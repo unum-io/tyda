@@ -127,6 +127,7 @@ lazy val root = (project in file("."))
     scalafixRules,
     scalafixTests,
     tyda,
+    tydaArrow,
     tydaBigQuery,
     tydaCollection,
     tydaDocs,
@@ -235,6 +236,16 @@ lazy val tyda = (project in file("tyda"))
         }
         .taskValue
   )
+
+lazy val tydaArrow = (project in file("tyda-arrow"))
+  .settings(commonSettings)
+  .settings(Dependencies.tydaArrow)
+  .settings(
+    Test / javaOptions ++= Seq("--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED"),
+    Test / fork := true
+  )
+  .dependsOn(scalafixRules % ScalafixConfig)
+  .dependsOn(tyda)
 
 lazy val tydaJson = (project in file("tyda-json"))
   .settings(commonSettings)
