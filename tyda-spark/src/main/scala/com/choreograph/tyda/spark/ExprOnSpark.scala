@@ -48,6 +48,7 @@ import com.choreograph.tyda.rewrite.CheckArrayIndexPositive
 import com.choreograph.tyda.rewrite.IsNone
 import com.choreograph.tyda.rewrite.Nullable
 import com.choreograph.tyda.rewrite.PrimitiveAggregateAsFold
+import com.choreograph.tyda.rewrite.SimplifyOptionIf
 import com.choreograph.tyda.rewrite.SparkJsonCompatability
 import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.shapeless3extras.tupleInstances
@@ -130,6 +131,7 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
 
   def convert(expr: ExprNode[?])(using spark: SparkSession): Column =
     expr match {
+      case SimplifyOptionIf(simplified) => convert(simplified)
       case ExprNode.Select(ref: ExprNode.Reference[?], name) => cfFromRef(ref).column(name)
       case ExprNode.Select(p, name) => convert(p)(name)
       case ref @ ExprNode.Reference(_, _) => cfFromRef(ref).row
@@ -149,7 +151,7 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
       case ExprNode.Range(start, end) =>
         val startCol = convert(start)
         val endCol = convert(end)
-        when(startCol < endCol, sequence(startCol, endCol - lit(1))).otherwise(array())
+        when(startCol >= endCol, array()).otherwise(sequence(startCol, endCol - lit(1)))
       case ExprNode.MakeSeq(values, _) =>
         val fieldExprs = values.map(convert(_))
         val arr = array(fieldExprs*)
