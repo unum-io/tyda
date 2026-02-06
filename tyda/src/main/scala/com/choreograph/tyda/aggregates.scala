@@ -3,10 +3,12 @@ package com.choreograph.tyda
 import scala.annotation.unused
 
 import com.choreograph.tyda.Expr.AsExpr
+import com.choreograph.tyda.Groupable
 import com.choreograph.tyda.PrimitiveAggregate.BoolAnd
 import com.choreograph.tyda.PrimitiveAggregate.BoolOr
 import com.choreograph.tyda.PrimitiveAggregate.Collect
 import com.choreograph.tyda.PrimitiveAggregate.Count
+import com.choreograph.tyda.PrimitiveAggregate.CountDistinct
 import com.choreograph.tyda.PrimitiveAggregate.CountSome
 import com.choreograph.tyda.PrimitiveAggregate.Max
 import com.choreograph.tyda.PrimitiveAggregate.MaxBy
@@ -63,6 +65,17 @@ object aggregates {
     * predicate is true.
     */
   def countIf[T](f: Expr[T] => Expr[Boolean]): Expr[T] => AggregateExpr[Long] = f.andThen(countIf)
+
+  /** AggregateExpr counting the number of distinct values.
+    */
+  def countDistinct[T: Groupable](e: Expr[T]): AggregateExpr[Long] =
+    aggregate(e, CountDistinct()(using e.codec))
+
+  /** AggregateExpr counting the number of distinct values of specified
+    * [[Expr]].
+    */
+  def countDistinct[T, R: Groupable, I: AsExpr.Of[R]](f: Expr[T] => I): Expr[T] => AggregateExpr[Long] =
+    f.andThen(AsExpr(_)).andThen(countDistinct)
 
   /** AggregateExpr returning true if all values are true.
     */
