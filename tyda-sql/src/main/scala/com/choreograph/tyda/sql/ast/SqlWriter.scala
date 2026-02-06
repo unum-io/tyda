@@ -32,7 +32,8 @@ private[tyda] final case class SqlWriter(writer: Writer) {
       case SqlExpr.BinaryOp(op, lhs, rhs) => writeSql"($lhs $op $rhs)"
       case SqlExpr.Brackets(exprs) => writeSql1"[$exprs]"
       case SqlExpr.FieldAccess(struct, field) => writeSql"$struct.$field"
-      case SqlExpr.Function(name, args) => writeSql"$name($args)"
+      case SqlExpr.Function(name, args, distinct) =>
+        if distinct then writeSql"$name(DISTINCT $args)" else writeSql"$name($args)"
       case SqlExpr.Index(arr, idx) => writeSql"$arr[$idx]"
       case SqlExpr.Ident(name) => write(name)
       case SqlExpr.UnaryOp(op, e, true) => writeSql"($op $e)"

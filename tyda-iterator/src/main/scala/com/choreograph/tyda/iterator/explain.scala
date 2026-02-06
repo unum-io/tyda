@@ -115,6 +115,7 @@ private def explainPrimitiveAggregate(primitive: PrimitiveAggregate[?, ?], arg: 
     case PrimitiveAggregate.Collect() => s"collect($arg)"
     case PrimitiveAggregate.Count() => s"count($arg)"
     case PrimitiveAggregate.CountSome() => s"countSome($arg)"
+    case PrimitiveAggregate.CountDistinct() => "countDistinct($arg)"
     case PrimitiveAggregate.BoolAnd() => s"boolAnd($arg)"
     case PrimitiveAggregate.BoolOr() => s"boolOr($arg)"
     case PrimitiveAggregate.Min(ord) => s"min($arg)(using $ord)"

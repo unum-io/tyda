@@ -1,5 +1,7 @@
 package com.choreograph.tyda
 
+import scala.reflect.ClassTag
+
 import com.choreograph.tyda.Aggregator.AndThen
 import com.choreograph.tyda.Aggregator.Compose
 import com.choreograph.tyda.Aggregator.Reduce
@@ -26,6 +28,10 @@ private[tyda] object PrimitiveAggregateEvaluation {
       case PrimitiveAggregate.Count() => make(Compose(_ => 1L, Reduce[Long](_ + _)))
       case PrimitiveAggregate.CountSome() =>
         make(Compose(t => if t.isDefined then 1L else 0L, Reduce[Long](_ + _)))
+      case countDistinct: PrimitiveAggregate.CountDistinct[?] =>
+        given Codec[From] = countDistinct.inputCodec
+        given Codec[Set[From]] = Codec.iterable[From, Set[From]]
+        make(AndThen(Compose(Set(_), Reduce[Set[From]](_ ++ _)), _.size.toLong))
       case PrimitiveAggregate.BoolAnd() => make(Reduce[Boolean](_ && _))
       case PrimitiveAggregate.BoolOr() => make(Reduce[Boolean](_ || _))
       case PrimitiveAggregate.Min(comparable) =>

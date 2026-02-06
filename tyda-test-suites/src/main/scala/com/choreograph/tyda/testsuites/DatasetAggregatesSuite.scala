@@ -20,6 +20,7 @@ import com.choreograph.tyda.aggregates.boolOr
 import com.choreograph.tyda.aggregates.collect
 import com.choreograph.tyda.aggregates.concat
 import com.choreograph.tyda.aggregates.count
+import com.choreograph.tyda.aggregates.countDistinct
 import com.choreograph.tyda.aggregates.countIf
 import com.choreograph.tyda.aggregates.countSome
 import com.choreograph.tyda.aggregates.max
@@ -152,17 +153,42 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     ds => ds.groupByKey(_._1).aggregateValue(concat(_._2)).values.select(_.exists(_.cast[Int] > 0))
   )
 
-  test[Int, Int]("min whole row", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-  test[Int, Long]("count whole row", ds => ds.groupByKey(_ => lit(1)).aggregateValue(count).values)
-  test[Boolean, Long]("countIf whole row", ds => ds.groupByKey(_ => lit(1)).aggregateValue(countIf).values)
-  test[Int, Long]("countIf expr", ds => ds.groupByKey(_ => lit(1)).aggregateValue(countIf(_ > 0)).values)
+  test[Option[Int], Long](
+    "countSome whole row",
+    ds => ds.groupByKey(_ => lit(1)).aggregateValue(countSome).values
+  )
+  test[Int, Int]("min whole row", ds => ds.groupByKey(_ => 1).aggregateValue(min).values)
+  test[Int, Long]("count whole row", ds => ds.groupByKey(_ => 1).aggregateValue(count).values)
+  test[Boolean, Long]("countIf whole row", ds => ds.groupByKey(_ => 1).aggregateValue(countIf).values)
+  test[Int, Long]("countIf expr", ds => ds.groupByKey(_ => 1).aggregateValue(countIf(_ > 0)).values)
   test[(Int, Int), (Int, Long)](
     "countIf group by",
     ds => ds.groupByKey(_._1).aggregateValue(countIf(_._2 > 0)).pairs
   )
-  test[Option[Int], Long](
-    "countSome whole row",
-    ds => ds.groupByKey(_ => lit(1)).aggregateValue(countSome).values
+  test[Int, Long]("countDistinct whole row", ds => ds.groupByKey(_ => 1).aggregateValue(countDistinct).values)
+  test[(Int, Int), (Int, Long)](
+    "countDistinct group by",
+    ds => ds.groupByKey(_._1).aggregateValue(countDistinct(_._2)).pairs
+  )
+  test[Pair, Long]("countDistinct struct", ds => ds.groupByKey(_ => 1).aggregateValue(countDistinct).values)
+  test[(Pair, Pair), (key: TinyByte, d1: Long, d2: Long)](
+    "countDistinct struct multiple",
+    ds => ds.groupByKey(_._1._1).aggregate(r => (d1 = countDistinct(r._1), d2 = countDistinct(r._2)))
+  )
+  test[(Pair, Pair), (key: TinyByte, d1: Long, d2: Long, tot: Long)](
+    "countDistinct struct multiple and supported",
+    ds =>
+      ds.groupByKey(_._1._1)
+        .aggregate(r => (d1 = countDistinct(r._1), d2 = countDistinct(r._2), tot = count(r)))
+  )
+  test[(Pair, Pair), Option[(d1: Long, d2: Long, tot: Long)]](
+    "countDistinct struct multiple and supported ungrouped",
+    ds => ds.aggregate(r => (d1 = countDistinct(r._1), d2 = countDistinct(r._2), tot = count(r)))
+  )
+  test[Pair, Option[Long]]("countDistinct struct ungrouped", ds => ds.aggregate(countDistinct))
+  test[Seq[Int], Long](
+    "countDistinct array",
+    ds => ds.groupByKey(_ => 1).aggregateValue(countDistinct).values
   )
   test[(TinyByte, Option[Int]), Long](
     "countSome expr",
