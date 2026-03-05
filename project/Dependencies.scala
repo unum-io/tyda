@@ -83,7 +83,7 @@ object Dependencies {
   val tydaMetadata = libraryDependencies ++=
     Seq(CompileDeps.jsoniterCore, CompileDeps.scalameta, ProvidedDeps.jsoniterMacros, TestDeps.scalatest)
 
-  val tydaSql = libraryDependencies ++= Seq()
+  val tydaSql = libraryDependencies ++= Seq(CompileDeps.slf4j)
 
   val tydaSparkSql = libraryDependencies ++= Seq(TestDeps.spark3Sql)
 

@@ -22,6 +22,7 @@ import com.choreograph.tyda.Runner
 import com.choreograph.tyda.RunnerArgs
 import com.choreograph.tyda.RunnerArgs.ValidateSchema
 import com.choreograph.tyda.bigquery.BigQueryRunner.buildClient
+import com.choreograph.tyda.sql.RenderedMultiStatement
 import com.choreograph.tyda.sql.SqlDialect
 import com.choreograph.tyda.sql.toSql
 
@@ -29,7 +30,7 @@ class BigQueryRunner(args: RunnerArgs.BigQuery) extends Runner {
   import BigQueryRunner.{logger, formatPlan}
   val bigQuery = buildClient(args.projectId)
 
-  def sql(ds: Dataset[?] | Dataset.Action): String =
+  def sql(ds: Dataset[?] | Dataset.Action): RenderedMultiStatement =
     toSql(ds, SqlDialect.BigQuery) match {
       case Right(sql) => sql
       case Left(err) => throw new RuntimeException(s"Failed to unparse dataset to SQL: $err")
@@ -37,11 +38,13 @@ class BigQueryRunner(args: RunnerArgs.BigQuery) extends Runner {
 
   def execute(ds: Dataset.Action): Unit = {
     validateReadTableSchemas(ds, args.validateSchemas)
-    val query = sql(ds)
-    logger.info(s"Executing query:\n$query")
-    val queryConfig = QueryJobConfiguration.newBuilder(query).build()
     // Do we need error handling here, or will those always result in exceptions?
-    try bigQuery.query(queryConfig, BigQueryRunner.retryJobOption): Unit
+    try
+      sql(ds).executeSingle { queryStr =>
+        logger.info(s"Executing query:\n$queryStr")
+        val queryConfig = QueryJobConfiguration.newBuilder(queryStr).build()
+        bigQuery.query(queryConfig, BigQueryRunner.retryJobOption): Unit
+      }
     catch
       case e: BigQueryException =>
         throw new RuntimeException(s"Failed to execute query:\n${explain(ds)}\nError: ${e.getMessage}", e)
@@ -49,8 +52,11 @@ class BigQueryRunner(args: RunnerArgs.BigQuery) extends Runner {
 
   def collect[T](ds: Dataset[T]): Seq[T] = {
     validateReadTableSchemas(ds, args.validateSchemas)
-    val queryConfig = QueryJobConfiguration.newBuilder(sql(BigQueryCollectionRewrites.rewrite(ds))).build()
-    val result = bigQuery.query(queryConfig, BigQueryRunner.retryJobOption)
+    val result = sql(BigQueryCollectionRewrites.rewrite(ds)).executeSetupAndQuery(queryStr =>
+      logger.info(s"Executing query:\n$queryStr")
+      val queryConfig = QueryJobConfiguration.newBuilder(queryStr).build()
+      bigQuery.query(queryConfig, BigQueryRunner.retryJobOption)
+    )
     assert(!(result.getSchema == null), "Query did not return a schema unable to decode results.")
     result.iterateAll().asScala.map(createDecoder(ds.codec, result.getSchema().getFields())).toSeq
   }
@@ -62,7 +68,7 @@ class BigQueryRunner(args: RunnerArgs.BigQuery) extends Runner {
     * dataset.
     */
   private def explainImpl[T](ds: Dataset[T] | Dataset.Action): String = {
-    val sqlStr = sql(ds)
+    val sqlStr = sql(ds).single
     val queryConfig = QueryJobConfiguration.newBuilder(sqlStr).setDryRun(true).build()
     val planOrError =
       try formatPlan(bigQuery.create(JobInfo.of(queryConfig)))
