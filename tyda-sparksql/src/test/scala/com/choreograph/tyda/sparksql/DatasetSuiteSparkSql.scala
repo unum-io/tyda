@@ -34,6 +34,7 @@ trait SharedSparkSession {
       .config("spark.sql.parquet.outputTimestampType", "TIMESTAMP_MICROS")
       .config("spark.sql.parquet.datetimeRebaseModeInWrite", "CORRECTED")
       .config("spark.sql.parquet.datetimeRebaseModeInRead", "CORRECTED")
+      .config("spark.sql.legacy.timeParserPolicy", "CORRECTED")
       .config("spark.sql.ansi.enabled", "true")
       /* By default Spark does variable substitution before parsing, this have obvious problems if the sql
        * contains any user controllable value. */

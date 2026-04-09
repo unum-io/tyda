@@ -186,14 +186,13 @@ object DatasetOnSpark {
     IntermediateDataset(df, ColumnFactory[(P, V)](value))
   }
 
+  private[spark] val jsonOptions: Map[String, String] =
+    Map("timeZone" -> "UTC", "timestampFormat" -> "yyyy-MM-dd'T'HH:mm[:ss][.SSSSSS][XXX]")
+
   private def formatOptions(format: Format): Map[String, String] =
     format match {
       case Format.Parquet => Map.empty
-      case Format.Json => Map(
-          "mode" -> "FAILFAST",
-          "timeZone" -> "UTC",
-          "timestampFormat" -> "yyyy-MM-dd'T'HH:mm[:ss][.SSSSSS][XXX]"
-        )
+      case Format.Json => Map("mode" -> "FAILFAST") ++ jsonOptions
     }
 
   extension (reader: DataFrameReader)

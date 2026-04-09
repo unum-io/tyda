@@ -58,6 +58,8 @@ abstract class ExprEvaluationSuite extends AnyFunSuite, ExprEvaluationSuiteBase 
       val results =
         try evalInOrder(values)
         catch
+          // TODO: Use ScalaTestControlException alias
+          case e: (TestPendingException | TestCanceledException | TestFailedException) => throw e
           case e: Throwable =>
             alert(exceptionFailureMessage(expr, values, e) + "\n\nStarting to shrink failure...")
             val minimized = shrinkableValues.minimize(input => Try(evalInOrder(input)).isFailure)

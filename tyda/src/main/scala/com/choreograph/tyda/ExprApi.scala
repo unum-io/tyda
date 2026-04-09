@@ -84,6 +84,12 @@ trait ExprApi[Expr[T]] {
     @targetName("optionMap")
     def map[U, I: AsExpr.Of[U]](f: Expr[T] => I): Expr[Option[U]] = when(!isEmpty, f(get))
 
+    /** Returns this Option if the predicate returns true or the option is
+      * empty, otherwise returns None.
+      */
+    @targetName("optionFilter")
+    def filter(p: Expr[T] => Expr[Boolean]): Expr[Option[T]] = when(isEmpty || p(get), get)
+
     /** Apply the Expr function returning an Option to the contained value if
       * the option is Some otherwise returns None.
       */
@@ -1027,4 +1033,15 @@ trait ExprApi[Expr[T]] {
   def when[R, I: AsExpr.Of[R] as asExpr](cond: Expr[Boolean], ifTrue: I): Expr[Option[R]] =
     val ifTrueExpr = asExpr(ifTrue)
     ternary(cond, some(ifTrueExpr), none(using unlift(ifTrueExpr).codec))
+
+  /** Serialize a value expression to a JSON string. */
+  def toJson[T: JsonArrayOrObject](expr: Expr[T]): Expr[String] = lift(ExprNode.ToJson(unlift(expr)))
+
+  /** Parse a JSON string expression into a value of type T.
+    *
+    * Returns `None` if the input string is not a valid JSON representation of
+    * T.
+    */
+  def fromJson[T: Codec: JsonArrayOrObject](expr: Expr[String]): Expr[Option[T]] =
+    lift(ExprNode.FromJson(unlift(expr), Codec[T]))
 }

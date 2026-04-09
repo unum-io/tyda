@@ -69,6 +69,16 @@ object NumericsReadMode {
   ) {
     def map[U](f: Expr[T] => Expr[U]): FailableReadAdapter[U, Read] =
       FailableReadAdapter(codec, cast.andThen(f), check)
+
+    def compose[U](f: FailableReadAdapter[U, T]): FailableReadAdapter[U, Read] = {
+      val combinedCheck = (check, f.check.map(_.compose(cast))) match {
+        case (Some(c1), Some(c2)) => Some((r: Expr[Read]) => c1(r) && c2(r))
+        case (c @ Some(_), None) => c
+        case (None, c @ Some(_)) => c
+        case (None, None) => None
+      }
+      FailableReadAdapter(codec, cast.andThen(f.cast), combinedCheck)
+    }
   }
 
   private[tyda] def buildReadAdapter[T](

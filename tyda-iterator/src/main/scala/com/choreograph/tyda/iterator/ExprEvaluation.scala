@@ -2,6 +2,11 @@ package com.choreograph.tyda.iterator
 
 import java.util.regex.Pattern
 
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonReaderException
+import com.github.plokhotnyuk.jsoniter_scala.core.ReaderConfig
+import com.github.plokhotnyuk.jsoniter_scala.core.readFromString
+import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
+
 import com.choreograph.tyda.CanCast
 import com.choreograph.tyda.CanTryCast
 import com.choreograph.tyda.Codec
@@ -18,6 +23,7 @@ import com.choreograph.tyda.NumericLimits
 import com.choreograph.tyda.PrimitiveAggregateEvaluation
 import com.choreograph.tyda.PrimitiveAggregateEvaluation.comparableToOrd
 import com.choreograph.tyda.Timestamp
+import com.choreograph.tyda.json.CodecToJsoniter
 import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.shapeless3extras.tupleInstances
 import com.choreograph.tyda.unreachable
@@ -187,6 +193,18 @@ object ExprEvaluation {
           from => evals.map(_(from)).mkString
         case ExprNode.Split(string, delimiter) =>
           binaryOp(string, delimiter, (str, del) => str.split(Pattern.quote(del), -1).toSeq)
+        case ExprNode.ToJson(inner) =>
+          val innerEval = impl(inner)
+          val jsonCodec = CodecToJsoniter.create(using inner.codec)
+          from => writeToString(innerEval(from))(using jsonCodec)
+        case ExprNode.FromJson(inner, codec) =>
+          val innerEval = impl(inner)
+          val jsonCodec = CodecToJsoniter.create(using codec)
+          val config = ReaderConfig.withCheckForEndOfInput(false)
+          from =>
+            val encoded = innerEval(from)
+            try Some(readFromString(encoded, config)(using jsonCodec))
+            catch { case _: JsonReaderException => None }
         case ExprNode.SizeSeq(operand) => impl(operand).andThen(_.size)
         case ExprNode.ElementSeq(array, index) =>
           val arrayEval = impl(array)

@@ -18,6 +18,7 @@ private[spark] trait SharedSparkSession {
       // TODO: Remove this once we only use Spark >4.0.0 where this is the default
       .config("spark.sql.parquet.datetimeRebaseModeInWrite", "CORRECTED")
       .config("spark.sql.parquet.datetimeRebaseModeInRead", "CORRECTED")
+      .config("spark.sql.legacy.timeParserPolicy", "CORRECTED")
       .getOrCreate()
 
   BigQueryIntegrationTestEnvVariables

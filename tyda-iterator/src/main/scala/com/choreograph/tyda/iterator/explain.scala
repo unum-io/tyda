@@ -172,6 +172,8 @@ private def explainLambdaBody[T](expr: ExprNode[T], args: Map[ExprNode.Reference
       case ExprNode.Trim(string) => s"${body(string)}.trim()"
       case ExprNode.EndsWith(string, suffix) => s"${body(string)}.endsWith(${body(suffix)})"
       case ExprNode.Split(string, delimiter) => s"${body(string)}.split(${body(delimiter)})"
+      case ExprNode.ToJson(inner) => s"toJson(${body(inner)})"
+      case ExprNode.FromJson(inner, _) => s"fromJson(${body(inner)})"
       case ExprNode.SizeSeq(operand) => s"${body(operand)}.size"
       case ExprNode.ElementSeq(array, index) => s"${body(array)}.get(${body(index)})"
       case ExprNode.Add(_, lhs, rhs) => s"${body(lhs)} + ${body(rhs)}"

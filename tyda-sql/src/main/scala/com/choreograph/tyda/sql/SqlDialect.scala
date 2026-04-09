@@ -38,6 +38,7 @@ final case class SqlDialect(
     extractTimestampMicros: String,
     floatingAggregate: SqlDialect.FloatingAggregate,
     floatingCompare: SqlDialect.FloatingCompare,
+    fromJson: SqlDialect.FromJsonSupport,
     intergerSupport: SqlDialect.IntegerSupport,
     isNanFunction: String,
     makeArray: SqlDialect.MakeArray,
@@ -52,6 +53,7 @@ final case class SqlDialect(
     splitFunction: SqlDialect.SplitFunction,
     trimFunction: SqlDialect.TrimFunction,
     startsWithFunction: String,
+    toJson: SqlDialect.ToJsonSupport,
     tryCast: String,
     tryCastTrimsControlChars: Boolean = false,
     // BigQuery complains when the struct functions is used in GROUP BY clause but has no problem
@@ -171,6 +173,12 @@ object SqlDialect {
 
     /** Only supports BigInt (64 bit integers) */
     case OnlyBigInt
+  }
+
+  final case class ToJsonSupport(functionName: String, options: Option[Map[String, String]])
+  enum FromJsonSupport {
+    case Parser(fromJson: String, options: Map[String, String])
+    case Extractors(extractScalar: String, extractArray: String, extractObject: String)
   }
 
   enum MakeArray {
@@ -359,6 +367,11 @@ object SqlDialect {
     extractTimestampMicros = "unix_micros",
     floatingAggregate = FloatingAggregate.NaNIsSmallestAndLargest,
     floatingCompare = FloatingCompare.Ieee,
+    fromJson = FromJsonSupport.Extractors(
+      extractScalar = "json_value",
+      extractArray = "json_query_array",
+      extractObject = "json_query"
+    ),
     intergerSupport = IntegerSupport.OnlyBigInt,
     isNanFunction = "is_nan",
     makeArray = MakeArray.Brackets,
@@ -372,6 +385,7 @@ object SqlDialect {
     endsWithFunction = "ends_with",
     splitFunction = SplitFunction.NonRegex("split"),
     trimFunction = TrimFunction.Characters("trim", " "),
+    toJson = SqlDialect.ToJsonSupport("to_json_string", None),
     tryCast = "SAFE_CAST",
     useSubqueryToAvoidStructInGroupBy = true,
     supportsExceptDistinctOnStructColumns = false,
@@ -387,6 +401,8 @@ object SqlDialect {
     )
   )
 
+  private val sparkJsonOptions =
+    Map("timeZone" -> "UTC", "timestampFormat" -> "yyyy-MM-dd'T'HH:mm[:ss][.SSSSSS][XXX]")
   val Spark: SqlDialect = SqlDialect(
     startsWithFunction = "startswith",
     arrayDistinct = ArrayDistinct.Function("array_distinct"),
@@ -406,6 +422,7 @@ object SqlDialect {
     extractTimestampMicros = "unix_micros",
     floatingAggregate = FloatingAggregate.NaNIsLargest,
     floatingCompare = FloatingCompare.NaNIsLargest,
+    fromJson = FromJsonSupport.Parser("from_json", Map("mode" -> "PERMISSIVE") ++ sparkJsonOptions),
     intergerSupport = IntegerSupport.AllSizes,
     isNanFunction = "isnan",
     makeArray = MakeArray.Function("array"),
@@ -426,20 +443,18 @@ object SqlDialect {
     trimFunction = TrimFunction.Default("trim"),
     tryCast = "TRY_CAST",
     tryCastTrimsControlChars = true,
+    toJson = SqlDialect.ToJsonSupport("to_json", Some(sparkJsonOptions)),
     values = Values.Native,
     rand = "rand",
-    writeSupport = WriteSupport.CreateTable(Map(
-      Format.Json -> Map(
-        "mode" -> "FAILFAST",
-        "timeZone" -> "UTC",
-        "timestampFormat" -> "yyyy-MM-dd'T'HH:mm[:ss][.SSSSSS][XXX]"
-      )
-    )),
+    writeSupport =
+      WriteSupport.CreateTable(Map(Format.Json -> (Map("mode" -> "FAILFAST") ++ sparkJsonOptions))),
     correctnessRules = Seq(
       CheckArrayIndexPositive,
       WrapOptionInCollect,
       SparkJsonCompatability.AdaptReads,
-      SparkJsonCompatability.ConvertWrites
+      SparkJsonCompatability.ConvertWrites,
+      SparkJsonCompatability.AdaptToJson,
+      SparkJsonCompatability.ConvertFromJson
     )
   )
 }

@@ -650,6 +650,10 @@ SELECT (t1.value IS NULL) AS value FROM t1
 SELECT coalesce(t1.value, error('should not happen')) AS value FROM t1
 ------ end
 
+------ Test: extra stuff after json object is ignored
+SELECT CASE WHEN ((json_query(t1._2, '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(t1._2, '$._1') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(t1._2, '$._1') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(t1._2, '$._1') AS INT) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(t1._2, '$._1') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(t1._2, '$._1') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(t1._2, '$._1') AS INT) END AS _1) END AS value FROM t1
+------ end
+
 ------ Test: fail on division by zero
 SELECT CAST(div(t1.value, CAST(0 AS INT)) AS INT) AS value FROM t1
 ------ end
@@ -772,6 +776,14 @@ SELECT is_nan(t1.value) AS value FROM t1
 
 ------ Test: isNaN for Float
 SELECT is_nan(t1.value) AS value FROM t1
+------ end
+
+------ Test: json date as YYYY-MM-DD
+SELECT CASE WHEN (CASE WHEN ((json_query(t1._2, '$') != 'null') AND (SAFE_CAST(json_value(t1._2, '$._1') AS DATE) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(t1._2, '$._1') AS DATE) AS _1) END IS NOT NULL) THEN CASE WHEN ((json_query(t1._2, '$') != 'null') AND (SAFE_CAST(json_value(t1._2, '$._1') AS DATE) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(t1._2, '$._1') AS DATE) AS _1) END._1 END AS value FROM t1
+------ end
+
+------ Test: json duration as long of microseconds
+SELECT CASE WHEN (CASE WHEN ((json_query(t1._2, '$') != 'null') AND (SAFE_CAST(json_value(t1._2, '$._1') AS BIGINT) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(t1._2, '$._1') AS BIGINT) AS _1) END IS NOT NULL) THEN CASE WHEN ((json_query(t1._2, '$') != 'null') AND (SAFE_CAST(json_value(t1._2, '$._1') AS BIGINT) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(t1._2, '$._1') AS BIGINT) AS _1) END._1 END AS value FROM t1
 ------ end
 
 ------ Test: lt for com.choreograph.tyda.Date$package.Date
@@ -932,6 +944,14 @@ SELECT [struct(t1._1 AS _1, t1._2 AS _2)] AS value FROM t1
 
 ------ Test: make tuple with literal
 SELECT t1.value AS _1, 'literal' AS _2 FROM t1
+------ end
+
+------ Test: malformed json array results in None
+SELECT CASE WHEN ((json_query_array(t1.value, '$') IS NOT NULL) AND (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT (CASE WHEN ((SAFE_CAST(json_value(c0, '$') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$') AS INT) END IS NOT NULL) FROM unnest(json_query_array(t1.value, '$')) AS c0))) AS c1)) THEN array((SELECT CASE WHEN ((SAFE_CAST(json_value(c0, '$') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$') AS INT) END FROM unnest(json_query_array(t1.value, '$')) AS c0)) END AS value FROM t1
+------ end
+
+------ Test: malformed json object results in None
+SELECT CASE WHEN ((json_query(t1.value, '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(t1.value, '$._1') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(t1.value, '$._1') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(t1.value, '$._1') AS INT) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(t1.value, '$._1') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(t1.value, '$._1') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(t1.value, '$._1') AS INT) END AS _1) END AS value FROM t1
 ------ end
 
 ------ Test: map Option
@@ -1220,6 +1240,50 @@ SELECT CASE WHEN t1._1 THEN t1._2 ELSE t1._3 END AS value FROM t1
 
 ------ Test: ternary with Option branches
 SELECT CASE WHEN t1._1 THEN t1._2 ELSE t1._3 END AS value FROM t1
+------ end
+
+------ Test: toJson/fromJson roundtrip for com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct
+SELECT CASE WHEN ((json_query(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$') != 'null') AND (((CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) END IS NOT NULL) AND (json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.b') IS NOT NULL)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.c') AS BOOLEAN) IS NOT NULL))) THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) END AS a, json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.b') AS b, SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.c') AS BOOLEAN) AS c) END AS value FROM t1
+------ end
+
+------ Test: toJson/fromJson roundtrip for scala.NamedTuple.NamedTuple[scala.Tuple1["0digitfirst"], scala.Tuple1[scala.Int]]
+SELECT CASE WHEN ((json_query(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT) END AS `0digitfirst`) END AS value FROM t1
+------ end
+
+------ Test: toJson/fromJson roundtrip for scala.NamedTuple.NamedTuple[scala.Tuple1["name with space"], scala.Tuple1[scala.Int]]
+SELECT CASE WHEN ((json_query(to_json_string(struct(t1.`name with space` AS `name with space`)), '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT) END AS `name with space`) END AS value FROM t1
+------ end
+
+------ Test: toJson/fromJson roundtrip for scala.NamedTuple.NamedTuple[scala.Tuple1["name-with-dash"], scala.Tuple1[scala.Int]]
+SELECT CASE WHEN ((json_query(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT) END AS `name-with-dash`) END AS value FROM t1
+------ end
+
+------ Test: toJson/fromJson roundtrip for scala.Tuple1[com.choreograph.tyda.Date$package.Date]
+SELECT CASE WHEN ((json_query(to_json_string(struct(t1._1 AS _1)), '$') != 'null') AND (SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS DATE) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS DATE) AS _1) END AS value FROM t1
+------ end
+
+------ Test: toJson/fromJson roundtrip for scala.Tuple1[com.choreograph.tyda.Duration$package.Duration]
+SELECT CASE WHEN ((json_query(to_json_string(struct(t1._1 AS _1)), '$') != 'null') AND (SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS BIGINT) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS BIGINT) AS _1) END AS value FROM t1
+------ end
+
+------ Test: toJson/fromJson roundtrip for scala.Tuple1[com.choreograph.tyda.Timestamp$package.Timestamp]
+SELECT CASE WHEN ((json_query(to_json_string(struct(t1._1 AS _1)), '$') != 'null') AND (SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS TIMESTAMP) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS TIMESTAMP) AS _1) END AS value FROM t1
+------ end
+
+------ Test: toJson/fromJson roundtrip for scala.Tuple1[scala.Option[scala.Option[scala.Int]]]
+SELECT CASE WHEN (json_query(to_json_string(struct(t1._1 AS _1)), '$') != 'null') THEN struct(CASE WHEN (json_query(to_json_string(struct(t1._1 AS _1)), '$._1') != 'null') THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1.value') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1.value') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1.value') AS INT) END AS value) END AS _1) END AS value FROM t1
+------ end
+
+------ Test: toJson/fromJson roundtrip for scala.collection.immutable.Map[scala.Predef.String, scala.Int]
+SELECT CASE WHEN ((json_query_array(to_json_string(t1.value), '$') IS NOT NULL) AND (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT ((json_query(c0, '$') != 'null') AND ((json_value(c0, '$.key') IS NOT NULL) AND (CASE WHEN ((SAFE_CAST(json_value(c0, '$.value') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$.value') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$.value') AS INT) END IS NOT NULL))) FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0))) AS c1)) THEN CAST(array((SELECT struct(json_value(c0, '$.key') AS key, CASE WHEN ((SAFE_CAST(json_value(c0, '$.value') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$.value') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$.value') AS INT) END AS value) FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0)) AS ARRAY<STRUCT<key STRING,value INT>>) END AS value FROM t1
+------ end
+
+------ Test: toJson/fromJson roundtrip for scala.collection.immutable.Seq[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
+SELECT CASE WHEN ((json_query_array(to_json_string(t1.value), '$') IS NOT NULL) AND (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT ((json_query(c0, '$') != 'null') AND (((CASE WHEN ((SAFE_CAST(json_value(c0, '$.a') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$.a') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$.a') AS INT) END IS NOT NULL) AND (json_value(c0, '$.b') IS NOT NULL)) AND (SAFE_CAST(json_value(c0, '$.c') AS BOOLEAN) IS NOT NULL))) FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0))) AS c1)) THEN array((SELECT struct(CASE WHEN ((SAFE_CAST(json_value(c0, '$.a') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$.a') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$.a') AS INT) END AS a, json_value(c0, '$.b') AS b, SAFE_CAST(json_value(c0, '$.c') AS BOOLEAN) AS c) FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0)) END AS value FROM t1
+------ end
+
+------ Test: toJson/fromJson roundtrip for scala.collection.immutable.Seq[scala.Int]
+SELECT CASE WHEN ((json_query_array(to_json_string(t1.value), '$') IS NOT NULL) AND (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT (CASE WHEN ((SAFE_CAST(json_value(c0, '$') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$') AS INT) END IS NOT NULL) FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0))) AS c1)) THEN array((SELECT CASE WHEN ((SAFE_CAST(json_value(c0, '$') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$') AS INT) END FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0)) END AS value FROM t1
 ------ end
 
 ------ Test: toMap

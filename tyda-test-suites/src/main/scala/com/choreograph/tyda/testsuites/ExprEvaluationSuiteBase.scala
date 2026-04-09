@@ -27,6 +27,7 @@ import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
 import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Expr
+import com.choreograph.tyda.JsonArrayOrObject
 import com.choreograph.tyda.Ord
 import com.choreograph.tyda.Remover
 import com.choreograph.tyda.Selector
@@ -36,6 +37,7 @@ import com.choreograph.tyda.functions.coalesce
 import com.choreograph.tyda.functions.concat
 import com.choreograph.tyda.functions.daysToDate
 import com.choreograph.tyda.functions.endsWith
+import com.choreograph.tyda.functions.fromJson
 import com.choreograph.tyda.functions.lit
 import com.choreograph.tyda.functions.makeMap
 import com.choreograph.tyda.functions.microsToDuration
@@ -47,6 +49,7 @@ import com.choreograph.tyda.functions.range
 import com.choreograph.tyda.functions.seq
 import com.choreograph.tyda.functions.some
 import com.choreograph.tyda.functions.startsWith
+import com.choreograph.tyda.functions.toJson
 import com.choreograph.tyda.functions.tuple
 import com.choreograph.tyda.testsuites.FloatingPointEquality.given
 
@@ -54,7 +57,7 @@ object ExprEvaluationSuiteBase {
   private final case class Full(a: Int, b: String, c: Boolean)
   private final case class Projected(a: Int)
 
-  private final case class Struct(a: Int, b: String, c: Boolean)
+  private final case class Struct(a: Int, b: String, c: Boolean) derives Arbitrary, Codec
   private type NamedTupleAlias = (a: Int, b: String, c: Boolean)
   private type NamedTupleAliasWithUnused = (a: Int, b: String, c: Boolean, unused: String)
 
@@ -116,6 +119,12 @@ object ExprEvaluationSuiteBase {
   }
 
   val errorMessage = "My error message"
+
+  // We run into https://issues.apache.org/jira/browse/SPARK-49311
+  // We might want to condider not using DayTimeInterval for Duration in Spark since they do not provide
+  // any good apis for extracting the underlying value.
+  given Arbitrary[Duration] =
+    Arbitrary[Duration].filter(d => d.toMicros < Long.MaxValue / 10 && d.toMicros > Long.MinValue / 10)
 }
 
 /** This contains behavior tests for expression evaluation.
@@ -128,7 +137,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   import ExprEvaluationSuiteBase.{
     CustomIntSeq, Full, Projected, Struct, NestedOption, NamedTuple1, NamedTuple2, NamedTupleAlias,
     NamedTupleAliasWithUnused, TestEnum, TestSealedTrait, TestEnumString, WithEmptyTuple, WithNamedTupleEmpty,
-    WithOptionField, TreeBounded, Leaf, Node, errorMessage
+    WithOptionField, TreeBounded, Leaf, Node, errorMessage, given
   }
 
   /** Evaluate the expression on a sequence of inputs.
@@ -1155,11 +1164,6 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     identity
   )
   {
-    // We run into https://issues.apache.org/jira/browse/SPARK-49311
-    // We might want to condider not using DayTimeInterval for Duration in Spark since they do not provide
-    // any good apis for extracting the underlying value.
-    given Arbitrary[Duration] =
-      Arbitrary[Duration].filter(d => d.toMicros < Long.MaxValue / 10 && d.toMicros > Long.MinValue / 10)
     given Arbitrary[Long] = Arbitrary[Duration].map(_.toMicros)
 
     testHasSameBehavior[Duration, Long]("Duration toMicros", _.toMicros, _.toMicros)
@@ -1215,4 +1219,80 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     t => (t.map(_.a), t.map(_.b), t.map(_.c))
   )
 
+  def testJsonRoundtrip[T: ClassTag: Codec: Arbitrary: TypeName: JsonArrayOrObject]: Unit =
+    testHasSameBehavior[T, Option[T]](
+      s"toJson/fromJson roundtrip for ${TypeName.name[T]}",
+      t => fromJson[T](toJson(t)),
+      Some(_)
+    )
+
+  testJsonRoundtrip[(`name with space`: Int)]
+  testJsonRoundtrip[(`name-with-dash`: Int)]
+  testJsonRoundtrip[(`0digitfirst`: Int)]
+  testJsonRoundtrip[Tuple1[Timestamp]]
+  testJsonRoundtrip[Tuple1[Date]]
+  testJsonRoundtrip[Tuple1[Duration]]
+  testJsonRoundtrip[Tuple1[Option[Option[Int]]]]
+  testJsonRoundtrip[Seq[Int]]
+  testJsonRoundtrip[Map[String, Int]]
+  testJsonRoundtrip[Struct]
+  testJsonRoundtrip[Seq[Struct]]
+  testJsonRoundtrip[Seq[Seq[Int]]]
+  {
+    given Arbitrary[(Date, String)] = Arbitrary[Date].map(date => date -> s"""{"_1":"${date.toIsoString}"}""")
+    testHasSameBehavior[(Date, String), Option[Date]](
+      "json date as YYYY-MM-DD",
+      { case Expr(_, json) => fromJson[Tuple1[Date]](json).map(_._1) },
+      (date, _) => Some(date)
+    )
+  }
+  {
+    given Arbitrary[(Long, String)] = Arbitrary[Long].map(long => long -> s"""{"_1":$long}""")
+    testHasSameBehavior[(Long, String), Option[Duration]](
+      "json duration as long of microseconds",
+      { case Expr(_, json) => fromJson[Tuple1[Duration]](json).map(_._1) },
+      (long, _) => Some(Duration.fromMicros(long))
+    )
+  }
+  {
+    given Arbitrary[String] =
+      Arbitrary.oneOf(
+        "{",
+        "}",
+        "{}",
+        """{"value": 0}""",
+        """[{"_1": 0}""",
+        "{_1:0}",
+        """{"_1":null}""",
+        "[,]",
+        "[null]",
+        s"""["${Int.MaxValue.toLong + 1}"]""",
+        s"""["${Long.MaxValue.toString}0"]""",
+        """[{}]"""
+      )
+    testHasSameBehavior[String, Option[Tuple1[Int]]](
+      "malformed json object results in None",
+      fromJson[Tuple1[Int]](_),
+      _ => None
+    )
+    testHasSameBehavior[String, Option[Seq[Int]]](
+      "malformed json array results in None",
+      fromJson[Seq[Int]](_),
+      _ => None
+    )
+  }
+  {
+    // extra stuff on the end is not an error
+    given Arbitrary[(Int, String)] =
+      for {
+        int <- Arbitrary.int
+        json <- Arbitrary.oneOf(s"""{"_1": $int}""")
+        extra <- Arbitrary.string
+      } yield (int, json + extra)
+    testHasSameBehavior[(Int, String), Option[Tuple1[Int]]](
+      "extra stuff after json object is ignored",
+      { case Expr(_, json) => fromJson[Tuple1[Int]](json) },
+      (int, _) => Some(Tuple1(int))
+    )
+  }
 }

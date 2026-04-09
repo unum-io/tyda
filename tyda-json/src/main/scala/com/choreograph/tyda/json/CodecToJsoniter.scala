@@ -20,6 +20,13 @@ import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.unreachable
 
 object CodecToJsoniter {
+
+  /** Create a JsonValueCodec that makes the format used by `Format.Json` in the
+    * Dataset apis.
+    *
+    * This means that top level values that are not objects will be wrapped in
+    * an object with a single "value" field.
+    */
   def create[T: Codec]: JsonValueCodec[T] =
     Codec[T] match {
       case Codec.Product(_, _, _) => fromReaderWriter[T]

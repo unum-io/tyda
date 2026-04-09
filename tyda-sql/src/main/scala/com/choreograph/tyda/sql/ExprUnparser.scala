@@ -1,5 +1,7 @@
 package com.choreograph.tyda.sql
 
+import scala.util.chaining.given
+
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Codec.seq
 import com.choreograph.tyda.CompiledAggregateExpr
@@ -35,6 +37,7 @@ import com.choreograph.tyda.sql.SqlDialect.IntegerSupport
 import com.choreograph.tyda.sql.SqlDialect.SplitFunction
 import com.choreograph.tyda.sql.SqlDialect.TrimFunction
 import com.choreograph.tyda.sql.ast.DdlType
+import com.choreograph.tyda.sql.ast.DdlWriter
 import com.choreograph.tyda.sql.ast.From
 import com.choreograph.tyda.sql.ast.Query
 import com.choreograph.tyda.sql.ast.SqlExpr
@@ -450,19 +453,9 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
         )
       case ExprNode.Quotient(integral, _, _) =>
         Left(DatasetToSqlError.RequiresUdfCapability(s"Quotient uses custom integral instance $integral"))
-      case ExprNode.Cast(value, _) =>
-        inner(value).map(SqlExpr.Cast(_, ToDdl.toDdlType(expr.codec, dialect.ddl, false, true).tpe))
-      case ExprNode.TryCast(value, canTryCast) => inner(value)
-          .map(fromExpr =>
-            fromExpr -> SqlExpr.Cast(
-              dialect.tryCast,
-              fromExpr,
-              ToDdl.toDdlType(canTryCast.codec, dialect.ddl, false, true).tpe
-            )
-          )
-          .map(addControlCharCheckIfNeeded(_, _, value.codec, dialect))
-          .map(addIntRangeCheckIfNeeded(_, canTryCast.codec, dialect))
-          .map(addDecimalRangeAndRoundingIfNeeded(_, canTryCast.codec, dialect))
+      case ExprNode.Cast(value, _) => inner(value).map(cast(_, expr.codec, dialect))
+      case ExprNode.TryCast(value, canTryCast) =>
+        inner(value).map(tryCast(_, value.codec, canTryCast.codec, dialect))
       case ExprNode.TimestampToMicros(value) =>
         inner(value).map(v => SqlExpr.Function(dialect.extractTimestampMicros, Seq(v)))
       case ExprNode.MicrosToTimestamp(value) => dialect.makeTimestamp match {
@@ -548,9 +541,184 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
       case ExprNode.None(codec) =>
         val ddlType = ToDdl.toDdlType(codec, dialect.ddl, notNull = false, supportsNotNull = true).tpe
         Right(SqlExpr.Cast(SqlExpr.LiteralNull, ddlType))
+      case ExprNode.ToJson(value) =>
+        val hasNestedArray = Codec
+          .iterate(value.codec)
+          .exists {
+            case Codec.Seq(CollectionOrNullableCollectionCodec(_)) => true
+            case _ => false
+          }
+        if !dialect.ddl.supportsArrayAsArrayElement && hasNestedArray then {
+          Left(DatasetToSqlError.NotImplemented(
+            "toJson with nested arrays and no nested array support is not implemented"
+          ))
+        } else {
+          val maybeOptions = dialect.toJson.options.map(optionsToSqlExpr)
+          inner(value).map(v => SqlExpr.Function(dialect.toJson.functionName, Seq(v) ++ maybeOptions))
+        }
+      case ExprNode.FromJson(json, codec) => dialect.fromJson match {
+          case SqlDialect.FromJsonSupport.Parser(fromJson, options) => for {
+              jsonExpr <- inner(json)
+              ddlType = ToDdl.toDdlType(codec, dialect.ddl, notNull = false, supportsNotNull = true).tpe
+              optionsExpr = optionsToSqlExpr(options)
+            } yield SqlExpr.Function(fromJson, Seq(jsonExpr, ddlAsSqlString(ddlType), optionsExpr))
+          case extractors @ SqlDialect.FromJsonSupport.Extractors(_, _, _) =>
+            inner(json).flatMap(expr => fromJson(extractors, expr, codec, args))
+        }
     }
   }
   inner(fullExpr)
+}
+
+private def optionsToSqlExpr(options: Map[String, String]): SqlExpr =
+  SqlExpr.Function(
+    "map",
+    options.flatMap((key, value) => Seq(SqlExpr.LiteralString(key), SqlExpr.LiteralString(value))).toSeq
+  )
+private def mapSeq(arr: SqlExpr, argName: String, fExpr: SqlExpr, dialect: SqlDialect): SqlExpr =
+  dialect.arrayHigherOrderFunctions match {
+    case SqlDialect.ArrayHigherOrderFunctions.Subquery(makeArray, unnest) =>
+      val from = From.Expr(SqlExpr.Function(unnest, Seq(arr)), argName)
+      val query = Query.Select(NonEmpty(fExpr), from)
+      SqlExpr.Function(makeArray, Seq(SqlExpr.Subquery(query)))
+    case SqlDialect.ArrayHigherOrderFunctions.Lambda(map = mapFunction) =>
+      SqlExpr.Function(mapFunction, Seq(arr, SqlExpr.LambdaFunction(SqlExpr.Ident(argName), fExpr)))
+  }
+
+private def aggregateSeq[T, R](
+    arr: SqlExpr,
+    elementCodec: Codec[T],
+    onEmpty: ExprNode[R],
+    primitive: PrimitiveAggregate[T, R] & ExprNode.AggregateSeq.SupportedAggregates,
+    args: UnparserArgs
+): Result[SqlExpr] =
+  args.dialect.arrayHigherOrderFunctions match {
+    case SqlDialect.ArrayHigherOrderFunctions.Subquery(makeArray, unnest) => for {
+        onEmptyExpr <- exprToSqlExpr(onEmpty, args)
+        argName = args.aliasGen.column()
+        arg = unwrapArrayElement(SqlExpr.Ident(argName), elementCodec, args.dialect)
+        aggExpr <- primitiveAggregate(arg, primitive, args.dialect)(using elementCodec)
+        from = From.Expr(SqlExpr.Function(unnest, Seq(arr)), argName)
+        query = Query.Select(NonEmpty(coalesce(aggExpr, onEmptyExpr)), from)
+      } yield SqlExpr.Subquery(query)
+    case SqlDialect.ArrayHigherOrderFunctions.Lambda(aggregate = aggregate) =>
+      val asFold = PrimitiveAggregateAsFold(onEmpty, primitive)(using elementCodec)
+      for {
+        initial <- exprToSqlExpr(asFold.initial, args)
+        merge <- lambda2(asFold.merge, args)
+        finish <- lambda(asFold.finish, args)
+      } yield SqlExpr.Function(aggregate, Seq(arr, initial, merge, finish))
+  }
+
+private def cast(expr: SqlExpr, to: Codec[?], dialect: SqlDialect): SqlExpr =
+  SqlExpr.Cast(expr, ToDdl.toDdlType(to, dialect.ddl, false, true).tpe)
+
+private def tryCast(expr: SqlExpr, from: Codec[?], to: Codec[?], dialect: SqlDialect): SqlExpr =
+  SqlExpr
+    .Cast(dialect.tryCast, expr, ToDdl.toDdlType(to, dialect.ddl, false, true).tpe)
+    .pipe(addControlCharCheckIfNeeded(expr, _, from, dialect))
+    .pipe(addIntRangeCheckIfNeeded(_, to, dialect))
+    .pipe(addDecimalRangeAndRoundingIfNeeded(_, to, dialect))
+
+private def jsonPath(path: Seq[String]): SqlExpr = {
+  def needEscaping(part: String): Boolean =
+    part.isEmpty || part.head.isDigit || part.exists(c => !c.isLetterOrDigit && c != '_')
+  def escape(part: String): String = if needEscaping(part) then s"\"$part\"" else part
+  if path.isEmpty then SqlExpr.LiteralString("$")
+  else SqlExpr.LiteralString("$." + path.map(escape).mkString("."))
+}
+
+private def fromJson[T](
+    extractors: SqlDialect.FromJsonSupport.Extractors,
+    fullJson: SqlExpr,
+    codec: Codec[T],
+    args: UnparserArgs
+): Result[SqlExpr] = {
+  val dialect = args.dialect
+
+  def and(lhs: Option[SqlExpr], rhs: Option[SqlExpr]): Option[SqlExpr] =
+    lhs.zip(rhs).map(SqlExpr.BinaryOp("AND", _, _)).orElse(lhs).orElse(rhs)
+
+  def isNotJsonNull(expr: SqlExpr): SqlExpr = SqlExpr.BinaryOp("!=", expr, SqlExpr.LiteralString("null"))
+
+  def nestedOption[T](
+      element: Codec.Option[T],
+      json: SqlExpr,
+      path: Seq[String]
+  ): Result[(value: SqlExpr, isValid: Option[SqlExpr])] = {
+    given Codec[T] = element.element
+    go(json, Codec[Option[(value: Option[T])]], path, nullable = true)
+  }
+
+  def go[A](
+      json: SqlExpr,
+      codec: Codec[A],
+      path: Seq[String],
+      nullable: Boolean
+  ): Result[(value: SqlExpr, isValid: Option[SqlExpr])] =
+    codec match {
+      case _: Codec.Primitive[A] =>
+        val extracted = SqlExpr.Function(extractors.extractScalar, Seq(json, jsonPath(path)))
+        val casted =
+          if codec == Codec.String then extracted else tryCast(extracted, Codec.String, codec, dialect)
+        val valid = Option.when(!nullable)(SqlExpr.isNotNull(casted))
+        Right((casted, valid))
+      case Codec.Seq(element) =>
+        val arrayOfJson = SqlExpr.Function(extractors.extractArray, Seq(json, jsonPath(path)))
+        val validArray = Option.when(!nullable)(SqlExpr.isNotNull(arrayOfJson))
+        val argName = args.aliasGen.column()
+        go(unwrapArrayElement(SqlExpr.Ident(argName), element, dialect), element, Seq.empty, nullable = false)
+          .flatMap { (elementExpr, maybeElementValid) =>
+            val extractedArray = mapSeq(arrayOfJson, argName, elementExpr, dialect)
+            val maybeAllElementsValid = maybeElementValid
+              .map(elementValid => mapSeq(arrayOfJson, argName, elementValid, dialect))
+              .map(arrayOfElementIsValid =>
+                aggregateSeq(
+                  arrayOfElementIsValid,
+                  Codec.Boolean,
+                  ExprNode.Literal(true),
+                  PrimitiveAggregate.BoolAnd(),
+                  args
+                )
+              )
+            maybeAllElementsValid.fold(Right(
+              (extractedArray, validArray)
+            ))(_.map(allValid => (extractedArray, and(validArray, Some(allValid)))))
+          }
+      case Codec.Option(element @ Codec.Option(_)) => nestedOption(element, json, path)
+      case Codec.Option(element) => go(json, element, path, nullable = true)
+      case Codec.Product(_, fields, _) => for {
+          (exprs, fieldsValid) <- fields.foldLeft0[Result[(Seq[SqlExpr], Option[SqlExpr])]](Right(
+            (Seq.empty[SqlExpr], Option.empty[SqlExpr])
+          ))([t] =>
+            (acc, field) =>
+              for {
+                (fields, isValid) <- acc
+                (fieldValue, fieldIsValid) <- go(json, field.codec, path :+ field.name, nullable = false)
+              } yield (fields :+ fieldValue, and(isValid, fieldIsValid))
+          )
+          productIsNotNull =
+            isNotJsonNull(SqlExpr.Function(extractors.extractObject, Seq(json, jsonPath(path))))
+          makeProduct = makeStruct(fields.mapConst([t] => _.name), exprs, dialect)
+        } yield
+          if nullable then
+            (SqlExpr.Case(Seq((condition = productIsNotNull, result = makeProduct))), fieldsValid)
+          else (makeProduct, and(Some(productIsNotNull), fieldsValid))
+
+      case Codec.Map(given Codec[k], given Codec[v]) => for {
+          (mapAsArray, isValid) <- go(json, Codec[Seq[(key: k, value: v)]], path, nullable)
+        } yield (makeMap(mapAsArray, Codec[k], Codec[v], dialect), isValid)
+      case Codec.FromInjection(_, to) => go(json, to, path, nullable)
+    }
+  for {
+    (value, isValid) <- go(fullJson, codec, Seq.empty, nullable = false)
+  } yield isValid.fold(value)(valid => SqlExpr.Case(Seq((condition = valid, result = value))))
+}
+
+private def ddlAsSqlString(ddl: DdlType): SqlExpr = {
+  val writer = new java.io.StringWriter()
+  DdlWriter(writer, pretty = false).write(ddl, 0)
+  SqlExpr.LiteralString(writer.toString)
 }
 
 private def addControlCharCheckIfNeeded(

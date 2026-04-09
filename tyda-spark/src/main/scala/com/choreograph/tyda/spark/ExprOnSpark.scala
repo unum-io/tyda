@@ -13,6 +13,7 @@ import org.apache.spark.sql.functions.date_from_unix_date
 import org.apache.spark.sql.functions.element_at
 import org.apache.spark.sql.functions.endswith
 import org.apache.spark.sql.functions.filter
+import org.apache.spark.sql.functions.from_json
 import org.apache.spark.sql.functions.isnan
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.functions.map_contains_key
@@ -26,6 +27,7 @@ import org.apache.spark.sql.functions.size
 import org.apache.spark.sql.functions.startswith
 import org.apache.spark.sql.functions.struct
 import org.apache.spark.sql.functions.timestamp_micros
+import org.apache.spark.sql.functions.to_json
 import org.apache.spark.sql.functions.transform
 import org.apache.spark.sql.functions.trim
 import org.apache.spark.sql.functions.unix_date
@@ -45,6 +47,7 @@ import com.choreograph.tyda.rewrite.ArrayCodec
 import com.choreograph.tyda.rewrite.IsNone
 import com.choreograph.tyda.rewrite.Nullable
 import com.choreograph.tyda.rewrite.PrimitiveAggregateAsFold
+import com.choreograph.tyda.rewrite.SparkJsonCompatability
 import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.shapeless3extras.tupleInstances
 import com.choreograph.tyda.spark.CodecToCatalystType.catalystType
@@ -92,6 +95,7 @@ private[spark] object ExprOnSpark {
     new ExprOnSpark(Map(compiled.arg -> ColumnFactory.unresolved)).convert(compiled.expr)
 
   private def wrapNestedSome(value: Column): Column = struct(value.as("value"))
+  private val jsonOptions: Map[String, String] = Map("mode" -> "PERMISSIVE") ++ DatasetOnSpark.jsonOptions
 }
 
 /** Contains logic for converting a Expr[T] into a Spark Column. */
@@ -242,6 +246,10 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
         /* In Spark 4.0.0+ (https://github.com/apache/spark/pull/46045) we can call split function directly
          * instead of using call_function */
         call_function("split", convert(string), quotedDelimiter)
+      case SparkJsonCompatability.AdaptToJson(adapted) => convert(adapted)
+      case SparkJsonCompatability.ConvertFromJson(converted) => convert(converted)
+      case ExprNode.ToJson(inner) => to_json(convert(inner), jsonOptions)
+      case ExprNode.FromJson(inner, codec) => from_json(convert(inner), catalystType(codec), jsonOptions)
       case ExprNode.SizeSeq(operand) => size(convert(operand))
       case ExprNode.ElementSeq(array, index) =>
         val idx = convert(index)
