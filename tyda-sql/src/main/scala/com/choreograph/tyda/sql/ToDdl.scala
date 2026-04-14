@@ -115,7 +115,7 @@ object ToDdl {
           case DdlDialect.DurationSupport.Long => toNullableDdlType(Codec.Long, dialect)
         }
       case Codec.Date => DdlType.Primitive("DATE")
-      case Codec.Bytes => DdlType.Primitive("BINARY")
+      case Codec.Bytes => DdlType.Primitive(dialect.bytesType)
 
       case Codec.Seq(given Codec[e]) =>
         val element = if shouldWrapArrayElement(Codec[e], dialect) then Codec[(value: e)] else Codec[e]

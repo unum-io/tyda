@@ -29,6 +29,7 @@ final case class SqlDialect(
     binaryLiteral: SqlDialect.BinaryLiteral,
     boolAndFunction: String,
     boolOrFunction: String,
+    bytesLength: String,
     collectFunction: String,
     countIfFunction: String,
     ddl: DdlDialect,
@@ -267,6 +268,14 @@ object SqlDialect {
       * ```
       */
     case HexString
+
+    /** A binary literal is represented as a byte string with `\x` escapes. e.g.
+      * ```
+      * B'\x0A\x0B\x0C'
+      * ```
+      * Used by BigQuery.
+      */
+    case ByteEscapeString
   }
 
   enum Range {
@@ -345,9 +354,10 @@ object SqlDialect {
     arrayElement = ArrayElement.Braces,
     arraySize = "array_length",
     arrayHigherOrderFunctions = ArrayHigherOrderFunctions.Subquery("array", "unnest"),
-    binaryLiteral = BinaryLiteral.HexString,
+    binaryLiteral = BinaryLiteral.ByteEscapeString,
     boolAndFunction = "logical_and",
     boolOrFunction = "logical_or",
+    bytesLength = "byte_length",
     collectFunction = "array_agg",
     countIfFunction = "countif",
     ddl = DdlDialect(
@@ -359,6 +369,7 @@ object SqlDialect {
       emptyStructFieldType = "BOOL",
       floatType = "FLOAT64",
       doubleType = "FLOAT64",
+      bytesType = "BYTES",
       supportsArrayAsArrayElement = false
     ),
     errorFunction = "error",
@@ -413,6 +424,7 @@ object SqlDialect {
     binaryLiteral = BinaryLiteral.HexString,
     boolAndFunction = "bool_and",
     boolOrFunction = "bool_or",
+    bytesLength = "length",
     collectFunction = "collect_list",
     countIfFunction = "count_if",
     ddl = DdlDialect.Spark,

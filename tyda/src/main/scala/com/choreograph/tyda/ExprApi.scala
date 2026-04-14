@@ -594,6 +594,12 @@ trait ExprApi[Expr[T]] {
     def toDays: Expr[Int] = lift(ExprNode.DateToDays(unlift(date)))
   }
 
+  extension (bytes: Expr[Binary]) {
+
+    /** Returns the number of bytes. */
+    def length: Expr[Int] = lift(ExprNode.BytesLength(unlift(bytes)))
+  }
+
   extension [T, C <: Seq[T]](seq: Expr[C]) {
 
     /** Returns the size of the sequence.

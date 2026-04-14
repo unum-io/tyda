@@ -3,7 +3,7 @@ SELECT CASE WHEN (count(1) <> 0) THEN min(t0._2) END AS value FROM (SELECT table
 ------ end
 
 ------ Test: bytes literal
-SELECT X'00cafebabe' AS value
+SELECT B'\x00\xca\xfe\xba\xbe' AS value
 ------ end
 
 ------ Test: distinct before select

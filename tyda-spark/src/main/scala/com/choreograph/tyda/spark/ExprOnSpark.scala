@@ -15,6 +15,7 @@ import org.apache.spark.sql.functions.endswith
 import org.apache.spark.sql.functions.filter
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.sql.functions.isnan
+import org.apache.spark.sql.functions.length
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.functions.map_contains_key
 import org.apache.spark.sql.functions.map_entries
@@ -278,6 +279,7 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
           lit(BigDecimal(1000000))).cast(catalystType(Codec[Duration]))
       case ExprNode.DateToDays(inner) => unix_date(convert(inner))
       case ExprNode.DaysToDate(inner) => date_from_unix_date(convert(inner))
+      case ExprNode.BytesLength(inner) => length(convert(inner))
       case ExprNode.ToRepr(inner, _) => convert(inner)
       case ExprNode.FromRepr(inner, _) => convert(inner)
       case ExprNode.MakeMap(pairs) => map_from_entries(convert(pairs))

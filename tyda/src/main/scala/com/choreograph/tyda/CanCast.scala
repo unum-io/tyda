@@ -39,6 +39,8 @@ object CanCast {
   private[tyda] case object IntToString extends CanCast[Int, String]
   private[tyda] case object LongToString extends CanCast[Long, String]
 
+  private[tyda] case object StringToBytes extends CanCast[String, Binary]
+
   private[tyda] final case class DecimalToFloat[P <: Int, S <: Int]() extends CanCast[Decimal[P, S], Float]
   private[tyda] final case class DecimalToDouble[P <: Int, S <: Int]() extends CanCast[Decimal[P, S], Double]
 
@@ -96,6 +98,8 @@ object CanCast {
   given shortToString: CanCast[Short, String] = ShortToString
   given intToString: CanCast[Int, String] = IntToString
   given longToString: CanCast[Long, String] = LongToString
+
+  given stringToBytes: CanCast[String, Binary] = StringToBytes
 
   given decimalToFloat[P <: Int, S <: Int]: CanCast[Decimal[P, S], Float] = DecimalToFloat()
   given decimalToDouble[P <: Int, S <: Int]: CanCast[Decimal[P, S], Double] = DecimalToDouble()

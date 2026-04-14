@@ -18,6 +18,7 @@ import org.scalactic.Equality
 import org.scalatest.funsuite.AnyFunSuite
 
 import com.choreograph.tyda.Arbitrary
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.CanCast
 import com.choreograph.tyda.CanTryCast
 import com.choreograph.tyda.Codec
@@ -165,6 +166,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testHasSameBehavior[(Int, Int), (Int, Int)]("identity tuple", identity, identity)
   testHasSameBehavior[(Boolean, Boolean), Boolean]("boolean and", t => t._1 && t._2, t => t._1 && t._2)
   testHasSameBehavior[(Boolean, Boolean), Boolean]("boolean or", t => t._1 || t._2, t => t._1 || t._2)
+  testHasSameBehavior[Binary, Int]("bytes length", _.length, _.length)
   testHasSameBehavior[(Boolean, Boolean), Boolean](
     "boolean not and equals",
     t => !t._1 == !t._2,
@@ -1020,6 +1022,8 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testCast[Int, String](_.toString)
   testCast[Long, String](_.toString)
 
+  testCast[String, Binary](Binary.fromString)
+
   testCast[Float, Double](_.toDouble)
   testCast[Double, Float](_.toFloat)
 
@@ -1147,6 +1151,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testLiteralCreation[Duration](Duration.fromMicros(1))
   testLiteralCreation[Option[Duration]](None)
   testLiteralCreation[Date](Date.fromDays(1))
+  testLiteralCreation[Binary](Binary.fromArray(Array(1, 2, 3)))
 
   testHasSameBehavior[Timestamp, Long]("Timestamp toMicros", _.toMicros, _.toMicros)
   {

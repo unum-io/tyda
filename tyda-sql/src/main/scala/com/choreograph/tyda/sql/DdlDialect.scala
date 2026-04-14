@@ -16,7 +16,8 @@ final case class DdlDialect(
      * nested arrays should work. */
     supportsArrayAsArrayElement: Boolean = true,
     floatType: String = "FLOAT",
-    doubleType: String = "DOUBLE"
+    doubleType: String = "DOUBLE",
+    bytesType: String = "BINARY"
 )
 
 object DdlDialect {

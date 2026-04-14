@@ -440,6 +440,10 @@ private object ExprNode extends ExprApi[ExprNode] {
     override def codec: Codec[Date] = Codec[Date]
   }
 
+  final case class BytesLength(bytes: ExprNode[Binary]) extends ExprNode[Int] {
+    override def codec: Codec[Int] = Codec[Int]
+  }
+
   final case class ToRepr[P, Repr](expr: ExprNode[P], injectionCodec: Codec.FromInjection[P, Repr])
       extends ExprNode[Repr] {
     override def codec: Codec[Repr] = injectionCodec.to

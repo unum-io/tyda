@@ -190,6 +190,7 @@ private def explainLambdaBody[T](expr: ExprNode[T], args: Map[ExprNode.Reference
       case ExprNode.MicrosToDuration(inner) => s"microsToDuration(${body(inner)})"
       case ExprNode.DateToDays(inner) => s"${body(inner)}.toDays"
       case ExprNode.DaysToDate(inner) => s"daysToDate(${body(inner)})"
+      case ExprNode.BytesLength(inner) => s"${body(inner)}.length"
       case ExprNode.ToRepr(inner, _) => s"asRepr(${body(inner)})"
       case ExprNode.FromRepr(inner, _) => s"fromRepr(${body(inner)})"
       case ExprNode.MakeMap(pairs) => s"makeMap(${body(pairs)})"

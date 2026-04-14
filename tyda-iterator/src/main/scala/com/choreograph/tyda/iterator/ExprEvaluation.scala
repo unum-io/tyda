@@ -7,6 +7,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.ReaderConfig
 import com.github.plokhotnyuk.jsoniter_scala.core.readFromString
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
 
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.CanCast
 import com.choreograph.tyda.CanTryCast
 import com.choreograph.tyda.Codec
@@ -237,6 +238,7 @@ object ExprEvaluation {
         case ExprNode.MicrosToDuration(inner) => impl(inner).andThen(Duration.fromMicros)
         case ExprNode.DateToDays(inner) => impl(inner).andThen(_.daysSinceEpoch)
         case ExprNode.DaysToDate(inner) => impl(inner).andThen(Date.fromDays)
+        case ExprNode.BytesLength(inner) => impl(inner).andThen(_.length)
         case ExprNode.MakeMap(pairs) => from => {
             val seq = impl(pairs)(from)
             val duplicates = seq
@@ -288,6 +290,7 @@ object ExprEvaluation {
       case CanCast.ShortToString => _.toString
       case CanCast.IntToString => _.toString
       case CanCast.LongToString => _.toString
+      case CanCast.StringToBytes => Binary.fromString
       case CanCast.DecimalToFloat() => _.toFloat
       case CanCast.DecimalToDouble() => _.toDouble
       case cast @ CanCast.DecimalToDecimal() =>

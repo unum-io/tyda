@@ -250,6 +250,10 @@ SELECT ((NOT t1._1) = (NOT t1._2)) AS value FROM t1
 SELECT (t1._1 OR t1._2) AS value FROM t1
 ------ end
 
+------ Test: bytes length
+SELECT byte_length(t1.value) AS value FROM t1
+------ end
+
 ------ Test: cast com.choreograph.tyda.Decimal$package.Decimal[10, 0] to com.choreograph.tyda.Decimal$package.Decimal[20, 5]
 SELECT CAST(t1.value AS DECIMAL) AS value FROM t1
 ------ end
@@ -272,6 +276,10 @@ SELECT CAST(t1.value AS FLOAT64) AS value FROM t1
 
 ------ Test: cast com.choreograph.tyda.Decimal$package.Decimal[38, 30] to scala.Float
 SELECT CAST(t1.value AS FLOAT64) AS value FROM t1
+------ end
+
+------ Test: cast java.lang.String to com.choreograph.tyda.Binary$package.Binary
+SELECT CAST(t1.value AS BYTES) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Byte to com.choreograph.tyda.Decimal$package.Decimal[10, 2]
@@ -496,6 +504,10 @@ SELECT CAST('20.00' AS DECIMAL) AS value FROM t1
 
 ------ Test: create literal A com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum
 SELECT 'a' AS discriminant, CAST(NULL AS STRUCT<i INT>) AS c, CAST(NULL AS STRUCT<i INT>) AS d FROM t1
+------ end
+
+------ Test: create literal ArraySeq(1, 2, 3) com.choreograph.tyda.Binary$package.Binary
+SELECT B'\x01\x02\x03' AS value FROM t1
 ------ end
 
 ------ Test: create literal List() scala.collection.immutable.List[scala.Int]

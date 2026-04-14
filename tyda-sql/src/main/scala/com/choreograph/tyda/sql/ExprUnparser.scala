@@ -485,6 +485,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
       case ExprNode.DaysToDate(value) => dialect.makeDate match {
           case SqlDialect.MakeDate.Function(name) => inner(value).map(v => SqlExpr.Function(name, Seq(v)))
         }
+      case ExprNode.BytesLength(value) => inner(value).map(b => SqlExpr.Function(dialect.bytesLength, Seq(b)))
       case ExprNode.Udf(_, _, _) =>
         Left(DatasetToSqlError.RequiresUdfCapability("UDFs are not supported on SQL"))
       case ExprNode.ToRepr(expr, _) => inner(expr)
@@ -949,6 +950,7 @@ private def literalToSqlExpr[T](value: T, codec: Codec.Primitive[T], dialect: Sq
     case Codec.String => SqlExpr.LiteralString(value.toString)
     case Codec.Bytes => dialect.binaryLiteral match {
         case SqlDialect.BinaryLiteral.HexString => SqlExpr.LiteralHexString(value)
+        case SqlDialect.BinaryLiteral.ByteEscapeString => SqlExpr.LiteralByteEscapeString(value)
       }
     case Codec.Boolean => SqlExpr.LiteralBool(value)
     case Codec.TimestampMicros => dialect.makeTimestamp match {
