@@ -44,6 +44,9 @@ private[tyda] object PrimitiveAggregateEvaluation {
       case PrimitiveAggregate.Sum(magnet) =>
         given Codec[To] = magnet.codec
         make(Compose(magnet.toResult, Reduce(magnet.add)))
+      case PrimitiveAggregate.SeqConcat() =>
+        given Codec[To] = agg.codec
+        make(Reduce[From](_ ++ _))
     }
 
   def minByAggregator[V, O](

@@ -23,6 +23,7 @@ import com.choreograph.tyda.sql.DdlDialect.DurationSupport
 final case class SqlDialect(
     arrayDistinct: SqlDialect.ArrayDistinct,
     arrayConcat: String,
+    arrayConcatAgg: SqlDialect.ArrayConcatAgg,
     arrayElement: SqlDialect.ArrayElement,
     arrayJoin: String,
     arraySize: String,
@@ -108,6 +109,23 @@ object SqlDialect {
       * to be filtered out to have correct behavior.
       */
     case Function(name: String, isChunked: Boolean)
+  }
+
+  enum ArrayConcatAgg {
+
+    /** Aggregate directly using a native function. e.g.
+      * ```
+      * array_concat_agg(array_column)
+      * ```
+      */
+    case Function(name: String)
+
+    /** Aggregate by collecting into a nested array and then flattening it. e.g.
+      * ```
+      * flatten(collect_list(array_column))
+      * ```
+      */
+    case FlattenCollect(flatten: String)
   }
 
   enum Values {
@@ -399,6 +417,7 @@ object SqlDialect {
     startsWithFunction = "STARTS_WITH",
     arrayDistinct = ArrayDistinct.Subquery("array", "unnest"),
     arrayConcat = "array_concat",
+    arrayConcatAgg = ArrayConcatAgg.Function("array_concat_agg"),
     arrayElement = ArrayElement.Braces,
     arrayJoin = "array_to_string",
     arraySize = "array_length",
@@ -471,6 +490,7 @@ object SqlDialect {
     startsWithFunction = "startswith",
     arrayDistinct = ArrayDistinct.Function("array_distinct"),
     arrayConcat = "concat",
+    arrayConcatAgg = ArrayConcatAgg.FlattenCollect("flatten"),
     arrayElement = ArrayElement.Function("element_at"),
     arrayJoin = "array_join",
     arraySize = "size",
