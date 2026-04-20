@@ -109,6 +109,7 @@ private[tyda] def explain(anyCompiled: AnyCompiledExpr): String =
 
 private def explainPrimitiveAggregate(primitive: PrimitiveAggregate[?, ?], arg: String): String =
   primitive match {
+    case PrimitiveAggregate.SeqConcat() => s"concat($arg)"
     case PrimitiveAggregate.Collect() => "collect($arg)"
     case PrimitiveAggregate.Count() => "count($arg)"
     case PrimitiveAggregate.CountSome() => "countSome($arg)"

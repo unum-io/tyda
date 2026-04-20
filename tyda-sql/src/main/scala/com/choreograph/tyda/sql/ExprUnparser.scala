@@ -737,6 +737,11 @@ private def primitiveAggregate[T: Codec](
       if shouldWrapArrayElement(Codec[T], dialect.ddl) then
         simpleAggregate(dialect.collectFunction, wrapArrayElement(arg, dialect))
       else simple(dialect.collectFunction)
+    case PrimitiveAggregate.SeqConcat() => dialect.arrayConcatAgg match {
+        case SqlDialect.ArrayConcatAgg.Function(name) => simpleAggregate(name, arg)
+        case SqlDialect.ArrayConcatAgg.FlattenCollect(flatten) =>
+          Right(SqlExpr.Function(flatten, Seq(SqlExpr.Function(dialect.collectFunction, Seq(arg)))))
+      }
     case PrimitiveAggregate.Reduce(_) =>
       Left(DatasetToSqlError.RequiresUdfCapability("Reduce is not supported on SQL"))
   }

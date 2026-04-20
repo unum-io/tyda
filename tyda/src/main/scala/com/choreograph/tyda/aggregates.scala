@@ -13,12 +13,23 @@ import com.choreograph.tyda.PrimitiveAggregate.MaxBy
 import com.choreograph.tyda.PrimitiveAggregate.Min
 import com.choreograph.tyda.PrimitiveAggregate.MinBy
 import com.choreograph.tyda.PrimitiveAggregate.Reduce
+import com.choreograph.tyda.PrimitiveAggregate.SeqConcat
 import com.choreograph.tyda.PrimitiveAggregate.Sum
 import com.choreograph.tyda.functions.tuple
 
 object aggregates {
   private def aggregate[T, R](node: Expr[T], agg: PrimitiveAggregate[T, R]): AggregateExpr[R] =
     AggregateExpr.lift(ExprNode.Aggregate(Expr.unlift(node), agg))
+
+  /** AggregateExpr concatenating all [[Seq]] values into a single [[Seq]].
+    */
+  def concat[T]: Expr[Seq[T]] => AggregateExpr[Seq[T]] = e => aggregate(e, SeqConcat()(using e.codec))
+
+  /** AggregateExpr concatenating all [[Seq]] values of specified [[Expr]] into
+    * a single [[Seq]].
+    */
+  def concat[T, R, I: AsExpr.Of[Seq[R]]](f: Expr[T] => I): Expr[T] => AggregateExpr[Seq[R]] =
+    concat[R].compose(f.andThen(AsExpr(_)))
 
   /** AggregateExpr collecting all values into a [[Seq]].
     */

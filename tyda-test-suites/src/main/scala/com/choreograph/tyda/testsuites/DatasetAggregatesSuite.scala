@@ -17,6 +17,7 @@ import com.choreograph.tyda.SumMagnet
 import com.choreograph.tyda.aggregates.boolAnd
 import com.choreograph.tyda.aggregates.boolOr
 import com.choreograph.tyda.aggregates.collect
+import com.choreograph.tyda.aggregates.concat
 import com.choreograph.tyda.aggregates.count
 import com.choreograph.tyda.aggregates.countIf
 import com.choreograph.tyda.aggregates.countSome
@@ -106,6 +107,7 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     "collect Option Seq",
     ds => ds.groupByKey(_ => lit(1)).aggregateValue(collect).values
   )
+  test[Seq[Int], Seq[Int]]("concat seq", ds => ds.groupByKey(_ => 1).aggregateValue(concat).values)
   test[Option[Int], Option[Option[Long]]]("aggregate nested Option", ds => ds.aggregate(sum))
   test[Pair, Seq[TinyByte]]("collect column", ds => ds.groupByKey(_._1).aggregateValue(collect(_._2)).values)
   test[Pair, Seq[Int]](

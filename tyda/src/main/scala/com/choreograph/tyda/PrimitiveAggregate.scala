@@ -20,6 +20,7 @@ private object PrimitiveAggregate {
       extends PrimitiveAggregate[(V, O), V] {
     def inputCodec: Codec[(V, O)] = summon
   }
+  final case class SeqConcat[T]()(using Codec[Seq[T]]) extends PrimitiveAggregate[Seq[T], Seq[T]]
   final case class Reduce[T: Codec](f: (T, T) => T) extends PrimitiveAggregate[T, T]
   final case class Sum[T, R: Codec](magnet: SumMagnet.Aux[T, R]) extends PrimitiveAggregate[T, R]
 }
