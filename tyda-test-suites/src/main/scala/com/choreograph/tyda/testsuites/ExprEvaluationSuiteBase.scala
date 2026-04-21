@@ -527,6 +527,9 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testComparisons[Long]
   testComparisons[Float]
   testComparisons[Double]
+
+  testHasSameBehavior[Float, Boolean]("isNaN for Float", _.isNaN, _.isNaN)
+  testHasSameBehavior[Double, Boolean]("isNaN for Double", _.isNaN, _.isNaN)
   testComparisons[String]
   testComparisons[Decimal[20, 10]]
   testComparisons[Date]

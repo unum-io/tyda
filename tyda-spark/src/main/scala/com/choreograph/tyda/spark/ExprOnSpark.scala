@@ -16,6 +16,7 @@ import org.apache.spark.sql.functions.date_from_unix_date
 import org.apache.spark.sql.functions.element_at
 import org.apache.spark.sql.functions.endswith
 import org.apache.spark.sql.functions.filter
+import org.apache.spark.sql.functions.isnan
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.functions.map_contains_key
 import org.apache.spark.sql.functions.map_entries
@@ -323,5 +324,6 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
         }
       case ExprNode.DistinctSeq(operand) => array_distinct(convert(operand))
       case ExprNode.Rand() => rand()
+      case ExprNode.IsNaN(operand) => isnan(convert(operand))
     }
 }

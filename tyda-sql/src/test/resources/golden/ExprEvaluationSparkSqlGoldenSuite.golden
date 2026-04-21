@@ -766,6 +766,14 @@ SELECT NULL FROM t1
 SELECT t1._1 AS _1, t1._2 AS _2 FROM t1
 ------ end
 
+------ Test: isNaN for Double
+SELECT isnan(t1.value) AS value FROM t1
+------ end
+
+------ Test: isNaN for Float
+SELECT isnan(t1.value) AS value FROM t1
+------ end
+
 ------ Test: lt for com.choreograph.tyda.Date$package.Date
 SELECT (t1._1 < t1._2) AS value FROM t1
 ------ end
