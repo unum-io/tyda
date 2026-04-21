@@ -90,4 +90,5 @@ object Date {
   given Arbitrary[Date] = Arbitrary.between(MinValue, MaxValue + 1)
   given Ordering[Date] = Ordering[Int]
   given Groupable[Date] = Groupable[Int]
+  given Orderable[Date] = Orderable[Int]
 }

@@ -28,6 +28,7 @@ import com.choreograph.tyda.TreeApi.Continue
 import com.choreograph.tyda.TreeApi.Skip
 import com.choreograph.tyda.functions.lit
 import com.choreograph.tyda.rewrite.ArrayCodec
+import com.choreograph.tyda.rewrite.IsNone
 import com.choreograph.tyda.rewrite.Nullable
 import com.choreograph.tyda.rewrite.StructFields
 import com.choreograph.tyda.shapeless3extras.mapConst
@@ -54,6 +55,7 @@ private final case class SelectBuilder[T, R](
     groupBy: Option[CompiledExpr[T, ?]] = None,
     having: Option[CompiledExpr[T, Boolean]] = None,
     distinct: Boolean = false,
+    orderBy: Option[CompiledExpr[T, ?]] = None,
     limit: Option[Int] = None
 ) {
   import SelectBuilder.*
@@ -70,6 +72,21 @@ private final case class SelectBuilder[T, R](
     /* We wrap the limit in a subquery to make sure the order of operations is preserved when it's combined
      * with other operations that can change the number of rows (e.g. filters, joins, aggregates). */
     copy(limit = Some(n)).toSubquery
+
+  def orderBy[K](key: CompiledExpr[R, K]): Result[SelectBuilder[?, R]] = {
+    val ordered = select match {
+      // TODO: orderBy should be fine to combine with distinct. But it currently it leads to spark
+      // not resolving fully qualified column names in the order by clause.
+      case _ if distinct => toSubquery.flatMap(_.orderBy(key))
+      case CompiledAggregateExpr(arg, expr) =>
+        Right(copy(orderBy = Some(key.compose(CompiledExpr(arg, expr)))))
+      case compiled: CompiledExpr[T, R] => Right(copy(orderBy = Some(key.compose(compiled))))
+    }
+
+    // TODO: We always force a subquery after order by for simplicity. But in the future we might
+    // want to allow it to be comined with more operations.
+    ordered.flatMap(_.toSubquery)
+  }
 
   def select[R2](expr: CompiledExprOrExplode[R, R2]): Result[SelectBuilder[?, R2]] =
     if distinct || requiresSubqueryForSeqOps(expr) then toSubquery.flatMap(_.select(expr))
@@ -481,6 +498,7 @@ private final case class SelectBuilder[T, R](
             None,
             None,
             false,
+            None,
             None
           ) => return Right(query)
       case _ => ()
@@ -517,7 +535,13 @@ private final case class SelectBuilder[T, R](
     }
     def groupByToSqlExpr(compiled: CompiledExpr[T, ?]): Result[Seq[SqlExpr]] = {
       val node = compiled.expr.replace(compiled.arg, output)
-      flattenGroupBy(node).map(simplifyAndToSqlExpr(_, ids, args)).sequence
+      flattenMakeStruct(node).map(simplifyAndToSqlExpr(_, ids, args)).sequence
+    }
+
+    def orderByToSqlExpr(compiled: CompiledExpr[T, ?]): Result[Seq[SqlExpr]] = {
+      val node = compiled.expr.replace(compiled.arg, output)
+      val nodes = flattenMakeStruct(node).flatMap(flattenForOrderBy(args.dialect, _))
+      nodes.map(simplifyAndToSqlExpr(_, ids, args)).sequence
     }
 
     def compiledToSqlExpr(compiled: CompiledExpr[T, ?]): Result[SqlExpr] =
@@ -539,6 +563,7 @@ private final case class SelectBuilder[T, R](
       where <- where.map(compiledToSqlExpr).sequence
       groupBy <- groupBy.toSeq.map(groupByToSqlExpr).sequence.map(_.flatten)
       having <- having.map(compiledToSqlExpr).sequence
+      orderByExprs <- orderBy.toSeq.map(orderByToSqlExpr).sequence.map(_.flatten)
     } yield Query.Select(
       select = select,
       from = Some(from.from),
@@ -546,6 +571,7 @@ private final case class SelectBuilder[T, R](
       groupBy = groupBy,
       having = having,
       distinct = distinct,
+      orderBy = orderByExprs,
       limit = limit
     )
   }
@@ -562,6 +588,7 @@ private final case class SelectBuilder[T, R](
       groupBy.map(simplifySelects),
       having.map(simplifySelects),
       distinct,
+      orderBy.map(simplifySelects),
       limit
     )
 }
@@ -706,13 +733,13 @@ private object SelectBuilder {
     }
 
   private def hasMakeProductAfterFlattening(newGroupBy: CompiledExpr[?, ?]): Boolean =
-    flattenGroupBy(newGroupBy.expr).exists(_.exists {
+    flattenMakeStruct(newGroupBy.expr).exists(_.exists {
       case ExprNode.MakeProduct(_, _) => true
       case ExprNode.MakeSome(Nullable(_)) => true
       case _ => false
     })
 
-  private def flattenGroupBy(node: ExprNode[?]): Seq[ExprNode[?]] = {
+  private def flattenMakeStruct(node: ExprNode[?]): Seq[ExprNode[?]] = {
     val exprs = simplifySelects(node)
       .fold(Seq.empty[ExprNode[?]])((acc, expr) =>
         expr match {
@@ -738,6 +765,41 @@ private object SelectBuilder {
       .distinct
     // We need at least one group by expression to preserve correct behavior for empty inputs.
     if exprs.isEmpty then Seq(ExprNode.None(Codec.Int)) else exprs
+  }
+
+  private def flattenForOrderBy[T](dialect: SqlDialect, node: ExprNode[T]): Seq[ExprNode[?]] = {
+    def inner[A](node: ExprNode[A]): Option[Seq[ExprNode[?]]] =
+      node.codec match {
+        case codec @ (Codec.Float | Codec.Double)
+            if dialect.floatingOrder == SqlDialect.FloatingOrder.NaNFirst =>
+          val nanCheck = codec match {
+            case Codec.Float => ExprNode.IsNaN[Float](node)
+            case Codec.Double => ExprNode.IsNaN[Double](node)
+          }
+          Some(Seq(nanCheck, node))
+        case Codec.Product(_, fields, _) =>
+          val fieldsExpanded = fields.mapConst { [t] => f =>
+            val fieldNode = ExprNode.Select(node, f.name)
+            (expansion = inner(fieldNode), fieldNode = fieldNode)
+          }
+          val expansionNeeded = dialect.flattenStructInOrderBy || fieldsExpanded.exists(_.expansion.isDefined)
+          Option.when(expansionNeeded)(
+            fieldsExpanded.map((expansion, fieldNode) => expansion.getOrElse(Seq(fieldNode))).flatten
+          )
+        case Codec.Option(element: Codec[t]) =>
+          val nullCheck = !IsNone(node: ExprNode[Option[t]])
+          val innerNode = ExprNode.KnownNotNull(node: ExprNode[Option[t]])
+          element match {
+            case Codec.Option(_) if dialect.flattenStructInOrderBy =>
+              Some(nullCheck +: inner(innerNode).getOrElse(Seq(innerNode)))
+            // No need to perform extra null check on floats as nulls will already be first
+            case Codec.Float | Codec.Double => inner(innerNode)
+            case _ => inner(innerNode).map(nullCheck +: _)
+          }
+        case fi @ Codec.FromInjection(_, _) => inner(ExprNode.ToRepr(node, fi))
+        case _ => None
+      }
+    inner(node).getOrElse(Seq(node))
   }
 
   private def andThenRelaxed[T, R, A](

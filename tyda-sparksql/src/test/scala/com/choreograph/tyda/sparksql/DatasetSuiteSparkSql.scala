@@ -17,6 +17,7 @@ import com.choreograph.tyda.sql.toSql
 import com.choreograph.tyda.testsuites.DatasetAggregatesSuite
 import com.choreograph.tyda.testsuites.DatasetBasicSuite
 import com.choreograph.tyda.testsuites.DatasetJoinSuite
+import com.choreograph.tyda.testsuites.DatasetOrderBySuite
 import com.choreograph.tyda.testsuites.DatasetReadWriteSuite
 import com.choreograph.tyda.testsuites.DatasetSubquerySuite
 import com.choreograph.tyda.testsuites.DatasetSuite
@@ -80,6 +81,7 @@ class DatasetBasicSuiteSparkSql extends DatasetBasicSuite, SparkSuiteRunner
 class DatasetJoinSuiteSparkSql extends DatasetJoinSuite, SparkSuiteRunner
 class DatasetAggregatesSuiteSparkSql extends DatasetAggregatesSuite, SparkSuiteRunner
 class DatasetSubquerySuiteSparkSql extends DatasetSubquerySuite, SparkSuiteRunner
+class DatasetOrderBySuiteSparkSql extends DatasetOrderBySuite, SparkSuiteRunner
 class DatasetReadWriteParquetSuiteSparkSql extends DatasetReadWriteSuite, SparkSuiteRunner {
   override def includeReadTests: Boolean = false
   override def format = Format.Parquet

@@ -38,6 +38,7 @@ final case class SqlDialect(
     extractTimestampMicros: String,
     floatingAggregate: SqlDialect.FloatingAggregate,
     floatingCompare: SqlDialect.FloatingCompare,
+    floatingOrder: SqlDialect.FloatingOrder,
     intergerSupport: SqlDialect.IntegerSupport,
     isNanFunction: String,
     makeArray: SqlDialect.MakeArray,
@@ -57,6 +58,9 @@ final case class SqlDialect(
     // BigQuery complains when the struct functions is used in GROUP BY clause but has no problem
     // when done as part of a subquery first.
     useSubqueryToAvoidStructInGroupBy: Boolean = false,
+    // BigQuery does not support struct types in ORDER BY at all, requiring individual fields to be
+    // listed explicitly.
+    flattenStructInOrderBy: Boolean = false,
     values: SqlDialect.Values,
     writeSupport: SqlDialect.WriteSupport,
     rand: String,
@@ -218,6 +222,20 @@ object SqlDialect {
     case NaNIsLargest
   }
 
+  enum FloatingOrder {
+
+    /** ORDER BY follows IEEE semantics: any comparison with NaN is false, so
+      * NaN can appear anywhere. An explicit IS_NAN() discriminator is added to
+      * ensure NaN sorts last.
+      */
+    case NaNFirst
+
+    /** ORDER BY follows the more common SQL semantics where NaN is considered
+      * larger than all other values.
+      */
+    case NaNLast
+  }
+
   enum FloatingAggregate {
     case NaNIsSmallestAndLargest
     case NaNIsLargest
@@ -356,6 +374,7 @@ object SqlDialect {
     extractTimestampMicros = "unix_micros",
     floatingAggregate = FloatingAggregate.NaNIsSmallestAndLargest,
     floatingCompare = FloatingCompare.Ieee,
+    floatingOrder = FloatingOrder.NaNFirst,
     intergerSupport = IntegerSupport.OnlyBigInt,
     isNanFunction = "is_nan",
     makeArray = MakeArray.Brackets,
@@ -371,6 +390,7 @@ object SqlDialect {
     trimFunction = TrimFunction.Characters("trim", " "),
     tryCast = "SAFE_CAST",
     useSubqueryToAvoidStructInGroupBy = true,
+    flattenStructInOrderBy = true,
     values = Values.SelectUnionAll,
     rand = "RAND",
     writeSupport = WriteSupport.ExportData,
@@ -402,6 +422,7 @@ object SqlDialect {
     extractTimestampMicros = "unix_micros",
     floatingAggregate = FloatingAggregate.NaNIsLargest,
     floatingCompare = FloatingCompare.NaNIsLargest,
+    floatingOrder = FloatingOrder.NaNLast,
     intergerSupport = IntegerSupport.AllSizes,
     isNanFunction = "isnan",
     makeArray = MakeArray.Function("array"),

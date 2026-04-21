@@ -81,7 +81,9 @@ trait DatasetSuite extends AnyFunSuite {
 
   def implementation: Runner
 
-  private def checkSameResult[T](ds: Dataset[T])(using aggregating: Aggregating[Seq[T]]): Result = {
+  private def checkResult[T](
+      ds: Dataset[T]
+  )(compare: (Seq[T], Seq[T]) => Boolean, mismatchMsg: (Seq[T], Seq[T]) => String): Result = {
     val expected = reference.collect(ds)
     val actual =
       try implementation.collect(ds)
@@ -97,16 +99,32 @@ trait DatasetSuite extends AnyFunSuite {
             e
           )
       }
-    val containsSameElements = aggregating.containsTheSameElementsAs(actual, expected)
-    if containsSameElements then Result.Success
-    else Result.Failure(s"""Implementations did not produced the same results\n
-      |Reference results: ${expected.mkString(", ")}
-      |Implementation results: ${actual.mkString(", ")}
-      |
-      |Reference explain:\n${reference.explain(ds)}\n
-      |Implementation explain:\n${implementation.explain(ds)}
-      """.stripMargin)
+    if compare(actual, expected) then Result.Success else Result.Failure(mismatchMsg(expected, actual))
   }
+
+  private def checkSameResult[T](ds: Dataset[T])(using aggregating: Aggregating[Seq[T]]): Result =
+    checkResult(ds)(
+      aggregating.containsTheSameElementsAs(_, _),
+      (expected, actual) => s"""Implementations did not produced the same results\n
+        |Reference results: ${expected.mkString(", ")}
+        |Implementation results: ${actual.mkString(", ")}
+        |
+        |Reference explain:\n${reference.explain(ds)}\n
+        |Implementation explain:\n${implementation.explain(ds)}
+        """.stripMargin
+    )
+
+  private def checkOrderedResult[T](ds: Dataset[T])(using equality: Equality[T]): Result =
+    checkResult(ds)(
+      (actual, expected) =>
+        actual.size == expected.size && actual.zip(expected).forall(equality.areEqual(_, _)),
+      (expected, actual) => s"""Ordered results did not match.
+        |Expected: ${expected.mkString(", ")}
+        |Actual:   ${actual.mkString(", ")}
+        |
+        |Reference explain:\n${reference.explain(ds)}\n
+        |Implementation explain:\n${implementation.explain(ds)}""".stripMargin
+    )
 
   private def propTest[Input: Arbitrary](name: String, testInput: Input => Result) =
     test(name) {
@@ -180,4 +198,26 @@ trait DatasetSuite extends AnyFunSuite {
           }
       }
     }
+
+  def testOrdered[T: Arbitrary: Codec, R: Equality](
+      name: String,
+      computation: Dataset[T] => Dataset[R],
+      inputs: Seq[T]*
+  ): Unit = {
+    def testInput(values: Seq[T]): Result = checkOrderedResult(computation(Dataset.FromSeq(values)))
+    propTest(name, testInput)
+    inputs.foreach(inputSeq =>
+      test(s"$name with input ${inputSeq.mkString(", ")}")(testInput(inputSeq).check)
+    )
+  }
+
+  def testOrdered[T1: Arbitrary: Codec, T2: Arbitrary: Codec, R: Equality](
+      name: String,
+      computation: (Dataset[T1], Dataset[T2]) => Dataset[R]
+  ): Unit =
+    propTest(
+      name,
+      (input: (Seq[T1], Seq[T2])) =>
+        checkOrderedResult(computation(Dataset.FromSeq(input._1), Dataset.FromSeq(input._2)))
+    )
 }

@@ -28,6 +28,7 @@ import com.choreograph.tyda.testsuites.BigQueryIntegrationTestEnvVariables
 import com.choreograph.tyda.testsuites.DatasetAggregatesSuite
 import com.choreograph.tyda.testsuites.DatasetBasicSuite
 import com.choreograph.tyda.testsuites.DatasetJoinSuite
+import com.choreograph.tyda.testsuites.DatasetOrderBySuite
 import com.choreograph.tyda.testsuites.DatasetReadBigQueryTableSuite
 import com.choreograph.tyda.testsuites.DatasetReadWriteSuite
 import com.choreograph.tyda.testsuites.DatasetSubquerySuite
@@ -66,6 +67,7 @@ class DatasetBasicSuiteBigQuery extends DatasetBasicSuite, BigQuerySuiteRunner
 class DatasetJoinSuiteBigQuery extends DatasetJoinSuite, BigQuerySuiteRunner
 class DatasetAggregatesSuiteBigQuery extends DatasetAggregatesSuite, BigQuerySuiteRunner
 class DatasetSubquerySuiteBigQuery extends DatasetSubquerySuite, BigQuerySuiteRunner
+class DatasetOrderBySuiteBigQuery extends DatasetOrderBySuite, BigQuerySuiteRunner
 abstract class DatasetReadWriteSuiteBigQuery extends DatasetReadWriteSuite, BigQuerySuiteRunner {
   override def includeReadTests: Boolean = false
 
