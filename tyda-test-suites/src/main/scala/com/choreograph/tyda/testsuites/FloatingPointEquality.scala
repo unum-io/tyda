@@ -23,6 +23,26 @@ object FloatingPointEquality {
         }
     }
 
+  given optionFloat: Equality[Option[Float]] =
+    new Equality[Option[Float]] {
+      override def areEqual(a: Option[Float], b: Any): Boolean =
+        b match {
+          case None => a.isEmpty
+          case Some(b: Float) => a.exists(float.areEqual(_, b))
+          case _ => false
+        }
+    }
+
+  given optionDouble: Equality[Option[Double]] =
+    new Equality[Option[Double]] {
+      override def areEqual(a: Option[Double], b: Any): Boolean =
+        b match {
+          case None => a.isEmpty
+          case Some(b: Double) => a.exists(double.areEqual(_, b))
+          case _ => false
+        }
+    }
+
   given seqFloat: Equality[Seq[Float]] =
     new Equality[Seq[Float]] {
       override def areEqual(a: Seq[Float], b: Any): Boolean =

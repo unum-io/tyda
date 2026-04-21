@@ -376,6 +376,114 @@ sealed trait Dataset[T: Codec] {
     Dataset.Limit(this, n)
   }
 
+  /** Returns a new Dataset sorted by the given expression in ascending order.
+    *
+    * Only types for which [[Orderable]] evidence exists can be used as sort
+    * keys.
+    */
+  def orderBy[I: AsExpr.Of[K], K: Orderable](key: Expr[T] => I): Dataset[T] =
+    Dataset.OrderBy(this, CompiledExpr(key))
+
+  /** Returns a new Dataset sorted by two expressions in ascending order.
+    *
+    * For detailed usage see [[orderBy]].
+    */
+  def orderBy[I1: AsExpr.Of[K1], K1: Orderable, I2: AsExpr.Of[K2], K2: Orderable](
+      k1: Expr[T] => I1,
+      k2: Expr[T] => I2
+  ): Dataset[T] = orderBy(v => (k1(v), k2(v)))
+
+  /** Returns a new Dataset sorted by three expressions in ascending order.
+    *
+    * For detailed usage see [[orderBy]].
+    */
+  def orderBy[I1: AsExpr.Of[K1], K1: Orderable, I2: AsExpr.Of[K2], K2: Orderable, I3: AsExpr.Of[
+    K3
+  ], K3: Orderable](k1: Expr[T] => I1, k2: Expr[T] => I2, k3: Expr[T] => I3): Dataset[T] =
+    orderBy(v => (k1(v), k2(v), k3(v)))
+
+  /** Returns a new Dataset sorted by four expressions in ascending order.
+    *
+    * For detailed usage see [[orderBy]].
+    */
+  def orderBy[I1: AsExpr.Of[K1], K1: Orderable, I2: AsExpr.Of[K2], K2: Orderable, I3: AsExpr.Of[
+    K3
+  ], K3: Orderable, I4: AsExpr.Of[K4], K4: Orderable](
+      k1: Expr[T] => I1,
+      k2: Expr[T] => I2,
+      k3: Expr[T] => I3,
+      k4: Expr[T] => I4
+  ): Dataset[T] = orderBy(v => (k1(v), k2(v), k3(v), k4(v)))
+
+  /** Returns a new Dataset sorted by five expressions in ascending order.
+    *
+    * For detailed usage see [[orderBy]].
+    */
+  def orderBy[I1: AsExpr.Of[K1], K1: Orderable, I2: AsExpr.Of[K2], K2: Orderable, I3: AsExpr.Of[
+    K3
+  ], K3: Orderable, I4: AsExpr.Of[K4], K4: Orderable, I5: AsExpr.Of[K5], K5: Orderable](
+      k1: Expr[T] => I1,
+      k2: Expr[T] => I2,
+      k3: Expr[T] => I3,
+      k4: Expr[T] => I4,
+      k5: Expr[T] => I5
+  ): Dataset[T] = orderBy(v => (k1(v), k2(v), k3(v), k4(v), k5(v)))
+
+  /** Returns a new Dataset sorted by six expressions in ascending order.
+    *
+    * For detailed usage see [[orderBy]].
+    */
+  def orderBy[
+      I1: AsExpr.Of[K1],
+      K1: Orderable,
+      I2: AsExpr.Of[K2],
+      K2: Orderable,
+      I3: AsExpr.Of[K3],
+      K3: Orderable,
+      I4: AsExpr.Of[K4],
+      K4: Orderable,
+      I5: AsExpr.Of[K5],
+      K5: Orderable,
+      I6: AsExpr.Of[K6],
+      K6: Orderable
+  ](
+      k1: Expr[T] => I1,
+      k2: Expr[T] => I2,
+      k3: Expr[T] => I3,
+      k4: Expr[T] => I4,
+      k5: Expr[T] => I5,
+      k6: Expr[T] => I6
+  ): Dataset[T] = orderBy(v => (k1(v), k2(v), k3(v), k4(v), k5(v), k6(v)))
+
+  /** Returns a new Dataset sorted by seven expressions in ascending order.
+    *
+    * For detailed usage see [[orderBy]].
+    */
+  def orderBy[
+      I1: AsExpr.Of[K1],
+      K1: Orderable,
+      I2: AsExpr.Of[K2],
+      K2: Orderable,
+      I3: AsExpr.Of[K3],
+      K3: Orderable,
+      I4: AsExpr.Of[K4],
+      K4: Orderable,
+      I5: AsExpr.Of[K5],
+      K5: Orderable,
+      I6: AsExpr.Of[K6],
+      K6: Orderable,
+      I7: AsExpr.Of[K7],
+      K7: Orderable
+  ](
+      k1: Expr[T] => I1,
+      k2: Expr[T] => I2,
+      k3: Expr[T] => I3,
+      k4: Expr[T] => I4,
+      k5: Expr[T] => I5,
+      k6: Expr[T] => I6,
+      k7: Expr[T] => I7
+  ): Dataset[T] = orderBy(v => (k1(v), k2(v), k3(v), k4(v), k5(v), k6(v), k7(v)))
+
   /** Perform a inner join with another [[Dataset]] using the given join
     * condition.
     */
@@ -957,6 +1065,8 @@ object Dataset {
       extends Dataset[T](using left.codec)
   private[tyda] final case class Cache[T](input: Dataset[T]) extends Dataset[T](using input.codec)
   private[tyda] final case class Limit[T](input: Dataset[T], n: Int) extends Dataset[T](using input.codec)
+  private[tyda] final case class OrderBy[T, K](input: Dataset[T], key: CompiledExpr[T, K])
+      extends Dataset[T](using input.codec)
 
   private def tuple2Codec[A: Codec, B: Codec]: Codec[(A, B)] = summon
   private def leftOuterCodec[A: Codec, B: Codec]: Codec[(A, Option[B])] = summon

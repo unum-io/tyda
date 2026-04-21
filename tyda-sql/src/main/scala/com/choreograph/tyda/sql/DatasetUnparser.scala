@@ -153,6 +153,7 @@ private def unparseDs[T](ds: Dataset[T], args: UnparserArgs): Result[SelectBuild
       case Dataset.SelectN(input, exprs) => inner(input).flatMap(_.selectN(exprs))
       case Dataset.Cache(input) => inner(input)
       case Dataset.Limit(input, n) => inner(input).flatMap(_.limit(n))
+      case Dataset.OrderBy(input, key) => inner(input).flatMap(_.orderBy(key))
       case Dataset.Union(left, right) => for {
           lhs <- inner(left)
           rhs <- inner(right)

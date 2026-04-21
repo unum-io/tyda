@@ -89,13 +89,14 @@ private[tyda] final case class SqlWriter(writer: Writer) {
 
   def write(query: Query): Unit =
     query match {
-      case Query.Select(select, from, where, groupBy, having, distinct, limit) =>
+      case Query.Select(select, from, where, groupBy, having, distinct, orderBy, limit) =>
         val selectType = if distinct then "SELECT DISTINCT" else "SELECT"
         writeSql"$selectType $select"
         from.foreach(from => writeSql1" FROM $from")
         where.foreach(cond => writeSql1" WHERE $cond")
         if groupBy.nonEmpty then writeSql1" GROUP BY $groupBy"
         having.foreach(cond => writeSql1" HAVING $cond")
+        if orderBy.nonEmpty then writeSql1" ORDER BY $orderBy"
         limit.foreach(n => write(s" LIMIT $n"))
 
       case Query.Union(left, right, all) =>

@@ -6,6 +6,7 @@ import com.choreograph.tyda.iterator.IteratorRunner
 import com.choreograph.tyda.testsuites.DatasetAggregatesSuite
 import com.choreograph.tyda.testsuites.DatasetBasicSuite
 import com.choreograph.tyda.testsuites.DatasetJoinSuite
+import com.choreograph.tyda.testsuites.DatasetOrderBySuite
 import com.choreograph.tyda.testsuites.DatasetReadBigQueryTableSuite
 import com.choreograph.tyda.testsuites.DatasetReadWriteSuite
 import com.choreograph.tyda.testsuites.DatasetSubquerySuite
@@ -20,6 +21,7 @@ class DatasetBasicSuiteSpark extends DatasetBasicSuite, SparkSuiteRunner
 class DatasetJoinSuiteSpark extends DatasetJoinSuite, SparkSuiteRunner
 class DatasetAggregatesSuiteSpark extends DatasetAggregatesSuite, SparkSuiteRunner
 class DatasetSubquerySuiteSpark extends DatasetSubquerySuite, SparkSuiteRunner
+class DatasetOrderBySuiteSpark extends DatasetOrderBySuite, SparkSuiteRunner
 class DatasetReadWriteParquetSuiteSpark extends DatasetReadWriteSuite, SparkSuiteRunner {
   override def format = Format.Parquet
 }
