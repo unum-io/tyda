@@ -3,6 +3,10 @@ package com.choreograph.tyda
 import scala.annotation.implicitNotFound
 import scala.compiletime.ops.int.-
 import scala.compiletime.ops.int.>=
+import scala.compiletime.summonInline
+import scala.deriving.Mirror
+
+import com.choreograph.tyda.shapeless3extras.K0BiProductInstances
 
 @implicitNotFound(
   "Cannot cast from ${From} to ${To}. If it a valid cast that might fail then use tryCast instead."
@@ -13,6 +17,8 @@ sealed trait CanCast[From, To: Codec] {
 
 object CanCast {
   type From[From] = [To] =>> CanCast[From, To]
+  private[tyda] final case class Identity[T: Codec]() extends CanCast[T, T]
+
   private[tyda] case object ByteToShort extends CanCast[Byte, Short]
   private[tyda] case object ByteToInt extends CanCast[Byte, Int]
   private[tyda] case object ByteToLong extends CanCast[Byte, Long]
@@ -70,6 +76,12 @@ object CanCast {
 
   private[tyda] final case class SeqToSeq[From, To: Codec](canCast: CanCast[From, To])
       extends CanCast[Seq[From], Seq[To]]
+
+  private[tyda] final case class ProductToProduct[From, To: Codec](
+      casts: K0BiProductInstances[CanCast, From, To]
+  ) extends CanCast[From, To]
+
+  given identity[T: Codec]: CanCast[T, T] = Identity()
 
   given byteToShort: CanCast[Byte, Short] = ByteToShort
   given byteToInt: CanCast[Byte, Int] = ByteToInt
@@ -130,4 +142,7 @@ object CanCast {
     given Codec[To] = canCast.codec
     SeqToSeq(canCast)
   }
+
+  inline given productToProduct[From: Mirror.ProductOf, To: Mirror.ProductOf: Codec]: CanCast[From, To] =
+    ProductToProduct(summonInline)
 }

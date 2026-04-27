@@ -288,7 +288,11 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
         call_function("div", convert(lhs), convert(rhs)).cast(CodecToEncoder.catalystType(expr.codec))
       case ExprNode.Quotient(integral, lhs, rhs) =>
         createUdf(integral.quot, convert(lhs), convert(rhs), s"$integral.quot")(using lhs.codec, lhs.codec)
-      case ExprNode.Cast(from, canCast) => convert(from).cast(CodecToEncoder.catalystType(expr.codec))
+      case ExprNode.Cast(from, canCast) =>
+        /* Spark is less strict will nullability, for examples in reads all fields are made nullable. But cast
+         * from nullable to non nullable is not allowed. So for now we need to make all all the resulting
+         * fields nullable. */
+        convert(from).cast(withAllNullable(CodecToEncoder.catalystType(expr.codec)))
       case ExprNode.TryCast(from, canTryCast) =>
         /* TODO: Replace with public API in Spark 4.0.0+ it was exposed added in
          * https://github.com/apache/spark/pull/45796 */
