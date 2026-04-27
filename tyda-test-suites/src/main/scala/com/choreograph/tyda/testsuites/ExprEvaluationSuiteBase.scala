@@ -1089,11 +1089,17 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testCast[Short, Decimal[10, 2]](Decimal[10, 2](_))
   testCast[Int, Decimal[12, 2]](Decimal[12, 2](_))
   testCast[Long, Decimal[22, 2]](Decimal[22, 2](_))
+  testCast[(Int, Long), (Int, Long)](identity)
+  testCast[(Int, Long), (key: Int, value: Long)](identity)
 
   testCast[Seq[Int], Seq[Long]](_.map(_.toLong))
   testCast[Seq[Byte], Seq[Double]](_.map(_.toDouble))
   testCast[Seq[Float], Seq[Double]](_.map(_.toDouble))
   testCast[Seq[Seq[Int]], Seq[Seq[Long]]](_.map(_.map(_.toLong)))
+  testCast[Seq[(key: Int, value: Int)], Seq[(Int, Long)]](_.map { case (k, v) => (k, v.toLong) })
+  testCast[Seq[(key: Int, value: Seq[Int])], Seq[(Int, Seq[Double])]](_.map { case (k, v) =>
+    (k, v.map(_.toDouble))
+  })
 
   testTryCast[Decimal[19, 3], Decimal[38, 9]](v => Decimal[38, 9](v.toBigDecimal))
   testTryCast[Decimal[19, 1], Decimal[19, 0]](v => Decimal[19, 0](v.toBigDecimal))

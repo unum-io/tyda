@@ -402,6 +402,14 @@ SELECT CAST(t1.value AS INT) AS value FROM t1
 SELECT CAST(t1.value AS BIGINT) AS value FROM t1
 ------ end
 
+------ Test: cast scala.Tuple2[scala.Int, scala.Long] to scala.NamedTuple.NamedTuple[scala.Tuple2["key", "value"], scala.Tuple2[scala.Int, scala.Long]]
+SELECT CAST(struct(t1._1 AS _1, t1._2 AS _2) AS STRUCT<key INT,value BIGINT>).key AS key, CAST(struct(t1._1 AS _1, t1._2 AS _2) AS STRUCT<key INT,value BIGINT>).value AS value FROM t1
+------ end
+
+------ Test: cast scala.Tuple2[scala.Int, scala.Long] to scala.Tuple2[scala.Int, scala.Long]
+SELECT CAST(struct(t1._1 AS _1, t1._2 AS _2) AS STRUCT<_1 INT,_2 BIGINT>)._1 AS _1, CAST(struct(t1._1 AS _1, t1._2 AS _2) AS STRUCT<_1 INT,_2 BIGINT>)._2 AS _2 FROM t1
+------ end
+
 ------ Test: cast scala.collection.immutable.Seq[scala.Byte] to scala.collection.immutable.Seq[scala.Double]
 SELECT array((SELECT CAST(c0 AS FLOAT64) FROM unnest(t1.value) AS c0)) AS value FROM t1
 ------ end
@@ -414,8 +422,16 @@ SELECT array((SELECT CAST(c0 AS FLOAT64) FROM unnest(t1.value) AS c0)) AS value 
 SELECT array((SELECT CAST(c0 AS BIGINT) FROM unnest(t1.value) AS c0)) AS value FROM t1
 ------ end
 
+------ Test: cast scala.collection.immutable.Seq[scala.NamedTuple.NamedTuple[scala.Tuple2["key", "value"], scala.Tuple2[scala.Int, scala.Int]]] to scala.collection.immutable.Seq[scala.Tuple2[scala.Int, scala.Long]]
+SELECT array((SELECT CAST(c0 AS STRUCT<_1 INT,_2 BIGINT>) FROM unnest(t1.value) AS c0)) AS value FROM t1
+------ end
+
+------ Test: cast scala.collection.immutable.Seq[scala.NamedTuple.NamedTuple[scala.Tuple2["key", "value"], scala.Tuple2[scala.Int, scala.collection.immutable.Seq[scala.Int]]]] to scala.collection.immutable.Seq[scala.Tuple2[scala.Int, scala.collection.immutable.Seq[scala.Double]]]
+SELECT array((SELECT struct(CAST(c0.key AS INT) AS _1, array((SELECT CAST(c1 AS FLOAT64) FROM unnest(c0.value) AS c1)) AS _2) FROM unnest(t1.value) AS c0)) AS value FROM t1
+------ end
+
 ------ Test: cast scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.Int]] to scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.Long]]
-SELECT array((SELECT struct(CAST(c0.value AS ARRAY<BIGINT>) AS value) FROM unnest(t1.value) AS c0)) AS value FROM t1
+SELECT array((SELECT struct(array((SELECT CAST(c1 AS BIGINT) FROM unnest(c0.value) AS c1)) AS value) FROM unnest(t1.value) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: coalesce
