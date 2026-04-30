@@ -3,7 +3,9 @@ package com.choreograph.tyda
 enum RunnerArgs {
   case BigQuery(
       projectId: String,
-      validateSchemas: RunnerArgs.ValidateSchema = RunnerArgs.ValidateSchema.Strict
+      validateReadSchemas: RunnerArgs.ValidateReadSchema = RunnerArgs.ValidateReadSchema.Strict,
+      validateWriteCompatibility: RunnerArgs.ValidateWriteCompatibility =
+        RunnerArgs.ValidateWriteCompatibility.Strict
   )
   case Iterator
   case Spark(master: Option[String] = None, logLevel: Option[RunnerArgs.SparkLogLevels] = None)
@@ -16,9 +18,42 @@ object RunnerArgs {
     def toSparkConf: String = toString.toUpperCase
   }
 
-  enum ValidateSchema {
+  /** Control how schemas are validated when reading a BigQuery table.
+    *
+    *   - `Strict`: The schema must match exactly. Any differences will result
+    *     in an error.
+    *   - `Warn`: Log a warning for any differences, but allow the read to
+    *     proceed.
+    *   - `Off`: No validation is performed. Any differences will be ignored.
+    */
+  enum ValidateReadSchema {
     case Strict, Warn, Off
   }
+
+  /** Control how schemas are validated with BigQuery compatibility.
+    *
+    * BigQuery has some limitations on the types of schemas it can support. The
+    * unsupported cases are
+    *
+    *   - Directly nested arrays e.g `Seq[Seq[Int]]` are not supported
+    *   - Array elements can not be null e.g `Seq[Option[Int]]` are not
+    *     supported
+    *   - Nullable arrays e.g `Option[Seq[Int]]` are lossily supported and on
+    *     writes nulls are changed into empty values.
+    *
+    * The supported values here are:
+    *
+    *   - `Strict`: The schema must be fully supported by BigQuery. Any
+    *     unsupported features will result in an error.
+    *   - `Lossy`: The lossy supported features are allowed but other
+    *     incompatibilities will result in an error.
+    *   - `Warn`: Log a warning for incompatibilities but allow execution.
+    *   - `Off`: No validation is performed.
+    */
+  enum ValidateWriteCompatibility {
+    case Strict, Lossy, Warn, Off
+  }
+
   private def runnerClassName(arg: RunnerArgs): String =
     arg match {
       case BigQuery(projectId = _) => "com.choreograph.tyda.bigquery.BigQueryRunner$"
