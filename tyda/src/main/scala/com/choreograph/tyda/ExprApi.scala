@@ -717,12 +717,6 @@ trait ExprApi[Expr[T]] {
     /** Returns the value associated with the given key.
       *
       * Returns None if the key is not present in the map.
-      *
-      * Note: Spark currently has a performance problem with Map lookup
-      * (https://github.com/apache/spark/issues/54646) so this method is
-      * intended for use with small maps where the performance issue is not
-      * significant. TODO: remove this when the support a version of Spark with
-      * the performance issue fixed.
       */
     @targetName("mapGet")
     def get(key: Expr[K]): Expr[Option[V]] = lift(ExprNode.MapGet(unlift(map), unlift(key)))

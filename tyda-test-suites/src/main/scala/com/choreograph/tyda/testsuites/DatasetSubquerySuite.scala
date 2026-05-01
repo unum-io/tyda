@@ -18,4 +18,10 @@ trait DatasetSubquerySuite extends DatasetSuite {
   )
 
   test[Long, Long, Long]("count subquery", (ds1, ds2) => ds1.where(_ > ds2.count))
+
+  test[TinyByte, (TinyByte, Int), (TinyByte, Option[Int])](
+    "collect toMap lookup",
+    (ds1, ds2) =>
+      ds1.select(identity, v => ds2.groupByKey(_._1).aggregateValue(max(_._2)).pairs.collect.toMap.get(v))
+  )
 }
