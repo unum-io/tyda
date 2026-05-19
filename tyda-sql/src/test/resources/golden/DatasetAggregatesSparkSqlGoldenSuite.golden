@@ -38,6 +38,10 @@ SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM t1
 SELECT CASE WHEN (count(1) <> 0) THEN max(t1.value) END AS value FROM t1
 ------ end
 
+------ Test: aggregate minBy and maxBy
+SELECT t1._1 AS key, min_by(named_struct('_1', t1._1, '_2', t1._2)._1, named_struct('_1', t1._1, '_2', t1._2)._2) AS min, max_by(named_struct('_1', t1._1, '_2', t1._2)._1, named_struct('_1', t1._1, '_2', t1._2)._2) AS max FROM t1 GROUP BY t1._1
+------ end
+
 ------ Test: aggregate nested Option
 SELECT CASE WHEN (count(1) <> 0) THEN named_struct('value', sum(t1.value)) END AS value FROM t1
 ------ end

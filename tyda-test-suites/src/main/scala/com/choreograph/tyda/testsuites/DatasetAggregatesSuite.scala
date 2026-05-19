@@ -167,6 +167,10 @@ trait DatasetAggregatesSuite extends DatasetSuite {
 
   test[Pair, Pair]("maxBy", ds => ds.groupByKey(_._1).aggregateValue(maxBy(_._1, _._2)).pairs)
   test[Pair, Pair]("minBy", ds => ds.groupByKey(_._1).aggregateValue(minBy(_._1, _._2)).pairs)
+  test[Pair, (key: TinyByte, min: TinyByte, max: TinyByte)](
+    "aggregate minBy and maxBy",
+    ds => ds.groupByKey(_._1).aggregate(v => (min = minBy(v._1, v._2), max = maxBy(v._1, v._2)))
+  )
 
   test[Byte, Long]("sum Byte", ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values)
   test[Short, Long]("sum Short", ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values)
