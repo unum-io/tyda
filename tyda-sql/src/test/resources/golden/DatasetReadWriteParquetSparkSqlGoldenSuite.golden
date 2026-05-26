@@ -1,0 +1,131 @@
+------ Test: write com.choreograph.tyda.Date$package.Date
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.Decimal$package.Decimal[15, 5]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.Decimal$package.Decimal[3, 0]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.Decimal$package.Decimal[38, 9]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.Duration$package.Duration
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.Timestamp$package.Timestamp
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.testsuites.DatasetReadWriteSuite.MyEnum
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.discriminant AS discriminant, t1.c AS c, t1.d AS d, t1.f AS f FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.testsuites.DatasetReadWriteSuite.MyProduct
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.a AS a, t1.b AS b, t1.c AS c FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.testsuites.DatasetReadWriteSuite.SimpleEnum
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write java.lang.String
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Boolean
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Byte
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Double
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Float
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Int
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Long
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Option[com.choreograph.tyda.testsuites.DatasetReadWriteSuite.MyEnum]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Option[com.choreograph.tyda.testsuites.DatasetReadWriteSuite.MyProduct]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Option[com.choreograph.tyda.testsuites.DatasetReadWriteSuite.SimpleEnum]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Option[scala.Long]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Option[scala.Option[scala.Long]]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Option[scala.collection.immutable.Map[scala.Predef.String, scala.Long]]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Option[scala.collection.immutable.Seq[scala.Long]]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Short
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Tuple2[scala.Long, scala.Option[scala.Long]]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1._1 AS _1, t1._2 AS _2 FROM t1
+------ end
+
+------ Test: write scala.collection.immutable.Map[scala.Predef.String, com.choreograph.tyda.Duration$package.Duration]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.collection.immutable.Map[scala.Predef.String, scala.Long]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.collection.immutable.Map[scala.Tuple2[scala.Predef.String, scala.Long], scala.Tuple2[scala.Predef.String, scala.Option[scala.Long]]]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.collection.immutable.Map[scala.collection.immutable.Seq[scala.Predef.String], scala.collection.immutable.Seq[scala.Long]]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.collection.immutable.Seq[scala.Long]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.collection.immutable.Seq[scala.Tuple2[scala.Long, scala.Option[scala.Long]]]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.Long]]
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.math.BigInt
+CREATE TABLE temp_write_2134402965 USING PARQUET LOCATION '/tmp/dataset-read-write/' AS SELECT t1.value AS value FROM t1
+------ end

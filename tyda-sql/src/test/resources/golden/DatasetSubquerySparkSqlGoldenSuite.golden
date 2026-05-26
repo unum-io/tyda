@@ -1,0 +1,19 @@
+------ Test: collect subquery
+SELECT t1.value AS value FROM t1 WHERE aggregate(transform(coalesce((SELECT CASE WHEN (count(1) <> 0) THEN collect_list(t2.value) END AS value FROM t2), CAST(array() AS ARRAY<TINYINT>)), c0 -> (c0 = t1.value)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3)
+------ end
+
+------ Test: count subquery
+SELECT t1.value AS value FROM t1 WHERE (NOT (t1.value <= coalesce((SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM t2), CAST(0 AS BIGINT))))
+------ end
+
+------ Test: exists subquery
+SELECT EXISTS (SELECT CAST(1 AS INT) AS value FROM t1 WHERE (NOT (t1.value <= CAST(0 AS BIGINT)))) AS value FROM t1
+------ end
+
+------ Test: exists subquery in where
+SELECT t1.value AS value FROM t1 WHERE EXISTS (SELECT CAST(1 AS INT) AS value FROM t1 WHERE (NOT (t1.value <= CAST(0 AS BIGINT))))
+------ end
+
+------ Test: scalar subquery
+SELECT t1.value AS value FROM t1 WHERE ((SELECT CASE WHEN (count(1) <> 0) THEN max(t1.value) END AS value FROM t1) IS NOT DISTINCT FROM t1.value)
+------ end

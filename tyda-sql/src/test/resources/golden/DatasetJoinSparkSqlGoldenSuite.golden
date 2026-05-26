@@ -1,0 +1,159 @@
+------ Test: fullJoinFlat
+SELECT CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN named_struct('key', t0.value.key, 'b', t0.value.b) END IS NULL) THEN named_struct('key', CAST(NULL AS TINYINT), 'b', CAST(NULL AS INT)) ELSE named_struct('key', CASE WHEN (t0.value IS NOT NULL) THEN named_struct('key', t0.value.key, 'b', t0.value.b) END.key, 'b', CASE WHEN (t0.value IS NOT NULL) THEN named_struct('key', t0.value.key, 'b', t0.value.b) END.b) END.key AS key, CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN named_struct('key', t0.value.key, 'b', t0.value.b) END IS NULL) THEN named_struct('key', CAST(NULL AS TINYINT), 'b', CAST(NULL AS INT)) ELSE named_struct('key', CASE WHEN (t0.value IS NOT NULL) THEN named_struct('key', t0.value.key, 'b', t0.value.b) END.key, 'b', CASE WHEN (t0.value IS NOT NULL) THEN named_struct('key', t0.value.key, 'b', t0.value.b) END.b) END.b AS b, CASE WHEN (CASE WHEN (t1.value IS NOT NULL) THEN named_struct('m1Key', t1.value.m1Key, 'c', t1.value.c) END IS NULL) THEN named_struct('m1Key', CAST(NULL AS TINYINT), 'c', CAST(NULL AS INT)) ELSE named_struct('m1Key', CASE WHEN (t1.value IS NOT NULL) THEN named_struct('m1Key', t1.value.m1Key, 'c', t1.value.c) END.m1Key, 'c', CASE WHEN (t1.value IS NOT NULL) THEN named_struct('m1Key', t1.value.m1Key, 'c', t1.value.c) END.c) END.m1Key AS m1Key, CASE WHEN (CASE WHEN (t1.value IS NOT NULL) THEN named_struct('m1Key', t1.value.m1Key, 'c', t1.value.c) END IS NULL) THEN named_struct('m1Key', CAST(NULL AS TINYINT), 'c', CAST(NULL AS INT)) ELSE named_struct('m1Key', CASE WHEN (t1.value IS NOT NULL) THEN named_struct('m1Key', t1.value.m1Key, 'c', t1.value.c) END.m1Key, 'c', CASE WHEN (t1.value IS NOT NULL) THEN named_struct('m1Key', t1.value.m1Key, 'c', t1.value.c) END.c) END.c AS c FROM (SELECT named_struct('key', t1.key, 'b', t1.b) AS value FROM t1) AS t0 FULL JOIN (SELECT named_struct('m1Key', t2.m1Key, 'c', t2.c) AS value FROM t2) AS t1 ON (t0.value.key = t1.value.m1Key)
+------ end
+
+------ Test: fullOuterJoin
+SELECT t0.value AS _1, t1.value AS _2 FROM (SELECT t1.value AS value FROM t1) AS t0 FULL JOIN (SELECT t2.value AS value FROM t2) AS t1 ON (t0.value = t1.value)
+------ end
+
+------ Test: fullOuterJoin nested Option
+SELECT t0.value AS _1, t1.value AS _2 FROM (SELECT named_struct('value', t1.value) AS value FROM t1) AS t0 FULL JOIN (SELECT named_struct('value', t2.value) AS value FROM t2) AS t1 ON (t0.value.value IS NOT DISTINCT FROM t1.value.value)
+------ end
+
+------ Test: fullOuterJoin nested Option one side
+SELECT t0.value AS _1, t1.value AS _2 FROM (SELECT named_struct('value', t1.value) AS value FROM t1) AS t0 FULL JOIN (SELECT t2.value AS value FROM t2) AS t1 ON (t0.value.value IS NOT DISTINCT FROM t1.value)
+------ end
+
+------ Test: fullOuterJoin product
+SELECT t0.value AS _1, t1.value AS _2 FROM (SELECT named_struct('_1', t1._1, '_2', t1._2) AS value FROM t1) AS t0 FULL JOIN (SELECT named_struct('_1', t2._1, '_2', t2._2) AS value FROM t2) AS t1 ON (t0.value._1 = t1.value._1)
+------ end
+
+------ Test: grouped leftAntiJoin
+SELECT t1.value AS value FROM t1 WHERE (NOT EXISTS (SELECT t2.value AS value FROM t2 WHERE (t1.value = t2.value)))
+------ end
+
+------ Test: join
+SELECT t1.value AS _1, t2.value AS _2 FROM t1 JOIN t2 ON (t1.value = t2.value)
+------ end
+
+------ Test: join complex condition
+SELECT named_struct('_1', t1._1, '_2', t1._2) AS _1, named_struct('_1', t2._1, '_2', t2._2) AS _2 FROM t1 JOIN t2 ON ((t1._1 = t2._1) AND ((t2._2 = t1._2) OR (t1._2 = CAST(0 AS TINYINT))))
+------ end
+
+------ Test: join complex not equi condition
+SELECT t1.value AS _1, t2.value AS _2 FROM t1 JOIN t2 ON ((t1.value = t2.value) OR (t1.value = CAST(0 AS TINYINT)))
+------ end
+
+------ Test: join condition reverse order of exprs
+SELECT t1.value AS _1, t2.value AS _2 FROM t1 JOIN t2 ON (t2.value = t1.value)
+------ end
+
+------ Test: join filter on both sides
+SELECT t1.value AS _1, t2.value AS _2 FROM t1 JOIN t2 ON (t1.value = t2.value) WHERE ((t1.value < CAST(0 AS TINYINT)) AND (t2.value < CAST(5 AS TINYINT)))
+------ end
+
+------ Test: join filter on lhs
+SELECT t1.value AS _1, t2.value AS _2 FROM t1 JOIN t2 ON (t1.value = t2.value) WHERE (t1.value < CAST(0 AS TINYINT))
+------ end
+
+------ Test: join filter on rhs
+SELECT t1.value AS _1, t2.value AS _2 FROM t1 JOIN t2 ON (t1.value = t2.value) WHERE (t2.value < CAST(0 AS TINYINT))
+------ end
+
+------ Test: join multiple keys
+SELECT named_struct('_1', t1._1, '_2', t1._2) AS _1, named_struct('_1', t2._1, '_2', t2._2) AS _2 FROM t1 JOIN t2 ON ((t1._1 = t2._1) AND (t1._2 = t2._2))
+------ end
+
+------ Test: joinFlat
+SELECT t1.key AS key, t1.b AS b, t2.m1Key AS m1Key, t2.c AS c FROM t1 JOIN t2 ON (t1.key = t2.m1Key)
+------ end
+
+------ Test: leftAntiJoin
+SELECT t1.value AS value FROM t1 WHERE (NOT EXISTS (SELECT t2.value AS value FROM t2 WHERE (t1.value = t2.value)))
+------ end
+
+------ Test: leftAntiJoin product
+SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 WHERE (NOT EXISTS (SELECT t2._1 AS _1, t2._2 AS _2 FROM t2 WHERE (t1._1 = t2._1)))
+------ end
+
+------ Test: leftJoinFlat
+SELECT t1.key AS key, t1.b AS b, CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN named_struct('m1Key', t0.value.m1Key, 'c', t0.value.c) END IS NULL) THEN named_struct('m1Key', CAST(NULL AS TINYINT), 'c', CAST(NULL AS INT)) ELSE named_struct('m1Key', CASE WHEN (t0.value IS NOT NULL) THEN named_struct('m1Key', t0.value.m1Key, 'c', t0.value.c) END.m1Key, 'c', CASE WHEN (t0.value IS NOT NULL) THEN named_struct('m1Key', t0.value.m1Key, 'c', t0.value.c) END.c) END.m1Key AS m1Key, CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN named_struct('m1Key', t0.value.m1Key, 'c', t0.value.c) END IS NULL) THEN named_struct('m1Key', CAST(NULL AS TINYINT), 'c', CAST(NULL AS INT)) ELSE named_struct('m1Key', CASE WHEN (t0.value IS NOT NULL) THEN named_struct('m1Key', t0.value.m1Key, 'c', t0.value.c) END.m1Key, 'c', CASE WHEN (t0.value IS NOT NULL) THEN named_struct('m1Key', t0.value.m1Key, 'c', t0.value.c) END.c) END.c AS c FROM t1 LEFT JOIN (SELECT named_struct('m1Key', t2.m1Key, 'c', t2.c) AS value FROM t2) AS t0 ON (t1.key = t0.value.m1Key)
+------ end
+
+------ Test: leftOuterJoin
+SELECT t1.value AS _1, t0.value AS _2 FROM t1 LEFT JOIN (SELECT t2.value AS value FROM t2) AS t0 ON (t1.value = t0.value)
+------ end
+
+------ Test: leftOuterJoin nested Option
+SELECT t1.value AS _1, t0.value AS _2 FROM t1 LEFT JOIN (SELECT named_struct('value', t2.value) AS value FROM t2) AS t0 ON (t0.value.value IS NOT DISTINCT FROM t1.value)
+------ end
+
+------ Test: leftOuterJoin product
+SELECT named_struct('_1', t1._1, '_2', t1._2) AS _1, t0.value AS _2 FROM t1 LEFT JOIN (SELECT named_struct('_1', t2._1, '_2', t2._2) AS value FROM t2) AS t0 ON (t1._1 = t0.value._1)
+------ end
+
+------ Test: leftOuterJoin singleton
+SELECT t1.value AS _1, t0.value AS _2 FROM t1 LEFT JOIN (SELECT named_struct('the cake is a lie 🎂', NULL) AS value FROM t2) AS t0 ON TRUE
+------ end
+
+------ Test: pair fullOuterJoin
+SELECT CASE WHEN (t0.value IS NOT NULL) THEN t0.value._2 END AS _1, CASE WHEN (t1.value IS NOT NULL) THEN t1.value._2 END AS _2 FROM (SELECT named_struct('_1', t1.value, '_2', t1.value) AS value FROM t1) AS t0 FULL JOIN (SELECT named_struct('_1', t2.value, '_2', t2.value) AS value FROM t2) AS t1 ON (t0.value._1 = t1.value._1)
+------ end
+
+------ Test: pair join
+SELECT t1.value AS _1, t2.value AS _2 FROM t1 JOIN t2 ON (t1.value = t2.value)
+------ end
+
+------ Test: pair leftOuterJoin
+SELECT t1.value AS _1, CASE WHEN (t0.value IS NOT NULL) THEN t0.value._2 END AS _2 FROM t1 LEFT JOIN (SELECT named_struct('_1', t2.value, '_2', t2.value) AS value FROM t2) AS t0 ON (t1.value = t0.value._1)
+------ end
+
+------ Test: pair rightOuterJoin
+SELECT CASE WHEN (t0.value IS NOT NULL) THEN t0.value._2 END AS _1, t2.value AS _2 FROM t2 LEFT JOIN (SELECT named_struct('_1', t1.value, '_2', t1.value) AS value FROM t1) AS t0 ON (t0.value._1 = t2.value)
+------ end
+
+------ Test: rightJoinFlat
+SELECT CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN named_struct('key', t0.value.key, 'b', t0.value.b) END IS NULL) THEN named_struct('key', CAST(NULL AS TINYINT), 'b', CAST(NULL AS INT)) ELSE named_struct('key', CASE WHEN (t0.value IS NOT NULL) THEN named_struct('key', t0.value.key, 'b', t0.value.b) END.key, 'b', CASE WHEN (t0.value IS NOT NULL) THEN named_struct('key', t0.value.key, 'b', t0.value.b) END.b) END.key AS key, CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN named_struct('key', t0.value.key, 'b', t0.value.b) END IS NULL) THEN named_struct('key', CAST(NULL AS TINYINT), 'b', CAST(NULL AS INT)) ELSE named_struct('key', CASE WHEN (t0.value IS NOT NULL) THEN named_struct('key', t0.value.key, 'b', t0.value.b) END.key, 'b', CASE WHEN (t0.value IS NOT NULL) THEN named_struct('key', t0.value.key, 'b', t0.value.b) END.b) END.b AS b, t2.m1Key AS m1Key, t2.c AS c FROM t2 LEFT JOIN (SELECT named_struct('key', t1.key, 'b', t1.b) AS value FROM t1) AS t0 ON (t0.value.key = t2.m1Key)
+------ end
+
+------ Test: rightOuterJoin
+SELECT t0.value AS _1, t2.value AS _2 FROM t2 LEFT JOIN (SELECT t1.value AS value FROM t1) AS t0 ON (t0.value = t2.value)
+------ end
+
+------ Test: rightOuterJoin product
+SELECT t0.value AS _1, named_struct('_1', t2._1, '_2', t2._2) AS _2 FROM t2 LEFT JOIN (SELECT named_struct('_1', t1._1, '_2', t1._2) AS value FROM t1) AS t0 ON (t0.value._1 = t2._1)
+------ end
+
+------ Test: self join
+SELECT named_struct('_1', t1._1, '_2', t1._2) AS _1, named_struct('_1', t1._1, '_2', t1._2) AS _2 FROM t1 JOIN t1 ON (t1._1 = t1._2)
+------ end
+
+------ Test: self join indirect
+SELECT named_struct('_1', named_struct('_1', t1._1, '_2', t1._2), '_2', named_struct('_1', t2._1, '_2', t2._2)) AS _1, named_struct('_1', t0._1, '_2', t0._2) AS _2 FROM t1 JOIN t2 ON (t1._1 = t2._1) JOIN (SELECT named_struct('_1', t1._1, '_2', t1._2) AS _1, named_struct('_1', t3._1, '_2', t3._2) AS _2 FROM t1 JOIN t3 ON (t1._1 = t3._1)) AS t0 ON (t1._2 = t0._1._2)
+------ end
+
+------ Test: self join multiple right
+SELECT named_struct('_1', named_struct('_1', t1._1, '_2', t1._2), '_2', named_struct('_1', t2._1, '_2', t2._2)) AS _1, named_struct('_1', t2._1, '_2', t2._2) AS _2 FROM t1 JOIN t2 ON (t1._1 = t2._1) JOIN t2 ON (t1._2 = t2._2)
+------ end
+
+------ Test: self join multiple right with select
+SELECT named_struct('_1', named_struct('_1', t1._1, '_2', t1._2), '_2', named_struct('_1', t2._1, '_2', t2._2)) AS _1, named_struct('_1', t2._1, '_2', t2._2) AS _2 FROM t1 JOIN t2 ON (t1._1 = t2._1) JOIN t2 ON (t1._2 = t2._2)
+------ end
+
+------ Test: self join mutiple left
+SELECT named_struct('_1', named_struct('_1', t1._1, '_2', t1._2), '_2', named_struct('_1', t2._1, '_2', t2._2)) AS _1, named_struct('_1', t1._1, '_2', t1._2) AS _2 FROM t1 JOIN t2 ON (t1._1 = t2._1) JOIN t1 ON (t1._2 = t1._2)
+------ end
+
+------ Test: self join mutiple left with aggregate
+SELECT named_struct('_1', t0._1, '_2', t0._2) AS _1, named_struct('_1', t1._1, '_2', t1._2) AS _2 FROM (SELECT named_struct('_1', t1._1, '_2', t1._2) AS _1, named_struct('_1', t2._1, '_2', t2._2) AS _2 FROM t1 JOIN t2 ON (t1._1 = t2._1) GROUP BY t1._1, t1._2, t2._1, t2._2) AS t0 JOIN t1 ON (t0._1._2 = t1._2)
+------ end
+
+------ Test: self join mutiple left with distinct
+SELECT named_struct('_1', t0._1, '_2', t0._2) AS _1, named_struct('_1', t1._1, '_2', t1._2) AS _2 FROM (SELECT DISTINCT named_struct('_1', t1._1, '_2', t1._2) AS _1, named_struct('_1', t2._1, '_2', t2._2) AS _2 FROM t1 JOIN t2 ON (t1._1 = t2._1)) AS t0 JOIN t1 ON (t0._1._2 = t1._2)
+------ end
+
+------ Test: self join mutiple left with select
+SELECT named_struct('_1', t1._1, '_2', t1._2) AS _1, named_struct('_1', t1._1, '_2', t1._2) AS _2 FROM t1 JOIN t2 ON (t1._1 = t2._1) JOIN t1 ON (t1._2 = t1._2)
+------ end
+
+------ Test: self join mutiple left with union
+SELECT named_struct('_1', t0._1, '_2', t0._2) AS _1, named_struct('_1', t1._1, '_2', t1._2) AS _2 FROM (SELECT named_struct('_1', t1._1, '_2', t1._2) AS _1, named_struct('_1', t2._1, '_2', t2._2) AS _2 FROM t1 JOIN t2 ON (t1._1 = t2._1) UNION ALL SELECT named_struct('_1', t2._1, '_2', t2._2) AS _1, named_struct('_1', t2._1, '_2', t2._2) AS _2 FROM t2) AS t0 JOIN t1 ON (t0._1._2 = t1._2)
+------ end
+
+------ Test: self join mutiple nested left hand side
+SELECT named_struct('_1', t1._1, '_2', t1._2) AS _1, named_struct('_1', t0._1, '_2', t0._2) AS _2 FROM t1 JOIN (SELECT named_struct('_1', t2._1, '_2', t2._2) AS _1, named_struct('_1', t1._1, '_2', t1._2) AS _2 FROM t2 JOIN t1 ON (t2._2 = t1._2)) AS t0 ON (t1._1 = t0._1._2)
+------ end
+
+------ Test: self leftAntiJoin
+SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 WHERE (NOT EXISTS (SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 WHERE (t1._1 = t1._2)))
+------ end

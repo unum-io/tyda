@@ -1,0 +1,131 @@
+------ Test: write com.choreograph.tyda.Date$package.Date
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.Decimal$package.Decimal[15, 5]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.Decimal$package.Decimal[3, 0]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.Decimal$package.Decimal[38, 9]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.Duration$package.Duration
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.Timestamp$package.Timestamp
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.testsuites.DatasetReadWriteSuite.MyEnum
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.discriminant AS discriminant, t1.c AS c, t1.d AS d, t1.f AS f FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.testsuites.DatasetReadWriteSuite.MyProduct
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.a AS a, t1.b AS b, t1.c AS c FROM t1
+------ end
+
+------ Test: write com.choreograph.tyda.testsuites.DatasetReadWriteSuite.SimpleEnum
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write java.lang.String
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Boolean
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Byte
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Double
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Float
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Int
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Long
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Option[com.choreograph.tyda.testsuites.DatasetReadWriteSuite.MyEnum]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Option[com.choreograph.tyda.testsuites.DatasetReadWriteSuite.MyProduct]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Option[com.choreograph.tyda.testsuites.DatasetReadWriteSuite.SimpleEnum]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Option[scala.Long]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Option[scala.Option[scala.Long]]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Option[scala.collection.immutable.Map[scala.Predef.String, scala.Long]]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Option[scala.collection.immutable.Seq[scala.Long]]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Short
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.Tuple2[scala.Long, scala.Option[scala.Long]]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1._1 AS _1, t1._2 AS _2 FROM t1
+------ end
+
+------ Test: write scala.collection.immutable.Map[scala.Predef.String, com.choreograph.tyda.Duration$package.Duration]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.collection.immutable.Map[scala.Predef.String, scala.Long]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.collection.immutable.Map[scala.Tuple2[scala.Predef.String, scala.Long], scala.Tuple2[scala.Predef.String, scala.Option[scala.Long]]]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.collection.immutable.Map[scala.collection.immutable.Seq[scala.Predef.String], scala.collection.immutable.Seq[scala.Long]]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.collection.immutable.Seq[scala.Long]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.collection.immutable.Seq[scala.Tuple2[scala.Long, scala.Option[scala.Long]]]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.Long]]
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: write scala.math.BigInt
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.parquet', format='PARQUET') AS SELECT t1.value AS value FROM t1
+------ end

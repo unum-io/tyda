@@ -1,0 +1,4 @@
+-Xmx4096M 
+-XX:+UseZGC 
+-XX:ZUncommitDelay=30 
+-XX:ZCollectionInterval=30

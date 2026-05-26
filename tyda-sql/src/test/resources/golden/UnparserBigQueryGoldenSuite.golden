@@ -1,0 +1,139 @@
+------ Test: aggregate after grouped aggregate
+SELECT CASE WHEN (count(1) <> 0) THEN min(t0._2) END AS value FROM (SELECT table1.b AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.b) AS t0
+------ end
+
+------ Test: bytes literal
+SELECT X'00cafebabe' AS value
+------ end
+
+------ Test: distinct before select
+SELECT t0._1 AS value FROM (SELECT DISTINCT table1.a AS _1, table1.b AS _2 FROM table1) AS t0
+------ end
+
+------ Test: empty collection
+SELECT t0.a AS a, t0.b AS b, t0.c AS c, t0.d AS d FROM (SELECT CAST(0 AS INT) AS a, '' AS b, FALSE AS c, [CAST(0.0 AS FLOAT64)] AS d) AS t0 WHERE FALSE
+------ end
+
+------ Test: equals with Option
+SELECT (table1.c1 IS NULL) AS value FROM table1
+------ end
+
+------ Test: escape identifiers
+SELECT `table-name`.`dashed-column` AS `dashed-column` FROM `table-name`
+------ end
+
+------ Test: escape strings
+SELECT 'O\'R' AS value UNION ALL SELECT 'Line1\nLine2' AS value UNION ALL SELECT 'Tab\tCharacter' AS value
+------ end
+
+------ Test: escape value columns
+SELECT CAST(1 AS INT) AS `from`, CAST(2 AS BIGINT) AS `has space`
+------ end
+
+------ Test: explode after aggregate
+SELECT t1 AS _1, t0._2 AS _2 FROM (SELECT table1.d AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.d) AS t0, t0._1 AS t1
+------ end
+
+------ Test: explode multiple expression
+SELECT table1.a AS _1, t0 AS _2 FROM table1, table1.d AS t0
+------ end
+
+------ Test: fromSeq
+SELECT CAST(1 AS INT) AS value UNION ALL SELECT CAST(2 AS INT) AS value UNION ALL SELECT CAST(3 AS INT) AS value
+------ end
+
+------ Test: full outer join product on lhs
+SELECT t0.value AS _1, t1.value AS _2 FROM (SELECT struct(table1.a AS a, table1.b AS b, table1.c AS c, table1.d AS d) AS value FROM table1) AS t0 FULL JOIN (SELECT table2.a AS value FROM table2) AS t1 ON (t0.value.a = t1.value)
+------ end
+
+------ Test: group by all
+SELECT count(CASE WHEN (table4.a IS NOT NULL) THEN CAST(1 AS INT) END) AS value FROM table4 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: grouped aggregation + filter
+SELECT table1.b AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.b HAVING (min(table1.a) < CAST(10 AS INT))
+------ end
+
+------ Test: groupped aggregate after grouped aggregate
+SELECT min(t0._1) AS value FROM (SELECT table1.b AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.b) AS t0 GROUP BY t0._2
+------ end
+
+------ Test: inner join select after
+SELECT table1.a AS _1, table2.a AS _2 FROM table1 JOIN table2 ON (table1.a = table2.a)
+------ end
+
+------ Test: inner join select before
+SELECT table1.a AS _1, table2.a AS _2 FROM table1 JOIN table2 ON (table1.a = table2.a)
+------ end
+
+------ Test: join and then explode
+SELECT t0 AS _1, t1 AS _2 FROM table1 JOIN table2 ON (table1.a = table2.a), table1.d AS t0, table2.d AS t1
+------ end
+
+------ Test: join+aggregate on lhs
+SELECT t0.value AS _1, table2.a AS _2 FROM (SELECT min(table1.a) AS value FROM table1 GROUP BY table1.b) AS t0 JOIN table2 ON (t0.value = table2.a)
+------ end
+
+------ Test: join+distinct on rhs
+SELECT table1.a AS _1, t0.value AS _2 FROM table1 JOIN (SELECT DISTINCT table2.a AS value FROM table2) AS t0 ON (table1.a = t0.value)
+------ end
+
+------ Test: left join product on lhs
+SELECT table1.a AS _1, t0.value AS _2 FROM table1 LEFT JOIN (SELECT table2.a AS value FROM table2) AS t0 ON (table1.a = t0.value)
+------ end
+
+------ Test: left join product on rhs
+SELECT table1.a AS _1, t0.value AS _2 FROM table1 LEFT JOIN (SELECT struct(table2.a AS a, table2.b AS b, table2.c AS c, table2.d AS d) AS value FROM table2) AS t0 ON (table1.a = t0.value.a)
+------ end
+
+------ Test: literal enum
+SELECT ((TRUE AND (t0._1.discriminant = 'c')) AND (t0._1.a IS NULL)) AS value FROM (SELECT struct('a' AS discriminant, struct(CAST(1 AS INT) AS a) AS a) AS _1) AS t0
+------ end
+
+------ Test: literal enum as string
+SELECT (t0.value = 'second') AS value FROM (SELECT 'first' AS value) AS t0
+------ end
+
+------ Test: literal singleton
+SELECT NULL AS `the cake is a lie 🎂`
+------ end
+
+------ Test: make named struct
+SELECT struct(table1.a AS a, table1.b AS b, table1.c AS c) AS value FROM table1
+------ end
+
+------ Test: make named struct from product
+SELECT struct(table1.a AS a, table1.b AS b, table1.c AS c, table1.d AS d) AS value FROM table1
+------ end
+
+------ Test: make struct
+SELECT struct(table1.a AS _1, table1.b AS _2, table1.c AS _3) AS value FROM table1
+------ end
+
+------ Test: multiple explodes in separate selects
+SELECT t0 AS _1, t1 AS _2 FROM table1, table1.d AS t0, table1.d AS t1
+------ end
+
+------ Test: multiple joins
+SELECT table1.a AS _1, table2.a AS _2, table3.a AS _3 FROM table1 JOIN table2 ON (table1.a = table2.a) JOIN table3 ON (table1.a = table3.a)
+------ end
+
+------ Test: select and where, with select first
+SELECT table1.a AS value FROM table1 WHERE (NOT (table1.a <= CAST(10 AS INT)))
+------ end
+
+------ Test: select and where, with where first
+SELECT table1.a AS value FROM table1 WHERE (NOT (table1.a <= CAST(10 AS INT)))
+------ end
+
+------ Test: select distinct
+SELECT DISTINCT table1.a AS value FROM table1
+------ end
+
+------ Test: write parquet to path
+EXPORT DATA OPTIONS(uri='/tmp/test-parquet/part-*.parquet', format='PARQUET') AS SELECT table1.a AS a, table1.b AS b, table1.c AS c, table1.d AS d FROM table1
+------ end
+
+------ Test: write path with sql injection
+EXPORT DATA OPTIONS(uri='/tmp/sql-injection-path\'; DROP TABLE;/part-*.parquet', format='PARQUET') AS SELECT table1.a AS a, table1.b AS b, table1.c AS c, table1.d AS d FROM table1
+------ end
