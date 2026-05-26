@@ -4,7 +4,14 @@ import scala.util.Try
 import scala.util.Success
 import scala.util.Failure
 
-ThisBuild / version := "0.1.0"
+ThisBuild / tlBaseVersion := "0.1"
+ThisBuild / organization := "com.wppresolve.tyda"
+ThisBuild / organizationName := "WPP"
+ThisBuild / licenses := Seq(License.MIT)
+ThisBuild / developers := List(
+  tlGitHubDev("eejbyfeldt", "Emil Ejbyfeldt"),
+)
+
 ThisBuild / scalaVersion := Dependencies.scala3Version
 
 ThisBuild / scalacOptions ++= Seq(
@@ -29,6 +36,40 @@ ThisBuild / scalacOptions ++= Seq(
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalafixDependencies += "com.github.xuwei-k" %% "scalafix-rules" % "0.6.24"
+
+ThisBuild / githubWorkflowBuildPreamble := Seq()
+ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"))
+ThisBuild / githubWorkflowBuildMatrixExclusions := Seq()
+
+ThisBuild / githubWorkflowAddedJobs ++= {
+  val javaVersions = (ThisBuild / githubWorkflowJavaVersions).value.toList
+  val setupSteps = List(WorkflowStep.Checkout, WorkflowStep.SetupSbt) ++
+    WorkflowStep.SetupJava(javaVersions)
+  Seq(
+    WorkflowJob(
+      id = "scalafmt",
+      name = "Scalafmt",
+      scalas = List("3"),
+      javas = javaVersions,
+      steps = setupSteps :+ WorkflowStep.Sbt(
+        List("scalafmtCheckAll", "scalafmtSbtCheck"),
+        name = Some("Check scalafmt")
+      )
+    ),
+    WorkflowJob(
+      id = "scalafix",
+      name = "Scalafix",
+      scalas = List("3"),
+      javas = javaVersions,
+      steps = setupSteps :+ WorkflowStep.Sbt(
+        List("scalafixAll --check"),
+        name = Some("Check scalafix")
+      )
+    )
+  )
+}
+
+ThisBuild / githubWorkflowPublishNeeds ++= Seq("scalafmt", "scalafix")
 
 lazy val commonSettings =
   // mdoc snippets are checked by mdoc instead of the snippet compiler
@@ -125,8 +166,8 @@ lazy val scalafixRules = (project in file("scalafix/rules"))
   .settings(commonSettings)
   .disablePlugins(ScalafixPlugin)
   .settings(Dependencies.scalafix)
-lazy val scalafixInput = (project in file("scalafix/input")).disablePlugins(ScalafixPlugin)
-lazy val scalafixOutput = (project in file("scalafix/output")).disablePlugins(ScalafixPlugin)
+lazy val scalafixInput = (project in file("scalafix/input")).disablePlugins(ScalafixPlugin).enablePlugins(NoPublishPlugin)
+lazy val scalafixOutput = (project in file("scalafix/output")).disablePlugins(ScalafixPlugin).enablePlugins(NoPublishPlugin)
 lazy val scalafixTests = (project in file("scalafix/tests"))
   .settings(commonSettings)
   .settings(
@@ -139,7 +180,7 @@ lazy val scalafixTests = (project in file("scalafix/tests"))
   )
   .dependsOn(scalafixRules % ScalafixConfig)
   .dependsOn(scalafixInput, scalafixRules)
-  .enablePlugins(ScalafixTestkitPlugin)
+  .enablePlugins(ScalafixTestkitPlugin, NoPublishPlugin)
 
 lazy val tyda = (project in file("tyda"))
   .settings(commonSettings)
@@ -211,6 +252,7 @@ lazy val tydaTestSuites = (project in file("tyda-test-suites"))
   .settings(Dependencies.tydaTestSuites)
   .dependsOn(scalafixRules % ScalafixConfig)
   .dependsOn(tyda)
+  .enablePlugins(NoPublishPlugin)
 
 lazy val tydaSpark = (project in file("tyda-spark"))
   .settings(commonSettings)
@@ -297,7 +339,7 @@ lazy val tydaDocs = (project in file("tyda-docs"))
   .settings(Dependencies.tydaDocs)
   .settings(sparkRunSettings)
   .dependsOn(tyda, tydaTable, tydaJob, tydaJobTest, tydaSpark)
-  .enablePlugins(MdocPlugin)
+  .enablePlugins(MdocPlugin, NoPublishPlugin)
   .disablePlugins(ScalafixPlugin)
 
 addCommandAlias(

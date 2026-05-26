@@ -1,5 +1,20 @@
 # AGENTS.md
 
+## CI / Release
+
+This project uses [sbt-typelevel-ci-release](https://typelevel.org/sbt-typelevel/) for CI and publishing.
+
+To regenerate the GitHub Actions workflows after changing CI configuration:
+```
+sbt githubWorkflowGenerate
+```
+
+Releases are triggered by pushing a version tag (e.g. `v0.1.0`). Snapshots are published automatically from `main`. The following secrets must be set on the GitHub repository:
+
+- `SONATYPE_USERNAME` and `SONATYPE_PASSWORD`
+- `PGP_SECRET`: output of `gpg --armor --export-secret-keys $LONG_ID | base64`
+- `PGP_PASSPHRASE` (if the key is passphrase-protected)
+
 ## Building and testing
 
 Project names are camelCased, derived from the directory name (e.g. `tyda-spark` → `tydaSpark`). When in doubt check `build.sbt` for the exact project name.
