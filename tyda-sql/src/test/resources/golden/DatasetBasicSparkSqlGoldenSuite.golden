@@ -43,7 +43,7 @@ SELECT explode(t0.value) AS value FROM (SELECT explode(t1.value) AS value FROM t
 ------ end
 
 ------ Test: explode multiple nested Seq
-SELECT t1.row AS row, t1._1 AS _1, explode(t1.row._2) AS _2 FROM (SELECT t0.row AS row, explode(t0.row._1) AS _1 FROM (SELECT named_struct('_1', t1._1, '_2', t1._2) AS row FROM t1) AS t0) AS t1
+SELECT t0._2 AS _1, explode(t0._1._2) AS _2 FROM (SELECT named_struct('_1', t1._1, '_2', t1._2) AS _1, explode(t1._1) AS _2 FROM t1) AS t0
 ------ end
 
 ------ Test: explode nested Seq
@@ -123,7 +123,7 @@ SELECT t1._1 AS _1, t1._2 AS _2, t1._3 AS _3, t1._4 AS _4, t1._5 AS _5, t1._6 AS
 ------ end
 
 ------ Test: select 7 explode
-SELECT t6.row AS row, t6._1 AS _1, t6._2 AS _2, t6._3 AS _3, t6._4 AS _4, t6._5 AS _5, t6._6 AS _6, explode(t6.row._7) AS _7 FROM (SELECT t5.row AS row, t5._1 AS _1, t5._2 AS _2, t5._3 AS _3, t5._4 AS _4, t5._5 AS _5, explode(t5.row._6) AS _6 FROM (SELECT t4.row AS row, t4._1 AS _1, t4._2 AS _2, t4._3 AS _3, t4._4 AS _4, explode(t4.row._5) AS _5 FROM (SELECT t3.row AS row, t3._1 AS _1, t3._2 AS _2, t3._3 AS _3, explode(t3.row._4) AS _4 FROM (SELECT t2.row AS row, t2._1 AS _1, t2._2 AS _2, explode(t2.row._3) AS _3 FROM (SELECT t1.row AS row, t1._1 AS _1, explode(t1.row._2) AS _2 FROM (SELECT t0.row AS row, explode(t0.row._1) AS _1 FROM (SELECT named_struct('_1', t1._1, '_2', t1._2, '_3', t1._3, '_4', t1._4, '_5', t1._5, '_6', t1._6, '_7', t1._7) AS row FROM t1) AS t0) AS t1) AS t2) AS t3) AS t4) AS t5) AS t6
+SELECT t5._2 AS _1, t5._3 AS _2, t5._4 AS _3, t5._5 AS _4, t5._6 AS _5, t5._7 AS _6, explode(t5._1._7) AS _7 FROM (SELECT t4._1 AS _1, t4._2 AS _2, t4._3 AS _3, t4._4 AS _4, t4._5 AS _5, t4._6 AS _6, explode(t4._1._6) AS _7 FROM (SELECT t3._1 AS _1, t3._2 AS _2, t3._3 AS _3, t3._4 AS _4, t3._5 AS _5, explode(t3._1._5) AS _6 FROM (SELECT t2._1 AS _1, t2._2 AS _2, t2._3 AS _3, t2._4 AS _4, explode(t2._1._4) AS _5 FROM (SELECT t1._1 AS _1, t1._2 AS _2, t1._3 AS _3, explode(t1._1._3) AS _4 FROM (SELECT t0._1 AS _1, t0._2 AS _2, explode(t0._1._2) AS _3 FROM (SELECT named_struct('_1', t1._1, '_2', t1._2, '_3', t1._3, '_4', t1._4, '_5', t1._5, '_6', t1._6, '_7', t1._7) AS _1, explode(t1._1) AS _2 FROM t1) AS t0) AS t1) AS t2) AS t3) AS t4) AS t5
 ------ end
 
 ------ Test: select Product
@@ -143,7 +143,7 @@ SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 WHERE ((t1._1 IS NOT NULL) AND (t1._2 IS
 ------ end
 
 ------ Test: select multiple explode seq
-SELECT t1.row AS row, t1._1 AS _1, explode(t1.row._2) AS _2 FROM (SELECT t0.row AS row, explode(t0.row._1) AS _1 FROM (SELECT named_struct('_1', t1._1, '_2', t1._2) AS row FROM t1) AS t0) AS t1
+SELECT t0._2 AS _1, explode(t0._1._2) AS _2 FROM (SELECT named_struct('_1', t1._1, '_2', t1._2) AS _1, explode(t1._1) AS _2 FROM t1) AS t0
 ------ end
 
 ------ Test: select nested access
