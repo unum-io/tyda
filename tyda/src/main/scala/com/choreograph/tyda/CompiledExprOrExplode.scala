@@ -15,4 +15,12 @@ private[tyda] object CompiledExprOrExplode {
   }
   def apply[T: Codec, R, I: AsExprOrExplode.Of[R]](f: Expr[T] => I): CompiledExprOrExplode[T, R] =
     apply(f.andThen(AsExprOrExplode(_)))
+
+  extension [T, R](compiled: CompiledExprOrExplode[T, R]) {
+    def compose[A](g: CompiledExpr[A, T]): CompiledExprOrExplode[A, R] =
+      compiled match {
+        case compiled @ CompiledExpr(_, _) => compiled.compose(g)
+        case compiled @ CompiledExplodeExpr(_, _) => compiled.compose(g)
+      }
+  }
 }

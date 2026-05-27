@@ -41,6 +41,7 @@ import com.choreograph.tyda.TreeApi.Continue
 import com.choreograph.tyda.TreeApi.Skip
 import com.choreograph.tyda.functions.some
 import com.choreograph.tyda.rewrite.ExplodeOptionToFilter
+import com.choreograph.tyda.rewrite.RemoveMultipleExplodes
 import com.choreograph.tyda.rewrite.ReplacementMap
 import com.choreograph.tyda.rewrite.ReplacementMap.Replacement
 import com.choreograph.tyda.rewrite.SparkJsonCompatability
@@ -260,25 +261,7 @@ object DatasetOnSpark {
           IntermediateDataset(filtered)
         case ExplodeOptionToFilter(ds) => toIntermediate(ds)
         case select: Dataset.Select1[?, T] => IntermediateDataset(select1(select))
-        // Workaround for https://issues.apache.org/jira/browse/SPARK-47241 that is present in Spark 3.5.1
-        // The bug means that multiple explodes in the same select lead to planning issues, but planning them
-        // as concecutive selects works.
-        case selectN: Dataset.SelectN[?, ?] if multipleExplodes(selectN) =>
-          val input = toIntermediate(selectN.input).toDataset
-          val exprs = tupleInstances(selectN.exprs)
-          val rowColumnName = "row"
-          val (df, _) =
-            exprs.foldLeft0((input.select(struct("*").as(rowColumnName)), 0)) { [t] => (dsAndCount, expr) =>
-              val (ds, resultExprCount) = dsAndCount
-              val cf = ColumnFactory(ds(rowColumnName))(using selectN.input.codec)
-              val select = convertExplodeExpr(cf, expr)
-              val existingResultColumns = (1 to resultExprCount).map(i => ds(s"_$i"))
-              val columns = existingResultColumns ++
-                Seq(select.as(s"_${resultExprCount + 1}"), ds(rowColumnName))
-              (ds.select(columns*), resultExprCount + 1)
-            }
-          val columns = (1 to exprs.arity).map(i => df(s"_$i"))
-          IntermediateDataset(df.select(columns*).as[T])
+        case RemoveMultipleExplodes(ds) => toIntermediate(ds)
         case selectN: Dataset.SelectN[?, ?] =>
           val (input, cf) = toIntermediate(selectN.input).toDataFrameAndColumnFactory
           val columns = tupleInstances(selectN.exprs)
@@ -375,17 +358,6 @@ object DatasetOnSpark {
         val column = convertExplodeExpr(cf, other)
         selectAndUnpack(df, column)
     }
-  }
-
-  private def multipleExplodes(select: Dataset.SelectN[?, ?]): Boolean = {
-    val explodes = tupleInstances(select.exprs).foldLeft0(0)([t] =>
-      (count, expr) =>
-        expr match {
-          case CompiledExplodeExpr(_, _) => count + 1
-          case _ => count
-        }
-    )
-    explodes > 1
   }
 
   private def isSelfJoin(left: Dataset[?], right: Dataset[?]): Boolean = {
