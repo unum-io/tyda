@@ -94,9 +94,9 @@ object CodecToJsoniter {
   private def reader[T](codec: Codec[T]): Reader[T] =
     codec match {
       case Codec.Boolean => _.readBoolean()
-      case Codec.Byte => _.readByte()
-      case Codec.Short => _.readShort()
-      case Codec.Int => _.readInt()
+      case Codec.Byte => in => if in.nextValueIsString() then in.readStringAsByte() else in.readByte()
+      case Codec.Short => in => if in.nextValueIsString() then in.readStringAsShort() else in.readShort()
+      case Codec.Int => in => if in.nextValueIsString() then in.readStringAsInt() else in.readInt()
       case Codec.Long => in => if in.nextValueIsString() then in.readStringAsLong() else in.readLong()
       case Codec.Float => in => if in.nextValueIsString() then in.readString(null).toFloat else in.readFloat()
       case Codec.Double =>

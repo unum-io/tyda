@@ -1,10 +1,12 @@
 package com.choreograph.tyda.rewrite
+import com.choreograph.tyda.CanTryCast
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.Expr
 import com.choreograph.tyda.Format
 import com.choreograph.tyda.NumericsReadMode.ReadAdapter
 import com.choreograph.tyda.NumericsReadMode.buildReadAdapter
+import com.choreograph.tyda.SimpleTypeName
 import com.choreograph.tyda.functions.microsToDuration
 import com.choreograph.tyda.rewrite.Cast.buildConverterDown
 
@@ -59,6 +61,10 @@ object SparkJsonCompatability {
   private def readAdapter[T](codec: Codec[T]): Option[ReadAdapter[T, ?]] =
     buildReadAdapter(codec)([t] =>
       _ match {
+        case Codec.Byte => tryCastAndExpect[Byte]
+        case Codec.Short => tryCastAndExpect[Short]
+        case Codec.Int => tryCastAndExpect[Int]
+        case Codec.Long => tryCastAndExpect[Long]
         case Codec.Map(given Codec[k], given Codec[v]) => Some(ReadAdapter(
             Codec[Seq[(key: k, value: v)]],
             // TODO: Would be nice if this could just be a cast instead of a higher order function
@@ -68,6 +74,12 @@ object SparkJsonCompatability {
         case _ => None
       }
     )
+
+  private def tryCastAndExpect[To: SimpleTypeName](using CanTryCast[String, To]): Option[ReadAdapter[To, ?]] =
+    Some(ReadAdapter(
+      Codec[String],
+      _.tryCast[To].expect(s"Read value was out of bounds or invalid for ${SimpleTypeName.name[To]}")
+    ))
 
   private def writeConverter[T](codec: Codec[T]): Option[Cast[T, ?]] = {
     import com.choreograph.tyda.Expr.toMicros
