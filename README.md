@@ -69,3 +69,9 @@ libraryDependencies ++= Seq(
 ## Documentation
 
 Full API documentation and guides are available at TODO.
+
+## Related projects
+
+For alterantive type-safe Spark libraries, check out:
+- [Frameless](https://github.com/typelevel/frameless)
+- [Wick](https://github.com/joan38/wick)
