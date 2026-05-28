@@ -91,9 +91,7 @@ object Dependencies {
   val tydaSpark = libraryDependencies ++= Seq(
     TestDeps.scalatest,
     TestDeps.bigQuerySparkConnector,
-    ProvidedDeps
-      .sparkSql
-      .exclude("org.scala-lang.modules", "scala-xml_2.13")
+    ProvidedDeps.sparkSql.exclude("org.scala-lang.modules", "scala-xml_2.13")
   )
 
   val tydaTable = libraryDependencies ++= Seq(TestDeps.scalatest)
