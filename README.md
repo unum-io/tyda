@@ -16,7 +16,6 @@ val persons: Dataset[Person] = Dataset.from(Seq(Person("Alice", 30), Person("Bob
 // Type-safe: the compiler knows this produces Dataset[String]
 val names: Dataset[String] = persons.select(_.name)
 
-// Joins use lambdas — no string column names
 case class User(id: Long, name: String, age: Int, location: Option[String])
 case class Event(id: Long, userId: Long, eventType: String)
 val joined: Dataset[(User, Event)] =
