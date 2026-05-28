@@ -1,6 +1,6 @@
 # Tyda
 
-Tyda is a type-safe Dataset library for Scala 3. It provides a fully type-safe expression API that compiles to multiple execution engines — including Spark and an in-process engine for fast unit tests.
+Tyda is a type-safe Dataset library for Scala 3. It provides a fully type-safe expression API that compiles to multiple execution engines - including Spark and an in-process engine for fast unit tests.
 
 ## Why Tyda?
 
