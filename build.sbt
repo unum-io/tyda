@@ -35,10 +35,9 @@ ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalafixDependencies += "com.github.xuwei-k" %% "scalafix-rules" % "0.6.24"
 
-ThisBuild / githubWorkflowBuildPreamble := Seq()
+ThisBuild / tlCiDependencyGraphJob := false // TODO: Decide we we want this and if so implement it
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"))
-ThisBuild / githubWorkflowBuildMatrixExclusions := Seq()
-ThisBuild / githubWorkflowEnv := Map.empty
+ThisBuild / githubWorkflowEnv := Map.empty // Do not set GITHUB_TOKEN everywhere
 
 ThisBuild / githubWorkflowAddedJobs ++= {
   val javaVersions = (ThisBuild / githubWorkflowJavaVersions).value.toList
