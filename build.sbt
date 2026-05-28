@@ -40,6 +40,7 @@ ThisBuild / scalafixDependencies += "com.github.xuwei-k" %% "scalafix-rules" % "
 ThisBuild / githubWorkflowBuildPreamble := Seq()
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"))
 ThisBuild / githubWorkflowBuildMatrixExclusions := Seq()
+ThisBuild / githubWorkflowEnv := Map.empty
 
 ThisBuild / githubWorkflowAddedJobs ++= {
   val javaVersions = (ThisBuild / githubWorkflowJavaVersions).value.toList
