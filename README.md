@@ -43,8 +43,8 @@ val withLocation: Dataset[(Long, String)] =
 | `tyda-sql` | SQL unparser (BigQuery and Spark SQL dialects) |
 | `tyda-sparksql` | Spark SQL execution via the SQL unparser |
 | `tyda-big-query` | BigQuery execution engine |
-| `tyda-json` | JSON serialisation for tyda types |
-| `tyda-parquet` | Parquet reader/writer |
+| `tyda-json` | Reference implementation for json used by tyda-iterator |
+| `tyda-parquet` | Reference implementation for parquet used by tyda-iterator |
 | `tyda-metadata` | Schema metadata extraction |
 | `tyda-table` | Table abstraction with partitioning |
 | `tyda-job` | Framework for writing data processing jobs with CLI argument parsing |
