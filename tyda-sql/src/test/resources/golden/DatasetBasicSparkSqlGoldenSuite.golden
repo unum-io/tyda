@@ -1,0 +1,163 @@
+------ Test: as
+SELECT t1.a AS a, t1.b AS b FROM t1
+------ end
+
+------ Test: distinct List
+SELECT DISTINCT t1.value AS value FROM t1
+------ end
+
+------ Test: distinct Option
+SELECT DISTINCT t1.value AS value FROM t1
+------ end
+
+------ Test: distinct primitive
+SELECT DISTINCT t1.value AS value FROM t1
+------ end
+
+------ Test: explode Map
+SELECT t0._1._1 AS _1, t0._1._2 AS _2 FROM (SELECT explode(CAST(map_entries(t1.value) AS ARRAY<STRUCT<_1 INT NOT NULL,_2 INT NOT NULL>>)) AS _1 FROM t1) AS t0
+------ end
+
+------ Test: explode Option
+SELECT t1.value AS value FROM t1 WHERE (t1.value IS NOT NULL)
+------ end
+
+------ Test: explode Seq
+SELECT explode(t1.value) AS value FROM t1
+------ end
+
+------ Test: explode Seq Option Seq
+SELECT explode(t0.value) AS value FROM (SELECT explode(t1.value) AS value FROM t1) AS t0 WHERE (t0.value IS NOT NULL)
+------ end
+
+------ Test: explode multiple nested Seq
+SELECT t1.row AS row, t1._1 AS _1, explode(t1.row._2) AS _2 FROM (SELECT t0.row AS row, explode(t0.row._1) AS _1 FROM (SELECT named_struct('_1', t1._1, '_2', t1._2) AS row FROM t1) AS t0) AS t1
+------ end
+
+------ Test: explode nested Seq
+SELECT explode(t0.value) AS value FROM (SELECT explode(t1.value) AS value FROM t1) AS t0
+------ end
+
+------ Test: limit after aggregate
+SELECT t1._1 AS key, sum(t1._2) AS value FROM t1 GROUP BY t1._1 LIMIT 5
+------ end
+
+------ Test: limit after explode
+SELECT t0.value AS value FROM (SELECT explode(t1._2) AS value FROM t1) AS t0 LIMIT 5
+------ end
+
+------ Test: limit after filter
+SELECT t1.value AS value FROM t1 WHERE (NOT (t1.value <= CAST(5 AS INT))) LIMIT 3
+------ end
+
+------ Test: limit after join
+SELECT t1.value AS _1, t2.value AS _2 FROM t1 JOIN t2 ON (t1.value = t2.value) LIMIT 5
+------ end
+
+------ Test: limit after select
+SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 LIMIT 3
+------ end
+
+------ Test: limit basic
+SELECT t1.value AS value FROM t1 LIMIT 5
+------ end
+
+------ Test: limit before aggregate
+SELECT t0._1 AS key, sum(t0._2) AS value FROM (SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 LIMIT 5) AS t0 GROUP BY t0._1
+------ end
+
+------ Test: limit before explode
+SELECT explode(t0._2) AS value FROM (SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 LIMIT 5) AS t0
+------ end
+
+------ Test: limit before filter
+SELECT t0.value AS value FROM (SELECT t1.value AS value FROM t1 LIMIT 5) AS t0 WHERE (NOT (t0.value <= CAST(2 AS INT)))
+------ end
+
+------ Test: limit before join
+SELECT t0.value AS _1, t2.value AS _2 FROM (SELECT t1.value AS value FROM t1 LIMIT 5) AS t0 JOIN t2 ON (t0.value = t2.value)
+------ end
+
+------ Test: limit zero
+SELECT t1.value AS value FROM t1 LIMIT 0
+------ end
+
+------ Test: select 2
+SELECT t1._1 AS _1, t1._2 AS _2 FROM t1
+------ end
+
+------ Test: select 3
+SELECT t1._1 AS _1, t1._2 AS _2, t1._3 AS _3 FROM t1
+------ end
+
+------ Test: select 4
+SELECT t1._1 AS _1, t1._2 AS _2, t1._3 AS _3, t1._4 AS _4 FROM t1
+------ end
+
+------ Test: select 5
+SELECT t1._1 AS _1, t1._2 AS _2, t1._3 AS _3, t1._4 AS _4, t1._5 AS _5 FROM t1
+------ end
+
+------ Test: select 6
+SELECT t1._1 AS _1, t1._2 AS _2, t1._3 AS _3, t1._4 AS _4, t1._5 AS _5, t1._6 AS _6 FROM t1
+------ end
+
+------ Test: select 7
+SELECT t1._1 AS _1, t1._2 AS _2, t1._3 AS _3, t1._4 AS _4, t1._5 AS _5, t1._6 AS _6, t1._7 AS _7 FROM t1
+------ end
+
+------ Test: select 7 explode
+SELECT t6.row AS row, t6._1 AS _1, t6._2 AS _2, t6._3 AS _3, t6._4 AS _4, t6._5 AS _5, t6._6 AS _6, explode(t6.row._7) AS _7 FROM (SELECT t5.row AS row, t5._1 AS _1, t5._2 AS _2, t5._3 AS _3, t5._4 AS _4, t5._5 AS _5, explode(t5.row._6) AS _6 FROM (SELECT t4.row AS row, t4._1 AS _1, t4._2 AS _2, t4._3 AS _3, t4._4 AS _4, explode(t4.row._5) AS _5 FROM (SELECT t3.row AS row, t3._1 AS _1, t3._2 AS _2, t3._3 AS _3, explode(t3.row._4) AS _4 FROM (SELECT t2.row AS row, t2._1 AS _1, t2._2 AS _2, explode(t2.row._3) AS _3 FROM (SELECT t1.row AS row, t1._1 AS _1, explode(t1.row._2) AS _2 FROM (SELECT t0.row AS row, explode(t0.row._1) AS _1 FROM (SELECT named_struct('_1', t1._1, '_2', t1._2, '_3', t1._3, '_4', t1._4, '_5', t1._5, '_6', t1._6, '_7', t1._7) AS row FROM t1) AS t0) AS t1) AS t2) AS t3) AS t4) AS t5) AS t6
+------ end
+
+------ Test: select Product
+SELECT t1.value AS _1, CAST(1 AS INT) AS _2 FROM t1
+------ end
+
+------ Test: select complex
+SELECT map_from_entries(CAST(array() AS ARRAY<STRUCT<_1 INT NOT NULL,_2 INT NOT NULL>>)) AS value FROM t1
+------ end
+
+------ Test: select enum
+SELECT t1.discriminant AS discriminant, t1.a AS a, t1.b AS b FROM t1
+------ end
+
+------ Test: select multiple explode options
+SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 WHERE ((t1._1 IS NOT NULL) AND (t1._2 IS NOT NULL))
+------ end
+
+------ Test: select multiple explode seq
+SELECT t1.row AS row, t1._1 AS _1, explode(t1.row._2) AS _2 FROM (SELECT t0.row AS row, explode(t0.row._1) AS _1 FROM (SELECT named_struct('_1', t1._1, '_2', t1._2) AS row FROM t1) AS t0) AS t1
+------ end
+
+------ Test: select nested access
+SELECT t1._1._1 AS value FROM t1
+------ end
+
+------ Test: select primitive
+SELECT CAST(1 AS INT) AS value FROM t1
+------ end
+
+------ Test: union
+SELECT t1.value AS value FROM t1 UNION ALL SELECT t2.value AS value FROM t2
+------ end
+
+------ Test: union on struct
+SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 UNION ALL SELECT t2._1 AS _1, t2._2 AS _2 FROM t2
+------ end
+
+------ Test: union with self
+SELECT t1.value AS value FROM t1 UNION ALL SELECT t1.value AS value FROM t1
+------ end
+
+------ Test: where
+SELECT t1.value AS value FROM t1 WHERE t1.value
+------ end
+
+------ Test: where literal
+SELECT t1.value AS value FROM t1 WHERE TRUE
+------ end
+
+------ Test: where not
+SELECT t1.value AS value FROM t1 WHERE (NOT t1.value)
+------ end

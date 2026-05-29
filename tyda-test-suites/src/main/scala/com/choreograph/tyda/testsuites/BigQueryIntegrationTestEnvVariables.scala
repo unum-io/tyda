@@ -1,0 +1,40 @@
+package com.choreograph.tyda.testsuites
+
+import org.scalatest.Assertions.assume
+
+import com.choreograph.tyda.unreachable
+
+object BigQueryIntegrationTestEnvVariables {
+  private val ProjectId = "TYDA_BIGQUERY_TEST_PROJECT_ID"
+  private val TmpDir = "TYDA_BIGQUERY_TEST_TMP_LOCATION"
+
+  def skipIfProjectNotSet(): Unit =
+    assume(
+      condition = sys.env.contains(ProjectId),
+      s"Provide a GCP project id using enviroment variable $ProjectId enable BigQuery integration tests"
+    ): Unit
+
+  def getProjectId: Option[String] = sys.env.get(ProjectId)
+
+  def getProjectIdOrSkip: String =
+    getProjectId match {
+      case Some(projectId) => projectId
+      case None =>
+        skipIfProjectNotSet()
+        unreachable("Test skipped by assume")
+    }
+
+  private def skipIfTmpDirNotSet(): Unit =
+    assume(
+      condition = sys.env.contains(TmpDir),
+      s"Provide gcs location using the eviroment variable $TmpDir to enable BigQuery integration read/write tests"
+    ): Unit
+
+  def getTmpDirOrSkip: String =
+    sys.env.get(TmpDir) match {
+      case Some(tmpDir) => tmpDir
+      case None =>
+        skipIfTmpDirNotSet()
+        unreachable("Test skipped by assume")
+    }
+}

@@ -1,0 +1,44 @@
+------ Test: aggregate
+Aggregate: x => (sum(x), max(x)(using Int))
+------ end
+
+------ Test: expr boolean
+Select1: x => (!(x == 1) && false)
+------ end
+
+------ Test: expr functions
+Select1: x => some(seq(x, 1))
+------ end
+
+------ Test: expr string functions
+Select1: x => x.trim()
+------ end
+
+------ Test: map option outer reference
+Select1: x => (case when !(some(x) == None) then some((some(x).get < x)) else None)
+------ end
+
+------ Test: map seq outer reference
+Select1: x => fromRepr(seq(x, x + 1).map(x1 => (x1 < x)))
+------ end
+
+------ Test: read
+ReadPath: path=/tmp/test, format=Parquet, unpivot=false, filenameGlobFilter=*
+------ end
+
+------ Test: read+filter
+Filter: x => (x < 10)
+    ReadPath: path=/tmp/test, format=Parquet, unpivot=false, filenameGlobFilter=*
+------ end
+
+------ Test: read+selectN+filter+join
+Join: (l, r) => (l._1 == r._1)
+    SelectN: x => x, x => (x == 1)
+        ReadPath: path=/tmp/test, format=Parquet, unpivot=false, filenameGlobFilter=*
+    Filter: x => (x._2 < 1)
+        ReadPath: path=/tmp/right, format=Parquet, unpivot=false, filenameGlobFilter=*
+------ end
+
+------ Test: ternary
+Select1: x => (case when (x < 10) then x else 0)
+------ end

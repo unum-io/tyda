@@ -1,0 +1,21 @@
+------ Test: complex calculation
+Sum: 15, Product: 120
+------ end
+
+------ Test: empty output
+
+------ end
+
+------ Test: multi-line output
+line 1
+line 2
+line 3
+------ end
+
+------ Test: simple addition
+2
+------ end
+
+------ Test: string concatenation
+hello world
+------ end

@@ -1,0 +1,6 @@
+com.choreograph.scalafix.NamedLiteralArguments
+com.choreograph.scalafix.Disallowed
+com.choreograph.scalafix.TypeSafetyComment
+com.choreograph.scalafix.OptionWhen
+com.choreograph.scalafix.FinalCaseClass
+com.choreograph.scalafix.ExplicitTypeArgs
