@@ -30,7 +30,7 @@ val withLocation: Dataset[(Long, String)] =
 ## Key features
 
 - **Type-safe expressions** — column access and transformations are checked at compile time
-- **Multiple execution engines** — the same business logic runs on Spark, BigQuery (no UDF support), or in-process
+- **Multiple execution engines** — the same business logic runs on Spark, BigQuery, or in-process
 - **Fast unit tests** — the in-process engine is ~100x faster than Spark for small datasets, turning minute-long test suites into seconds
 - **Familiar API** — designed to feel like normal Scala: `map`, `filter`, `Option`, named tuples
 
