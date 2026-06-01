@@ -5,7 +5,7 @@ import scala.util.Try
 import scala.util.Success
 import scala.util.Failure
 
-ThisBuild / tlBaseVersion := "0.1"
+ThisBuild / tlBaseVersion := "0.2"
 ThisBuild / organization := "com.wppresolve.tyda"
 ThisBuild / organizationName := "WPP"
 ThisBuild / licenses := Seq(License.MIT)
