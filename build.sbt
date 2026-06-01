@@ -9,8 +9,11 @@ ThisBuild / tlBaseVersion := "0.2"
 ThisBuild / organization := "com.wppresolve.tyda"
 ThisBuild / organizationName := "WPP"
 ThisBuild / licenses := Seq(License.MIT)
-ThisBuild / developers :=
-  List(tlGitHubDev("eejbyfeldt", "Emil Ejbyfeldt"), tlGitHubDev("dahlbaek", "Jonas Dahlbæk"))
+ThisBuild / developers := List(
+  tlGitHubDev("eejbyfeldt", "Emil Ejbyfeldt"),
+  tlGitHubDev("dahlbaek", "Jonas Dahlbæk"),
+  tlGitHubDev("ch1nq", "Aske Ching")
+)
 
 ThisBuild / scalaVersion := Dependencies.scala3Version
 
