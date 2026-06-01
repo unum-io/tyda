@@ -173,6 +173,7 @@ lazy val scalafixRules = (project in file("scalafix/rules"))
   .disablePlugins(ScalafixPlugin)
   .enablePlugins(NoPublishPlugin)
   .settings(Dependencies.scalafix)
+
 lazy val scalafixInput = (project in file("scalafix/input"))
   .disablePlugins(ScalafixPlugin)
   .enablePlugins(NoPublishPlugin)
