@@ -142,7 +142,7 @@ lazy val root = (project in file("."))
     tydaTable,
     tydaTestSuites
   )
-  .enablePlugins(ScalaUnidocPlugin)
+  .enablePlugins(ScalaUnidocPlugin, NoPublishPlugin)
   .settings(commonSettings)
   .settings(docSettings)
   // Run mdoc as part of unidoc generation

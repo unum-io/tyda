@@ -1,4 +1,4 @@
-## Building and testing
+## Building and testing 2
 
 Project names are camelCased. The camelCased name is derived from the directory
 name (e.g. directory `tyda-spark` → project `tydaSpark`). When in doubt check
