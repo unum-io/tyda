@@ -394,6 +394,14 @@ SELECT CAST(t1.value AS INT) AS value FROM t1
 SELECT CAST(t1.value AS BIGINT) AS value FROM t1
 ------ end
 
+------ Test: cast scala.Tuple2[scala.Int, scala.Long] to scala.NamedTuple.NamedTuple[scala.Tuple2["key", "value"], scala.Tuple2[scala.Int, scala.Long]]
+SELECT CAST(named_struct('_1', t1._1, '_2', t1._2) AS STRUCT<key INT NOT NULL,value BIGINT NOT NULL>).key AS key, CAST(named_struct('_1', t1._1, '_2', t1._2) AS STRUCT<key INT NOT NULL,value BIGINT NOT NULL>).value AS value FROM t1
+------ end
+
+------ Test: cast scala.Tuple2[scala.Int, scala.Long] to scala.Tuple2[scala.Int, scala.Long]
+SELECT CAST(named_struct('_1', t1._1, '_2', t1._2) AS STRUCT<_1 INT NOT NULL,_2 BIGINT NOT NULL>)._1 AS _1, CAST(named_struct('_1', t1._1, '_2', t1._2) AS STRUCT<_1 INT NOT NULL,_2 BIGINT NOT NULL>)._2 AS _2 FROM t1
+------ end
+
 ------ Test: cast scala.collection.immutable.Seq[scala.Byte] to scala.collection.immutable.Seq[scala.Double]
 SELECT CAST(t1.value AS ARRAY<DOUBLE>) AS value FROM t1
 ------ end
@@ -404,6 +412,14 @@ SELECT CAST(t1.value AS ARRAY<DOUBLE>) AS value FROM t1
 
 ------ Test: cast scala.collection.immutable.Seq[scala.Int] to scala.collection.immutable.Seq[scala.Long]
 SELECT CAST(t1.value AS ARRAY<BIGINT>) AS value FROM t1
+------ end
+
+------ Test: cast scala.collection.immutable.Seq[scala.NamedTuple.NamedTuple[scala.Tuple2["key", "value"], scala.Tuple2[scala.Int, scala.Int]]] to scala.collection.immutable.Seq[scala.Tuple2[scala.Int, scala.Long]]
+SELECT CAST(t1.value AS ARRAY<STRUCT<_1 INT NOT NULL,_2 BIGINT NOT NULL>>) AS value FROM t1
+------ end
+
+------ Test: cast scala.collection.immutable.Seq[scala.NamedTuple.NamedTuple[scala.Tuple2["key", "value"], scala.Tuple2[scala.Int, scala.collection.immutable.Seq[scala.Int]]]] to scala.collection.immutable.Seq[scala.Tuple2[scala.Int, scala.collection.immutable.Seq[scala.Double]]]
+SELECT CAST(t1.value AS ARRAY<STRUCT<_1 INT NOT NULL,_2 ARRAY<DOUBLE> NOT NULL>>) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.Int]] to scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.Long]]
