@@ -413,7 +413,7 @@ Union
    +- 'DeserializeToObject unresolveddeserializer(assertnotnull(getcolumnbyordinal(0, IntegerType))), obj#3: int
       +- SerializeFromObject [input[0, int, false] AS value#4]
          +- MapPartitions org.apache.spark.sql.Dataset$$Lambda/0x2, obj#5: int
-            +- DeserializeToObject newInstance(class scala.Tuple2), obj#6: scala.Tuple2
+            +- DeserializeToObject newInstance(class com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt), obj#6: com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt
                +- Project [tmp#7.seq AS seq#8, tmp#7.integer AS integer#9]
                   +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(seq, seq#10, integer, integer#11))._2 AS tmp#7]
                      +- SubqueryAlias golden_test_t5
@@ -427,7 +427,7 @@ SerializeFromObject [input[0, int, false] AS value#1]
    +- DeserializeToObject assertnotnull(value#4), obj#3: int
       +- SerializeFromObject [input[0, int, false] AS value#4]
          +- MapPartitions org.apache.spark.sql.Dataset$$Lambda/0x2, obj#5: int
-            +- DeserializeToObject newInstance(class scala.Tuple2), obj#6: scala.Tuple2
+            +- DeserializeToObject newInstance(class com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt), obj#6: com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt
                +- Project [tmp#7.seq AS seq#8, tmp#7.integer AS integer#9]
                   +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(seq, seq#10, integer, integer#11))._2 AS tmp#7]
                      +- SubqueryAlias golden_test_t5
@@ -438,14 +438,14 @@ SerializeFromObject [input[0, int, false] AS value#1]
 SerializeFromObject [input[0, int, false] AS value#1]
 +- MapElements com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$$Lambda/0x1, int, [StructField(value,IntegerType,false)], obj#2: int
    +- MapPartitions org.apache.spark.sql.Dataset$$Lambda/0x2, obj#5: int
-      +- DeserializeToObject newInstance(class scala.Tuple2), obj#6: scala.Tuple2
+      +- DeserializeToObject newInstance(class com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt), obj#6: com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt
          +- LocalRelation [seq#8, integer#9]
 
 == Physical Plan ==
 *(1) SerializeFromObject [input[0, int, false] AS value#1]
 +- *(1) MapElements com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$$Lambda/0x1, obj#2: int
    +- MapPartitions org.apache.spark.sql.Dataset$$Lambda/0x2, obj#5: int
-      +- DeserializeToObject newInstance(class scala.Tuple2), obj#6: scala.Tuple2
+      +- DeserializeToObject newInstance(class com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt), obj#6: com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt
          +- LocalTableScan [seq#8, integer#9]
 
 ------ end

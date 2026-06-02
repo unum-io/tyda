@@ -21,7 +21,12 @@ import com.choreograph.tyda.testsuites.GoldenTestSuite
   * of unnecessary operations or operations that spark cannot optimize away.
   */
 class DatasetOnSparkGoldenExplainSuite extends GoldenTestSuite, SharedSparkSession {
-  import DatasetOnSparkGoldenExplainSuite.normalizeIds
+  import DatasetOnSparkGoldenExplainSuite.{SeqAndInt, normalizeIds}
+
+  override def goldenFileName = {
+    val sparkMajor = spark.version.head
+    s"${getClass.getSimpleName}${sparkMajor}.golden"
+  }
 
   def testExplain(name: String)(ds: => Dataset[?]): Unit =
     goldenTest(name) { normalizeIds(DatasetOnSpark(ds).queryExecution.explainString(ExtendedMode)) }
@@ -35,7 +40,7 @@ class DatasetOnSparkGoldenExplainSuite extends GoldenTestSuite, SharedSparkSessi
   private val ds2 = createTable[(Int, String)]("golden_test_t2")
   private val ds3 = createTable[(Int, String)]("golden_test_t3")
   private val ds4 = createTable[(integer: Int, string: String)]("golden_test_t4")
-  private val ds5 = createTable[(seq: Seq[Int], integer: Int)]("golden_test_t5")
+  private val ds5 = createTable[SeqAndInt]("golden_test_t5")
   private val ds6 = createTable[(opt1: Option[Int], opt2: Option[Int])]("golden_test_t6")
 
   testExplain("read table") { ds1 }
@@ -64,6 +69,9 @@ class DatasetOnSparkGoldenExplainSuite extends GoldenTestSuite, SharedSparkSessi
 }
 
 object DatasetOnSparkGoldenExplainSuite {
+  // We use a case class to get stable deserializer in the explain
+  final case class SeqAndInt(seq: Seq[Int], integer: Int)
+
   /* The normalize logic is stolen directly from Spark golden suite
    * https://github.com/apache/spark/blob/c70c728eb1ea2e6c6aff29e84af89eba4be345dc/sql/core/src/test/scala/org/apache/spark/sql/PlanStabilitySuite.scala#L232
    *

@@ -5,16 +5,22 @@ import Keys.*
 
 object Dependencies {
   val scala3Version = "3.7.4"
-  val sparkVersion = "3.5.1"
+  val spark3Version = "3.5.1"
+  val spark4Version = "4.0.2"
   val jsoniterVersion = "2.38.6"
+  val bigQueryConnectorVersion = "0.44.1"
 
   object TestDeps {
     val scalatest = CompileDeps.scalatest % Test
     val commonsIo = CompileDeps.commonsIo % Test
-    val sparkSql = (CompileDeps.sparkSql % Test).exclude("org.scala-lang.modules", "scala-xml_2.13")
+    val spark3Sql = (CompileDeps.spark3Sql % Test).exclude("org.scala-lang.modules", "scala-xml_2.13")
+    val spark4Sql = (CompileDeps.spark4Sql % Test).exclude("org.scala-lang.modules", "scala-xml_2.13")
     val gcsConnector = CompileDeps.gcsConnector % Test
     val jsonSchemaValidator = "com.networknt" % "json-schema-validator" % "3.0.1" % Test
-    val bigQuerySparkConnector = "com.google.cloud.spark" % "spark-3.5-bigquery" % "0.44.1" % Test
+    val bigQuerySpark3Connector = "com.google.cloud.spark" % "spark-3.5-bigquery" % bigQueryConnectorVersion %
+      Test
+    val bigQuerySpark4Connector = "com.google.cloud.spark" % "spark-4.0-bigquery" % bigQueryConnectorVersion %
+      Test
   }
 
   object CompileDeps {
@@ -26,16 +32,17 @@ object Dependencies {
     val bigQuery = "com.google.cloud" % "google-cloud-bigquery" % "2.61.0"
     val parquet = "org.apache.parquet" % "parquet-hadoop" % "1.13.1"
     val hadoop = "org.apache.hadoop" % "hadoop-client-runtime" % "3.3.4"
-    val sparkSql = ("org.apache.spark" %% "spark-sql" % sparkVersion).cross(CrossVersion.for3Use2_13)
+    val spark3Sql = ("org.apache.spark" %% "spark-sql" % spark3Version).cross(CrossVersion.for3Use2_13)
+    val spark4Sql = ("org.apache.spark" %% "spark-sql" % spark4Version).cross(CrossVersion.for3Use2_13)
     val scalameta = "org.scalameta" %% "scalameta" % "4.15.2"
     val gcsConnector = ("com.google.cloud.bigdataoss" % "gcs-connector" % "hadoop3-2.2.31")
   }
 
   object ProvidedDeps {
-    val sparkSql = ("org.apache.spark" %% "spark-sql" % sparkVersion % Provided).cross(
+    val spark3Sql = ("org.apache.spark" %% "spark-sql" % spark3Version % Provided).cross(
       CrossVersion.for3Use2_13
     )
-    val sparkHadoop = ("org.apache.spark" %% "spark-hadoop-cloud" % sparkVersion % Provided).cross(
+    val spark4Sql = ("org.apache.spark" %% "spark-sql" % spark4Version % Provided).cross(
       CrossVersion.for3Use2_13
     )
     val jsoniterMacros = "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" %
@@ -54,7 +61,7 @@ object Dependencies {
 
   val tydaCollection = libraryDependencies ++= Seq(TestDeps.scalatest)
 
-  val tydaDocs = libraryDependencies ++= Seq(CompileDeps.sparkSql)
+  val tydaDocs = libraryDependencies ++= Seq(CompileDeps.spark3Sql)
 
   val tydaTestSuites = libraryDependencies ++= Seq(CompileDeps.scalatest, CompileDeps.commonsIo)
 
@@ -77,16 +84,27 @@ object Dependencies {
 
   val tydaSql = libraryDependencies ++= Seq()
 
-  val tydaSparkSql = libraryDependencies ++= Seq(TestDeps.sparkSql)
+  val tydaSparkSql = libraryDependencies ++= Seq(TestDeps.spark3Sql)
 
   val tydaBigQuery = libraryDependencies ++=
     Seq(CompileDeps.bigQuery, TestDeps.scalatest, TestDeps.gcsConnector)
 
-  val tydaSpark = libraryDependencies ++= Seq(
+  val tydaSpark3 = libraryDependencies ++= Seq(
     TestDeps.scalatest,
-    TestDeps.bigQuerySparkConnector,
+    TestDeps.bigQuerySpark3Connector,
     ProvidedDeps
-      .sparkSql
+      .spark3Sql
+      /* Both scalatest and Spark depend on scala-xml we need to exclude one of them since one can not mix
+       * 2.13 and 3 of the same artifact. But since scalatest is only used in test any compatability issues
+       * should show up in tests. */
+      .exclude("org.scala-lang.modules", "scala-xml_2.13")
+  )
+
+  val tydaSpark4 = libraryDependencies ++= Seq(
+    TestDeps.scalatest,
+    TestDeps.bigQuerySpark4Connector,
+    ProvidedDeps
+      .spark4Sql
       /* Both scalatest and Spark depend on scala-xml we need to exclude one of them since one can not mix
        * 2.13 and 3 of the same artifact. But since scalatest is only used in test any compatability issues
        * should show up in tests. */
@@ -99,5 +117,5 @@ object Dependencies {
     Seq(CompileDeps.slf4j, TestDeps.scalatest.exclude("org.scala-lang.modules", "scala-xml_3"))
 
   val tydaJobTest = libraryDependencies ++=
-    Seq(CompileDeps.scalatest.exclude("org.scala-lang.modules", "scala-xml_3"), CompileDeps.sparkSql)
+    Seq(CompileDeps.scalatest.exclude("org.scala-lang.modules", "scala-xml_3"), CompileDeps.spark3Sql)
 }

@@ -8,7 +8,6 @@ import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.shapeless3extras.mapConst
 
 private object CodecToCatalystType {
-
   def catalystType[T](codec: Codec[T]): DataType =
     codec match {
       case Codec.Byte => ByteType
@@ -29,7 +28,7 @@ private object CodecToCatalystType {
       case Codec.Option(inner @ Codec.Option(_)) => StructType(Seq(StructField("value", catalystType(inner))))
       case opt: Codec.Option[?] => catalystType(opt.element)
       case Codec.Product(_, _, Some(_)) => StructType(Seq(StructField(Forbidden.column, NullType)))
-      case prod: Codec.Product[T] => structFromFields(prod.fields.mapConst[Field[?]]([t] => identity(_)))
+      case prod: Codec.Product[T] => catalystStructType(prod)
       case Codec.FromInjection(_, to) => catalystType(to)
     }
 
