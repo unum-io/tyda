@@ -30,6 +30,7 @@ trait DatasetReadWriteSuiteAsGoldenSuite extends SqlGoldenTestSuite, DatasetRead
   }
 
   override def testReadExtended[Old: Arbitrary: Codec: TypeName, New: Codec: TypeName: Equality](
-      _update: Old => New
+      _update: Old => New,
+      _customName: Option[String] = None
   ): Unit = ()
 }
