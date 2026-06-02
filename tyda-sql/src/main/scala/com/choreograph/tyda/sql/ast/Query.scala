@@ -13,6 +13,7 @@ private[sql] enum Query {
       limit: Option[Int] = None
   )
   case Union(left: Query, right: Query, all: Boolean)
+  case Except(left: Query, right: Query, all: Boolean)
   case CreateTable(tableName: String, format: String, location: SqlExpr, query: Query, options: Query.Options)
   case ExportData(query: Query, options: Query.Options)
 }

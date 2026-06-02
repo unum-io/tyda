@@ -434,6 +434,13 @@ sealed trait Dataset[T: Codec] {
     */
   def union(other: Dataset[T]): Dataset[T] = Dataset.Union(this, other)
 
+  /** Returns a new Dataset containing the rows in this Dataset that are not
+    * present in the other Dataset. Duplicate rows are eliminated.
+    *
+    * This is equivalent to SQL `EXCEPT DISTINCT`.
+    */
+  def except(other: Dataset[T])(using Groupable[T]): Dataset[T] = leftAntiJoin(other, _ == _).distinct
+
   /** Proivdes a hint that the Dataset should be cached.
     *
     * There is no corresponding uncache method it expected that the runner will

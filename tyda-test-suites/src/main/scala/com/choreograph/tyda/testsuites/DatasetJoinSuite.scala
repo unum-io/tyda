@@ -135,6 +135,12 @@ trait DatasetJoinSuite extends DatasetSuite {
       ds1.join(ds2, _._1 == _._1).union(ds2.select(identity, identity)).join(ds1, _._1._2 == _._2)
   )
   test[Pair, Pair, ((Pair, Pair), Pair)](
+    "self join mutiple left with except",
+    (ds1: Dataset[Pair], ds2: Dataset[Pair]) =>
+      ds1.join(ds2, _._1 == _._1).except(ds2.select(identity, identity)).join(ds1, _._1._2 == _._2)
+  )
+
+  test[Pair, Pair, ((Pair, Pair), Pair)](
     "self join mutiple left with distinct",
     (ds1: Dataset[Pair], ds2: Dataset[Pair]) =>
       ds1.join(ds2, _._1 == _._1).distinct.join(ds1, _._1._2 == _._2)

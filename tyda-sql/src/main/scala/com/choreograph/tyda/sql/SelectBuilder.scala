@@ -246,6 +246,15 @@ private final case class SelectBuilder[T, R](
       SelectBuilder.from(newFrom, args)
     }
 
+  def except(rhs: SelectBuilder[?, ?]): Result[SelectBuilder[?, R]] =
+    for {
+      left <- build()
+      right <- rhs.build()
+    } yield {
+      val newFrom = TypedFrom(Query.Except(left, right, false), args.aliasGen)(using select.expr.codec)
+      SelectBuilder.from(newFrom, args)
+    }
+
   private def toSubquery: Result[SelectBuilder[R, R]] = build().map(makeSubquery(_, select.expr.codec))
 
   private def requiresSubqueryForSeqOps[T, R](compiled: CompiledExprOrExplode[T, R]): Boolean =
