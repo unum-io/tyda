@@ -372,6 +372,10 @@ private object ExprNode extends ExprApi[ExprNode] {
     override def codec: Codec[Double] = Codec[Double]
   }
 
+  final case class IsNaN[T <: Float | Double](operand: ExprNode[T]) extends ExprNode[Boolean] {
+    override def codec: Codec[Boolean] = Codec[Boolean]
+  }
+
   final case class DistinctSeq[T](operand: ExprNode[Seq[T]]) extends ExprNode[Seq[T]] {
     override def codec: Codec[Seq[T]] = operand.codec
   }

@@ -517,6 +517,16 @@ trait ExprApi[Expr[T]] {
 
   }
 
+  extension [T <: Float | Double](fp: Expr[T]) {
+
+    /** Returns true if the value is NaN (Not a Number).
+      *
+      * Note: for Double and Float, NaN != NaN per IEEE 754. Use this method to
+      * explicitly check for NaN values.
+      */
+    def isNaN: Expr[Boolean] = lift(ExprNode.IsNaN(unlift(fp)))
+  }
+
   extension (string: Expr[String]) {
 
     /** True if this string starts with the given prefix. */

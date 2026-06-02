@@ -178,6 +178,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
       case ExprNode.Select(p, field) => inner(p).map(e => SqlExpr.FieldAccess(e, field))
       case ExprNode.Literal(value, codec) => Right(literalToSqlExpr(value, codec, dialect))
       case ExprNode.Rand() => Right(SqlExpr.Function(dialect.rand, Seq.empty))
+      case ExprNode.IsNaN(operand) => inner(operand).map(e => SqlExpr.Function(dialect.isNanFunction, Seq(e)))
       case ExprNode.Not(IsNone(operand)) => inner(operand).map(SqlExpr.isNotNull)
       case IsNone(operand) => inner(operand).map(SqlExpr.isNull)
       case ExprNode.Equals(Nullable(lhs), Nullable(rhs)) => binaryOp("IS NOT DISTINCT FROM", lhs, rhs)
