@@ -235,7 +235,11 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
         }
       case ExprNode.OptionToIterable(e) =>
         val column = convert(e)
-        when(column.isNotNull, array(column)).otherwise(array())
+        val elementColumn = e.codec match {
+          case Codec.Option(Codec.Option(_)) => column("value")
+          case _ => column
+        }
+        when(column.isNotNull, array(elementColumn)).otherwise(array())
       case ExprNode.Udf(e, f, codec) => createUdf(f, convert(e))(using e.codec, codec)
       case ExprNode.MakeSome(Nullable(e)) => wrapNestedSome(convert(e))
       case ExprNode.MakeSome(e) => convert(e)
