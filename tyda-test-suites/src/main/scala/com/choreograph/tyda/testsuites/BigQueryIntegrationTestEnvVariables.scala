@@ -8,11 +8,14 @@ object BigQueryIntegrationTestEnvVariables {
   private val ProjectId = "TYDA_BIGQUERY_TEST_PROJECT_ID"
   private val TmpDir = "TYDA_BIGQUERY_TEST_TMP_LOCATION"
 
-  def skipIfProjectNotSet(): Unit =
+  def skipIfProjectNotSet(): Unit = {
+    // We use a local variable here to avoid the whole env becoming part of the error message
+    val shouldRun = sys.env.contains(ProjectId)
     assume(
-      condition = sys.env.contains(ProjectId),
+      condition = shouldRun,
       s"Provide a GCP project id using enviroment variable $ProjectId enable BigQuery integration tests"
     ): Unit
+  }
 
   def getProjectId: Option[String] = sys.env.get(ProjectId)
 
@@ -25,8 +28,10 @@ object BigQueryIntegrationTestEnvVariables {
     }
 
   private def skipIfTmpDirNotSet(): Unit =
+    // We use a local variable here to avoid the whole env becoming part of the error message
+    val shouldRun = sys.env.contains(TmpDir)
     assume(
-      condition = sys.env.contains(TmpDir),
+      condition = shouldRun,
       s"Provide gcs location using the eviroment variable $TmpDir to enable BigQuery integration read/write tests"
     ): Unit
 
