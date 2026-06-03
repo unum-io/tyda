@@ -1,5 +1,3 @@
-package com.choreograph.superspine
-
 import _root_.scalafix.sbt.BuildInfo as ScalafixBuildInfo
 import sbt.*
 
