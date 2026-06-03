@@ -5,6 +5,8 @@ import scala.util.Try
 import scala.util.Success
 import scala.util.Failure
 
+import com.github.sbt.git.SbtGit.GitKeys.useConsoleForROGit
+
 ThisBuild / tlBaseVersion := "0.3"
 ThisBuild / organization := "com.wppresolve.tyda"
 ThisBuild / organizationName := "WPP"
@@ -40,6 +42,10 @@ ThisBuild / scalacOptions ++= Seq(
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalafixDependencies += "com.github.xuwei-k" %% "scalafix-rules" % "0.6.24"
+
+// This is needed for using git worktrees, without having jgit crash.
+// When https://github.com/sbt/sbt-git/issues/264 is solved we can remove this.
+ThisBuild / useConsoleForROGit := true
 
 ThisBuild / tlCiDependencyGraphJob := false // TODO: Decide we we want this and if so implement it
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"))
