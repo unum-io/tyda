@@ -335,66 +335,24 @@ private final case class SelectBuilder[T, R](
       exprs: Tuple.Map[R2, [X] =>> CompiledExprOrExplode[R, X]]
   ): Result[SelectBuilder[?, R2]] =
     args.dialect.explode match {
-      case SqlDialect.ExplodeSupport.Function(_, supportMultiple) =>
-        selectNExplodeFunction(exprs, supportMultiple)
+      case SqlDialect.ExplodeSupport.Function(_, _) => selectNExplodeFunction(exprs)
       case SqlDialect.ExplodeSupport.InnerJoin => selectNExplodeJoin(exprs)
     }
 
   private def selectNExplodeFunction[R2 <: Tuple](
-      exprs: Tuple.Map[R2, [X] =>> CompiledExprOrExplode[R, X]],
-      supportMultipleExplodes: Boolean
+      exprs: Tuple.Map[R2, [X] =>> CompiledExprOrExplode[R, X]]
   ): Result[SelectBuilder[?, R2]] = {
-
-    val nbrExplodes = tupleInstances(exprs).foldLeft0(0)([t] =>
-      (acc, compiled) =>
-        compiled match {
-          case _: CompiledExplodeExpr[?, ?] => acc + 1
-          case compiled: CompiledExpr[?, ?] => acc
-        }
-    )
     val codec = Codec.tuple(tupleInstances(exprs).mapK([t] => _.codec))
-    // Workaround for old Spark versions not supporting multiple explodes
-    if nbrExplodes > 1 && !supportMultipleExplodes then {
-      val rowColumnName = "row"
-      val queryResult = buildWithSelect(NonEmpty[Seq]((RelaxedCompiledExpr(select), rowColumnName)))
-      tupleInstances(exprs)
-        .foldLeft0(queryResult.map((_, 0)))([t] =>
-          (result, selectExpr) =>
-            result.flatMap((query, resultCount) =>
-              val alias = args.aliasGen.table()
-              val from = From.Subquery(query, alias)
-              val rowExpr = SqlExpr.FieldAccess(SqlExpr.Ident(alias), rowColumnName)
-              def column(name: String) = SqlExpr.As(SqlExpr.FieldAccess(SqlExpr.Ident(alias), name), name)
-              val existingResultColumns = (1 to resultCount).map(i => column(s"_${i}"))
+    val newSelect = NonEmpty
+      .from(
+        tupleInstances(exprs)
+          .mapConst([t] => compiled => andThenRelaxed(select, compiled))
+          .zipWithIndex
+          .map { case (e, i) => (e, s"_${i + 1}") }
+      )
+      .getOrElse(unreachable("Selects contains at least one statement"))
 
-              val (arg, expr) = selectExpr match {
-                case explode: CompiledExplodeExpr[?, ?] => (explode.arg, ExplodeExpr(explode.expr))
-                case compiled: CompiledExpr[?, ?] => (compiled.arg, compiled.expr)
-              }
-              val newQuery = simplifyAndToSqlExpr(expr, Map(arg -> IdentifierOrSqlExpr.Expr(rowExpr)), args)
-                .map(SqlExpr.As(_, s"_${resultCount + 1}"))
-                .map(newResult =>
-                  NonEmpty[Seq](SqlExpr.As(rowExpr, rowColumnName)) ++ existingResultColumns ++ Seq(newResult)
-                )
-                .map(newSelect =>
-                  Query.Select(newSelect, Some(from), None, Seq.empty, None, distinct = false)
-                )
-              newQuery.map((_, resultCount + 1))
-            )
-        )
-        .map((query, _) => makeSubquery(query, codec))
-    } else {
-      val newSelect = NonEmpty
-        .from(
-          tupleInstances(exprs)
-            .mapConst([t] => compiled => andThenRelaxed(select, compiled))
-            .zipWithIndex
-            .map { case (e, i) => (e, s"_${i + 1}") }
-        )
-        .getOrElse(unreachable("Selects contains at least one statement"))
-
-      buildWithSelect(newSelect).map(makeSubquery(_, codec))
-    }
+    buildWithSelect(newSelect).map(makeSubquery(_, codec))
   }
 
   private def selectNExplodeJoin[R2 <: Tuple](

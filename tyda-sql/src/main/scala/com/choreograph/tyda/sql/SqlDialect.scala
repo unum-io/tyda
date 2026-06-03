@@ -9,6 +9,7 @@ import com.choreograph.tyda.rewrite.DisfavorIsNotDistinctFrom
 import com.choreograph.tyda.rewrite.DistributeProductAndSeqEquals
 import com.choreograph.tyda.rewrite.ExprRule
 import com.choreograph.tyda.rewrite.RemoveArrayCasts
+import com.choreograph.tyda.rewrite.RemoveMultipleExplodes
 import com.choreograph.tyda.rewrite.RemoveNullSafeEqualsInJoinCondition
 import com.choreograph.tyda.rewrite.SparkJsonCompatability
 import com.choreograph.tyda.rewrite.WrapOptionInCollect
@@ -439,7 +440,8 @@ object SqlDialect {
       CheckArrayIndexPositive,
       WrapOptionInCollect,
       SparkJsonCompatability.AdaptReads,
-      SparkJsonCompatability.ConvertWrites
+      SparkJsonCompatability.ConvertWrites,
+      RemoveMultipleExplodes
     )
   )
 }
