@@ -149,7 +149,9 @@ object ExprEvaluation {
         case ExprNode.LessThanOrEqual(comparable, lhs, rhs) =>
           binaryOp(lhs, rhs, comparableToOrd(comparable).lteq)
         case ExprNode.UpcastToIterable(expr) => impl(expr)
-        case ExprNode.OptionToIterable(expr) => impl(expr).andThen(Option.option2Iterable)
+        case ExprNode.OptionToIterable(expr) => impl(expr)
+            .andThen(Option.option2Iterable)
+            .andThen(_.toSeq) // cast to seq to provide comparable type for equality checks in tests
         case ExprNode.Udf(e, f, _) => impl(e).andThen(f)
         case ExprNode.MakeSome(expr) =>
           val exprEval = impl(expr)
