@@ -561,10 +561,4 @@ object CodecToEncoder {
       WalkedTypePath()
     )
   }
-
-  private[spark] final class RowProduct(row: Row) extends Product, Serializable {
-    def productArity: Int = row.length
-    def productElement(n: Int): Any = row.get(n)
-    def canEqual(that: Any): Boolean = that.isInstanceOf[RowProduct]
-  }
 }
