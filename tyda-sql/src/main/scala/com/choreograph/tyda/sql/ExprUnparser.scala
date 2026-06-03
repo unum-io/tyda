@@ -712,6 +712,7 @@ private def primitiveAggregate[T: Codec](
     Right(SqlExpr.Function(name, Seq(SqlExpr.FieldAccess(arg, "_1"), SqlExpr.FieldAccess(arg, "_2"))))
   agg match {
     case PrimitiveAggregate.Count() => simple("count")
+    case PrimitiveAggregate.CountDistinct() => Right(SqlExpr.Function("count", Seq(arg), distinct = true))
     case PrimitiveAggregate.BoolAnd() => simple(dialect.boolAndFunction)
     case PrimitiveAggregate.BoolOr() => simple(dialect.boolOrFunction)
     case agg @ (PrimitiveAggregate.Min(_)) if isFloatingPoint(Codec[T]) =>

@@ -94,6 +94,38 @@ SELECT t1._1 AS _1, count(CAST(1 AS INT)) AS _2 FROM t1 GROUP BY t1._1
 SELECT count(CAST(1 AS INT)) AS value FROM t1 GROUP BY CAST(NULL AS INT)
 ------ end
 
+------ Test: countDistinct array
+SELECT count(CAST(1 AS INT)) AS value FROM (SELECT DISTINCT struct(CAST(1 AS INT) AS key) AS _1, t1.value AS _2 FROM t1) AS t0 GROUP BY t0._1
+------ end
+
+------ Test: countDistinct group by
+SELECT t1._1 AS _1, count(DISTINCT t1._2) AS _2 FROM t1 GROUP BY t1._1
+------ end
+
+------ Test: countDistinct struct
+SELECT count(CAST(1 AS INT)) AS value FROM (SELECT DISTINCT struct(CAST(1 AS INT) AS key) AS _1, struct(t1._1 AS _1, t1._2 AS _2) AS _2 FROM t1) AS t0 GROUP BY t0._1
+------ end
+
+------ Test: countDistinct struct multiple
+SELECT t2._1.key AS key, t2._2.value AS d1, t3._2.value AS d2 FROM (SELECT t0._1 AS _1, struct(count(CAST(1 AS INT)) AS value) AS _2 FROM (SELECT DISTINCT struct(t1._1._1 AS key) AS _1, t1._1 AS _2 FROM t1) AS t0 GROUP BY t0._1) AS t2 JOIN (SELECT t1._1 AS _1, struct(count(CAST(1 AS INT)) AS value) AS _2 FROM (SELECT DISTINCT struct(t1._1._1 AS key) AS _1, t1._2 AS _2 FROM t1) AS t1 GROUP BY t1._1) AS t3 ON (t2._1 = t3._1)
+------ end
+
+------ Test: countDistinct struct multiple and supported
+SELECT t1._1.key AS key, t2._2.value AS d1, t4._2.value AS d2, t1._2.result0 AS tot FROM (SELECT struct(t1._1._1 AS key) AS _1, struct(count(CAST(1 AS INT)) AS result0) AS _2 FROM t1 GROUP BY t1._1._1) AS t1 JOIN (SELECT t0._1 AS _1, struct(count(CAST(1 AS INT)) AS value) AS _2 FROM (SELECT DISTINCT struct(t1._1._1 AS key) AS _1, t1._1 AS _2 FROM t1) AS t0 GROUP BY t0._1) AS t2 ON (t1._1 = t2._1) JOIN (SELECT t3._1 AS _1, struct(count(CAST(1 AS INT)) AS value) AS _2 FROM (SELECT DISTINCT struct(t1._1._1 AS key) AS _1, t1._2 AS _2 FROM t1) AS t3 GROUP BY t3._1) AS t4 ON (t1._1 = t4._1)
+------ end
+
+------ Test: countDistinct struct multiple and supported ungrouped
+SELECT CASE WHEN (count(1) <> 0) THEN struct((SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM (SELECT DISTINCT t1._1._1 AS _1, t1._1._2 AS _2 FROM t1) AS t0) AS d1, (SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM (SELECT DISTINCT t1._2._1 AS _1, t1._2._2 AS _2 FROM t1) AS t2) AS d2, count(CAST(1 AS INT)) AS tot) END AS value FROM t1
+------ end
+
+------ Test: countDistinct struct ungrouped
+SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM (SELECT DISTINCT t1._1 AS _1, t1._2 AS _2 FROM t1) AS t0
+------ end
+
+------ Test: countDistinct whole row
+SELECT count(DISTINCT t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+------ end
+
 ------ Test: countIf expr
 SELECT count(CASE WHEN (NOT (t1.value <= CAST(0 AS INT))) THEN CAST(1 AS INT) END) AS value FROM t1 GROUP BY CAST(NULL AS INT)
 ------ end

@@ -8,6 +8,9 @@ private object PrimitiveAggregate {
   final case class Collect[T: Codec]() extends PrimitiveAggregate[T, Seq[T]]
   final case class Count[T]() extends PrimitiveAggregate[T, Long]
   final case class CountSome[T]() extends PrimitiveAggregate[Option[T], Long]
+  final case class CountDistinct[T: Codec]() extends PrimitiveAggregate[T, Long] {
+    def inputCodec: Codec[T] = summon
+  }
   final case class BoolAnd() extends PrimitiveAggregate[Boolean, Boolean]
   final case class BoolOr() extends PrimitiveAggregate[Boolean, Boolean]
   final case class Min[T: Codec](comparable: Comparable[T]) extends PrimitiveAggregate[T, T]
