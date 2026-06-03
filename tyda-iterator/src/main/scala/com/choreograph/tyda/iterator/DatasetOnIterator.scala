@@ -19,9 +19,13 @@ import com.choreograph.tyda.CompiledExpr
 import com.choreograph.tyda.CompiledExprOrExplode
 import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.Date
+import com.choreograph.tyda.Decimal
+import com.choreograph.tyda.Duration
 import com.choreograph.tyda.Format
 import com.choreograph.tyda.HivePartitionParser
+import com.choreograph.tyda.Ord
 import com.choreograph.tyda.PartitionEncoding
+import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.iterator.AggregateExprEvaluation.aggregator
 import com.choreograph.tyda.iterator.ExprEvaluation.lambda
 import com.choreograph.tyda.json.CodecToJsoniter
@@ -29,6 +33,7 @@ import com.choreograph.tyda.parquet.CodecParquetWriter
 import com.choreograph.tyda.parquet.CodecReadSupport
 import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.shapeless3extras.tupleInstances
+import com.choreograph.tyda.unreachable
 
 object DatasetOnIterator {
   def perform[T](ds: Dataset.Action): Unit =
@@ -74,6 +79,9 @@ object DatasetOnIterator {
       case Dataset.Union(left, right) => apply(left) ++ apply(right)
       case Dataset.Cache(input) => apply(input).iterator
       case Dataset.Limit(input, n) => apply(input).take(n)
+      case Dataset.OrderBy(input, key: CompiledExpr[?, k]) =>
+        given Ordering[k] = ordFromCodec(key.codec)
+        apply(input).to(Vector).sortBy(lambda(key)).iterator
     }
 
   private def selectN[T, R <: Tuple](
@@ -220,4 +228,30 @@ object DatasetOnIterator {
       }
     }
   }
+
+  type Id[x] = x
+
+  private def ordFromCodec[T](codec: Codec[T]): Ord[T] =
+    codec match {
+      case Codec.Boolean => Ord[Boolean]
+      case Codec.Byte => Ord[Byte]
+      case Codec.Short => Ord[Short]
+      case Codec.Int => Ord[Int]
+      case Codec.Long => Ord[Long]
+      case Codec.Float => Ord[Float]
+      case Codec.Double => Ord[Double]
+      case Codec.String => Ord[String]
+      case _: Codec.Decimal[p, s] => Ord[Decimal[p, s]]
+      case Codec.Date => Ord.fromOrdering(using Ordering[Date])
+      case Codec.TimestampMicros => Ord.fromOrdering(using Ordering[Timestamp])
+      case Codec.DurationMicros => Ord.fromOrdering(using Ordering[Duration])
+      case Codec.Option(element: Codec[e]) =>
+        given Ord[e] = ordFromCodec(element)
+        Ord.sum[Option[e]]
+      case Codec.Product(_, fields, _) => Ord.product(using fields.mapK([t] => f => ordFromCodec(f.codec)))
+      case Codec.FromInjection(inj, to) =>
+        val ordering = Ordering.by(inj(_))(using ordFromCodec(to))
+        Ord.fromOrdering(using ordering)
+      case Codec.Seq(_) | Codec.Map(_, _) | Codec.Bytes => unreachable("Collections are not orderable")
+    }
 }

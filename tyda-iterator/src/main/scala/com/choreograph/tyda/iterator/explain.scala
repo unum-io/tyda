@@ -65,6 +65,7 @@ private def children[T](ds: Dataset[T] | Dataset.Action): Seq[Dataset[?]] =
     case Dataset.Union(left, right) => Seq(left, right)
     case Dataset.Action.Write(input, _, _) => Seq(input)
     case Dataset.Limit(input, _) => Seq(input)
+    case Dataset.OrderBy(input, _) => Seq(input)
   }
 
 private type AnyCompiledExpr = CompiledExpr[?, ?] | CompiledExpr2[?, ?, ?] | CompiledExplodeExpr[?, ?] |
@@ -94,6 +95,7 @@ private def exprs[T](ds: Dataset[T] | Dataset.Action): Seq[AnyCompiledExpr] =
     case Dataset.Union(_, _) => Seq.empty
     case Dataset.Action.Write(_, _, _) => Seq.empty
     case Dataset.Limit(_, _) => Seq.empty
+    case Dataset.OrderBy(_, key) => Seq(key)
   }
 
 private[tyda] def explain(anyCompiled: AnyCompiledExpr): String =
