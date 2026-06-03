@@ -54,7 +54,7 @@ class ExprEvaluationSuiteSpark extends ExprEvaluationSuite, SharedSparkSession {
     val dummyPlan = Project(Seq(Alias(expr, "result")()), LocalRelation(attrs))
     val analyzedPlan = analyzer.execute(dummyPlan)
     analyzer.checkAnalysis(analyzedPlan)
-    /* If we do not apply ReplaceExpressions we run into assert failures on this assery
+    /* If we do not apply ReplaceExpressions we run into assert failures on this assert
      * https://github.com/apache/spark/blob/b5ed5220267d639f0fae73d1fb1b4de7e84adecc/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/Expression.scala#L463-L465 */
     val replacedPlan = ReplaceExpressions(analyzedPlan)
     val resolvedExpr = replacedPlan.expressions.head

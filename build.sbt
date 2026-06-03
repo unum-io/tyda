@@ -324,11 +324,10 @@ lazy val tydaSpark4 = (project in file("tyda-spark4"))
     // An existential type that came from a Scala-2 classfile for class AgnosticEncoders
     // cannot be mapped accurately to a Scala-3 equivalent.
     //
-    // Seems like the nowarn annoation can not be used for this warning, so we can not make the silencing more
-    // local than this.
+    // Seems like the nowarn annotation can not be used for this warning, so we can not make the silencing
+    // more local than this.
     scalacOptions += "-Wconf:id=E098:s"
   )
-  .settings(Dependencies.tydaSpark3)
   .dependsOn(scalafixRules % ScalafixConfig)
   .dependsOn(tyda, tydaRewrite)
   .dependsOn(tydaIterator % "test->compile")
