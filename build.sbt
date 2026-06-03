@@ -1,5 +1,5 @@
 import java.nio.file.StandardCopyOption
-import com.choreograph.superspine.Dependencies
+
 import scala.sys.process.*
 import scala.util.Try
 import scala.util.Success
