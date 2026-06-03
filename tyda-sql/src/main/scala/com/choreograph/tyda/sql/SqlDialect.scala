@@ -57,6 +57,9 @@ final case class SqlDialect(
     // BigQuery complains when the struct functions is used in GROUP BY clause but has no problem
     // when done as part of a subquery first.
     useSubqueryToAvoidStructInGroupBy: Boolean = false,
+    // BigQuery does not support EXCEPT DISTINCT when any SELECT column is of STRUCT type.
+    // When false, the Distinct(LeftAntiJoin(_ == _)) pattern uses NOT EXISTS + DISTINCT instead.
+    supportsExceptDistinctOnStructColumns: Boolean = true,
     values: SqlDialect.Values,
     writeSupport: SqlDialect.WriteSupport,
     rand: String,
@@ -371,6 +374,7 @@ object SqlDialect {
     trimFunction = TrimFunction.Characters("trim", " "),
     tryCast = "SAFE_CAST",
     useSubqueryToAvoidStructInGroupBy = true,
+    supportsExceptDistinctOnStructColumns = false,
     values = Values.SelectUnionAll,
     rand = "RAND",
     writeSupport = WriteSupport.ExportData,

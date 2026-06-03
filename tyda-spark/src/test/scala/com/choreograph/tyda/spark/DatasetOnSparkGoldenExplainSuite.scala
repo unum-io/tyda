@@ -46,6 +46,8 @@ class DatasetOnSparkGoldenExplainSuite extends GoldenTestSuite, SharedSparkSessi
 
   testExplain("union") { ds1.union(ds2) }
 
+  testExplain("except") { ds1.except(ds2) }
+
   testExplain("aggregate") { ds1.groupByKey(_._1).aggregate(r => (count = count(), min = min(r._1))) }
 
   testExplain("project") { ds4.project[(string: String)] }

@@ -14,6 +14,18 @@ SELECT DISTINCT t1.value AS value FROM t1
 SELECT DISTINCT t1.value AS value FROM t1
 ------ end
 
+------ Test: except
+(SELECT t1.value AS value FROM t1) EXCEPT DISTINCT (SELECT t2.value AS value FROM t2)
+------ end
+
+------ Test: except on struct
+(SELECT t1._1 AS _1, t1._2 AS _2 FROM t1) EXCEPT DISTINCT (SELECT t2._1 AS _1, t2._2 AS _2 FROM t2)
+------ end
+
+------ Test: except with self
+(SELECT t1.value AS value FROM t1) EXCEPT DISTINCT (SELECT t1.value AS value FROM t1)
+------ end
+
 ------ Test: explode Map
 SELECT t2._1 AS _1, t2._2 AS _2 FROM (SELECT CAST(t0.value AS ARRAY<STRUCT<_1 INT,_2 INT>>) AS value FROM (SELECT t1.value AS value FROM t1) AS t0) AS t1, t1.value AS t2
 ------ end
@@ -139,15 +151,15 @@ SELECT CAST(1 AS INT) AS value FROM t1
 ------ end
 
 ------ Test: union
-SELECT t1.value AS value FROM t1 UNION ALL SELECT t2.value AS value FROM t2
+(SELECT t1.value AS value FROM t1) UNION ALL (SELECT t2.value AS value FROM t2)
 ------ end
 
 ------ Test: union on struct
-SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 UNION ALL SELECT t2._1 AS _1, t2._2 AS _2 FROM t2
+(SELECT t1._1 AS _1, t1._2 AS _2 FROM t1) UNION ALL (SELECT t2._1 AS _1, t2._2 AS _2 FROM t2)
 ------ end
 
 ------ Test: union with self
-SELECT t1.value AS value FROM t1 UNION ALL SELECT t1.value AS value FROM t1
+(SELECT t1.value AS value FROM t1) UNION ALL (SELECT t1.value AS value FROM t1)
 ------ end
 
 ------ Test: where

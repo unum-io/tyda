@@ -96,7 +96,11 @@ private[tyda] final case class SqlWriter(writer: Writer) {
 
       case Query.Union(left, right, all) =>
         val union = if (all) then "UNION ALL" else "UNION"
-        writeSql"$left $union $right"
+        writeSql"($left) $union ($right)"
+
+      case Query.Except(left, right, all) =>
+        val except = if (all) then "EXCEPT" else "EXCEPT DISTINCT"
+        writeSql"($left) $except ($right)"
 
       case Query.CreateTable(tableName, format, location, query, options) =>
         writeSql"CREATE TABLE $tableName USING $format$options LOCATION $location AS $query"
