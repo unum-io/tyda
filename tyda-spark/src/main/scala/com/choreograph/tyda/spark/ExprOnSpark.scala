@@ -50,7 +50,7 @@ import com.choreograph.tyda.rewrite.Nullable
 import com.choreograph.tyda.rewrite.PrimitiveAggregateAsFold
 import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.shapeless3extras.tupleInstances
-import com.choreograph.tyda.spark.CodecToEncoder.catalystType
+import com.choreograph.tyda.spark.CodecToCatalystType.catalystType
 import com.choreograph.tyda.spark.PrimitiveAggregateOnSpark.CompatibleIntegral
 import com.choreograph.tyda.unreachable
 
@@ -97,7 +97,7 @@ private[spark] object ExprOnSpark {
   private def createUdf[T: Codec, U: Codec](f: (T, T) => U, arg1: Column, arg2: Column, name: String) = {
     val udf = ScalaUDF(
       function = f,
-      dataType = CodecToEncoder.catalystType(Codec[U]),
+      dataType = catalystType(Codec[U]),
       children = Seq(arg1.expr, arg2.expr),
       inputEncoders =
         Seq(CodecToEncoder.convertInternal(using Codec[T]), CodecToEncoder.convertInternal(using Codec[T]))
@@ -111,7 +111,7 @@ private[spark] object ExprOnSpark {
   private def createUdf[T: Codec, U: Codec](f: T => U, arg: Column) = {
     val udf = ScalaUDF(
       function = f,
-      dataType = CodecToEncoder.catalystType(Codec[U]),
+      dataType = catalystType(Codec[U]),
       children = Seq(arg.expr),
       inputEncoders = Seq(Some(CodecToEncoder.convertInternal(using Codec[T]))),
       outputEncoder = Some(CodecToEncoder.convertInternal(using Codec[U]))
@@ -122,7 +122,7 @@ private[spark] object ExprOnSpark {
   private def createUdf[U: Codec](f: () => U, name: Option[String]) = {
     val udf = ScalaUDF(
       function = f,
-      dataType = CodecToEncoder.catalystType(Codec[U]),
+      dataType = catalystType(Codec[U]),
       children = Seq(),
       outputEncoder = Some(CodecToEncoder.convertInternal(using Codec[U])),
       udfName = name
@@ -165,7 +165,7 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
       case ExprNode.MakeProduct(values, Codec.Product(_, _, Some(_))) =>
         struct(lit(null).as(Forbidden.column))
 
-      case ExprNode.None(_) => lit(null).cast(CodecToEncoder.catalystType(expr.codec))
+      case ExprNode.None(_) => lit(null).cast(catalystType(expr.codec))
       case ExprNode.MakeProduct(values, codec) =>
         val fieldExprs = tupleInstances(values).mapConst([t] => convert(_))
         val names = codec.fields.mapConst[String]([t] => _.name)
@@ -177,7 +177,7 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
       case ExprNode.MakeSeq(values, _) =>
         val fieldExprs = values.map(convert(_))
         val arr = array(fieldExprs*)
-        if values.isEmpty then arr.cast(CodecToEncoder.catalystType(expr.codec)) else arr
+        if values.isEmpty then arr.cast(catalystType(expr.codec)) else arr
       case ExprNode.ConcatSeq(lhs, rhs) => concat(convert(lhs), (convert(rhs)))
       case ExprNode.MapSeq(seq, f) =>
         val seqCol = convert(seq)
@@ -229,7 +229,7 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
       case ExprNode.LessThanOrEqual(_, lhs, rhs) => convert(lhs) <= convert(rhs)
       case ExprNode.UpcastToIterable(e) => e.codec match {
           // The cast he is to rename the struct fields from key, value to _1, _2
-          case _: Codec.Map[?, ?] => map_entries(convert(e)).cast(CodecToEncoder.catalystType(expr.codec))
+          case _: Codec.Map[?, ?] => map_entries(convert(e)).cast(catalystType(expr.codec))
           case ArrayCodec(_) => convert(e)
           case codec => unreachable(s"UpcastToIterable only get codecs of Map and Iterable not $codec")
         }
@@ -242,8 +242,7 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
       case ExprNode.Coalesce(operands) => coalesce(operands.map(convert(_))*)
       case Nullable(ExprNode.KnownNotNull(e)) => convert(e)("value")
       case ExprNode.KnownNotNull(e) => convert(e)
-      case ExprNode.RaiseError(message, codec) =>
-        raise_error(convert(message)).cast(CodecToEncoder.catalystType(codec))
+      case ExprNode.RaiseError(message, codec) => raise_error(convert(message)).cast(catalystType(codec))
       case ExprNode.ScalarSubquery(ds) =>
         // TODO: When only supporting Spark 4.0+ we can use the improve subquery apis from
         // https://github.com/apache/spark/pull/48664 and plan this as a scalar subquery
@@ -286,15 +285,15 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
         call_function("element_at", convert(array), adjustedIdx)
       case ExprNode.Add(additive, lhs, rhs) => convert(lhs) + convert(rhs)
       case ExprNode.Quotient(CompatibleIntegral(), lhs, rhs) =>
-        call_function("div", convert(lhs), convert(rhs)).cast(CodecToEncoder.catalystType(expr.codec))
+        call_function("div", convert(lhs), convert(rhs)).cast(catalystType(expr.codec))
       case ExprNode.Quotient(integral, lhs, rhs) =>
         createUdf(integral.quot, convert(lhs), convert(rhs), s"$integral.quot")(using lhs.codec, lhs.codec)
-      case ExprNode.Cast(from, canCast) => convert(from).cast(CodecToEncoder.catalystType(expr.codec))
+      case ExprNode.Cast(from, canCast) => convert(from).cast(catalystType(expr.codec))
       case ExprNode.TryCast(from, canTryCast) =>
         /* TODO: Replace with public API in Spark 4.0.0+ it was exposed added in
          * https://github.com/apache/spark/pull/45796 */
         val e = convert(from).expr
-        val tryCast = Cast(e, CodecToEncoder.catalystType(expr.codec), None, EvalMode.TRY)
+        val tryCast = Cast(e, catalystType(expr.codec), None, EvalMode.TRY)
         val casted = new Column(tryCast)
         if from.codec == Codec.String then when(!convert(from).rlike("\\p{Cc}"), casted) else casted
       case ExprNode.TimestampToMicros(inner) => unix_micros(convert(inner))

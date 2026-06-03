@@ -31,6 +31,7 @@ import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Ord
 import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.TypeName
+import com.choreograph.tyda.spark.CodecToCatalystType.nullable
 import com.choreograph.tyda.staticAssert
 
 object CodecToEncoderSpecBase {
@@ -220,8 +221,7 @@ trait CodecToEncoderSpecBase extends AnyFunSuite with SharedSparkSession {
     test(s"schema test for ${TypeName.name[T]}") {
       val expected = expectedType match {
         case s: StructType => s
-        case other =>
-          StructType(Seq(StructField("value", other, nullable = CodecToEncoder.nullable(Codec[T]))))
+        case other => StructType(Seq(StructField("value", other, nullable = nullable(Codec[T]))))
       }
 
       val fromCodec = convert[T].schema

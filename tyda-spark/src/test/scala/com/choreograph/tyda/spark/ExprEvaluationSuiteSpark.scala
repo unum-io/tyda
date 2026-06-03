@@ -16,6 +16,7 @@ import org.apache.spark.sql.types.StructType
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.CompiledExpr
 import com.choreograph.tyda.Expr
+import com.choreograph.tyda.spark.CodecToCatalystType.catalystType
 import com.choreograph.tyda.testsuites.ExprEvaluationSuite
 
 /* This suite evaluates expressions without doing creating a full plan.
@@ -68,7 +69,7 @@ class ExprEvaluationSuiteSpark extends ExprEvaluationSuite, SharedSparkSession {
       case _ =>
     }
     val deserializer = createDeserializer[To](using compiled.codec)
-    val expectedType = CodecToEncoder.catalystType(compiled.codec)
+    val expectedType = catalystType(compiled.codec)
     assert(
       withAllNullable(sparkExpr.dataType) == withAllNullable(expectedType),
       s"Got\n${sparkExpr.dataType} but expected\n${expectedType}"

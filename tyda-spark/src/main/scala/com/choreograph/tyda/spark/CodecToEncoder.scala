@@ -41,6 +41,9 @@ import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.Injection
 import com.choreograph.tyda.Variant
 import com.choreograph.tyda.shapeless3extras.mapConst
+import com.choreograph.tyda.spark.CodecToCatalystType.catalystStructType
+import com.choreograph.tyda.spark.CodecToCatalystType.catalystType
+import com.choreograph.tyda.spark.CodecToCatalystType.nullable
 
 /* This object currently contains code vendored from Spark 3.5.4 mainly from the files
  * https://github.com/apache/spark/blob/v3.5.4/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/DeserializerBuildHelper.scala
@@ -71,44 +74,6 @@ object CodecToEncoder {
       case Codec.Date => IntegerType
       case Codec.String | Codec.Seq(_) | Codec.Map(_, _) | Codec.Option(_) | Codec.Decimal(_, _) | Codec
             .Product(_, _, _) | Codec.FromInjection(_, _) => ObjectType(codec.classTag.runtimeClass)
-    }
-
-  private[tyda] def catalystType[T](codec: Codec[T]): DataType =
-    codec match {
-      case Codec.Byte => ByteType
-      case Codec.Short => ShortType
-      case Codec.Int => IntegerType
-      case Codec.Long => LongType
-      case Codec.Float => FloatType
-      case Codec.Double => DoubleType
-      case Codec.Boolean => BooleanType
-      case Codec.String => StringType
-      case Codec.Bytes => BinaryType
-      case Codec.Decimal(precision, scale) => DecimalType(precision, scale)
-      case Codec.TimestampMicros => TimestampType
-      case Codec.DurationMicros => DayTimeIntervalType()
-      case Codec.Date => DateType
-      case map: Codec.Map[?, ?] => MapType(catalystType(map.key), catalystType(map.value))
-      case Codec.Seq(element) => ArrayType(catalystType(element))
-      case Codec.Option(inner @ Codec.Option(_)) => StructType(Seq(StructField("value", catalystType(inner))))
-      case opt: Codec.Option[?] => catalystType(opt.element)
-      case Codec.Product(_, _, Some(_)) => StructType(Seq(StructField(Forbidden.column, NullType)))
-      case prod: Codec.Product[T] => structFromFields(prod.fields.mapConst[Field[?]]([t] => identity(_)))
-      case Codec.FromInjection(_, to) => catalystType(to)
-    }
-
-  private def sumSchema[T](sum: Codec.Sum[T, ?]): StructType = structFromFields(sum.reprFields)
-
-  private def structFromFields(fields: Seq[Field[?]]): StructType =
-    StructType(fields.map(field => StructField(field.name, catalystType(field.codec), nullable(field.codec))))
-
-  /* This implement to match Spark view of nullability where anything that can have a `null` in the jvm is
-   * considered nullable. In practice we only want types inside an Option to be nullable. */
-  private[spark] def nullable[T](codec: Codec[T]): Boolean =
-    codec match {
-      case _: Codec.Sum[T, ?] => false
-      case _: Codec.Decimal[?, ?] => false
-      case _ => jvmType(codec).isInstanceOf[ObjectType]
     }
 
   private def createSerializer[T](codec: Codec[T]): Expression = {
@@ -428,7 +393,7 @@ object CodecToEncoder {
           } else {
             val fields = prod.fields.mapConst([t] => identity(_))
             val row =
-              createRowDeserializer(path, fields, walkedTypePath, structFromFields(fields), topRow = topRow)
+              createRowDeserializer(path, fields, walkedTypePath, catalystStructType(prod), topRow = topRow)
             val clsRowProduct = classOf[RowProduct]
             val rowProduct =
               NewInstance(clsRowProduct, Seq(row), ObjectType(clsRowProduct), propagateNull = false)
@@ -450,7 +415,7 @@ object CodecToEncoder {
       walkedTypePath: WalkedTypePath,
       topRow: Boolean
   ): Expression = {
-    val row = createRowDeserializer(path, sum.reprFields, walkedTypePath, sumSchema(sum), topRow)
+    val row = createRowDeserializer(path, sum.reprFields, walkedTypePath, catalystStructType(sum), topRow)
     val rowEncoder = Literal.create(SumToRowEncoder(sum), ObjectType(classOf[SumToRowEncoder[?]]))
     Invoke(rowEncoder, "decode", jvmType(sum), Seq(row))
   }
