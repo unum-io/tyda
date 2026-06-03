@@ -236,6 +236,10 @@ object ExprEvaluation {
         case ExprNode.DistinctSeq(operand) => (impl(operand).andThen(_.distinct))
         case ExprNode.None(_) => _ => None
         case ExprNode.Rand() => _ => scala.util.Random.nextDouble()
+        case ExprNode.IsNaN(operand) => impl(operand).andThen {
+            case f: Float => f.isNaN
+            case d: Double => d.isNaN
+          }
 
       }
 

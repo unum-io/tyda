@@ -176,12 +176,12 @@ trait DatasetReadWriteSuite extends DatasetSuite {
   }
 
   def testReadExtended[Old: Arbitrary: Codec: TypeName, New: Codec: TypeName: Equality](
-      update: Old => New
+      update: Old => New,
+      customName: Option[String] = None
   ): Unit = {
     if !includeReadTests then return
-    test(s"read ${TypeName.name[Old]} as ${TypeName.name[New]}")(
-      checkReadWrite[Old, New](reference, implementation, update, NumericsReadMode.Exact)
-    )
+    val name = customName.getOrElse(s"read ${TypeName.name[Old]} as ${TypeName.name[New]}")
+    test(name)(checkReadWrite[Old, New](reference, implementation, update, NumericsReadMode.Exact))
   }
 
   def testReadPartitioned[P: Arbitrary: Codec: TypeName: Labelling as labels, M: Arbitrary: Codec: TypeName](
@@ -288,4 +288,28 @@ trait DatasetReadWriteSuite extends DatasetSuite {
     case Type.Int => TypeExtended.Int
     case Type.Decimal => TypeExtended.Decimal(None, None)
   }
+
+  /** Verifies that string-encoded numbers in JSON (e.g., "123") are cleanly
+    * coerced into their respective integral types on read. This ensures
+    * consistent cross-backend behavior (tydaJson, tydaSpark, tydaBigQuery) when
+    * parsing and decoding loose JSON formats without throwing strict schema
+    * errors.
+    */
+  private def testJsonCoercion[Num: Codec: Equality: TypeName: com.choreograph.tyda.SimpleTypeName](
+      fromString: String => Num
+  )(using Arbitrary[Num]): Unit =
+    if (format == Format.Json) {
+      given Arbitrary[String] = Arbitrary[Num].map(_.toString)
+      testReadExtended[String, Num](
+        fromString,
+        customName = Some(
+          s"JSON coercion: read string-encoded numbers as ${com.choreograph.tyda.SimpleTypeName.name[Num]}"
+        )
+      )
+    }
+
+  testJsonCoercion[Byte](_.toByte)
+  testJsonCoercion[Short](_.toShort)
+  testJsonCoercion[Int](_.toInt)
+  testJsonCoercion[Long](_.toLong)
 }
