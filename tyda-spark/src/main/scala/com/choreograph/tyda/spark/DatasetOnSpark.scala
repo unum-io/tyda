@@ -252,7 +252,7 @@ object DatasetOnSpark {
               val parser = HivePartitionParser.makeParser
               dfRaw.select(createUdf(parser, dfRaw("partition"))).as[T]
             case TableLocation.BigQuery =>
-              // TODO: We should generate the approriate query using tyda-sql here. See: LEVEE-576
+              // TODO: We should generate the approriate query using tyda-sql here.
               throw new RuntimeException("Reading table partition paths is not supported for BigQuery tables")
           }
           IntermediateDataset(df)
