@@ -45,6 +45,10 @@ class AggregatorSpec extends AnyFunSuite {
       )
     }
 
+  test("asstDoesNotCapture should throw on forbiddenidden class") {
+    assertThrows[AssertionError] { assertDoesNotCapture(Tuple1(Codec[Long]), classOf[Codec[?]]) }
+  }
+
   testAggregatorDoesNotCaptureCodec(PrimitiveAggregate.Collect[Long]())
   testAggregatorDoesNotCaptureCodec(PrimitiveAggregate.Collect[Option[Long]]())
   testAggregatorDoesNotCaptureCodec(PrimitiveAggregate.Collect[(a: Int, b: String)]())
