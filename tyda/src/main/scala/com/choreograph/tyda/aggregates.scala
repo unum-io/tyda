@@ -110,7 +110,7 @@ object aggregates {
     val byExpr = AsExpr[I2, O](by)
     given Codec[V] = valueExpr.codec
     given Codec[O] = byExpr.codec
-    aggregate(tuple((valueExpr, byExpr)), MinBy[V, O](summon))
+    aggregate(tuple((valueExpr, byExpr)), MinBy[V, O](Comparable[O]))
   }
 
   /** AggregateExpr returning minimum value of the first [[Expr]] when ordered
@@ -130,7 +130,7 @@ object aggregates {
     val byExpr = AsExpr[I2, O](by)
     given Codec[V] = valueExpr.codec
     given Codec[O] = byExpr.codec
-    aggregate(tuple((valueExpr, byExpr)), MaxBy[V, O](summon))
+    aggregate(tuple((valueExpr, byExpr)), MaxBy[V, O](Comparable[O]))
   }
 
   /** AggregateExpr returning maximum value of the first [[Expr]] when ordered
