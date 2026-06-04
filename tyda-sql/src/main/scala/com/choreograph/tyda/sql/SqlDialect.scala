@@ -23,6 +23,7 @@ import com.choreograph.tyda.sql.DdlDialect.DurationSupport
 final case class SqlDialect(
     arrayDistinct: SqlDialect.ArrayDistinct,
     arrayConcat: String,
+    arrayConcatAgg: SqlDialect.ArrayConcatAgg,
     arrayElement: SqlDialect.ArrayElement,
     arraySize: String,
     arrayHigherOrderFunctions: SqlDialect.ArrayHigherOrderFunctions,
@@ -73,6 +74,23 @@ final case class SqlDialect(
 )
 
 object SqlDialect {
+  enum ArrayConcatAgg {
+
+    /** Aggregate directly using a native function. e.g.
+      * ```
+      * array_concat_agg(array_column)
+      * ```
+      */
+    case Function(name: String)
+
+    /** Aggregate by collecting into a nested array and then flattening it. e.g.
+      * ```
+      * flatten(collect_list(array_column))
+      * ```
+      */
+    case FlattenCollect(flatten: String)
+  }
+
   enum Values {
 
     /** Supports the SQL standard `VALUES` clause in the FROM clause. e.g.
@@ -334,6 +352,7 @@ object SqlDialect {
     startsWithFunction = "STARTS_WITH",
     arrayDistinct = ArrayDistinct.Subquery("array", "unnest"),
     arrayConcat = "array_concat",
+    arrayConcatAgg = ArrayConcatAgg.Function("array_concat_agg"),
     arrayElement = ArrayElement.Braces,
     arraySize = "array_length",
     arrayHigherOrderFunctions = ArrayHigherOrderFunctions.Subquery("array", "unnest"),
@@ -391,6 +410,7 @@ object SqlDialect {
     startsWithFunction = "startswith",
     arrayDistinct = ArrayDistinct.Function("array_distinct"),
     arrayConcat = "concat",
+    arrayConcatAgg = ArrayConcatAgg.FlattenCollect("flatten"),
     arrayElement = ArrayElement.Function("element_at"),
     arraySize = "size",
     arrayHigherOrderFunctions = ArrayHigherOrderFunctions.Lambda("transform", "aggregate", "filter"),

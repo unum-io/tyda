@@ -20,6 +20,9 @@ private[tyda] object PrimitiveAggregateEvaluation {
         minByAggregator(comparableToOrd(minBy.comparable), minBy.inputCodec)
       case maxBy: PrimitiveAggregate.MaxBy[?, ?] =>
         minByAggregator(comparableToOrd(maxBy.comparable).reverse, maxBy.inputCodec)
+      case PrimitiveAggregate.SeqConcat() =>
+        given Codec[To] = agg.codec
+        Reduce[From](_ ++ _)
       case PrimitiveAggregate.Reduce(f) => Reduce(f)(using agg.codec)
       case PrimitiveAggregate.Sum(magnet) => Compose(magnet.toResult, Reduce(magnet.add)(using magnet.codec))
     }
