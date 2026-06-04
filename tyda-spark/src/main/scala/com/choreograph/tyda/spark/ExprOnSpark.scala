@@ -3,8 +3,6 @@ package com.choreograph.tyda.spark
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.catalyst.expressions.Cast
-import org.apache.spark.sql.catalyst.expressions.EvalMode
 import org.apache.spark.sql.functions.aggregate
 import org.apache.spark.sql.functions.array
 import org.apache.spark.sql.functions.array_distinct
