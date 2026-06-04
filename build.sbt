@@ -1,5 +1,5 @@
 import java.nio.file.StandardCopyOption
-import com.choreograph.superspine.Dependencies
+
 import scala.sys.process.*
 import scala.util.Try
 import scala.util.Success
@@ -12,7 +12,8 @@ ThisBuild / licenses := Seq(License.MIT)
 ThisBuild / developers := List(
   tlGitHubDev("eejbyfeldt", "Emil Ejbyfeldt"),
   tlGitHubDev("dahlbaek", "Jonas Dahlbæk"),
-  tlGitHubDev("ch1nq", "Aske Ching")
+  tlGitHubDev("ch1nq", "Aske Ching"),
+  tlGitHubDev("shambala-ifmo", "Andrei Mavrin")
 )
 
 ThisBuild / scalaVersion := Dependencies.scala3Version
@@ -43,6 +44,7 @@ ThisBuild / scalafixDependencies += "com.github.xuwei-k" %% "scalafix-rules" % "
 ThisBuild / tlCiDependencyGraphJob := false // TODO: Decide we we want this and if so implement it
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"))
 ThisBuild / githubWorkflowEnv := Map.empty // Do not set GITHUB_TOKEN everywhere
+ThisBuild / githubWorkflowTargetBranches := Seq("**")
 
 ThisBuild / githubWorkflowAddedJobs ++= {
   val javaVersions = (ThisBuild / githubWorkflowJavaVersions).value.toList

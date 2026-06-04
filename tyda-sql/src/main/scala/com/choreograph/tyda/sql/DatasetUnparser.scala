@@ -4,8 +4,10 @@ import java.io.StringWriter
 
 import scala.annotation.targetName
 
+import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.NonEmpty
+import com.choreograph.tyda.rewrite.Except
 import com.choreograph.tyda.rewrite.ExplodeOptionToFilter
 import com.choreograph.tyda.sql.ast.Query
 import com.choreograph.tyda.sql.ast.SqlExpr
@@ -83,6 +85,23 @@ def toSql(action: Dataset.Action, dialect: SqlDialect): Result[String] = {
   }
 }
 
+/** Check if there are struct columns ignoring any top level struct. */
+private def hasInnerStructColumns(codec: Codec[?]): Boolean = {
+  def hasStructColumn(codec: Codec[?]): Boolean =
+    Codec
+      .iterate(codec)
+      .exists {
+        case Codec.Product(_, _, _) => true
+        case _ => false
+      }
+  codec match {
+    case Codec.Product(_, fields, _) =>
+      fields.foldLeft0(false)([t] => (acc, f) => hasStructColumn(f.codec) || acc)
+    case Codec.FromInjection(_, to) => hasInnerStructColumns(to)
+    case other => hasStructColumn(other)
+  }
+}
+
 private def queryToString(query: Query): String = {
   val stringWriter = new StringWriter()
   SqlWriter(stringWriter).write(query)
@@ -93,6 +112,13 @@ private def unparseDs[T](ds: Dataset[T], args: UnparserArgs): Result[SelectBuild
   def inner[U](ds: Dataset[U]): Result[SelectBuilder[?, U]] = {
     val result: Result[SelectBuilder[?, U]] = ds match {
       case Dataset.Aggregate(input, aggregate) => inner(input).flatMap(_.aggregate(aggregate))
+      case Except(left, right)
+          if args.dialect.supportsExceptDistinctOnStructColumns || !hasInnerStructColumns(left.codec) =>
+        for {
+          lhs <- inner(left)
+          rhs <- inner(right)
+          except <- lhs.except(rhs)
+        } yield except
       case Dataset.Distinct(input) => inner(input).map(_.copy(distinct = true))
       case Dataset.Filter(input, predicate) => inner(input).map(_.filter(predicate))
       case Dataset.FromSeq(values, codec) => SelectBuilder.fromSeq(values, codec, args)

@@ -91,6 +91,10 @@ trait DatasetBasicSuite extends DatasetSuite {
   test[(Int, Int), (Int, Int), (Int, Int)]("union on struct", (left, right) => left.union(right))
   test[Int, Int]("union with self", ds => ds.union(ds))
 
+  test[Int, Int, Int]("except", (left, right) => left.except(right))
+  test[(Int, Int), (Int, Int), (Int, Int)]("except on struct", (left, right) => left.except(right))
+  test[Int, Int]("except with self", ds => ds.except(ds))
+
   test[Int, Int]("limit basic", _.limit(5))
   test[Int, Int]("limit zero", _.limit(0))
   test[(Int, Int), (Int, Int)]("limit after select", _.select(x => (x._1, x._2)).limit(3))

@@ -103,30 +103,42 @@ object aggregates {
   /** AggregateExpr returning minimum value of the first [[Expr]] when ordered
     * by the second [[Expr]].
     */
-  def minBy[T, V, I1: AsExpr.Of[V], O, I2: AsExpr.Of[O]](value: Expr[T] => I1, by: Expr[T] => I2)(using
+  def minBy[V, O, I1: AsExpr.Of[V], I2: AsExpr.Of[O]](value: I1, by: I2)(using
       Comparable[O]
-  ): Expr[T] => AggregateExpr[V] =
-    e => {
-      val valueExpr = AsExpr[I1, V](value(e))
-      val byExpr = AsExpr[I2, O](by(e))
-      given Codec[V] = valueExpr.codec
-      given Codec[O] = byExpr.codec
-      aggregate(tuple((valueExpr, byExpr)), MinBy[V, O](Comparable[O]))
-    }
+  ): AggregateExpr[V] = {
+    val valueExpr = AsExpr[I1, V](value)
+    val byExpr = AsExpr[I2, O](by)
+    given Codec[V] = valueExpr.codec
+    given Codec[O] = byExpr.codec
+    aggregate(tuple((valueExpr, byExpr)), MinBy[V, O](Comparable[O]))
+  }
+
+  /** AggregateExpr returning minimum value of the first [[Expr]] when ordered
+    * by the second [[Expr]].
+    */
+  def minBy[T, V, O, I1: AsExpr.Of[V], I2: AsExpr.Of[O]](value: Expr[T] => I1, by: Expr[T] => I2)(using
+      Comparable[O]
+  ): Expr[T] => AggregateExpr[V] = e => minBy(value(e), by(e))
 
   /** AggregateExpr returning maximum value of the first [[Expr]] when ordered
     * by the second [[Expr]].
     */
-  def maxBy[T, V, I1: AsExpr.Of[V], O, I2: AsExpr.Of[O]](value: Expr[T] => I1, by: Expr[T] => I2)(using
+  def maxBy[V, O, I1: AsExpr.Of[V], I2: AsExpr.Of[O]](value: I1, by: I2)(using
       Comparable[O]
-  ): Expr[T] => AggregateExpr[V] =
-    e => {
-      val valueExpr = AsExpr[I1, V](value(e))
-      val byExpr = AsExpr[I2, O](by(e))
-      given Codec[V] = valueExpr.codec
-      given Codec[O] = byExpr.codec
-      aggregate(tuple((valueExpr, byExpr)), MaxBy[V, O](Comparable[O]))
-    }
+  ): AggregateExpr[V] = {
+    val valueExpr = AsExpr[I1, V](value)
+    val byExpr = AsExpr[I2, O](by)
+    given Codec[V] = valueExpr.codec
+    given Codec[O] = byExpr.codec
+    aggregate(tuple((valueExpr, byExpr)), MaxBy[V, O](Comparable[O]))
+  }
+
+  /** AggregateExpr returning maximum value of the first [[Expr]] when ordered
+    * by the second [[Expr]].
+    */
+  def maxBy[T, V, O, I1: AsExpr.Of[V], I2: AsExpr.Of[O]](value: Expr[T] => I1, by: Expr[T] => I2)(using
+      Comparable[O]
+  ): Expr[T] => AggregateExpr[V] = e => maxBy(value(e), by(e))
 
   /** Aggregate from a binary function.
     */

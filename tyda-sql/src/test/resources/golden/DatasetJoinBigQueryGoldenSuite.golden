@@ -142,12 +142,16 @@ SELECT struct(t0._1 AS _1, t0._2 AS _2) AS _1, struct(t1._1 AS _1, t1._2 AS _2) 
 SELECT struct(t0._1 AS _1, t0._2 AS _2) AS _1, struct(t1._1 AS _1, t1._2 AS _2) AS _2 FROM (SELECT DISTINCT struct(t1._1 AS _1, t1._2 AS _2) AS _1, struct(t2._1 AS _1, t2._2 AS _2) AS _2 FROM t1 JOIN t2 ON (t1._1 = t2._1)) AS t0 JOIN t1 ON (t0._1._2 = t1._2)
 ------ end
 
+------ Test: self join mutiple left with except
+SELECT struct(t0._1 AS _1, t0._2 AS _2) AS _1, struct(t1._1 AS _1, t1._2 AS _2) AS _2 FROM (SELECT DISTINCT struct(t1._1 AS _1, t1._2 AS _2) AS _1, struct(t2._1 AS _1, t2._2 AS _2) AS _2 FROM t1 JOIN t2 ON (t1._1 = t2._1) WHERE (NOT EXISTS (SELECT struct(t2._1 AS _1, t2._2 AS _2) AS _1, struct(t2._1 AS _1, t2._2 AS _2) AS _2 FROM t2 WHERE (struct(struct(t1._1 AS _1, t1._2 AS _2) AS _1, struct(t2._1 AS _1, t2._2 AS _2) AS _2) = struct(struct(t2._1 AS _1, t2._2 AS _2) AS _1, struct(t2._1 AS _1, t2._2 AS _2) AS _2))))) AS t0 JOIN t1 ON (t0._1._2 = t1._2)
+------ end
+
 ------ Test: self join mutiple left with select
 SELECT struct(t1._1 AS _1, t1._2 AS _2) AS _1, struct(t1._1 AS _1, t1._2 AS _2) AS _2 FROM t1 JOIN t2 ON (t1._1 = t2._1) JOIN t1 ON (t1._2 = t1._2)
 ------ end
 
 ------ Test: self join mutiple left with union
-SELECT struct(t0._1 AS _1, t0._2 AS _2) AS _1, struct(t1._1 AS _1, t1._2 AS _2) AS _2 FROM (SELECT struct(t1._1 AS _1, t1._2 AS _2) AS _1, struct(t2._1 AS _1, t2._2 AS _2) AS _2 FROM t1 JOIN t2 ON (t1._1 = t2._1) UNION ALL SELECT struct(t2._1 AS _1, t2._2 AS _2) AS _1, struct(t2._1 AS _1, t2._2 AS _2) AS _2 FROM t2) AS t0 JOIN t1 ON (t0._1._2 = t1._2)
+SELECT struct(t0._1 AS _1, t0._2 AS _2) AS _1, struct(t1._1 AS _1, t1._2 AS _2) AS _2 FROM ((SELECT struct(t1._1 AS _1, t1._2 AS _2) AS _1, struct(t2._1 AS _1, t2._2 AS _2) AS _2 FROM t1 JOIN t2 ON (t1._1 = t2._1)) UNION ALL (SELECT struct(t2._1 AS _1, t2._2 AS _2) AS _1, struct(t2._1 AS _1, t2._2 AS _2) AS _2 FROM t2)) AS t0 JOIN t1 ON (t0._1._2 = t1._2)
 ------ end
 
 ------ Test: self join mutiple nested left hand side
