@@ -45,6 +45,7 @@ trait DatasetBasicSuite extends DatasetSuite {
   )
   test[Map[Int, Int], (Int, Int)]("explode Map", _.select(explode(identity)))
   test[Option[Int], Int]("explode Option", _.select(explode(identity)))
+  test[Option[Option[Int]], Iterable[Option[Int]]]("nested option upcast", _.select(v => v))
 
   test[Int, Int]("mapPartitions", _.mapPartitions(_.map(_ + 1)))
 

@@ -243,10 +243,14 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
         inner(operand).map(sqlExpr => SqlExpr.FieldAccess(sqlExpr, "value"))
       case ExprNode.KnownNotNull(operand) => inner(operand)
       case ExprNode.OptionToIterable(opt) => inner(opt).map(optSql =>
+          val elementSql = opt.codec match {
+            case Codec.Option(Codec.Option(_)) => SqlExpr.FieldAccess(optSql, "value")
+            case _ => optSql
+          }
           SqlExpr.Case(
             Seq((
               condition = SqlExpr.isNotNull(optSql),
-              result = makeArray(Seq(optSql), opt.codec.element, dialect)
+              result = makeArray(Seq(elementSql), opt.codec.element, dialect)
             )),
             elseExpr = Some(makeArray(Seq(), opt.codec.element, dialect))
           )

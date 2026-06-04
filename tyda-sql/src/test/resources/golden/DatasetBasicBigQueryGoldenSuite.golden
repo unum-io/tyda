@@ -94,6 +94,10 @@ SELECT t0.value AS _1, t2.value AS _2 FROM (SELECT t1.value AS value FROM t1 LIM
 SELECT t1.value AS value FROM t1 LIMIT 0
 ------ end
 
+------ Test: nested option upcast
+SELECT CASE WHEN (t1.value IS NOT NULL) THEN [t1.value.value] ELSE CAST([] AS ARRAY<INT>) END AS value FROM t1
+------ end
+
 ------ Test: select 2
 SELECT t1._1 AS _1, t1._2 AS _2 FROM t1
 ------ end
