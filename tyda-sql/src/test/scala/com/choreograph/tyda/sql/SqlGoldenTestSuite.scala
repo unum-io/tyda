@@ -7,7 +7,7 @@ trait SqlGoldenTestSuite extends GoldenTestSuite {
   def dialect: SqlDialect
   private def toSqlOrFail(ds: Dataset[?] | Dataset.Action, dialect: SqlDialect): String =
     toSql(ds, dialect) match {
-      case Right(sql) => sql
+      case Right(sql) => sql.single
       case Left(err) => fail(s"Failed to unparse dataset to SQL: $err")
     }
 
@@ -21,7 +21,7 @@ trait SqlGoldenTestSuite extends GoldenTestSuite {
           pending
           unreachable("Test should be skipped by pending")
         case Left(DatasetToSqlError.NotImplemented(msg)) => fail(s"Unimplemented feature: $msg")
-        case Right(plan) => plan
+        case Right(plan) => plan.single
       }
     }
 }
