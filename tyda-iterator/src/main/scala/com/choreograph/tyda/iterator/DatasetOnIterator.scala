@@ -10,7 +10,6 @@ import org.apache.hadoop.io.Text
 import org.apache.hadoop.util.LineReader
 import org.apache.parquet.hadoop.ParquetReader
 import shapeless3.deriving.K0
-import shapeless3.deriving.Labelling
 
 import com.choreograph.tyda.Aggregator
 import com.choreograph.tyda.Codec
@@ -18,16 +17,13 @@ import com.choreograph.tyda.CompiledExplodeExpr
 import com.choreograph.tyda.CompiledExpr
 import com.choreograph.tyda.CompiledExprOrExplode
 import com.choreograph.tyda.Dataset
-import com.choreograph.tyda.Date
 import com.choreograph.tyda.Format
 import com.choreograph.tyda.HivePartitionParser
-import com.choreograph.tyda.PartitionEncoding
 import com.choreograph.tyda.iterator.AggregateExprEvaluation.aggregator
 import com.choreograph.tyda.iterator.ExprEvaluation.lambda
 import com.choreograph.tyda.json.CodecToJsoniter
 import com.choreograph.tyda.parquet.CodecParquetWriter
 import com.choreograph.tyda.parquet.CodecReadSupport
-import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.shapeless3extras.tupleInstances
 
 object DatasetOnIterator {
@@ -50,8 +46,19 @@ object DatasetOnIterator {
             modelCodec
           ) =>
         readWithHivePartitions(basePath, path, filenameGlobFilter, format)(using partitionCodec, modelCodec)
-      case _: (Dataset.Read[?] | Dataset.ReadWithMetadata[?] | Dataset.ReadPartitionsPaths |
-            Dataset.ReadTablePartitionsPaths) => throw new NotImplementedError(
+      case Dataset.ReadPartitionsPaths(path, codec) =>
+        val hadoopPath = new Path(path)
+        val conf = new Configuration()
+        val fs = hadoopPath.getFileSystem(conf)
+        val partitions = Option(fs.globStatus(hadoopPath))
+          .iterator
+          .flatten
+          .filter(_.isDirectory)
+          .map(_.getPath.toString)
+        val parser = HivePartitionParser.makeParser(using codec)
+        partitions.map(parser)
+      case _: (Dataset.Read[?] | Dataset.ReadWithMetadata[?] | Dataset.ReadTablePartitionsPaths[?]) =>
+        throw new NotImplementedError(
           "DatasetOnIterator currently only has limited support for read operations. Only Parquet format is partly supported."
         )
       case Dataset.FromSeq(values, _) => values.iterator
@@ -157,44 +164,10 @@ object DatasetOnIterator {
       readFile(filePath).map(model => (partition, model))
     }
 
-  private def fieldParser[T](codec: Codec[T]): String => T =
-    codec match {
-      case Codec.Byte => _.toByte
-      case Codec.Short => _.toShort
-      case Codec.Int => _.toInt
-      case Codec.Long => _.toLong
-      case Codec.Boolean => _.toBoolean
-      case Codec.Float => _.toFloat
-      case Codec.Double => _.toDouble
-      case Codec.String => PartitionEncoding.decode(_)
-      case Codec.Date => str =>
-          Date.fromIsoString(str).getOrElse(throw new RuntimeException(s"Unable to decode $str as a Date"))
-      case Codec.FromInjection(inj, to) => fieldParser(to).andThen(inj.invert)
-      case Codec.Bytes | Codec.TimestampMicros | Codec.DurationMicros | Codec.Seq(_) | Codec.Map(_, _) | Codec
-            .Option(_) | Codec.Decimal(_, _) | Codec.Product(_, _, _) | Codec.FromInjection(_, _) =>
-        throw new RuntimeException(s"Unsupported codec for hive partition decoding: $codec")
-    }
-
-  private def partionParser[P: Codec](basePath: String): Path => P =
-    Codec[P] match {
-      case Codec.Product(tag, fields, _) =>
-        given Labelling[P] =
-          Labelling(tag.getClass.getSimpleName, fields.mapConst([t] => _.name).toIndexedSeq)
-        val fieldParsers = fields.mapK([t] => f => fieldParser(f.codec))
-        val parser = HivePartitionParser.make(fieldParsers)
-        path =>
-          parser(path.toString.stripPrefix(basePath)).match {
-            case Right(partition) => partition
-            case Left(error) => throw new RuntimeException(error)
-          }
-      case Codec.FromInjection(inj, to) => partionParser(basePath)(using to).andThen(inj.invert)
-      case (_: Codec.Primitive[?]) | Codec.Bytes | Codec.TimestampMicros | Codec.DurationMicros |
-          Codec.Seq(_) | Codec.Map(_, _) | Codec.Option(_) | Codec.Decimal(_, _) | Codec.Product(_, _, _) |
-          Codec.FromInjection(_, _) =>
-        throw new RuntimeException(s"Unsupported partition type for Hive partition decoding: ${Codec[
-            P
-          ]}. Only Product types are supported.")
-    }
+  private def partionParser[P: Codec](basePath: String): Path => P = {
+    val parser = HivePartitionParser.makeParser[P]
+    path => parser(path.toString.stripPrefix(basePath))
+  }
 
   private def writeParquetToPath[T](input: Dataset[T], path: String, codec: Codec[T]): Unit = {
     given Codec[T] = codec

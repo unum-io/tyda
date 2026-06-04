@@ -591,7 +591,7 @@ object Dataset {
     * ```
     * as that will not contain the partitions with only empty data files.
     */
-  def readPartitionsPaths(path: String): Dataset[String] = ReadPartitionsPaths(path)
+  def readPartitionsPaths[P: Codec as codec](path: String): Dataset[P] = ReadPartitionsPaths(path, codec)
 
   /** Read the partition paths from a table using its name.
     *
@@ -600,8 +600,9 @@ object Dataset {
     * there might not have any further interpretation than that it contains the
     * partition values.
     */
-  def readTablePartitions(identitifier: String, location: TableLocation): Dataset[String] =
-    ReadTablePartitionsPaths(identitifier, location)
+
+  def readTablePartitions[P: Codec as codec](identitifier: String, location: TableLocation): Dataset[P] =
+    ReadTablePartitionsPaths(identitifier, location, codec)
 
   /** Create a Dataset with a single value.
     */
@@ -898,9 +899,13 @@ object Dataset {
   private[tyda] object FromSeq {
     def apply[T: Codec](values: Seq[T]): Dataset[T] = FromSeq(values, Codec[T])
   }
-  private[tyda] final case class ReadPartitionsPaths(path: String) extends Dataset[String]
-  private[tyda] final case class ReadTablePartitionsPaths(identifier: String, location: TableLocation)
-      extends Dataset[String]
+  private[tyda] final case class ReadPartitionsPaths[P](path: String, override val codec: Codec[P])
+      extends Dataset[P](using codec)
+  private[tyda] final case class ReadTablePartitionsPaths[P](
+      identifier: String,
+      location: TableLocation,
+      override val codec: Codec[P]
+  ) extends Dataset[P](using codec)
   private[tyda] final case class Filter[T](input: Dataset[T], p: CompiledExpr[T, Boolean])
       extends Dataset[T](using input.codec)
   private[tyda] final case class Select1[T, R](input: Dataset[T], expr: CompiledExprOrExplode[T, R])

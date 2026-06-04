@@ -5,7 +5,6 @@ import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.expressions.Cast
 import org.apache.spark.sql.catalyst.expressions.EvalMode
-import org.apache.spark.sql.catalyst.expressions.ScalaUDF
 import org.apache.spark.sql.functions.aggregate
 import org.apache.spark.sql.functions.array
 import org.apache.spark.sql.functions.array_distinct
@@ -52,6 +51,7 @@ import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.shapeless3extras.tupleInstances
 import com.choreograph.tyda.spark.CodecToCatalystType.catalystType
 import com.choreograph.tyda.spark.PrimitiveAggregateOnSpark.CompatibleIntegral
+import com.choreograph.tyda.spark.UdfBuilder.createUdf
 import com.choreograph.tyda.unreachable
 
 private[spark] object ExprOnSpark {
@@ -93,42 +93,6 @@ private[spark] object ExprOnSpark {
     */
   def unresolved[T: Codec](compiled: CompiledExpr[T, ?])(using SparkSession): Column =
     new ExprOnSpark(Map(compiled.arg -> ColumnFactory.unresolved)).convert(compiled.expr)
-
-  private def createUdf[T: Codec, U: Codec](f: (T, T) => U, arg1: Column, arg2: Column, name: String) = {
-    val udf = ScalaUDF(
-      function = f,
-      dataType = catalystType(Codec[U]),
-      children = Seq(arg1.expr, arg2.expr),
-      inputEncoders =
-        Seq(CodecToEncoder.convertInternal(using Codec[T]), CodecToEncoder.convertInternal(using Codec[T]))
-          .map(Some(_)),
-      outputEncoder = Some(CodecToEncoder.convertInternal(using Codec[U])),
-      udfName = Some(name)
-    )
-    new Column(udf)
-  }
-
-  private def createUdf[T: Codec, U: Codec](f: T => U, arg: Column) = {
-    val udf = ScalaUDF(
-      function = f,
-      dataType = catalystType(Codec[U]),
-      children = Seq(arg.expr),
-      inputEncoders = Seq(Some(CodecToEncoder.convertInternal(using Codec[T]))),
-      outputEncoder = Some(CodecToEncoder.convertInternal(using Codec[U]))
-    )
-    new Column(udf)
-  }
-
-  private def createUdf[U: Codec](f: () => U, name: Option[String]) = {
-    val udf = ScalaUDF(
-      function = f,
-      dataType = catalystType(Codec[U]),
-      children = Seq(),
-      outputEncoder = Some(CodecToEncoder.convertInternal(using Codec[U])),
-      udfName = name
-    )
-    new Column(udf)
-  }
 
   private def wrapNestedSome(value: Column): Column = struct(value.as("value"))
 }

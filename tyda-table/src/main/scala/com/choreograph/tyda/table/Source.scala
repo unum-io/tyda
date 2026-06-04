@@ -98,17 +98,16 @@ object Source {
       source: Source[M, Partitioner.Hive[V]]
   )(using decoder: Partitioner.Determinator[V, Partitioner.Hive[V]]) {
     def asPartitionDataset(p: Partitioner.Hive[V]): Dataset[V] =
-      extension (ds: Dataset[String]) { def decode: Dataset[V] = ds.select(_.udf(decoder.decode(_))) }
       source match {
-        case Source.Path(basePath, _, _, _, _) => Dataset.readPartitionsPaths(p.path(basePath)).decode
+        case Source.Path(basePath, _, _, _, _) => Dataset.readPartitionsPaths[V](p.path(basePath))
         case Source.Table(identifier, location) =>
-          Dataset.readTablePartitions(identifier, location).decode.where(decoder.predicate(p))
+          Dataset.readTablePartitions[V](identifier, location).where(decoder.predicate(p))
         case Source.Test(testValues, metadata) =>
           val paths = testValues match {
             case TestValues.Fixed(_) => Seq(metadata.file_path)
             case TestValues.Partitioned(dataMap) => matchingValues(dataMap, p).keys.toSeq
           }
-          Dataset.from(paths).decode
+          Dataset.from(paths).select(_.udf(decoder.decode))
       }
   }
 

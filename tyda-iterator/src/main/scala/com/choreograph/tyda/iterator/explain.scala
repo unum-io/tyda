@@ -58,7 +58,7 @@ private def children[T](ds: Dataset[T] | Dataset.Action): Seq[Dataset[?]] =
     case Dataset.ReadTable(identifier = _) => Seq.empty
     case Dataset.ReadWithMetadata(read) => Seq(read)
     case Dataset.ReadPathWithHivePartitions(basePath = _) => Seq.empty
-    case Dataset.ReadPartitionsPaths(_) => Seq.empty
+    case Dataset.ReadPartitionsPaths(path = _) => Seq.empty
     case Dataset.ReadTablePartitionsPaths(identifier = _) => Seq.empty
     case Dataset.Select1(input, _) => Seq(input)
     case Dataset.SelectN(input, _) => Seq(input)
@@ -87,7 +87,7 @@ private def exprs[T](ds: Dataset[T] | Dataset.Action): Seq[AnyCompiledExpr] =
     case Dataset.ReadTable(identifier = _) => Seq.empty
     case Dataset.ReadWithMetadata(_) => Seq.empty
     case Dataset.ReadPathWithHivePartitions(basePath = _) => Seq.empty
-    case Dataset.ReadPartitionsPaths(_) => Seq.empty
+    case Dataset.ReadPartitionsPaths(path = _) => Seq.empty
     case Dataset.ReadTablePartitionsPaths(identifier = _) => Seq.empty
     case Dataset.Select1(_, compiled) => Seq(compiled)
     case Dataset.SelectN(_, exprs) => tupleInstances(exprs).mapConst([t] => identity(_))

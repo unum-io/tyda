@@ -239,6 +239,24 @@ trait DatasetReadWriteSuite extends DatasetSuite {
     }
   }
 
+  test("read partitions paths") {
+    if includeReadTests then {
+      Using.resource(TmpPath(tmpDir, cleanupPath)) { tmpPath =>
+        val basePath = tmpPath.path
+        val formatPartition = (p: (p1: Int, p2: String)) => s"p1=${p.p1}/p2=${encode(p.p2)}"
+        val partitions = Seq((p1 = 1, p2 = "a"), (p1 = 2, p2 = "b"))
+        partitions.foreach { p =>
+          val writeDs = Dataset.from(Seq(1L)).writeToPath(s"$basePath/${formatPartition(p)}", format)
+          reference.execute(writeDs)
+        }
+        val globPath = s"$basePath/p1=*/p2=*"
+        val readDs = Dataset.readPartitionsPaths[(p1: Int, p2: String)](globPath)
+        val read = implementation.collect(readDs)
+        checkSame(read, partitions).check
+      }
+    }
+  }
+
   testReadWrite[Boolean]
   testReadWrite[Byte]
   testReadWrite[Short]
