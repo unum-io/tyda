@@ -35,6 +35,58 @@ AdaptiveSparkPlan isFinalPlan=false
 
 ------ end
 
+------ Test: except
+== Parsed Logical Plan ==
+Deduplicate [_1#1, _2#2]
++- Project [tmp#3._1 AS _1#1, tmp#3._2 AS _2#2]
+   +- Project [struct(_1, _1#4, _2, _2#5) AS tmp#3]
+      +- Join LeftAnti, (cast(struct(_1, _1#4, _2, _2#5) as struct<_1:int,_2:string>) = cast(struct(_1, _1#6, _2, _2#7) as struct<_1:int,_2:string>))
+         :- Project [tmp#8._1 AS _1#4, tmp#8._2 AS _2#5]
+         :  +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#9, _2, _2#10))._2 AS tmp#8]
+         :     +- SubqueryAlias golden_test_t1
+         :        +- View (`golden_test_t1`, [_1#9, _2#10])
+         :           +- LocalRelation [_1#9, _2#10]
+         +- Project [tmp#11._1 AS _1#6, tmp#11._2 AS _2#7]
+            +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#12, _2, _2#13))._2 AS tmp#11]
+               +- SubqueryAlias golden_test_t2
+                  +- View (`golden_test_t2`, [_1#12, _2#13])
+                     +- LocalRelation [_1#12, _2#13]
+
+== Analyzed Logical Plan ==
+_1: int, _2: string
+Deduplicate [_1#1, _2#2]
++- Project [tmp#3._1 AS _1#1, tmp#3._2 AS _2#2]
+   +- Project [struct(_1, _1#4, _2, _2#5) AS tmp#3]
+      +- Join LeftAnti, (cast(struct(_1, _1#4, _2, _2#5) as struct<_1:int,_2:string>) = cast(struct(_1, _1#6, _2, _2#7) as struct<_1:int,_2:string>))
+         :- Project [tmp#8._1 AS _1#4, tmp#8._2 AS _2#5]
+         :  +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#9, _2, _2#10))._2 AS tmp#8]
+         :     +- SubqueryAlias golden_test_t1
+         :        +- View (`golden_test_t1`, [_1#9, _2#10])
+         :           +- LocalRelation [_1#9, _2#10]
+         +- Project [tmp#11._1 AS _1#6, tmp#11._2 AS _2#7]
+            +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#12, _2, _2#13))._2 AS tmp#11]
+               +- SubqueryAlias golden_test_t2
+                  +- View (`golden_test_t2`, [_1#12, _2#13])
+                     +- LocalRelation [_1#12, _2#13]
+
+== Optimized Logical Plan ==
+Aggregate [_1#4, _2#5], [_1#4, _2#5]
++- Join LeftAnti, (struct(_1, _1#4, _2, _2#5) = struct(_1, _1#6, _2, _2#7))
+   :- LocalRelation [_1#4, _2#5]
+   +- LocalRelation [_1#6, _2#7]
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- HashAggregate(keys=[_1#4, _2#5], functions=[], output=[_1#4, _2#5])
+   +- Exchange hashpartitioning(_1#4, _2#5, 1), ENSURE_REQUIREMENTS, [plan_id=1]
+      +- HashAggregate(keys=[_1#4, _2#5], functions=[], output=[_1#4, _2#5])
+         +- BroadcastHashJoin [struct(_1, _1#4, _2, _2#5)], [struct(_1, _1#6, _2, _2#7)], LeftAnti, BuildRight, false
+            :- LocalTableScan [_1#4, _2#5]
+            +- BroadcastExchange HashedRelationBroadcastMode(List(struct(_1, input[0, int, false], _2, input[1, string, true])),false), [plan_id=2]
+               +- LocalTableScan [_1#6, _2#7]
+
+------ end
+
 ------ Test: explode option
 == Parsed Logical Plan ==
 Project [opt1#1 AS value#2]

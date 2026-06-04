@@ -66,12 +66,12 @@ private object CodecToExpressionEncoder {
             .Product(_, _, _) | Codec.FromInjection(_, _) => ObjectType(codec.classTag.runtimeClass)
     }
 
-  private def createSerializer[T](codec: Codec[T]): Expression = {
+  def createSerializer[T](codec: Codec[T]): Expression = {
     val input = BoundReference(0, jvmType(codec), nullable = nullable(codec))
     createSerializer(codec, input)
   }
 
-  def createSerializer[T](codec: Codec[T], input: Expression): Expression =
+  private def createSerializer[T](codec: Codec[T], input: Expression): Expression =
     codec match {
       case Codec.Byte => input
       case Codec.Short => input
