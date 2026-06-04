@@ -4,11 +4,13 @@ import sbt.*
 import Keys.*
 
 object Dependencies {
+  val arrowVersion = "18.3.0"
   val scala3Version = "3.7.4"
   val sparkVersion = "3.5.1"
   val jsoniterVersion = "2.38.6"
 
   object TestDeps {
+    val arrowNetty = CompileDeps.arrowNetty % Test
     val scalatest = CompileDeps.scalatest % Test
     val commonsIo = CompileDeps.commonsIo % Test
     val sparkSql = (CompileDeps.sparkSql % Test).exclude("org.scala-lang.modules", "scala-xml_2.13")
@@ -18,6 +20,9 @@ object Dependencies {
   }
 
   object CompileDeps {
+    val arrowVector = "org.apache.arrow" % "arrow-vector" % arrowVersion
+    val arrowCData = "org.apache.arrow" % "arrow-c-data" % arrowVersion
+    val arrowNetty = "org.apache.arrow" % "arrow-memory-netty" % arrowVersion
     val shapeless3 = "org.typelevel" %% "shapeless3-deriving" % "3.6.0"
     val jsoniterCore = "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % jsoniterVersion
     val scalatest = "org.scalatest" %% "scalatest" % "3.2.19"
@@ -49,6 +54,9 @@ object Dependencies {
   )
 
   val tyda = libraryDependencies ++= Seq(TestDeps.scalatest, CompileDeps.shapeless3)
+
+  val tydaArrow = libraryDependencies ++=
+    Seq(CompileDeps.arrowCData, CompileDeps.arrowVector, TestDeps.scalatest, TestDeps.arrowNetty)
 
   val tydaRewrite = libraryDependencies ++= Seq(TestDeps.scalatest)
 
