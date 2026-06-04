@@ -6,10 +6,7 @@ import scala.collection.Factory
 import scala.deriving.Mirror
 import scala.reflect.ClassTag
 
-import javax.lang.model.SourceVersion
 import org.apache.commons.lang3.reflect.ConstructorUtils
-import org.apache.commons.lang3.reflect.MethodUtils
-import org.apache.spark.sql.Encoder
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.DeserializerBuildHelper
 import org.apache.spark.sql.catalyst.DeserializerBuildHelper.expressionWithNullSafety
@@ -17,7 +14,6 @@ import org.apache.spark.sql.catalyst.SerializerBuildHelper
 import org.apache.spark.sql.catalyst.WalkedTypePath
 import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
 import org.apache.spark.sql.catalyst.analysis.UnresolvedExtractValue
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.catalyst.expressions.*
 import org.apache.spark.sql.catalyst.expressions.objects.AssertNotNull
 import org.apache.spark.sql.catalyst.expressions.objects.CreateExternalRow
@@ -39,7 +35,6 @@ import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Field
 import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.Injection
-import com.choreograph.tyda.Variant
 import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.spark.CodecToCatalystType.catalystStructType
 import com.choreograph.tyda.spark.CodecToCatalystType.catalystType
@@ -53,12 +48,7 @@ import com.choreograph.tyda.spark.CodecToCatalystType.nullable
  * provide our own encoders for types like enums. When we are using Spark > 4.0.0 we should instead be able
  * just to convert of `Codec[T]` class into an `AgnosticEncoder[T]` but we will need the
  * `TransformingEncoder[T]` in order to support custom types in that approach. */
-object CodecToEncoder {
-  given convert[T: Codec]: Encoder[T] = convertInternal[T]
-
-  private[spark] def convertInternal[T: Codec]: ExpressionEncoder[T] =
-    new ExpressionEncoder[T](createSerializer(Codec[T]), createDeserializer(Codec[T]), Codec[T].classTag)
-
+private object CodecToExpressionEncoder {
   private def jvmType[T](codec: Codec[T]): DataType =
     codec match {
       case Codec.Byte => ByteType
@@ -76,7 +66,7 @@ object CodecToEncoder {
             .Product(_, _, _) | Codec.FromInjection(_, _) => ObjectType(codec.classTag.runtimeClass)
     }
 
-  private def createSerializer[T](codec: Codec[T]): Expression = {
+  def createSerializer[T](codec: Codec[T]): Expression = {
     val input = BoundReference(0, jvmType(codec), nullable = nullable(codec))
     createSerializer(codec, input)
   }
@@ -147,9 +137,6 @@ object CodecToEncoder {
          * [1] https://github.com/scala/scala3/issues/22382#issuecomment-2613187822 */
 
         val cls = prod.classTag.runtimeClass
-        def isValidJavaAccessor(cls: Class[?], name: String): Boolean =
-          !SourceVersion.isKeyword(name) && SourceVersion.isIdentifier(name) &&
-            MethodUtils.getMatchingAccessibleMethod(cls, name) != null
         def nameAndSerializer(field: Field[?], index: Int): (String, Expression) = {
           def invoke(functionName: String, arguments: Expression*): Invoke =
             Invoke(
@@ -228,59 +215,12 @@ object CodecToEncoder {
       }
     createSerializerForStruct(input, serializedFields)
   }
-  /* We encode to a Row here using scala code. This way it easier to move this to the Spark 4.0.0 approach
-   * where we will use this inside a TransformingEncoder. */
-  trait SumToRowEncoder[S] extends Serializable {
-    def encode(s: S): Row
-    def decode(row: Row): S
-  }
 
-  private[spark] object SumToRowEncoder {
-    def apply[T](s: Codec.Sum[T, ?]): SumToRowEncoder[T] = {
-      val reprSize = s.reprFields.size
-      val ordinalToSingleton = s
-        .variants
-        .mapConst[Option[T]]([t <: T] => Some(_).collect { case Variant.Singleton(value = v) => v })
-        .toArray
-      val ordinalToProductOfAllNone = s.variants.mapConst[scala.Option[T]]([t <: T] => _.allNone).toArray
-      val ordinalToIndex = s
-        .variants
-        .mapConst[Boolean]([t] => _.isInstanceOf[Variant.Singleton[?]])
-        .scanLeft(1)((index, isSingleton) => if (isSingleton) { index } else { index + 1 })
-        .dropRight(1)
-        .toArray
-      val variantNames = s.variants.mapConst[String]([t] => _.name)
-      val discriminantToOrdinal = variantNames.zipWithIndex.toMap
-      val ordinalToDiscriminant = variantNames.toArray
-      new SumToRowEncoder[T] {
-        def encode(in: T): Row = {
-          val values = new Array[Any](reprSize)
-          val ordinal = s.ordinal(in)
-          values(0) = ordinalToDiscriminant(ordinal)
-          if (ordinalToSingleton(ordinal).isEmpty) values(ordinalToIndex(ordinal)) = Some(in)
-          new GenericRow(values)
-        }
-        def decode(out: Row): T = {
-          val discriminant = out.getString(0)
-          val ordinal = discriminantToOrdinal(discriminant)
-          ordinalToSingleton(ordinal)
-            /* When reading old data where a singleton has been changed to a product spark can return null
-             * here. */
-            .orElse(Option(out.getAs[Option[T]](ordinalToIndex(ordinal))).flatten)
-            .orElse(ordinalToProductOfAllNone(ordinal))
-            .getOrElse {
-              throw new RuntimeException(
-                s"Expected non-null value for variant $discriminant but found null in row $out"
-              )
-            }
-        }
-      }
-    }
-  }
+  def createDeserializer[T](codec: Codec[T]): Expression =
+    createDeserializer(codec, GetColumnByOrdinal(0, jvmType(codec)))
 
-  private def createDeserializer[T](codec: Codec[T]): Expression = {
+  def createDeserializer[T](codec: Codec[T], input: Expression): Expression = {
     val walkedTypePath = WalkedTypePath().recordRoot(codec.classTag.runtimeClass.getName)
-    val input = GetColumnByOrdinal(0, jvmType(codec))
     val deserializer = createDeserializer(codec, input, walkedTypePath, topRow = true)
     expressionWithNullSafety(deserializer, nullable(codec), walkedTypePath)
   }

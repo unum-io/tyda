@@ -6,7 +6,7 @@ Project [tmp#1.key AS key#2, tmp#1.count AS count#3, tmp#1.min AS min#4]
       +- Project [tmp#8._1 AS _1#7, tmp#8._2 AS _2#9]
          +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#10, _2, _2#11))._2 AS tmp#8]
             +- SubqueryAlias golden_test_t1
-               +- View (`golden_test_t1`, [_1#10,_2#11])
+               +- View (`golden_test_t1`, [_1#10, _2#11])
                   +- LocalRelation [_1#10, _2#11]
 
 == Analyzed Logical Plan ==
@@ -17,7 +17,7 @@ Project [tmp#1.key AS key#2, tmp#1.count AS count#3, tmp#1.min AS min#4]
       +- Project [tmp#8._1 AS _1#7, tmp#8._2 AS _2#9]
          +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#10, _2, _2#11))._2 AS tmp#8]
             +- SubqueryAlias golden_test_t1
-               +- View (`golden_test_t1`, [_1#10,_2#11])
+               +- View (`golden_test_t1`, [_1#10, _2#11])
                   +- LocalRelation [_1#10, _2#11]
 
 == Optimized Logical Plan ==
@@ -44,12 +44,12 @@ Deduplicate [_1#1, _2#2]
          :- Project [tmp#8._1 AS _1#4, tmp#8._2 AS _2#5]
          :  +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#9, _2, _2#10))._2 AS tmp#8]
          :     +- SubqueryAlias golden_test_t1
-         :        +- View (`golden_test_t1`, [_1#9,_2#10])
+         :        +- View (`golden_test_t1`, [_1#9, _2#10])
          :           +- LocalRelation [_1#9, _2#10]
          +- Project [tmp#11._1 AS _1#6, tmp#11._2 AS _2#7]
             +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#12, _2, _2#13))._2 AS tmp#11]
                +- SubqueryAlias golden_test_t2
-                  +- View (`golden_test_t2`, [_1#12,_2#13])
+                  +- View (`golden_test_t2`, [_1#12, _2#13])
                      +- LocalRelation [_1#12, _2#13]
 
 == Analyzed Logical Plan ==
@@ -61,12 +61,12 @@ Deduplicate [_1#1, _2#2]
          :- Project [tmp#8._1 AS _1#4, tmp#8._2 AS _2#5]
          :  +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#9, _2, _2#10))._2 AS tmp#8]
          :     +- SubqueryAlias golden_test_t1
-         :        +- View (`golden_test_t1`, [_1#9,_2#10])
+         :        +- View (`golden_test_t1`, [_1#9, _2#10])
          :           +- LocalRelation [_1#9, _2#10]
          +- Project [tmp#11._1 AS _1#6, tmp#11._2 AS _2#7]
             +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#12, _2, _2#13))._2 AS tmp#11]
                +- SubqueryAlias golden_test_t2
-                  +- View (`golden_test_t2`, [_1#12,_2#13])
+                  +- View (`golden_test_t2`, [_1#12, _2#13])
                      +- LocalRelation [_1#12, _2#13]
 
 == Optimized Logical Plan ==
@@ -94,7 +94,7 @@ Project [opt1#1 AS value#2]
    +- Project [tmp#3.opt1 AS opt1#1, tmp#3.opt2 AS opt2#4]
       +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(opt1, opt1#5, opt2, opt2#6))._2 AS tmp#3]
          +- SubqueryAlias golden_test_t6
-            +- View (`golden_test_t6`, [opt1#5,opt2#6])
+            +- View (`golden_test_t6`, [opt1#5, opt2#6])
                +- LocalRelation [opt1#5, opt2#6]
 
 == Analyzed Logical Plan ==
@@ -104,7 +104,7 @@ Project [opt1#1 AS value#2]
    +- Project [tmp#3.opt1 AS opt1#1, tmp#3.opt2 AS opt2#4]
       +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(opt1, opt1#5, opt2, opt2#6))._2 AS tmp#3]
          +- SubqueryAlias golden_test_t6
-            +- View (`golden_test_t6`, [opt1#5,opt2#6])
+            +- View (`golden_test_t6`, [opt1#5, opt2#6])
                +- LocalRelation [opt1#5, opt2#6]
 
 == Optimized Logical Plan ==
@@ -122,7 +122,7 @@ Project [opt1#1 AS _1#2, opt2#3 AS _2#4]
    +- Project [tmp#5.opt1 AS opt1#1, tmp#5.opt2 AS opt2#3]
       +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(opt1, opt1#6, opt2, opt2#7))._2 AS tmp#5]
          +- SubqueryAlias golden_test_t6
-            +- View (`golden_test_t6`, [opt1#6,opt2#7])
+            +- View (`golden_test_t6`, [opt1#6, opt2#7])
                +- LocalRelation [opt1#6, opt2#7]
 
 == Analyzed Logical Plan ==
@@ -132,7 +132,7 @@ Project [opt1#1 AS _1#2, opt2#3 AS _2#4]
    +- Project [tmp#5.opt1 AS opt1#1, tmp#5.opt2 AS opt2#3]
       +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(opt1, opt1#6, opt2, opt2#7))._2 AS tmp#5]
          +- SubqueryAlias golden_test_t6
-            +- View (`golden_test_t6`, [opt1#6,opt2#7])
+            +- View (`golden_test_t6`, [opt1#6, opt2#7])
                +- LocalRelation [opt1#6, opt2#7]
 
 == Optimized Logical Plan ==
@@ -151,12 +151,12 @@ Project [tmp#1._1 AS _1#2, tmp#1._2 AS _2#3]
       :- Project [tmp#8._1 AS _1#4, tmp#8._2 AS _2#5]
       :  +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#9, _2, _2#10))._2 AS tmp#8]
       :     +- SubqueryAlias golden_test_t1
-      :        +- View (`golden_test_t1`, [_1#9,_2#10])
+      :        +- View (`golden_test_t1`, [_1#9, _2#10])
       :           +- LocalRelation [_1#9, _2#10]
       +- Project [tmp#11._1 AS _1#6, tmp#11._2 AS _2#7]
          +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#12, _2, _2#13))._2 AS tmp#11]
             +- SubqueryAlias golden_test_t2
-               +- View (`golden_test_t2`, [_1#12,_2#13])
+               +- View (`golden_test_t2`, [_1#12, _2#13])
                   +- LocalRelation [_1#12, _2#13]
 
 == Analyzed Logical Plan ==
@@ -167,12 +167,12 @@ Project [tmp#1._1 AS _1#2, tmp#1._2 AS _2#3]
       :- Project [tmp#8._1 AS _1#4, tmp#8._2 AS _2#5]
       :  +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#9, _2, _2#10))._2 AS tmp#8]
       :     +- SubqueryAlias golden_test_t1
-      :        +- View (`golden_test_t1`, [_1#9,_2#10])
+      :        +- View (`golden_test_t1`, [_1#9, _2#10])
       :           +- LocalRelation [_1#9, _2#10]
       +- Project [tmp#11._1 AS _1#6, tmp#11._2 AS _2#7]
          +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#12, _2, _2#13))._2 AS tmp#11]
             +- SubqueryAlias golden_test_t2
-               +- View (`golden_test_t2`, [_1#12,_2#13])
+               +- View (`golden_test_t2`, [_1#12, _2#13])
                   +- LocalRelation [_1#12, _2#13]
 
 == Optimized Logical Plan ==
@@ -202,17 +202,17 @@ Project [tmp#1._1 AS _1#2, tmp#1._2 AS _2#3]
       :  :- Project [tmp#10._1 AS _1#4, tmp#10._2 AS _2#5]
       :  :  +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#11, _2, _2#12))._2 AS tmp#10]
       :  :     +- SubqueryAlias golden_test_t1
-      :  :        +- View (`golden_test_t1`, [_1#11,_2#12])
+      :  :        +- View (`golden_test_t1`, [_1#11, _2#12])
       :  :           +- LocalRelation [_1#11, _2#12]
       :  +- Project [tmp#13._1 AS _1#6, tmp#13._2 AS _2#7]
       :     +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#14, _2, _2#15))._2 AS tmp#13]
       :        +- SubqueryAlias golden_test_t2
-      :           +- View (`golden_test_t2`, [_1#14,_2#15])
+      :           +- View (`golden_test_t2`, [_1#14, _2#15])
       :              +- LocalRelation [_1#14, _2#15]
       +- Project [tmp#16._1 AS _1#8, tmp#16._2 AS _2#9]
          +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#17, _2, _2#18))._2 AS tmp#16]
             +- SubqueryAlias golden_test_t3
-               +- View (`golden_test_t3`, [_1#17,_2#18])
+               +- View (`golden_test_t3`, [_1#17, _2#18])
                   +- LocalRelation [_1#17, _2#18]
 
 == Analyzed Logical Plan ==
@@ -224,17 +224,17 @@ Project [tmp#1._1 AS _1#2, tmp#1._2 AS _2#3]
       :  :- Project [tmp#10._1 AS _1#4, tmp#10._2 AS _2#5]
       :  :  +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#11, _2, _2#12))._2 AS tmp#10]
       :  :     +- SubqueryAlias golden_test_t1
-      :  :        +- View (`golden_test_t1`, [_1#11,_2#12])
+      :  :        +- View (`golden_test_t1`, [_1#11, _2#12])
       :  :           +- LocalRelation [_1#11, _2#12]
       :  +- Project [tmp#13._1 AS _1#6, tmp#13._2 AS _2#7]
       :     +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#14, _2, _2#15))._2 AS tmp#13]
       :        +- SubqueryAlias golden_test_t2
-      :           +- View (`golden_test_t2`, [_1#14,_2#15])
+      :           +- View (`golden_test_t2`, [_1#14, _2#15])
       :              +- LocalRelation [_1#14, _2#15]
       +- Project [tmp#16._1 AS _1#8, tmp#16._2 AS _2#9]
          +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#17, _2, _2#18))._2 AS tmp#16]
             +- SubqueryAlias golden_test_t3
-               +- View (`golden_test_t3`, [_1#17,_2#18])
+               +- View (`golden_test_t3`, [_1#17, _2#18])
                   +- LocalRelation [_1#17, _2#18]
 
 == Optimized Logical Plan ==
@@ -267,7 +267,7 @@ Project [tmp#1.string AS string#2]
    +- Project [tmp#4.integer AS integer#5, tmp#4.string AS string#3]
       +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(integer, integer#6, string, string#7))._2 AS tmp#4]
          +- SubqueryAlias golden_test_t4
-            +- View (`golden_test_t4`, [integer#6,string#7])
+            +- View (`golden_test_t4`, [integer#6, string#7])
                +- LocalRelation [integer#6, string#7]
 
 == Analyzed Logical Plan ==
@@ -277,7 +277,7 @@ Project [tmp#1.string AS string#2]
    +- Project [tmp#4.integer AS integer#5, tmp#4.string AS string#3]
       +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(integer, integer#6, string, string#7))._2 AS tmp#4]
          +- SubqueryAlias golden_test_t4
-            +- View (`golden_test_t4`, [integer#6,string#7])
+            +- View (`golden_test_t4`, [integer#6, string#7])
                +- LocalRelation [integer#6, string#7]
 
 == Optimized Logical Plan ==
@@ -294,7 +294,7 @@ Project [struct(string, string#1).string AS value#2]
 +- Project [tmp#3.integer AS integer#4, tmp#3.string AS string#1]
    +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(integer, integer#5, string, string#6))._2 AS tmp#3]
       +- SubqueryAlias golden_test_t4
-         +- View (`golden_test_t4`, [integer#5,string#6])
+         +- View (`golden_test_t4`, [integer#5, string#6])
             +- LocalRelation [integer#5, string#6]
 
 == Analyzed Logical Plan ==
@@ -303,7 +303,7 @@ Project [struct(string, string#1).string AS value#2]
 +- Project [tmp#3.integer AS integer#4, tmp#3.string AS string#1]
    +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(integer, integer#5, string, string#6))._2 AS tmp#3]
       +- SubqueryAlias golden_test_t4
-         +- View (`golden_test_t4`, [integer#5,string#6])
+         +- View (`golden_test_t4`, [integer#5, string#6])
             +- LocalRelation [integer#5, string#6]
 
 == Optimized Logical Plan ==
@@ -319,7 +319,7 @@ LocalTableScan [value#2]
 Project [tmp#1._1 AS _1#2, tmp#1._2 AS _2#3]
 +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#4, _2, _2#5))._2 AS tmp#1]
    +- SubqueryAlias golden_test_t1
-      +- View (`golden_test_t1`, [_1#4,_2#5])
+      +- View (`golden_test_t1`, [_1#4, _2#5])
          +- LocalRelation [_1#4, _2#5]
 
 == Analyzed Logical Plan ==
@@ -327,7 +327,7 @@ _1: int, _2: string
 Project [tmp#1._1 AS _1#2, tmp#1._2 AS _2#3]
 +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#4, _2, _2#5))._2 AS tmp#1]
    +- SubqueryAlias golden_test_t1
-      +- View (`golden_test_t1`, [_1#4,_2#5])
+      +- View (`golden_test_t1`, [_1#4, _2#5])
          +- LocalRelation [_1#4, _2#5]
 
 == Optimized Logical Plan ==
@@ -344,7 +344,7 @@ Project [_2#1 AS value#2]
 +- Project [tmp#3._1 AS _1#4, tmp#3._2 AS _2#1]
    +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#5, _2, _2#6))._2 AS tmp#3]
       +- SubqueryAlias golden_test_t1
-         +- View (`golden_test_t1`, [_1#5,_2#6])
+         +- View (`golden_test_t1`, [_1#5, _2#6])
             +- LocalRelation [_1#5, _2#6]
 
 == Analyzed Logical Plan ==
@@ -353,7 +353,7 @@ Project [_2#1 AS value#2]
 +- Project [tmp#3._1 AS _1#4, tmp#3._2 AS _2#1]
    +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#5, _2, _2#6))._2 AS tmp#3]
       +- SubqueryAlias golden_test_t1
-         +- View (`golden_test_t1`, [_1#5,_2#6])
+         +- View (`golden_test_t1`, [_1#5, _2#6])
             +- LocalRelation [_1#5, _2#6]
 
 == Optimized Logical Plan ==
@@ -370,13 +370,13 @@ Union false, false
 :- Project [tmp#1._1 AS _1#2, tmp#1._2 AS _2#3]
 :  +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#4, _2, _2#5))._2 AS tmp#1]
 :     +- SubqueryAlias golden_test_t1
-:        +- View (`golden_test_t1`, [_1#4,_2#5])
+:        +- View (`golden_test_t1`, [_1#4, _2#5])
 :           +- LocalRelation [_1#4, _2#5]
 +- Project [_1#6, _2#7]
    +- Project [tmp#8._1 AS _1#6, tmp#8._2 AS _2#7]
       +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#9, _2, _2#10))._2 AS tmp#8]
          +- SubqueryAlias golden_test_t2
-            +- View (`golden_test_t2`, [_1#9,_2#10])
+            +- View (`golden_test_t2`, [_1#9, _2#10])
                +- LocalRelation [_1#9, _2#10]
 
 == Analyzed Logical Plan ==
@@ -385,13 +385,13 @@ Union false, false
 :- Project [tmp#1._1 AS _1#2, tmp#1._2 AS _2#3]
 :  +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#4, _2, _2#5))._2 AS tmp#1]
 :     +- SubqueryAlias golden_test_t1
-:        +- View (`golden_test_t1`, [_1#4,_2#5])
+:        +- View (`golden_test_t1`, [_1#4, _2#5])
 :           +- LocalRelation [_1#4, _2#5]
 +- Project [_1#6, _2#7]
    +- Project [tmp#8._1 AS _1#6, tmp#8._2 AS _2#7]
       +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(_1, _1#9, _2, _2#10))._2 AS tmp#8]
          +- SubqueryAlias golden_test_t2
-            +- View (`golden_test_t2`, [_1#9,_2#10])
+            +- View (`golden_test_t2`, [_1#9, _2#10])
                +- LocalRelation [_1#9, _2#10]
 
 == Optimized Logical Plan ==
@@ -410,42 +410,42 @@ Union
 == Parsed Logical Plan ==
 'SerializeFromObject [input[0, int, false] AS value#1]
 +- 'MapElements com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$$Lambda/0x1, int, [StructField(value,IntegerType,false)], obj#2: int
-   +- 'DeserializeToObject unresolveddeserializer(assertnotnull(getcolumnbyordinal(0, IntegerType))), obj#3: int
+   +- 'DeserializeToObject unresolveddeserializer(assertnotnull(upcast(getcolumnbyordinal(0, IntegerType), IntegerType, - root class: "int"))), obj#3: int
       +- SerializeFromObject [input[0, int, false] AS value#4]
-         +- MapPartitions org.apache.spark.sql.Dataset$$Lambda/0x2, obj#5: int
-            +- DeserializeToObject newInstance(class scala.Tuple2), obj#6: scala.Tuple2
+         +- MapPartitions org.apache.spark.sql.internal.UDFAdaptors$$$Lambda/0x2, obj#5: int
+            +- DeserializeToObject newInstance(class com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt), obj#6: com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt
                +- Project [tmp#7.seq AS seq#8, tmp#7.integer AS integer#9]
                   +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(seq, seq#10, integer, integer#11))._2 AS tmp#7]
                      +- SubqueryAlias golden_test_t5
-                        +- View (`golden_test_t5`, [seq#10,integer#11])
+                        +- View (`golden_test_t5`, [seq#10, integer#11])
                            +- LocalRelation [seq#10, integer#11]
 
 == Analyzed Logical Plan ==
 value: int
 SerializeFromObject [input[0, int, false] AS value#1]
 +- MapElements com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$$Lambda/0x1, int, [StructField(value,IntegerType,false)], obj#2: int
-   +- DeserializeToObject assertnotnull(value#4), obj#3: int
+   +- DeserializeToObject assertnotnull(cast(value#4 as int)), obj#3: int
       +- SerializeFromObject [input[0, int, false] AS value#4]
-         +- MapPartitions org.apache.spark.sql.Dataset$$Lambda/0x2, obj#5: int
-            +- DeserializeToObject newInstance(class scala.Tuple2), obj#6: scala.Tuple2
+         +- MapPartitions org.apache.spark.sql.internal.UDFAdaptors$$$Lambda/0x2, obj#5: int
+            +- DeserializeToObject newInstance(class com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt), obj#6: com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt
                +- Project [tmp#7.seq AS seq#8, tmp#7.integer AS integer#9]
                   +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(seq, seq#10, integer, integer#11))._2 AS tmp#7]
                      +- SubqueryAlias golden_test_t5
-                        +- View (`golden_test_t5`, [seq#10,integer#11])
+                        +- View (`golden_test_t5`, [seq#10, integer#11])
                            +- LocalRelation [seq#10, integer#11]
 
 == Optimized Logical Plan ==
 SerializeFromObject [input[0, int, false] AS value#1]
 +- MapElements com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$$Lambda/0x1, int, [StructField(value,IntegerType,false)], obj#2: int
-   +- MapPartitions org.apache.spark.sql.Dataset$$Lambda/0x2, obj#5: int
-      +- DeserializeToObject newInstance(class scala.Tuple2), obj#6: scala.Tuple2
+   +- MapPartitions org.apache.spark.sql.internal.UDFAdaptors$$$Lambda/0x2, obj#5: int
+      +- DeserializeToObject newInstance(class com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt), obj#6: com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt
          +- LocalRelation [seq#8, integer#9]
 
 == Physical Plan ==
 *(1) SerializeFromObject [input[0, int, false] AS value#1]
 +- *(1) MapElements com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$$Lambda/0x1, obj#2: int
-   +- MapPartitions org.apache.spark.sql.Dataset$$Lambda/0x2, obj#5: int
-      +- DeserializeToObject newInstance(class scala.Tuple2), obj#6: scala.Tuple2
+   +- MapPartitions org.apache.spark.sql.internal.UDFAdaptors$$$Lambda/0x2, obj#5: int
+      +- DeserializeToObject newInstance(class com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt), obj#6: com.choreograph.tyda.spark.DatasetOnSparkGoldenExplainSuite$SeqAndInt
          +- LocalTableScan [seq#8, integer#9]
 
 ------ end

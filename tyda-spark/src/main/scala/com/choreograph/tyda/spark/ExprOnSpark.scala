@@ -99,7 +99,7 @@ private[spark] object ExprOnSpark {
 
 /** Contains logic for converting a Expr[T] into a Spark Column. */
 private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) {
-  import ExprOnSpark.*
+  import ExprOnSpark.wrapNestedSome
 
   private def literal[T](value: T, codec: Codec.Primitive[T])(using SparkSession): Column =
     codec match {
@@ -258,11 +258,7 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
         createUdf(integral.quot, convert(lhs), convert(rhs), s"$integral.quot")(using lhs.codec, lhs.codec)
       case ExprNode.Cast(from, canCast) => convert(from).cast(catalystType(expr.codec))
       case ExprNode.TryCast(from, canTryCast) =>
-        /* TODO: Replace with public API in Spark 4.0.0+ it was exposed added in
-         * https://github.com/apache/spark/pull/45796 */
-        val e = convert(from).expr
-        val tryCast = Cast(e, catalystType(expr.codec), None, EvalMode.TRY)
-        val casted = new Column(tryCast)
+        val casted = tryCast(convert(from), expr.codec)
         if from.codec == Codec.String then when(!convert(from).rlike("\\p{Cc}"), casted) else casted
       case ExprNode.TimestampToMicros(inner) => unix_micros(convert(inner))
       case ExprNode.MicrosToTimestamp(inner) => timestamp_micros(convert(inner))

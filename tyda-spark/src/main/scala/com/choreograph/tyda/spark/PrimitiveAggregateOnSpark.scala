@@ -47,14 +47,16 @@ private[spark] object PrimitiveAggregateOnSpark {
     }
 
   private def fallback[T, R](expr: PrimitiveAggregate[T, R], cf: ColumnFactory[T]): Column = {
-    val aggregator = PrimitiveAggregateEvaluation.aggregator[T, R](expr)
+    val aggregatorAndCodec = PrimitiveAggregateEvaluation.aggregatorAndIntermediateCodec[T, R](expr)
+    val aggregator = aggregatorAndCodec.aggregator
+    val intermediateCodec = aggregatorAndCodec.codec
     // Due to SPARK-52023 returning an Option from a udaf can cause data corruption/crashes.
     // To avoid this we instead wrap the output in a Tuple1 and then extract the Option afterwards.
     val outputNeedsWorkaround = expr.codec.isInstanceOf[Codec.Option[?]]
     val sparkAggregator =
       if outputNeedsWorkaround then
-        aggregatorAsSparkWrappedOutput(aggregator)(using aggregator.intermediateCodec, expr.codec)
-      else aggregatorAsSpark(aggregator)(using aggregator.intermediateCodec, expr.codec)
+        aggregatorAsSparkWrappedOutput(aggregator)(using intermediateCodec, expr.codec)
+      else aggregatorAsSpark(aggregator)(using intermediateCodec, expr.codec)
     val customAggregate = udaf(sparkAggregator, CodecToEncoder.convert(using cf.codec))
     val resultExpr = customAggregate(cf.columns*)
     if outputNeedsWorkaround then resultExpr("_1") else resultExpr

@@ -8,6 +8,7 @@ import org.apache.spark.sql.catalyst.expressions.AttributeSeq
 import org.apache.spark.sql.catalyst.expressions.BindReferences
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.expressions.Nondeterministic
+import org.apache.spark.sql.catalyst.optimizer.ReplaceExpressions
 import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
 import org.apache.spark.sql.catalyst.plans.logical.Project
 import org.apache.spark.sql.catalyst.types.DataTypeUtils
@@ -53,14 +54,18 @@ class ExprEvaluationSuiteSpark extends ExprEvaluationSuite, SharedSparkSession {
     val dummyPlan = Project(Seq(Alias(expr, "result")()), LocalRelation(attrs))
     val analyzedPlan = analyzer.execute(dummyPlan)
     analyzer.checkAnalysis(analyzedPlan)
-    val resolvedExpr = analyzedPlan.expressions.head
+    /* If we do not apply ReplaceExpressions we run into assert failures on this assert
+     * https://github.com/apache/spark/blob/b5ed5220267d639f0fae73d1fb1b4de7e84adecc/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/Expression.scala#L463-L465 */
+    val replacedPlan = ReplaceExpressions(analyzedPlan)
+    val resolvedExpr = replacedPlan.expressions.head
     BindReferences.bindReference(resolvedExpr, attrs)
   }
 
   def evaluator[From: Codec, To](compiled: CompiledExpr[From, To]): From => To = {
     val encoder = CodecToEncoder.convertInternal[From]
     val serializer = encoder.createSerializer()
-    val sparkExpr = resolveAndBind(ExprOnSpark.unresolved[From](compiled).expr, encoder.schema)
+    val column = ExprOnSpark.unresolved[From](compiled)
+    val sparkExpr = resolveAndBind(columnToExpression(column), encoder.schema)
     /* Based on
      * https://github.com/apache/spark/blob/v4.1.1/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/ExpressionsEvaluator.scala#L48
      * Without initialization Nondeterministic expressions will throw an exception during eval. */
@@ -83,7 +88,7 @@ class ExprEvaluationSuiteSpark extends ExprEvaluationSuite, SharedSparkSession {
   }
 
   override def explain[From: Codec, To](expr: Expr[From] => Expr[To], values: Seq[From]): String = {
-    val c: Column = ExprOnSpark.unresolved(CompiledExpr(expr))
+    val c: Column = ExprOnSpark.unresolved[From](CompiledExpr(expr))
     c.toString
   }
 }

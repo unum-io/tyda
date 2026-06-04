@@ -147,7 +147,8 @@ lazy val root = (project in file("."))
     tydaParquet,
     tydaRepl,
     tydaRewrite,
-    tydaSpark,
+    tydaSpark3,
+    tydaSpark4,
     tydaSql,
     tydaSparkSql,
     tydaTable,
@@ -161,7 +162,8 @@ lazy val root = (project in file("."))
   .settings(
     // tydaTestSuites depends on scalatest which generates a lots of documentation warnings.
     // Since it a internal test project, we just exclude it from docs like other Test projects.
-    ScalaUnidoc / unidoc / unidocProjectFilter := inAnyProject -- inProjects(tydaTestSuites)
+    ScalaUnidoc / unidoc / unidocProjectFilter :=
+      inAnyProject -- inProjects(tydaTestSuites) -- inProjects(tydaSpark4)
   )
   .disablePlugins(ScalafixPlugin)
   .settings(name := "tyda")
@@ -176,7 +178,7 @@ lazy val tydaDocs = (project in file("tyda-docs"))
   )
   .settings(Dependencies.tydaDocs)
   .settings(sparkRunSettings)
-  .dependsOn(tyda, tydaTable, tydaJob, tydaJobTest, tydaSpark)
+  .dependsOn(tyda, tydaTable, tydaJob, tydaJobTest, tydaSpark3)
   .enablePlugins(MdocPlugin)
   .disablePlugins(ScalafixPlugin)
   .enablePlugins(NoPublishPlugin)
@@ -294,12 +296,38 @@ lazy val tydaTestSuites = (project in file("tyda-test-suites"))
   .dependsOn(tyda)
   .enablePlugins(NoPublishPlugin)
 
-lazy val tydaSpark = (project in file("tyda-spark"))
+lazy val tydaSpark3 = (project in file("tyda-spark"))
   .settings(name := "tyda-spark")
   .settings(commonSettings)
   .settings(sparkSettings)
   .settings(tydaGoldenTestsSettings)
-  .settings(Dependencies.tydaSpark)
+  .settings(Dependencies.tydaSpark3)
+  .settings(Compile / unmanagedSourceDirectories += baseDirectory.value / "src" / "main" / "spark-3")
+  .dependsOn(scalafixRules % ScalafixConfig)
+  .dependsOn(tyda, tydaRewrite)
+  .dependsOn(tydaIterator % "test->compile")
+  .dependsOn(tydaTestSuites % "test->compile")
+
+lazy val tydaSpark4 = (project in file("tyda-spark4"))
+  .settings(name := "tyda-spark4")
+  .settings(commonSettings)
+  .settings(sparkSettings)
+  .settings(tydaGoldenTestsSettings)
+  .settings(Dependencies.tydaSpark4)
+  .settings(sourceDirectory := (tydaSpark3 / sourceDirectory).value)
+  .settings(
+    Compile / unmanagedSourceDirectories += (tydaSpark3 / baseDirectory).value / "src" / "main" / "spark-4",
+    // We use the overrides to force spark 3 dependencies. Therefore we must remove them here.
+    dependencyOverrides := Seq.empty,
+    // This silences the following warning:
+    //
+    // An existential type that came from a Scala-2 classfile for class AgnosticEncoders
+    // cannot be mapped accurately to a Scala-3 equivalent.
+    //
+    // Seems like the nowarn annotation can not be used for this warning, so we can not make the silencing
+    // more local than this.
+    scalacOptions += "-Wconf:id=E098:s"
+  )
   .dependsOn(scalafixRules % ScalafixConfig)
   .dependsOn(tyda, tydaRewrite)
   .dependsOn(tydaIterator % "test->compile")
@@ -328,7 +356,7 @@ lazy val tydaSparkSql = (project in file("tyda-sparksql"))
   .settings(sparkSettings)
   .settings(Dependencies.tydaSparkSql)
   .dependsOn(scalafixRules % ScalafixConfig)
-  .dependsOn(tydaSql, tydaSpark)
+  .dependsOn(tydaSql, tydaSpark3)
   .dependsOn(tydaIterator % "test->compile")
   .dependsOn(tydaTestSuites % "test->compile")
   .enablePlugins(NoPublishPlugin)
@@ -371,7 +399,7 @@ lazy val tydaJobTest = (project in file("tyda-job-test"))
   .settings(tydaJobSettings)
   .settings(Dependencies.tydaJobTest)
   .dependsOn(scalafixRules % ScalafixConfig)
-  .dependsOn(tydaJob, tydaSpark, tydaIterator)
+  .dependsOn(tydaJob, tydaSpark3, tydaIterator)
 
 lazy val tydaParquet = (project in file("tyda-parquet"))
   .settings(name := "tyda-parquet")
