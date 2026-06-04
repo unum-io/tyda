@@ -244,7 +244,7 @@ object DatasetOnSpark {
           ).iterator.flatten.filter(_.isDirectory()).map(_.getPath.toString).toSeq
           val parser = HivePartitionParser.makeParser
           val decoded = partitions.map(parser)
-          IntermediateDataset(spark.createDataset(decoded)(using convert))
+          IntermediateDataset(spark.createDataset(decoded))
         case Dataset.ReadTablePartitionsPaths(identifier, location, _) =>
           val df = location match {
             case TableLocation.Native =>
