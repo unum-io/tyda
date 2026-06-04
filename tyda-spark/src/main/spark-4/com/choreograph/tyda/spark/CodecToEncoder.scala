@@ -17,7 +17,8 @@ import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.catalyst.expressions.GenericRow
 import org.apache.spark.sql.catalyst.util.SparkDateTimeUtils
 import org.apache.spark.sql.catalyst.util.SparkIntervalUtils
-import org.apache.spark.sql.types.*
+import org.apache.spark.sql.types.DecimalType
+import org.apache.spark.sql.types.Metadata
 
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
@@ -37,7 +38,7 @@ object CodecToEncoder {
   private object TimestampSparkCodec extends SparkCodec[Timestamp, Instant] {
     def encode(value: Timestamp): Instant = SparkDateTimeUtils.microsToInstant(value.toMicros)
     // Using Instant.EPOCH.until(value, ChronoUnit.MICROS) will do calculation in nanos
-    // So we use the spark implemenation here handles all edge cases.
+    // So we use the spark implementation here which handles all edge cases.
     def decode(value: Instant): Timestamp = Timestamp.fromMicros(SparkDateTimeUtils.instantToMicros(value))
   }
 
@@ -82,10 +83,10 @@ object CodecToEncoder {
         // TYPE SAFETY: Cast is safe since tyda Decimal type is an opaque type for BigDecimal
         AgnosticEncoders.ScalaDecimalEncoder(DecimalType(precision, scale)).asInstanceOf[AgnosticEncoder[T]]
       // To get the logical type encoded correctly in parquet files we need to use the Spark build in
-      /* timestamp encoders. Maybe we should try upstream some way of encoding Long directly to timestamp
-       * type. */
+      // timestamp encoders. Maybe we should try upstream some way of encoding Long directly to timestamp
+      // type.
       case Codec.TimestampMicros => TransformingEncoder(
-          clsTag = classTag[Timestamp],
+          clsTag = codec.classTag,
           transformed = AgnosticEncoders.InstantEncoder(false),
           codecProvider = () => TimestampSparkCodec,
           nullable = false
@@ -107,7 +108,7 @@ object CodecToEncoder {
 
       case Codec.Option(element) => toAgnostic(element) match {
           // This is a workaround for an upstream issue. If this PR
-          // https://github.com/apache/spark/pull/54506 get merged we can remove this case
+          // https://github.com/apache/spark/pull/54506 gets merged we can remove this case
           case transforming: TransformingEncoder[?, ?] => makeNullable(transforming)
           case other => OptionEncoder(other)
         }
