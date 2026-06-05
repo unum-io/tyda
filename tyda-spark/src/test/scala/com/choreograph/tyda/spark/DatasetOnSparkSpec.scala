@@ -144,4 +144,12 @@ class DatasetOnSparkSpec extends AnyFunSuite, SharedSparkSession, Eventually {
       assert(countCached(usesCache) == 0, "The dataset should be uncached")
     }
   }
+
+  test("perf of Map.get https://github.com/apache/spark/issues/54646") {
+    // If doing linear lookup in the map this tests will take a really long time.
+    val map = Dataset.FromSeq((0 until 100000).map(i => (i, i))).collect.toMap
+    val ds1 = Dataset.FromSeq(0 until 100000)
+    val lookups = ds1.select(v => map.get(v))
+    val _ = DatasetOnSpark(lookups).collect()
+  }
 }

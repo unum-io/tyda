@@ -42,10 +42,15 @@ import com.choreograph.tyda.CompiledExpr2
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
 import com.choreograph.tyda.Errors
+import com.choreograph.tyda.Expr
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.Forbidden
+import com.choreograph.tyda.TreeApi.Continue
+import com.choreograph.tyda.TreeApi.Skip
+import com.choreograph.tyda.TreeApi.Stop
 import com.choreograph.tyda.rewrite.ArrayCodec
 import com.choreograph.tyda.rewrite.IsNone
+import com.choreograph.tyda.rewrite.NonDeterministic
 import com.choreograph.tyda.rewrite.Nullable
 import com.choreograph.tyda.rewrite.PrimitiveAggregateAsFold
 import com.choreograph.tyda.rewrite.SparkJsonCompatability
@@ -118,7 +123,7 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
   private def cfFromRef(ref: ExprNode.Reference[?]): ColumnFactory[?] =
     cfs.get(ref).getOrElse(Errors.failUnexpectedReference(ref, cfs.keys))
 
-  def convert(expr: ExprNode[?])(using spark: SparkSession): Column =
+  def convert[T](expr: ExprNode[T])(using spark: SparkSession): Column =
     expr match {
       case ExprNode.Select(ref: ExprNode.Reference[?], name) => cfFromRef(ref).column(name)
       case ExprNode.Select(p, name) => convert(p)(name)
@@ -284,6 +289,16 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
       case ExprNode.FromRepr(inner, _) => convert(inner)
       case ExprNode.MakeMap(pairs) => map_from_entries(convert(pairs))
       case ExprNode.MapEntries(map) => map_entries(convert(map))
+      // Workaround for https://github.com/apache/spark/issues/54646
+      // Spark does linear looks ups for maps which will be slow for large maps
+      // that do not depend on the row. So we manually plan it as a lookup instead.
+      // Remove after only using 4.2.x or later
+      case ExprNode.MapGet(map, key: ExprNode[k]) if isConstant(map) =>
+        given Codec[k] = key.codec
+        given Codec[T] = expr.codec
+        val evalMap = com.choreograph.tyda.Dataset.from(Seq(1)).select(_ => Expr.lift(map))
+        val literalMap = DatasetOnSpark(evalMap).head
+        createUdf(literalMap.get, convert(key))
       case ExprNode.MapGet(map, key) =>
         val mapCol = convert(map)
         val keyCol = convert(key)
@@ -296,4 +311,14 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
       case ExprNode.Rand() => rand()
       case ExprNode.IsNaN(operand) => isnan(convert(operand))
     }
+
+  // Check if a expression is the same for all rows
+  private def isConstant[T](expr: ExprNode[T]): Boolean =
+    expr.fold[Boolean](true)((_, node) =>
+      node match {
+        case ExprNode.Reference(_, _) | NonDeterministic() => Stop(false)
+        case ExprNode.ExistsSubquery(_) | ExprNode.ScalarSubquery(_) => Skip(true)
+        case _ => Continue(true)
+      }
+    )
 }

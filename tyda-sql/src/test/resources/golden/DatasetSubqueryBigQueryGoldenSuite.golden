@@ -2,6 +2,10 @@
 SELECT t1.value AS value FROM t1 WHERE (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = t1.value) FROM unnest(coalesce((SELECT CASE WHEN (count(1) <> 0) THEN array_agg(t2.value) END AS value FROM t2), CAST([] AS ARRAY<TINYINT>))) AS c0))) AS c1)
 ------ end
 
+------ Test: collect toMap lookup
+SELECT t1.value AS _1, (SELECT c2.value FROM unnest(CASE WHEN (array_length(coalesce((SELECT CASE WHEN (count(1) <> 0) THEN array_agg(struct(t0._1 AS _1, t0._2 AS _2)) END AS value FROM (SELECT t2._1 AS _1, max(t2._2) AS _2 FROM t2 GROUP BY t2._1) AS t0), CAST([] AS ARRAY<STRUCT<_1 TINYINT,_2 INT>>))) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest(coalesce((SELECT CASE WHEN (count(1) <> 0) THEN array_agg(struct(t2._1 AS _1, t2._2 AS _2)) END AS value FROM (SELECT t2._1 AS _1, max(t2._2) AS _2 FROM t2 GROUP BY t2._1) AS t2), CAST([] AS ARRAY<STRUCT<_1 TINYINT,_2 INT>>))) AS c0))) AS c1)))) THEN CAST(coalesce((SELECT CASE WHEN (count(1) <> 0) THEN array_agg(struct(t4._1 AS _1, t4._2 AS _2)) END AS value FROM (SELECT t2._1 AS _1, max(t2._2) AS _2 FROM t2 GROUP BY t2._1) AS t4), CAST([] AS ARRAY<STRUCT<_1 TINYINT,_2 INT>>)) AS ARRAY<STRUCT<key TINYINT,value INT>>) ELSE error('Duplicate keys found') END) AS c2 WHERE (c2.key = t1.value)) AS _2 FROM t1
+------ end
+
 ------ Test: count subquery
 SELECT t1.value AS value FROM t1 WHERE (NOT (t1.value <= coalesce((SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM t2), CAST(0 AS BIGINT))))
 ------ end
