@@ -1151,7 +1151,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testLiteralCreation[Duration](Duration.fromMicros(1))
   testLiteralCreation[Option[Duration]](None)
   testLiteralCreation[Date](Date.fromDays(1))
-  testLiteralCreation[Binary](Binary.fromArray(Array(1, 2, 3)))
+  testLiteralCreation[Binary](Binary.fromArray(Array(0x00, 0xca, 0xfe, 0xba, 0xbe).map(_.toByte)))
 
   testHasSameBehavior[Timestamp, Long]("Timestamp toMicros", _.toMicros, _.toMicros)
   {
