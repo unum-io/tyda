@@ -506,8 +506,8 @@ SELECT CAST('20.00' AS DECIMAL) AS value FROM t1
 SELECT 'a' AS discriminant, CAST(NULL AS STRUCT<i INT>) AS c, CAST(NULL AS STRUCT<i INT>) AS d FROM t1
 ------ end
 
------- Test: create literal ArraySeq(1, 2, 3) com.choreograph.tyda.Binary$package.Binary
-SELECT B'\x01\x02\x03' AS value FROM t1
+------ Test: create literal ArraySeq(0, -54, -2, -70, -66) com.choreograph.tyda.Binary$package.Binary
+SELECT B'\x00\xca\xfe\xba\xbe' AS value FROM t1
 ------ end
 
 ------ Test: create literal List() scala.collection.immutable.List[scala.Int]
