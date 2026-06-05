@@ -9,7 +9,6 @@ import org.apache.spark.sql.types.BooleanType
 import org.apache.spark.sql.types.ByteType
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.DateType
-import org.apache.spark.sql.types.DayTimeIntervalType
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.FloatType
 import org.apache.spark.sql.types.IntegerType
@@ -240,7 +239,7 @@ trait CodecToEncoderSpecBase extends AnyFunSuite with SharedSparkSession {
   schemaTest[Boolean](BooleanType)
   schemaTest[BigInt](BinaryType)
   schemaTest[Timestamp](TimestampType)
-  schemaTest[Duration](DayTimeIntervalType())
+  schemaTest[Duration](LongType)
   schemaTest[Date](DateType)
   schemaTest[Seq[Int]](ArrayType(IntegerType, false))
   schemaTest[Map[Int, Int]](MapType(IntegerType, IntegerType, false))

@@ -57,7 +57,7 @@ object DdlDialect {
 
   val Spark = DdlDialect(
     decimal = DecimalSupport.Decimal128,
-    duration = DurationSupport.Native("INTERVAL DAY TO SECOND"),
+    duration = DurationSupport.Long,
     map = MapSupport.Native(supportsNotNullKey = false, supportsNotNullValue = false),
     supportsNotNullColumn = true,
     supportsNotNullArrayElement = false,

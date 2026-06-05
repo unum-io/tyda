@@ -120,12 +120,6 @@ object ExprEvaluationSuiteBase {
   }
 
   val errorMessage = "My error message"
-
-  // We run into https://issues.apache.org/jira/browse/SPARK-49311
-  // We might want to condider not using DayTimeInterval for Duration in Spark since they do not provide
-  // any good apis for extracting the underlying value.
-  given Arbitrary[Duration] =
-    Arbitrary[Duration].filter(d => d.toMicros < Long.MaxValue / 10 && d.toMicros > Long.MinValue / 10)
 }
 
 /** This contains behavior tests for expression evaluation.
@@ -138,7 +132,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   import ExprEvaluationSuiteBase.{
     CustomIntSeq, Full, Projected, Struct, NestedOption, NamedTuple1, NamedTuple2, NamedTupleAlias,
     NamedTupleAliasWithUnused, TestEnum, TestSealedTrait, TestEnumString, WithEmptyTuple, WithNamedTupleEmpty,
-    WithOptionField, TreeBounded, Leaf, Node, errorMessage, given
+    WithOptionField, TreeBounded, Leaf, Node, errorMessage
   }
 
   /** Evaluate the expression on a sequence of inputs.

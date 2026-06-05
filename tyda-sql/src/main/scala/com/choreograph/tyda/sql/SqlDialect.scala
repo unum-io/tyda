@@ -439,7 +439,7 @@ object SqlDialect {
     isNanFunction = "isnan",
     makeArray = MakeArray.Function("array"),
     makeDate = MakeDate.Function("date_from_unix_date"),
-    makeDuration = MakeDuration.Cast,
+    makeDuration = MakeDuration.DiffBigInt,
     makeStruct = MakeStruct.Function("named_struct"),
     makeTimestamp = MakeTimestamp.Function("timestamp_micros"),
     mapSupport = MapSupport.Native(

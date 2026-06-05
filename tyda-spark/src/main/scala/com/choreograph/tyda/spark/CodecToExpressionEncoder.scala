@@ -1,7 +1,5 @@
 package com.choreograph.tyda.spark
 
-import java.time.Duration
-
 import scala.collection.Factory
 import scala.deriving.Mirror
 import scala.reflect.ClassTag
@@ -28,7 +26,6 @@ import org.apache.spark.sql.catalyst.expressions.objects.UnresolvedMapObjects
 import org.apache.spark.sql.catalyst.expressions.objects.UnwrapOption
 import org.apache.spark.sql.catalyst.expressions.objects.ValidateExternalType
 import org.apache.spark.sql.catalyst.expressions.objects.WrapOption
-import org.apache.spark.sql.catalyst.util.IntervalUtils
 import org.apache.spark.sql.types.*
 
 import com.choreograph.tyda.Codec
@@ -82,15 +79,7 @@ private object CodecToExpressionEncoder {
       case Codec.Boolean => input
       case Codec.Bytes => input
       case Codec.TimestampMicros => MicrosToTimestamp(input)
-      case Codec.DurationMicros =>
-        val duration = StaticInvoke(
-          IntervalUtils.getClass,
-          ObjectType(classOf[Duration]),
-          "microsToDuration",
-          input :: Nil,
-          returnNullable = false
-        )
-        SerializerBuildHelper.createSerializerForJavaDuration(duration)
+      case Codec.DurationMicros => input
       case Codec.Date => DateFromUnixDate(input)
       case Codec.String => SerializerBuildHelper.createSerializerForString(input)
       case Codec.Decimal(precision, scale) =>
@@ -241,15 +230,7 @@ private object CodecToExpressionEncoder {
       case Codec.Boolean => path
       case Codec.Bytes => path
       case Codec.TimestampMicros => UnixMicros(path)
-      case Codec.DurationMicros =>
-        val duration = DeserializerBuildHelper.createDeserializerForDuration(path)
-        StaticInvoke(
-          IntervalUtils.getClass,
-          LongType,
-          "durationToMicros",
-          duration :: Nil,
-          returnNullable = false
-        )
+      case Codec.DurationMicros => path
       case Codec.Date => UnixDate(path)
       case Codec.String => DeserializerBuildHelper.createDeserializerForString(path, returnNullable = false)
       case Codec.Decimal(precision, scale) =>
