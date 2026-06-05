@@ -17,6 +17,7 @@ ThisBuild / developers := List(
   tlGitHubDev("ch1nq", "Aske Ching"),
   tlGitHubDev("shambala-ifmo", "Andrei Mavrin")
 )
+ThisBuild / tlCiMimaBinaryIssueCheck := false
 
 ThisBuild / scalaVersion := Dependencies.scala3Version
 

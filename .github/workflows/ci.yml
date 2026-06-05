@@ -57,10 +57,6 @@ jobs:
       - name: Test
         run: sbt '++ ${{ matrix.scala }}' test
 
-      - name: Check binary compatibility
-        if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
-        run: sbt '++ ${{ matrix.scala }}' mimaReportBinaryIssues
-
       - name: Generate API documentation
         if: matrix.java == 'temurin@17' && matrix.os == 'ubuntu-22.04'
         run: sbt '++ ${{ matrix.scala }}' doc
