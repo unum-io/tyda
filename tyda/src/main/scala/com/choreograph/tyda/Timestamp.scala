@@ -8,8 +8,8 @@ import java.util.concurrent.TimeUnit
 /** A timestamp represents a point in time with microsecond precision.
   *
   * Valid range is [0001-01-01T00:00:00.000000Z, 9999-12-31T23:59:59.999999Z].
-  * Values outside this range will cause an [[ArithmeticException]] when
-  * constructed via [[Timestamp.fromMicros]] . Note that this limit is not
+  * Values outside this range will cause an [[java.lang.ArithmeticException]]
+  * when constructed via [[Timestamp.fromMicros]] . Note that this limit is not
   * always strictly enforced when reading data from external sources such as
   * Parquet files.
   *
@@ -33,7 +33,7 @@ object Timestamp {
   private val MinInstant = Instant.EPOCH.plus(MinValue, ChronoUnit.MICROS)
   private val MaxInstant = Instant.EPOCH.plus(MaxValue, ChronoUnit.MICROS)
 
-  /** Create from an [[Instant]].
+  /** Create from an [[java.time.Instant]].
     *
     * NOTE: This is a destructive operation and will truncate precision to
     * microseconds.
@@ -47,7 +47,7 @@ object Timestamp {
 
   /** Create a timestamp from the number of microseconds since the unix epoch.
     *
-    * @throws ArithmeticException
+    * @throws java.lang.ArithmeticException
     *   if the value is outside the valid range [0001-01-01T00:00:00.000000Z,
     *   9999-12-31T23:59:59.999999Z].
     */
