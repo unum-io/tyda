@@ -142,8 +142,9 @@ private def unparseDs[T](ds: Dataset[T], args: UnparserArgs): Result[SelectBuild
       case Dataset.LeftAntiJoin(left, right, on) => inner(left).flatMap(_.antiJoin(right, on))
       case Dataset.MapPartitions(_, _, _) =>
         Left(DatasetToSqlError.RequiresUdfCapability("MapPartitions is not supported on SQL"))
-      case Dataset.ReadPath(path = _) | Dataset.ReadPathWithHivePartitions(basePath = _) | Dataset
-            .ReadWithMetadata(_) | Dataset.ReadPartitionsPaths(_) | Dataset.ReadTablePartitionsPaths(_, _) =>
+      case Dataset.ReadPath(path = _) | Dataset.ReadPathWithHivePartitions(basePath = _) |
+          Dataset.ReadWithMetadata(_) | Dataset.ReadPartitionsPaths(path = _) | Dataset
+            .ReadTablePartitionsPaths(identifier = _) =>
         Left(DatasetToSqlError.NotImplemented("support reading from path in SQL"))
       case Dataset.ReadTable(name, _, partitionCodec, modelCodec) =>
         Right(SelectBuilder.fromTable(name, partitionCodec, modelCodec, args))

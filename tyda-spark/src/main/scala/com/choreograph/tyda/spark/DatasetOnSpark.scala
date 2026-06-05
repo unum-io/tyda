@@ -36,6 +36,7 @@ import com.choreograph.tyda.Expr
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.Format
+import com.choreograph.tyda.HivePartitionParser
 import com.choreograph.tyda.TableLocation
 import com.choreograph.tyda.TreeApi.Continue
 import com.choreograph.tyda.TreeApi.Skip
@@ -234,19 +235,26 @@ object DatasetOnSpark {
         case Dataset.ReadWithMetadata(read) =>
           val (df, cf) = toIntermediate(read).toDataFrameAndColumnFactory
           IntermediateDataset(df.select(cf.column("_metadata").as("_1"), cf.row.as("_2")).as[T])
-        case Dataset.ReadPartitionsPaths(globPath) =>
-          val path = new Path(globPath)
+        case Dataset.ReadPartitionsPaths(p, _) =>
+          val path = new Path(p)
           val fs = path.getFileSystem(spark.sparkContext.hadoopConfiguration)
           val partitions = Option(
             fs.globStatus(path)
           ).iterator.flatten.filter(_.isDirectory()).map(_.getPath.toString).toSeq
-          IntermediateDataset(spark.createDataset(partitions))
-        case Dataset.ReadTablePartitionsPaths(identifier, TableLocation.Native) =>
-          val df = spark.sql(s"SHOW PARTITIONS `$identifier`")
-          IntermediateDataset(df.select(df("partition").as("value")).as[String])
-        case Dataset.ReadTablePartitionsPaths(identifier, TableLocation.BigQuery) =>
-          // TODO: We should generate the approriate query using tyda-sql here.
-          throw new RuntimeException("Reading table partition paths is not supported for BigQuery tables")
+          val parser = HivePartitionParser.makeParser
+          val decoded = partitions.map(parser)
+          IntermediateDataset(spark.createDataset(decoded))
+        case Dataset.ReadTablePartitionsPaths(identifier, location, _) =>
+          val df = location match {
+            case TableLocation.Native =>
+              val dfRaw = spark.sql(s"SHOW PARTITIONS `${identifier}`")
+              val parser = HivePartitionParser.makeParser
+              dfRaw.select(createUdf(parser, dfRaw("partition"))).as[T]
+            case TableLocation.BigQuery =>
+              // TODO: We should generate the approriate query using tyda-sql here.
+              throw new RuntimeException("Reading table partition paths is not supported for BigQuery tables")
+          }
+          IntermediateDataset(df)
         case Dataset.FromSeq(values, Codec.Product(_, _, Some(_))) =>
           IntermediateDataset(spark.range(values.size).select(lit(null).as(Forbidden.column)).as[T])
         case Dataset.FromSeq(values, _) => IntermediateDataset(spark.createDataset(values))
