@@ -100,7 +100,7 @@ private[spark] object ExprOnSpark {
 
 /** Contains logic for converting a Expr[T] into a Spark Column. */
 private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) {
-  import ExprOnSpark.wrapNestedSome
+  import ExprOnSpark.{wrapNestedSome, jsonOptions}
 
   private def literal[T](value: T, codec: Codec.Primitive[T])(using SparkSession): Column =
     codec match {
