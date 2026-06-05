@@ -21,13 +21,13 @@ import org.apache.spark.sql.types.Metadata
 
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
+import com.choreograph.tyda.Duration
 import com.choreograph.tyda.Field
 import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.Injection
 import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.spark.CodecToCatalystType.nullable
-import com.choreograph.tyda.Duration
 
 object CodecToEncoder {
   given convert[T: Codec]: Encoder[T] = convertInternal[T]
