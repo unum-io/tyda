@@ -200,22 +200,10 @@ trait CodecToEncoderSpecBase extends AnyFunSuite with SharedSparkSession {
   test[NestedEnum](supportsNull = false)
   test[GenericEmptyVariants[Generic.A.type]](supportsNull = false)
   test[Binary](supportsNull = false)
-  {
-    given Equiv[Option[Binary]] = Equiv.universal
-    test[Option[Binary]](supportsNull = false)
-  }
-  {
-    given Equiv[Tuple1[Binary]] = Equiv.universal
-    test[Tuple1[Binary]](supportsNull = false)
-  }
-  {
-    given Equiv[Seq[Binary]] = Equiv.universal
-    test[Seq[Binary]]()
-  }
-  {
-    given Equiv[Map[Int, Binary]] = Equiv.universal
-    test[Map[Int, Binary]]()
-  }
+  test[Option[Binary]](supportsNull = false)
+  test[Tuple1[Binary]](supportsNull = false)
+  test[Seq[Binary]]()
+  test[Map[Int, Binary]]()
   test[EnumString](supportsNull = false)
   test[(name: String, age: Int)](supportsNull = false)
   test[BigNamedTuple](supportsNull = false)
