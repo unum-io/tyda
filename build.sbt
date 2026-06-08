@@ -48,6 +48,7 @@ ThisBuild / scalafixDependencies += "com.github.xuwei-k" %% "scalafix-rules" % "
 ThisBuild / useConsoleForROGit := true
 
 ThisBuild / tlCiDependencyGraphJob := false // TODO: Decide we we want this and if so implement it
+ThisBuild / tlCiStewardValidateConfig := None
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"))
 ThisBuild / githubWorkflowEnv := Map.empty // Do not set GITHUB_TOKEN everywhere
 ThisBuild / githubWorkflowTargetBranches := Seq("**")
