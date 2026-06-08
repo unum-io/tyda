@@ -43,5 +43,7 @@ object Binary {
     } yield ArraySeq.ofByte(arr)
 
   given Groupable[Binary] = Groupable.derived
-  given Equiv[Binary] = Equiv.universal
+
+  import scala.math.Ordering.Implicits.seqOrdering
+  given Ordering[Binary] = Ordering.by(b => b.toArray.toSeq)
 }
