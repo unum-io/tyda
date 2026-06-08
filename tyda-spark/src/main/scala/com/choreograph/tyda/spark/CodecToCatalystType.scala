@@ -21,7 +21,7 @@ private object CodecToCatalystType {
       case Codec.Bytes => BinaryType
       case Codec.Decimal(precision, scale) => DecimalType(precision, scale)
       case Codec.TimestampMicros => TimestampType
-      case Codec.DurationMicros => DayTimeIntervalType()
+      case Codec.DurationMicros => LongType
       case Codec.Date => DateType
       case map: Codec.Map[?, ?] => MapType(catalystType(map.key), catalystType(map.value))
       case Codec.Seq(element) => ArrayType(catalystType(element))

@@ -153,7 +153,7 @@ class ToDdlSpec extends AnyFunSuite {
   test("toDdl duration") {
     val ddl = toSparkDdl(Codec[Duration])
     assert(ddl == """
-                    |value INTERVAL DAY TO SECOND NOT NULL
+                    |value BIGINT NOT NULL
                     |""".stripMargin)
   }
 
