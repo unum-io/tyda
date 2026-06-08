@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets
 
 import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
+import java.util.Arrays
 
 /** An immutable sequence of bytes with value semantics.
   *
@@ -42,6 +43,5 @@ object Binary {
 
   given Groupable[Binary] = Groupable.derived
 
-  import scala.math.Ordering.Implicits.seqOrdering
-  given Ordering[Binary] = Ordering.by(b => b.toArray.toSeq)
+  given Ordering[Binary] = (x, y) => Arrays.compareUnsigned(x.unsafeArray, y.unsafeArray)
 }
