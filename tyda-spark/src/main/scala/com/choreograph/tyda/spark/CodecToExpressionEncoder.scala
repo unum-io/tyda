@@ -229,13 +229,8 @@ private object CodecToExpressionEncoder {
       case Codec.Float => path
       case Codec.Double => path
       case Codec.Boolean => path
-      case Codec.Bytes => StaticInvoke(
-          BinaryHelper.getClass,
-          ObjectType(Binary.cls),
-          "fromArray",
-          path :: Nil,
-          returnNullable = false
-        )
+      case Codec.Bytes =>
+        StaticInvoke(BinaryHelper.getClass, jvmType(codec), "fromArray", path :: Nil, returnNullable = false)
       case Codec.TimestampMicros => UnixMicros(path)
       case Codec.DurationMicros => path
       case Codec.Date => UnixDate(path)

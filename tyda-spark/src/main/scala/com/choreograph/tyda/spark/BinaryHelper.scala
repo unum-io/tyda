@@ -1,7 +1,7 @@
 package com.choreograph.tyda.spark
 
-import scala.collection.immutable.ArraySeq
+import com.choreograph.tyda.Binary
 
 private[spark] object BinaryHelper {
-  def fromArray(bytes: Array[Byte]): ArraySeq.ofByte = new ArraySeq.ofByte(bytes.clone())
+  def fromArray(bytes: Array[Byte]): Binary = Binary.fromArray(bytes)
 }
