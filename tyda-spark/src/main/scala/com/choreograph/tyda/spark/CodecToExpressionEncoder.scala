@@ -78,8 +78,13 @@ private object CodecToExpressionEncoder {
       case Codec.Float => input
       case Codec.Double => input
       case Codec.Boolean => input
-      case Codec.Bytes =>
-        StaticInvoke(BinaryHelper.getClass, BinaryType, "toArray", input :: Nil, returnNullable = false)
+      case Codec.Bytes => StaticInvoke(
+          BinaryHelper.getClass,
+          catalystType(codec),
+          "toArray",
+          input :: Nil,
+          returnNullable = false
+        )
       case Codec.TimestampMicros => MicrosToTimestamp(input)
       case Codec.DurationMicros => input
       case Codec.Date => DateFromUnixDate(input)
