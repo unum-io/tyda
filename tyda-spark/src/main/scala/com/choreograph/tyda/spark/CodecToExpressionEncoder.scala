@@ -39,6 +39,11 @@ import com.choreograph.tyda.spark.CodecToCatalystType.catalystStructType
 import com.choreograph.tyda.spark.CodecToCatalystType.catalystType
 import com.choreograph.tyda.spark.CodecToCatalystType.nullable
 
+private[spark] object BinaryHelper {
+  def fromArray(bytes: Array[Byte]): Binary = Binary.fromArray(bytes)
+  def toArray(b: Binary): Array[Byte] = b.to(Array)
+}
+
 /* This object currently contains code vendored from Spark 3.5.4 mainly from the files
  * https://github.com/apache/spark/blob/v3.5.4/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/DeserializerBuildHelper.scala
  * https://github.com/apache/spark/blob/v3.5.4/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/SerializerBuildHelper.scala
