@@ -206,3 +206,57 @@ jobs:
 
       - name: Check scalafix
         run: sbt '++ ${{ matrix.scala }}' 'scalafixAll --check'
+
+  site:
+    name: Publish Docs
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+        scala: [3]
+        java: [temurin@17]
+    runs-on: ${{ matrix.os }}
+    environment: github-pages
+    permissions:
+      actions: none
+      checks: none
+      contents: read
+      deployments: none
+      id-token: write
+      issues: none
+      packages: read
+      pages: write
+      pull-requests: none
+      repository-projects: none
+      security-events: none
+      statuses: none
+    steps:
+      - name: Checkout current branch (fast)
+        uses: actions/checkout@v6
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Setup Java (temurin@17)
+        id: setup-java-temurin-17
+        if: matrix.java == 'temurin@17'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'temurin@17' && steps.setup-java-temurin-17.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Generate docs
+        run: sbt '++ ${{ matrix.scala }}' doc
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: target/scala-3.7.4/unidoc
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v5
