@@ -240,7 +240,7 @@ object Codec {
     inline def derived[T: ClassTag: AllSingletons as singletons]: Codec.EnumAsString[T] = {
       val tag = summon[ClassTag[T]]
       checkStableHashCode(tag)
-      SumAsString[T](summon, singletons.values)
+      SumAsString[T](summon, singletons)
     }
   }
 
