@@ -225,7 +225,7 @@ object CodecToJsoniter {
       case Codec.Double =>
         (out, value) => if value.isFinite then out.writeVal(value) else out.writeVal(value.toString)
       case Codec.String => (out, value) => out.writeVal(value)
-      case Codec.Bytes => (out, value) => out.writeBase64Val(value.toArray, doPadding = true)
+      case Codec.Bytes => (out, value) => out.writeBase64Val(value.to(Array), doPadding = true)
       case Codec.Decimal(_, _) => (out, value) => out.writeValAsString(value.toBigDecimal)
       case Codec.Date =>
         (out, value) => out.writeVal(java.time.LocalDate.ofEpochDay(value.daysSinceEpoch.toLong))
