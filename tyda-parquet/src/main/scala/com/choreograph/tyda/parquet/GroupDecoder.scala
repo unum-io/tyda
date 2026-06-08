@@ -8,6 +8,7 @@ import org.apache.parquet.schema.PrimitiveType
 import org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName
 import org.apache.parquet.schema.Type
 
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
@@ -80,7 +81,7 @@ private object GroupDecoder {
             .toMap
         }
       case prod: Codec.Product[T] => product(prod, parquetType).compose(_.getGroup(fieldName, 0))
-      case Codec.Bytes => group => group.getBinary(fieldName, 0).getBytes()
+      case Codec.Bytes => group => Binary.fromArray(group.getBinary(fieldName, 0).getBytes())
       case inj: Codec.FromInjection[T, ?] =>
         val inner = impl(fieldName, inj.to, parquetType)
         group => inj.inj.invert(inner(group))

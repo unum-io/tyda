@@ -28,6 +28,7 @@ import org.apache.spark.sql.catalyst.expressions.objects.ValidateExternalType
 import org.apache.spark.sql.catalyst.expressions.objects.WrapOption
 import org.apache.spark.sql.types.*
 
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Field
 import com.choreograph.tyda.Forbidden
@@ -55,7 +56,7 @@ private object CodecToExpressionEncoder {
       case Codec.Float => FloatType
       case Codec.Double => DoubleType
       case Codec.Boolean => BooleanType
-      case Codec.Bytes => BinaryType
+      case Codec.Bytes => ObjectType(Binary.cls)
       case Codec.TimestampMicros => LongType
       case Codec.DurationMicros => LongType
       case Codec.Date => IntegerType
@@ -77,7 +78,7 @@ private object CodecToExpressionEncoder {
       case Codec.Float => input
       case Codec.Double => input
       case Codec.Boolean => input
-      case Codec.Bytes => input
+      case Codec.Bytes => Invoke(input, "unsafeArray", BinaryType)
       case Codec.TimestampMicros => MicrosToTimestamp(input)
       case Codec.DurationMicros => input
       case Codec.Date => DateFromUnixDate(input)
@@ -228,7 +229,13 @@ private object CodecToExpressionEncoder {
       case Codec.Float => path
       case Codec.Double => path
       case Codec.Boolean => path
-      case Codec.Bytes => path
+      case Codec.Bytes => StaticInvoke(
+          BinaryHelper.getClass,
+          ObjectType(Binary.cls),
+          "fromArray",
+          path :: Nil,
+          returnNullable = false
+        )
       case Codec.TimestampMicros => UnixMicros(path)
       case Codec.DurationMicros => path
       case Codec.Date => UnixDate(path)

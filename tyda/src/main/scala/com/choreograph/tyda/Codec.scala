@@ -259,7 +259,7 @@ object Codec {
     def inj: Injection[T, String] = SumAsStringInjection(values, encodedValues)
   }
 
-  /** A codec that encodes an [[Array[Byte]]] as a binary type.
+  /** A codec that encodes an [[Binary]] as a binary type.
     *
     * Note: This is distinct from encoding a [[scala.Seq[Byte]]], which is
     * represented as an array where each element is a byte.
@@ -294,7 +294,7 @@ object Codec {
     * The deserializer is not supported: need a(n) "ARRAY" field but got "BINARY".
     * ```
     */
-  private[tyda] case object Bytes extends Primitive[Array[Byte]]
+  private[tyda] case object Bytes extends Primitive[Binary]
 
   private[tyda] sealed trait FromInjection[From, To] extends Codec[From] {
     def inj: Injection[From, To]
@@ -315,11 +315,6 @@ object Codec {
       def to: Codec[To] = withTo
       def classTag: ClassTag[From] = summon
     }
-
-  private object BigIntAsBytes extends Injection[scala.BigInt, Array[Byte]] {
-    def apply(from: scala.BigInt): Array[Byte] = from.toByteArray
-    def invert(to: Array[Byte]): scala.BigInt = scala.BigInt(to)
-  }
 
   private def checkStableHashCode[S](tag: ClassTag[S]): Unit = {
     val isEnum = classOf[scala.reflect.Enum].isAssignableFrom(tag.runtimeClass)
@@ -349,13 +344,7 @@ object Codec {
   given decimal[P <: Int, S <: Int](using valid: TydaDecimal.Valid[P, S]): Codec[TydaDecimal[P, S]] =
     Decimal[P, S](valid.precision, valid.scale)
 
-  /** Encodes a [[BigInt]] as an array of bytes.
-    *
-    * Note: This is different from Spark that will store BigInt as a fixed size
-    * array of 16 bytes. This instead uses a variable length array and can
-    * therefore support all values of [[BigInt]].
-    */
-  given bigInt: Codec[BigInt] = fromInjection(BigIntAsBytes, Codec.Bytes)
+  given binary: Codec[Binary] = Codec.Bytes
 
   given seq[T: Codec, C <: scala.Seq[T]: ClassTag as tag](using Factory[T, C]): Codec[C] = {
     val seqTag = classTag[scala.Seq[T]]
