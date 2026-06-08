@@ -13,8 +13,6 @@ opaque type Binary = ArraySeq.ofByte
 
 object Binary {
 
-  def cls: Class[Binary] = classOf[ArraySeq.ofByte]
-
   /** An empty `Binary` value. */
   val empty: Binary = new ArraySeq.ofByte(Array.emptyByteArray)
 

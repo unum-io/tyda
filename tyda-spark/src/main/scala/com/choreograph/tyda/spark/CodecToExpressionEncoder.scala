@@ -3,6 +3,7 @@ package com.choreograph.tyda.spark
 import scala.collection.Factory
 import scala.deriving.Mirror
 import scala.reflect.ClassTag
+import scala.reflect.classTag
 
 import org.apache.commons.lang3.reflect.ConstructorUtils
 import org.apache.spark.sql.Row
@@ -56,7 +57,7 @@ private object CodecToExpressionEncoder {
       case Codec.Float => FloatType
       case Codec.Double => DoubleType
       case Codec.Boolean => BooleanType
-      case Codec.Bytes => ObjectType(Binary.cls)
+      case Codec.Bytes => ObjectType(classTag[Binary].runtimeClass)
       case Codec.TimestampMicros => LongType
       case Codec.DurationMicros => LongType
       case Codec.Date => IntegerType
