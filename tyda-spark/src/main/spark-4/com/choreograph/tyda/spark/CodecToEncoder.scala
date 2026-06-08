@@ -36,7 +36,7 @@ object CodecToEncoder {
   private[spark] def convertInternal[T: Codec]: ExpressionEncoder[T] = ExpressionEncoder(toAgnostic(Codec[T]))
 
   private object BinarySparkCodec extends SparkCodec[Binary, Array[Byte]] {
-    def encode(value: Binary): Array[Byte] = value.toArray
+    def encode(value: Binary): Array[Byte] = value.to(Array)
     def decode(value: Array[Byte]): Binary = Binary.fromArray(value)
   }
 

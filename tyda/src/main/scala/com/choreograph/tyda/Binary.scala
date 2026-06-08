@@ -3,8 +3,8 @@ package com.choreograph.tyda
 import java.nio.charset.StandardCharsets
 import java.util.Arrays
 
+import scala.collection.Factory
 import scala.collection.immutable.ArraySeq
-import scala.reflect.ClassTag
 
 /** An immutable sequence of bytes with value semantics.
   *
@@ -31,8 +31,8 @@ object Binary {
     /** Returns the number of bytes. */
     def length: Int = b.length
 
-    /** Returns a copy of the bytes. */
-    def toArray: Array[Byte] = b.toArray
+    /** Returns a copy of the bytes as C. */
+    def to[C](factory: Factory[Byte, C]): C = factory.fromSpecific(b)
   }
 
   given arbitrary: Arbitrary[Binary] =

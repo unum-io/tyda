@@ -949,8 +949,8 @@ private def literalToSqlExpr[T](value: T, codec: Codec.Primitive[T], dialect: Sq
       SqlExpr.Cast(sqlValue, ToDdl.toNullableDdlType(codec, dialect.ddl))
     case Codec.String => SqlExpr.LiteralString(value.toString)
     case Codec.Bytes => dialect.binaryLiteral match {
-        case SqlDialect.BinaryLiteral.HexString => SqlExpr.LiteralHexString(value.toArray)
-        case SqlDialect.BinaryLiteral.ByteEscapeString => SqlExpr.LiteralByteEscapeString(value.toArray)
+        case SqlDialect.BinaryLiteral.HexString => SqlExpr.LiteralHexString(value.to(Array))
+        case SqlDialect.BinaryLiteral.ByteEscapeString => SqlExpr.LiteralByteEscapeString(value.to(Array))
       }
     case Codec.Boolean => SqlExpr.LiteralBool(value)
     case Codec.TimestampMicros => dialect.makeTimestamp match {
