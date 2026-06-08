@@ -1,10 +1,10 @@
 package com.choreograph.tyda
 
 import java.nio.charset.StandardCharsets
+import java.util.Arrays
 
 import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
-import java.util.Arrays
 
 /** An immutable sequence of bytes with value semantics.
   *
