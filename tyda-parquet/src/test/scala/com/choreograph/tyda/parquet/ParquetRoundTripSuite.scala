@@ -12,6 +12,7 @@ import org.scalactic.Equality
 import org.scalatest.funsuite.AnyFunSuite
 
 import com.choreograph.tyda.Arbitrary
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
@@ -92,7 +93,7 @@ class ParquetRoundTripSuite extends AnyFunSuite {
   testRoundTrip[Seq[Decimal[15, 5]]]
   testRoundTrip[Option[Decimal[38, 3]]]
   testRoundTrip[(Decimal[15, 5], Decimal[3, 0])]
-  testRoundTrip[BigInt]
+  testRoundTrip[Binary]
   testRoundTrip[Date]
   testRoundTrip[Timestamp]
   testRoundTrip[Duration]

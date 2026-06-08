@@ -19,6 +19,7 @@ import org.apache.spark.sql.catalyst.util.SparkDateTimeUtils
 import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.types.Metadata
 
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Duration
@@ -33,6 +34,11 @@ object CodecToEncoder {
   given convert[T: Codec]: Encoder[T] = convertInternal[T]
 
   private[spark] def convertInternal[T: Codec]: ExpressionEncoder[T] = ExpressionEncoder(toAgnostic(Codec[T]))
+
+  private object BinarySparkCodec extends SparkCodec[Binary, Array[Byte]] {
+    def encode(value: Binary): Array[Byte] = value.toArray
+    def decode(value: Array[Byte]): Binary = Binary.fromArray(value)
+  }
 
   private object TimestampSparkCodec extends SparkCodec[Timestamp, Instant] {
     def encode(value: Timestamp): Instant = SparkDateTimeUtils.microsToInstant(value.toMicros)
@@ -76,7 +82,12 @@ object CodecToEncoder {
       case Codec.Double => AgnosticEncoders.PrimitiveDoubleEncoder
       case Codec.Boolean => AgnosticEncoders.PrimitiveBooleanEncoder
       case Codec.String => AgnosticEncoders.StringEncoder
-      case Codec.Bytes => AgnosticEncoders.BinaryEncoder
+      case Codec.Bytes => TransformingEncoder(
+          clsTag = codec.classTag,
+          transformed = AgnosticEncoders.BinaryEncoder,
+          codecProvider = () => BinarySparkCodec,
+          nullable = true
+        )
       case Codec.Decimal(precision, scale) =>
         // TYPE SAFETY: Cast is safe since tyda Decimal type is an opaque type for BigDecimal
         AgnosticEncoders.ScalaDecimalEncoder(DecimalType(precision, scale)).asInstanceOf[AgnosticEncoder[T]]

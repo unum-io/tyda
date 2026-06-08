@@ -9,6 +9,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonReader
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonWriter
 
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
@@ -44,10 +45,7 @@ object CodecToJsoniter {
       case Codec.Float => 0.0f
       case Codec.Double => 0.0
       case Codec.String => ""
-      case Codec.Bytes =>
-        // This can not currently be empty because of it being used with BigInt
-        // TODO: Clean up after BigInt usage is replaced with Decimal(38, 0)
-        Array(0)
+      case Codec.Bytes => Binary.empty
       case codec @ Codec.Decimal(_, _) => Decimal.zero(using codec.valid)
       case Codec.Date => Date.fromDays(0)
       case Codec.TimestampMicros => Timestamp.fromMicros(0)
@@ -109,7 +107,7 @@ object CodecToJsoniter {
       case Codec.Double =>
         in => if in.nextValueIsString() then in.readString(null).toDouble else in.readDouble()
       case Codec.String => _.readString(null)
-      case Codec.Bytes => _.readBase64AsBytes(null)
+      case Codec.Bytes => in => Binary.fromArray(in.readBase64AsBytes(null))
       case codec @ Codec.Decimal(precision, scale) =>
         import codec.given
         in =>
@@ -227,7 +225,7 @@ object CodecToJsoniter {
       case Codec.Double =>
         (out, value) => if value.isFinite then out.writeVal(value) else out.writeVal(value.toString)
       case Codec.String => (out, value) => out.writeVal(value)
-      case Codec.Bytes => (out, value) => out.writeBase64Val(value, doPadding = true)
+      case Codec.Bytes => (out, value) => out.writeBase64Val(value.toArray, doPadding = true)
       case Codec.Decimal(_, _) => (out, value) => out.writeValAsString(value.toBigDecimal)
       case Codec.Date =>
         (out, value) => out.writeVal(java.time.LocalDate.ofEpochDay(value.daysSinceEpoch.toLong))

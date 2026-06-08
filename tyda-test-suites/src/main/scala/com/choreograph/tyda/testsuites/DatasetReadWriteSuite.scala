@@ -12,6 +12,7 @@ import org.scalatest.enablers.Aggregating
 import shapeless3.deriving.Labelling
 
 import com.choreograph.tyda.Arbitrary
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.Date
@@ -265,7 +266,7 @@ trait DatasetReadWriteSuite extends DatasetSuite {
   testReadWrite[Decimal[3, 0]]
   testReadWrite[Decimal[15, 5]]
   testReadWrite[Decimal[38, 9]]
-  testReadWrite[BigInt]
+  testReadWrite[Binary]
   testReadWrite[Date]
   testReadWrite[Timestamp]
   testReadWrite[Duration]
