@@ -1089,4 +1089,14 @@ trait ExprApi[Expr[T]] {
     */
   def fromJson[T: Codec: JsonArrayOrObject](expr: Expr[String]): Expr[Option[T]] =
     lift(ExprNode.FromJson(unlift(expr), Codec[T]))
+
+  /** Decode a Base64 string expression into binary data.
+    *
+    * Returns `None` if the input string is not valid Base64.
+    */
+  def fromBase64(expr: Expr[String]): Expr[Option[Binary]] = lift(ExprNode.FromBase64(unlift(expr)))
+
+  /** Encode binary data as a Base64 string.
+    */
+  def toBase64(expr: Expr[Binary]): Expr[String] = lift(ExprNode.ToBase64(unlift(expr)))
 }

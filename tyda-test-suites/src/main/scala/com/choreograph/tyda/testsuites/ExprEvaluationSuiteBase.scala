@@ -1,5 +1,6 @@
 package com.choreograph.tyda.testsuites
 
+import java.util.Base64
 import java.util.regex.Pattern
 
 import scala.NamedTuple.NamedTuple
@@ -38,6 +39,7 @@ import com.choreograph.tyda.functions.coalesce
 import com.choreograph.tyda.functions.concat
 import com.choreograph.tyda.functions.daysToDate
 import com.choreograph.tyda.functions.endsWith
+import com.choreograph.tyda.functions.fromBase64
 import com.choreograph.tyda.functions.fromJson
 import com.choreograph.tyda.functions.lit
 import com.choreograph.tyda.functions.makeMap
@@ -50,6 +52,7 @@ import com.choreograph.tyda.functions.range
 import com.choreograph.tyda.functions.seq
 import com.choreograph.tyda.functions.some
 import com.choreograph.tyda.functions.startsWith
+import com.choreograph.tyda.functions.toBase64
 import com.choreograph.tyda.functions.toJson
 import com.choreograph.tyda.functions.tuple
 import com.choreograph.tyda.testsuites.FloatingPointEquality.given
@@ -1286,6 +1289,29 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testJsonRoundtrip[Struct]
   testJsonRoundtrip[Seq[Struct]]
   testJsonRoundtrip[Seq[Seq[Int]]]
+  {
+    val chunked = Arbitrary.string.map(s => Base64.getMimeEncoder.encodeToString(s.getBytes))
+    val normal = Arbitrary.string.map(s => Base64.getEncoder.encodeToString(s.getBytes))
+    given Arbitrary[String] = Arbitrary.combine(Arbitrary.string, chunked, normal)
+    testHasSameBehavior[String, Option[Binary]](
+      "fromBase64",
+      str => fromBase64(str),
+      str => Binary.fromBase64(str)
+    )
+  }
+  {
+    val longerBinary = for {
+      size <- Arbitrary.between(0, 1000)
+      arr <- Arbitrary.bytes(size)
+    } yield Binary.fromArray(arr)
+    given Arbitrary[Binary] = Arbitrary.combine(longerBinary, Binary.arbitrary)
+    testHasSameBehavior[Binary, String]("toBase64", bin => toBase64(bin), _.toBase64)
+  }
+  testHasSameBehavior[Binary, Option[Binary]](
+    "toBase64 and fromBase64 should roundtrip",
+    bin => fromBase64(toBase64(bin)),
+    Some(_)
+  )
   {
     given Arbitrary[(Date, String)] = Arbitrary[Date].map(date => date -> s"""{"_1":"${date.toIsoString}"}""")
     testHasSameBehavior[(Date, String), Option[Date]](
