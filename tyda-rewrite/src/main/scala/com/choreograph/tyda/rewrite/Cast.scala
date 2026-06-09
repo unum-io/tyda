@@ -10,6 +10,7 @@ import com.choreograph.tyda.shapeless3extras.mapConst
 
 private[tyda] final case class Cast[T, R](cast: Expr[T] => Expr[R]) {
   def apply(expr: Expr[T]): Expr[R] = cast(expr)
+  def apply(expr: ExprNode[T]): ExprNode[R] = cast(Expr.lift(expr)).node
   def compose[A](g: Cast[A, T]): Cast[A, R] = Cast(cast.compose(g.cast))
   def resCodec(using Codec[T]): Codec[R] = cast(Expr.lift(ExprNode.Reference())).codec
 }

@@ -296,7 +296,7 @@ object ArgsParser {
     }
 
     given [T: AllSingletons]: Arg[T] with {
-      val lookup = AllSingletons[T].values.map(f => pascalToKebab(f.toString) -> f).toMap
+      val lookup = AllSingletons[T].map(f => pascalToKebab(f.toString) -> f).toMap
       def parse(t: String): Option[T] = lookup.get(t.toLowerCase)
       def serialize(t: T, templateTag: Option[String]): String = pascalToKebab(t.toString)
       def hint: String = lookup.keys.mkString("|")

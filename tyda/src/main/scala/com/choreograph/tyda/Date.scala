@@ -9,9 +9,10 @@ import com.choreograph.tyda.Arbitrary
 /** Date represents a calendar date.
   *
   * Valid range is [0001-01-01, 9999-12-31]. Values outside this range will
-  * cause an [[ArithmeticException]] when constructed via [[Date.fromDays]] or
-  * arithmetic operations. Note that this limit is not always strictly enforced
-  * when reading data from external sources such as Parquet files.
+  * cause an [[java.lang.ArithmeticException]] when constructed via
+  * [[Date.fromDays]] or arithmetic operations. Note that this limit is not
+  * always strictly enforced when reading data from external sources such as
+  * Parquet files.
   */
 opaque type Date = Int
 
@@ -37,7 +38,7 @@ object Date {
 
   /** Create a Date from the number of days since the unix epoch (1970-01-01).
     *
-    * @throws ArithmeticException
+    * @throws java.lang.ArithmeticException
     *   if the value is outside the valid range [0001-01-01, 9999-12-31]
     */
   def fromDays(days: Int): Date = checkRange(days)
@@ -70,14 +71,14 @@ object Date {
 
     /** Add the specified number of days to this date.
       *
-      * @throws ArithmeticException
+      * @throws java.lang.ArithmeticException
       *   if the result is outside the valid range [0001-01-01, 9999-12-31].
       */
     def addDays(days: Int): Date = checkRange(Math.addExact(value, days))
 
     /** Subtract the specified number of days from this date.
       *
-      * @throws ArithmeticException
+      * @throws java.lang.ArithmeticException
       *   if the result is outside the valid range [0001-01-01, 9999-12-31].
       */
     def subtractDays(days: Int): Date = checkRange(Math.subtractExact(value, days))

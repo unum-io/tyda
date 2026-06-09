@@ -16,7 +16,8 @@ final case class DdlDialect(
      * nested arrays should work. */
     supportsArrayAsArrayElement: Boolean = true,
     floatType: String = "FLOAT",
-    doubleType: String = "DOUBLE"
+    doubleType: String = "DOUBLE",
+    bytesType: String = "BINARY"
 )
 
 object DdlDialect {
@@ -56,7 +57,7 @@ object DdlDialect {
 
   val Spark = DdlDialect(
     decimal = DecimalSupport.Decimal128,
-    duration = DurationSupport.Native("INTERVAL DAY TO SECOND"),
+    duration = DurationSupport.Long,
     map = MapSupport.Native(supportsNotNullKey = false, supportsNotNullValue = false),
     supportsNotNullColumn = true,
     supportsNotNullArrayElement = false,

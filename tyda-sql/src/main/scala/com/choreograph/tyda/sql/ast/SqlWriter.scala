@@ -54,6 +54,10 @@ private[tyda] final case class SqlWriter(writer: Writer) {
         write("X'")
         value.foreach(b => write(f"$b%02x"))
         write("'")
+      case SqlExpr.LiteralByteEscapeString(value) =>
+        write("B'")
+        value.foreach(b => write(f"\\x$b%02x"))
+        write("'")
       case SqlExpr.LiteralNumeric(value) => write(value)
       case SqlExpr.LiteralBool(value) => if value then write("TRUE") else write("FALSE")
       case SqlExpr.LiteralNull => write("NULL")

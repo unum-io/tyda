@@ -16,7 +16,6 @@ import org.apache.spark.sql.catalyst.encoders.Codec as SparkCodec
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.catalyst.expressions.GenericRow
 import org.apache.spark.sql.catalyst.util.SparkDateTimeUtils
-import org.apache.spark.sql.catalyst.util.SparkIntervalUtils
 import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.types.Metadata
 
@@ -47,10 +46,9 @@ object CodecToEncoder {
     def decode(value: LocalDate): Date = Date.fromDays(value.toEpochDay.toInt)
   }
 
-  private object DurationSparkCodec extends SparkCodec[Duration, java.time.Duration] {
-    def encode(value: Duration): java.time.Duration = SparkIntervalUtils.microsToDuration(value.toMicros)
-    def decode(value: java.time.Duration): Duration =
-      Duration.fromMicros(SparkIntervalUtils.durationToMicros(value))
+  private object DurationSparkCodec extends SparkCodec[Duration, Long] {
+    def encode(value: Duration): Long = value.toMicros
+    def decode(value: Long): Duration = Duration.fromMicros(value)
   }
 
   private class NullableSparkCodec[F, T](inner: SparkCodec[F, T]) extends SparkCodec[Option[F], Option[T]] {
@@ -99,7 +97,7 @@ object CodecToEncoder {
         )
       case Codec.DurationMicros => TransformingEncoder(
           clsTag = codec.classTag,
-          transformed = AgnosticEncoders.DayTimeIntervalEncoder,
+          transformed = AgnosticEncoders.PrimitiveLongEncoder,
           codecProvider = () => DurationSparkCodec,
           nullable = false
         )

@@ -376,6 +376,14 @@ private object ExprNode extends ExprApi[ExprNode] {
     override def codec: Codec[Boolean] = Codec[Boolean]
   }
 
+  final case class ToJson[T](expr: ExprNode[T]) extends ExprNode[String] {
+    override def codec: Codec[String] = Codec[String]
+  }
+
+  final case class FromJson[T](expr: ExprNode[String], valueCodec: Codec[T]) extends ExprNode[Option[T]] {
+    override def codec: Codec[Option[T]] = Codec.option(using valueCodec)
+  }
+
   final case class DistinctSeq[T](operand: ExprNode[Seq[T]]) extends ExprNode[Seq[T]] {
     override def codec: Codec[Seq[T]] = operand.codec
   }
@@ -430,6 +438,10 @@ private object ExprNode extends ExprApi[ExprNode] {
 
   final case class DaysToDate(expr: ExprNode[Int]) extends ExprNode[Date] {
     override def codec: Codec[Date] = Codec[Date]
+  }
+
+  final case class BytesLength(bytes: ExprNode[Binary]) extends ExprNode[Int] {
+    override def codec: Codec[Int] = Codec[Int]
   }
 
   final case class ToRepr[P, Repr](expr: ExprNode[P], injectionCodec: Codec.FromInjection[P, Repr])

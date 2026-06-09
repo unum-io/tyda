@@ -10,6 +10,7 @@ private[sql] enum SqlExpr {
   case Ident(name: Identifier)
   case LiteralString(value: String)
   case LiteralHexString(value: Array[Byte])
+  case LiteralByteEscapeString(value: Array[Byte])
   case LiteralNumeric(value: String)
   case LiteralBool(value: Boolean)
   case LiteralNull

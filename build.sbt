@@ -7,7 +7,7 @@ import scala.util.Failure
 
 import com.github.sbt.git.SbtGit.GitKeys.useConsoleForROGit
 
-ThisBuild / tlBaseVersion := "0.3"
+ThisBuild / tlBaseVersion := "0.4"
 ThisBuild / organization := "com.wppresolve.tyda"
 ThisBuild / organizationName := "WPP"
 ThisBuild / licenses := Seq(License.MIT)
@@ -187,7 +187,6 @@ lazy val scalafixRules = (project in file("scalafix/rules"))
   .settings(name := "tyda-scalafix-rules")
   .settings(commonSettings)
   .disablePlugins(ScalafixPlugin)
-  .enablePlugins(NoPublishPlugin)
   .settings(Dependencies.scalafix)
 lazy val scalafixInput = (project in file("scalafix/input"))
   .settings(name := "tyda-scalafix-input")

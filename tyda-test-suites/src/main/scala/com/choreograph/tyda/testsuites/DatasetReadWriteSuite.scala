@@ -78,9 +78,6 @@ object DatasetReadWriteSuite {
 
   private given Equality[Float] = equalityFromOrd[Float]
   private given Equality[Double] = equalityFromOrd[Double]
-  // TODO: Remove after upgrading Spark see: https://issues.apache.org/jira/browse/SPARK-49311
-  given Arbitrary[Duration] =
-    Arbitrary[Duration].filter(d => d.toMicros < Long.MaxValue / 10 && d.toMicros > Long.MinValue / 10)
 }
 
 trait DatasetReadWriteSuite extends DatasetSuite {

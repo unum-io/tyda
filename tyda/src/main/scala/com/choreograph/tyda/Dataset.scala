@@ -327,7 +327,7 @@ sealed trait Dataset[T: Codec] {
     * the result.
     *
     * If performance is important consider using [[select]] with
-    * [[functions.explode]] and the expression api directly instead.
+    * [[Expr.explode]] and the expression api directly instead.
     */
   def flatMap[U: Codec](f: T => Iterable[U]): Dataset[U] = {
     given Codec[Iterable[U]] = Codec.iterable
@@ -452,8 +452,8 @@ sealed trait Dataset[T: Codec] {
 
   /** Write a Dataset to path using the specified format.
     *
-    * Note: This is a lazy operation and the returned [[Action]] needs to be
-    * passed to a runner for the data to be written.
+    * Note: This is a lazy operation and the returned [[Dataset.Action]] needs
+    * to be passed to a runner for the data to be written.
     */
   def writeToPath(path: String, format: Format): Action =
     Action.Write(this, if path.endsWith("/") then path else path + "/", format)
@@ -670,7 +670,7 @@ object Dataset {
       * and flattening the result.
       *
       * Note: If performance is important consider using [[selectValues]] with
-      * [[functions.explode]] and the expression api directly instead.
+      * [[Expr.explode]] and the expression api directly instead.
       */
     def flatMapValues[U: Codec](f: V => Iterable[U]): Dataset[(K, U)] = {
       given Codec[Iterable[U]] = Codec.iterable

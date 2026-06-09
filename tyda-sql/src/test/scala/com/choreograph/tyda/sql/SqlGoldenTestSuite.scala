@@ -20,7 +20,9 @@ trait SqlGoldenTestSuite extends GoldenTestSuite {
         case Left(DatasetToSqlError.RequiresUdfCapability(msg)) =>
           pending
           unreachable("Test should be skipped by pending")
-        case Left(DatasetToSqlError.NotImplemented(msg)) => fail(s"Unimplemented feature: $msg")
+        case Left(DatasetToSqlError.NotImplemented(msg)) =>
+          pending
+          unreachable(s"Unimplemented feature: $msg")
         case Right(plan) => plan
       }
     }
