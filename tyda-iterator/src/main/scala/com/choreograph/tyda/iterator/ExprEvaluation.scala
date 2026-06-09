@@ -255,6 +255,12 @@ object ExprEvaluation {
           val mapEval = impl(map)
           val keyEval = impl(key)
           from => mapEval(from).get(keyEval(from))
+        case ExprNode.FromBase64(string) =>
+          val stringEval = impl(string)
+          from => Binary.fromBase64(stringEval(from))
+        case ExprNode.ToBase64(binary) =>
+          val binaryEval = impl(binary)
+          from => binaryEval(from).toBase64
         case ExprNode.DistinctSeq(operand) => (impl(operand).andThen(_.distinct))
         case ExprNode.None(_) => _ => None
         case ExprNode.Rand() => _ => scala.util.Random.nextDouble()

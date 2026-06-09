@@ -1,6 +1,7 @@
 package com.choreograph.tyda
 
 import java.nio.charset.StandardCharsets
+import java.util.Base64
 
 import scala.collection.immutable.ArraySeq
 
@@ -24,10 +25,22 @@ object Binary {
   /** Encode a `String` to its UTF-8 byte representation. */
   def fromString(str: String): Binary = new ArraySeq.ofByte(str.getBytes(StandardCharsets.UTF_8))
 
+  /** Decode a Base64-encoded string to binary data.
+    *
+    * Returns `None` if the string is not valid Base64. This follows common sql
+    * semantics and filters out whitespace before trying to decode.
+    */
+  def fromBase64(str: String): Option[Binary] =
+    try Some(new ArraySeq.ofByte(Base64.getDecoder.decode(str.filter(!_.isWhitespace))))
+    catch { case _: IllegalArgumentException => None }
+
   extension (b: Binary) {
 
     /** Returns the number of bytes. */
     def length: Int = b.length
+
+    /** Encode binary data as a Base64 string. */
+    def toBase64: String = Base64.getEncoder.encodeToString(b.toArray)
   }
 
   private object BinaryToArray extends Injection[Binary, Array[Byte]] {
