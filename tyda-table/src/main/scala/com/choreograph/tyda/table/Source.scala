@@ -17,8 +17,6 @@ import com.choreograph.tyda.TableLocation
 import com.choreograph.tyda.functions.explode
 
 enum Source[M, P <: Partitioner] {
-  // TODO: Due to this bug https://github.com/scala/scala3/issues/22137
-  // we need to add explicit type parameter to the case. When using scala 3.6.4 or later we can remove this.
 
   /** Source that is read from a path on cloud storage.
     *
@@ -38,7 +36,7 @@ enum Source[M, P <: Partitioner] {
     *   filter out files that should not be read. The glob filter is applied to
     *   the filenames in the path, not the full path.
     */
-  case Path[M, P <: Partitioner](
+  case Path(
       basePath: String,
       format: Format = Format.Parquet,
       unpivot: Boolean = false,
@@ -53,7 +51,7 @@ enum Source[M, P <: Partitioner] {
     * @param data
     *   The data contained in the source.
     */
-  case Test[M, P <: Partitioner](data: TestValues[M], metadata: FileMetadata) extends Source[M, P]
+  case Test(data: TestValues[M], metadata: FileMetadata) extends Source[M, P]
 }
 
 object Source {
