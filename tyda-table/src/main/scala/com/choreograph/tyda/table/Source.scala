@@ -92,7 +92,7 @@ object Source {
   /* Currently this is restricted to Hive partitioners since for tables that the only thing that will work.
    * But if we make readTablePartitions return the value instead of a then we should be able to relax this
    * constraint. */
-  extension [M, V <: Product: Codec](
+  extension [M, V: Codec](
       source: Source[M, Partitioner.Hive[V]]
   )(using decoder: Partitioner.Determinator[V, Partitioner.Hive[V]]) {
     def asPartitionDataset(p: Partitioner.Hive[V]): Dataset[V] =
