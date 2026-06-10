@@ -25,7 +25,7 @@ import com.choreograph.tyda.table.ArgsParser.Result
 final case class Latest[S <: Source[?, ?], Date](source: S, overrideDate: Option[Date] = None)
 
 object Latest {
-  extension [M: Codec, Date: Codec: Comparable, PartitionValue <: Product: Codec: Selector.To[Date]](
+  extension [M: Codec, Date: Codec: Comparable, PartitionValue: Codec: Selector.To[Date]](
       latest: Latest[Source[M, Partitioner.Hive[PartitionValue]], Date]
   )(using
       decoder: Partitioner.Determinator[PartitionValue, Partitioner.Hive[PartitionValue]],
@@ -52,9 +52,9 @@ object Latest {
     def readLatest(runDate: Date): Dataset[M] = readLatestWithPartitions(runDate).select(_._2)
   }
 
-  extension [M: Codec, Date: Codec: Comparable, PartitionValue <: Product: Codec: Remover.Of[
+  extension [M: Codec, Date: Codec: Comparable, PartitionValue: Codec: Remover.Of[Date] as r: Selector.To[
     Date
-  ] as r: Selector.To[Date]](latest: Latest[Source[M, Partitioner.Hive[PartitionValue]], Date])(using
+  ]](latest: Latest[Source[M, Partitioner.Hive[PartitionValue]], Date])(using
       decoder: Partitioner.Determinator[PartitionValue, Partitioner.Hive[PartitionValue]],
       creator: Partitioner.Creator[PartitionValue, Partitioner.Hive[PartitionValue]]
   )(using Groupable[r.Out], Codec[r.Out]) {
