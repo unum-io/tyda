@@ -417,7 +417,6 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
             case SqlDialect.ArrayDistinct.Subquery(makeArray, unnest) =>
               val element = args.aliasGen.column()
               val elementIdent = SqlExpr.Ident(element)
-
               val unnestFrom = From.Expr(SqlExpr.Function(unnest, Seq(arr)), element)
               val selectQuery = Query.Select(
                 select = NonEmpty(elementIdent),
@@ -428,8 +427,23 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
                 distinct = true
               )
               SqlExpr.Function(makeArray, Seq(SqlExpr.Subquery(selectQuery)))
-
           }
+        )
+      case ExprNode.FromBase64(string) => inner(string).map(str =>
+          dialect.fromBase64 match {
+            case SqlDialect.FromBase64Support.TryFunction(name, format) =>
+              SqlExpr.Function(name, Seq(str, SqlExpr.LiteralString(format)))
+            case SqlDialect.FromBase64Support.Function(name) => SqlExpr.Function(name, Seq(str))
+          }
+        )
+      case ExprNode.ToBase64(binary) => inner(binary).map(bin =>
+          val encoded = SqlExpr.Function(dialect.toBase64.name, Seq(bin))
+          if dialect.toBase64.isChunked then
+            SqlExpr.Function(
+              "replace",
+              Seq(encoded, SqlExpr.LiteralString("\r\n"), SqlExpr.LiteralString(""))
+            )
+          else encoded
         )
       case ExprNode.ElementSeq(array, index) =>
         val adjusted =

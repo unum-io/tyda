@@ -444,6 +444,14 @@ private object ExprNode extends ExprApi[ExprNode] {
     override def codec: Codec[Int] = Codec[Int]
   }
 
+  final case class FromBase64(string: ExprNode[String]) extends ExprNode[Option[Binary]] {
+    override def codec: Codec[Option[Binary]] = Codec[Option[Binary]]
+  }
+
+  final case class ToBase64(binary: ExprNode[Binary]) extends ExprNode[String] {
+    override def codec: Codec[String] = Codec[String]
+  }
+
   final case class ToRepr[P, Repr](expr: ExprNode[P], injectionCodec: Codec.FromInjection[P, Repr])
       extends ExprNode[Repr] {
     override def codec: Codec[Repr] = injectionCodec.to
