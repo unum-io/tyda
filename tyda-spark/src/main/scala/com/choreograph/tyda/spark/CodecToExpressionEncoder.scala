@@ -39,8 +39,9 @@ import com.choreograph.tyda.spark.CodecToCatalystType.catalystStructType
 import com.choreograph.tyda.spark.CodecToCatalystType.catalystType
 import com.choreograph.tyda.spark.CodecToCatalystType.nullable
 
+// Since to is a generic extension method on Binary, it isn't directly
+// available to spark via java reflection.
 private[spark] object BinaryHelper {
-  def fromArray(bytes: Array[Byte]): Binary = Binary.fromArray(bytes)
   def toArray(b: Binary): Array[Byte] = b.to(Array)
 }
 
@@ -242,7 +243,7 @@ private object CodecToExpressionEncoder {
       case Codec.Double => path
       case Codec.Boolean => path
       case Codec.Bytes =>
-        StaticInvoke(BinaryHelper.getClass, jvmType(codec), "fromArray", path :: Nil, returnNullable = false)
+        StaticInvoke(Binary.getClass, jvmType(codec), "fromArray", path :: Nil, returnNullable = false)
       case Codec.TimestampMicros => UnixMicros(path)
       case Codec.DurationMicros => path
       case Codec.Date => UnixDate(path)
