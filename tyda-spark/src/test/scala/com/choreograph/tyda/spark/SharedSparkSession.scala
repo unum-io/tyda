@@ -26,10 +26,9 @@ private[spark] trait SharedSparkSession {
     .foreach { projectId => spark.conf.set("spark.datasource.bigquery.parentProject", projectId) }
 
   // Based on what is done in the spark codebase
-  /* https://github.com/apache/spark/blob/4e5ed454fb292bc22cbdb6fc69b7de322e0afeff/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/SQLConfHelper.scala#L34-L37 */
-  //
-  /* It quite ugly as it modifies the global state of the shared SparkSession, so depends no the test runner
-   * not running individual test in a suite in parallel. */
+  // https://github.com/apache/spark/blob/4e5ed454fb292bc22cbdb6fc69b7de322e0afeff/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/SQLConfHelper.scala#L34-L37
+  // It quite ugly as it modifies the global state of the shared SparkSession, so depends no the test runner
+  // not running individual test in a suite in parallel.
   def withConf[T](pairs: (String, String)*)(f: => T): T = {
     val oldConf = pairs.map { case (k, _) => k -> spark.conf.get(k) }.toMap
     pairs.foreach { case (k, v) => spark.conf.set(k, v) }

@@ -30,7 +30,7 @@ extension [T, F[_]](inst: K0.ProductInstances[F, T]) {
 
 extension [T <: Tuple, F[_]](inst: K0.ProductInstances[F, T]) {
   def toTuple: Tuple.Map[T, F] =
-    /* TYPE SAFETY: For tuples the type classes in K0.ProductInstances[F, T] is exactly Tuple.Map[T, F] */
+    // TYPE SAFETY: For tuples the type classes in K0.ProductInstances[F, T] is exactly Tuple.Map[T, F]
     Tuple.fromIArray(IArray.from(inst.mapConst[Any]([t] => v => v: Any))).asInstanceOf[Tuple.Map[T, F]]
 }
 

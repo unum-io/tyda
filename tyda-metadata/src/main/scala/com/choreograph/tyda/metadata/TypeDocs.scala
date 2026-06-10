@@ -16,7 +16,7 @@ object TypeDocs:
     import quotes.reflect.*
 
     val repr = TypeRepr.of[T]
-    /* For singleton enum cases (e.g. `case Foo`), typeSymbol points to the parent enum. */
+    // For singleton enum cases (e.g. `case Foo`), typeSymbol points to the parent enum.
     val sym = if repr.isSingleton then repr.termSymbol else repr.typeSymbol
 
     val docstring = sym.docstring
