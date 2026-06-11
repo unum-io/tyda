@@ -17,6 +17,15 @@ object BigQueryIntegrationTestEnvVariables {
     ): Unit
   }
 
+  def skipIfProjectIsSet(): Unit = {
+    // We use a local variable here to avoid the whole env becoming part of the error message
+    val shouldRun = !sys.env.contains(ProjectId)
+    assume(
+      condition = shouldRun,
+      s"Skipping bigquery-emulator tests: real BigQuery integration is active ($ProjectId is set)"
+    ): Unit
+  }
+
   def getProjectId: Option[String] = sys.env.get(ProjectId)
 
   def getProjectIdOrSkip: String =
