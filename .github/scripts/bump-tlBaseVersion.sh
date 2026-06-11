@@ -62,7 +62,7 @@ case "$command" in
     BRANCH="bump-base-version-${VERSION}"
     append_github_env "BRANCH=$BRANCH"
 
-    PR_EXISTS=$(gh pr list --head "$BRANCH" --json number --jq 'length > 0')
+    PR_EXISTS=$(gh pr list --state all --head "$BRANCH" --json number --jq 'length > 0')
 
     append_github_output "PR_EXISTS=$PR_EXISTS"
     echo "PR already exists: $PR_EXISTS"
@@ -98,3 +98,4 @@ case "$command" in
     exit 1
     ;;
 esac
+
