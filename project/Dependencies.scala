@@ -63,6 +63,8 @@ object Dependencies {
 
   val tydaDocs = libraryDependencies ++= Seq(CompileDeps.spark3Sql)
 
+  val tydaFuzz = libraryDependencies ++= Seq(CompileDeps.scalatest)
+
   val tydaTestSuites = libraryDependencies ++= Seq(CompileDeps.scalatest, CompileDeps.commonsIo)
 
   val tydaParquet = libraryDependencies ++=
