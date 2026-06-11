@@ -196,11 +196,11 @@ object ExprEvaluation {
           binaryOp(string, delimiter, (str, del) => str.split(Pattern.quote(del), -1).toSeq)
         case ExprNode.ToJson(inner) =>
           val innerEval = impl(inner)
-          val jsonCodec = CodecToJsoniter.create(using inner.codec)
+          val jsonCodec = CodecToJsoniter.unwrapped(using inner.codec)
           from => writeToString(innerEval(from))(using jsonCodec)
         case ExprNode.FromJson(inner, codec) =>
           val innerEval = impl(inner)
-          val jsonCodec = CodecToJsoniter.create(using codec)
+          val jsonCodec = CodecToJsoniter.unwrapped(using codec)
           val config = ReaderConfig.withCheckForEndOfInput(false)
           from =>
             val encoded = innerEval(from)

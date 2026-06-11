@@ -1294,4 +1294,5 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
       (int, _) => Some(Tuple1(int))
     )
   }
+  testHasSameBehavior[Seq[Int], String]("toJson Seq[Int]", toJson, _.mkString("[", ",", "]"))
 }
