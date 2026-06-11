@@ -1,3 +1,6 @@
+import org.typelevel.sbt.gha.JobEnvironment
+import org.typelevel.sbt.gha.PermissionValue
+import org.typelevel.sbt.gha.Permissions
 import java.nio.file.StandardCopyOption
 
 import scala.sys.process.*
@@ -70,6 +73,34 @@ ThisBuild / githubWorkflowAddedJobs ++= {
       scalas = List("3"),
       javas = javaVersions,
       steps = setupSteps :+ WorkflowStep.Sbt(List("scalafixAll --check"), name = Some("Check scalafix"))
+    ),
+    WorkflowJob(
+      id = "site",
+      name = "Publish Docs",
+      scalas = List("3"),
+      javas = javaVersions,
+      cond = Some("github.event_name != 'pull_request' && github.ref == 'refs/heads/main'"),
+      permissions = Some(
+        Permissions
+          .Specify
+          .defaultRestrictive
+          .withPages(PermissionValue.Write)
+          .withIdToken(PermissionValue.Write)
+      ),
+      environment = Some(JobEnvironment(name = "github-pages")),
+      steps = setupSteps ++ List(
+        WorkflowStep.Sbt(List("doc"), name = Some("Generate docs")),
+        WorkflowStep.Use(
+          UseRef.Public("actions", "upload-pages-artifact", "v5"),
+          name = Some("Upload pages artifact"),
+          params =
+            Map("path" -> s"target/scala-${scalaVersion.value}/unidoc") // adjust to your actual output path
+        ),
+        WorkflowStep.Use(
+          UseRef.Public("actions", "deploy-pages", "v5"),
+          name = Some("Deploy to GitHub Pages")
+        )
+      )
     )
   )
 }
@@ -160,6 +191,9 @@ lazy val root = (project in file("."))
   // Run mdoc as part of unidoc generation
   .settings(Compile / unidoc := (Compile / unidoc).dependsOn((tydaDocs / mdoc).toTask("")).value)
   .settings(
+    // Make unidoc be the default doc command
+    Compile / doc := (Compile / unidoc).map(_.head).value,
+    Compile / doc / aggregate := false,
     // tydaTestSuites depends on scalatest which generates a lots of documentation warnings.
     // Since it a internal test project, we just exclude it from docs like other Test projects.
     ScalaUnidoc / unidoc / unidocProjectFilter :=
