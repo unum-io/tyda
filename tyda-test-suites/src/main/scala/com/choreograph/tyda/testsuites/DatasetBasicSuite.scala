@@ -11,7 +11,7 @@ object DatasetBasicSuite {
   final case class SimpleProduct(a: Int, b: String)
 }
 
-/* Testsuite focusing on select and filter that will compare a Dataset backend to a reference implementation. */
+// Testsuite focusing on select and filter that will compare a Dataset backend to a reference implementation.
 trait DatasetBasicSuite extends DatasetSuite {
   import DatasetBasicSuite.{WideTuple, SimpleProduct}
   import DatasetSuite.{MyEnum, TinyByte}

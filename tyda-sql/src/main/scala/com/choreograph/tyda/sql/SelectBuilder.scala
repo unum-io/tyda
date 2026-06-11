@@ -304,7 +304,7 @@ private final case class SelectBuilder[T, R](
     val newSelect = andThenRelaxed(select, explode)
     explode.codec match {
       case Codec.Product(_, _, _) | Codec.Sum(_, _) =>
-        /* When exploding to a structured type we end up with a single column and need to flatten it manually */
+        // When exploding to a structured type we end up with a single column and need to flatten it manually
         buildWithSelect(
           NonEmpty[Seq]((newSelect, "_1"))
         ).flatMap(makeSubquery[Tuple1[R2]](_, summon).select(CompiledExpr(_._1)))
@@ -412,7 +412,7 @@ private final case class SelectBuilder[T, R](
       )
     select match {
       case compiled: CompiledExpr[T, R] if !distinct && allOnlySelects(compiled) =>
-        /* The explodes can be added as joins in the existing from without a subquery. */
+        // The explodes can be added as joins in the existing from without a subquery.
         val explodeCodecs = instances.foldLeft0(Vector.empty[Codec[?]])([t] =>
           (acc, select) =>
             select match {

@@ -43,7 +43,7 @@ private object SumToRowEncoder {
         val discriminant = out.getString(0)
         val ordinal = discriminantToOrdinal(discriminant)
         ordinalToSingleton(ordinal)
-          /* When reading old data where a singleton has been changed to a product spark can return null here. */
+          // When reading old data where a singleton has been changed to a product spark can return null here.
           .orElse(Option(out.getAs[Option[T]](ordinalToIndex(ordinal))).flatten)
           .orElse(ordinalToProductOfAllNone(ordinal))
           .getOrElse {

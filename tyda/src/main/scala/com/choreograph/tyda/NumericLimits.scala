@@ -1,12 +1,12 @@
 package com.choreograph.tyda
 
-/* NumericLimits is a type class that provides the minimum and maximum values of a numeric type. */
+// NumericLimits is a type class that provides the minimum and maximum values of a numeric type.
 private[tyda] trait NumericLimits[T] {
   def min: T
   def max: T
 }
 
-/* Specialized type class with values that only exists for floating point types. */
+// Specialized type class with values that only exists for floating point types.
 private[tyda] trait FloatingLimits[T] extends NumericLimits[T] {
   def nan: T
   def infinity: T

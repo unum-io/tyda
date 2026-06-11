@@ -123,7 +123,7 @@ object DatasetOnSpark {
    * collected. */
   //
   // This is the same approach as is used in Spark for cleaning up persisted RDDs
-  /* https://github.com/apache/spark/blob/4e5ed454fb292bc22cbdb6fc69b7de322e0afeff/core/src/main/scala/org/apache/spark/ContextCleaner.scala#L76 */
+  // https://github.com/apache/spark/blob/4e5ed454fb292bc22cbdb6fc69b7de322e0afeff/core/src/main/scala/org/apache/spark/ContextCleaner.scala#L76
   private val referenceQueue = new ReferenceQueue[Dataset[?]]()
   private val unpersistTasks = Collections.newSetFromMap[UnpersistTask](ConcurrentHashMap())
 

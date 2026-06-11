@@ -73,7 +73,7 @@ object DatasetSuite {
   }
 }
 
-/* Testsuite that will compare a Dataset backend to a reference implementation. */
+// Testsuite that will compare a Dataset backend to a reference implementation.
 trait DatasetSuite extends AnyFunSuite {
   import DatasetSuite.Result
 

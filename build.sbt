@@ -109,7 +109,7 @@ lazy val sparkRunSettings = Seq(
     "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
   ),
   // Add provided dependencies to run to classpath based on
-  /* https://stackoverflow.com/questions/18838944/how-to-add-provided-dependencies-back-to-run-test-tasks-classpath/21803413#21803413 */
+  // https://stackoverflow.com/questions/18838944/how-to-add-provided-dependencies-back-to-run-test-tasks-classpath/21803413#21803413
   // https://github.com/sbt/sbt/issues/3733
   // Adding it to the Runtime configuration will not work as that will also include it in the assembly
   Compile / run :=

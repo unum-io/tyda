@@ -245,7 +245,7 @@ object ArgsParser {
     def parse(t: String): Option[T]
     final def parseResult(t: String): Result[T] = parse(t).toRight(Error.UnparsableValue(t, hint))
     def serialize(t: T, templateTag: Option[String]): String
-    /* Return information about what as valid value */
+    // Return information about what as valid value
     def hint: String
 
     def withHint(newHint: String): Arg[T] =

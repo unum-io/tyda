@@ -341,9 +341,9 @@ private object CodecToExpressionEncoder {
     Invoke(rowEncoder, "decode", jvmType(sum), Seq(row))
   }
 
-  /* Because we use the row encoder for sum type we need some special handling when it the top level object.
-   * Spark also has this for the RowEncoder: */
-  /* https://github.com/apache/spark/blob/7c29c664cdc9321205a98a14858aaf8daaa19db2/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/DeserializerBuildHelper.scala#L218-L223 */
+  // Because we use the row encoder for sum type we need some special handling when it the top level object.
+  // Spark also has this for the RowEncoder:
+  // https://github.com/apache/spark/blob/7c29c664cdc9321205a98a14858aaf8daaa19db2/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/DeserializerBuildHelper.scala#L218-L223
   private def createRowDeserializer(
       path: Expression,
       fields: Seq[Field[?]],
@@ -392,8 +392,8 @@ private object CodecToExpressionEncoder {
     )
   }
 
-  /* Conservative List of collections directly supported by Spark. This is needed because Spark does not
-   * correctly handle collections that takes an implicit parameter to their newBuilder method. */
+  // Conservative List of collections directly supported by Spark. This is needed because Spark does not
+  // correctly handle collections that takes an implicit parameter to their newBuilder method.
   private val sparkSupportedCollections = Seq(classOf[List[?]], classOf[Set[?]], classOf[Seq[?]])
 
   private def createDeserializerForIterable[T, C <: Iterable[T]](
