@@ -1270,6 +1270,10 @@ SELECT CASE WHEN t1._1 THEN t1._2 ELSE t1._3 END AS value FROM t1
 SELECT CASE WHEN t1._1 THEN t1._2 ELSE t1._3 END AS value FROM t1
 ------ end
 
+------ Test: toJson Seq[Int]
+SELECT to_json_string(t1.value) AS value FROM t1
+------ end
+
 ------ Test: toJson/fromJson roundtrip for com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct
 SELECT CASE WHEN ((json_query(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$') != 'null') AND (((CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) END IS NOT NULL) AND (json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.b') IS NOT NULL)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.c') AS BOOLEAN) IS NOT NULL))) THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) END AS a, json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.b') AS b, SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.c') AS BOOLEAN) AS c) END AS value FROM t1
 ------ end
