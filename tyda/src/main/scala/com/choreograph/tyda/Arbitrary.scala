@@ -381,10 +381,8 @@ object Arbitrary {
     def unshrinkable[T](value: T): Shrinkable[T] = Shrinkable(value, LazyList.empty)
 
     extension [T](seq: Seq[Shrinkable[T]]) {
-      def minimize(pred: Seq[T] => Boolean): Seq[T] = {
-        val shrinkable = Shrinkable(seq.map(_.value), shrinkSeq(seq))
-        shrinkable.minimize(pred)
-      }
+      def minimize(pred: Seq[T] => Boolean): Seq[T] = seq.toShrinkable.minimize(pred)
+      def toShrinkable: Shrinkable[Seq[T]] = Shrinkable(seq.map(_.value), shrinkSeq(seq))
     }
 
     val pure: Pure[Shrinkable] = [t] => unshrinkable(_)
