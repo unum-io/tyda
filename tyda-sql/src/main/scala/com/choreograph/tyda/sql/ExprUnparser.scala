@@ -361,7 +361,8 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
               finish <- lambda(asFold.finish, args)
             } yield SqlExpr.Function(aggregate, Seq(arr, initial, merge, finish))
         }
-      case ExprNode.RaiseError(msg, _) => inner(msg).map(m => SqlExpr.Function(dialect.errorFunction, Seq(m)))
+      case ExprNode.RaiseError(msg, codec) =>
+        inner(msg).map(m => SqlExpr.Function(dialect.errorFunction, Seq(m))).map(cast(_, codec, dialect))
       case ExprNode.Cases(whenThenExpr, whenThenExprs, elseExpr) => for {
           whensSql <- (whenThenExpr +: whenThenExprs)
             .map { branch =>
