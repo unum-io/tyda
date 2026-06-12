@@ -27,9 +27,8 @@ object CodecToJsoniterSpec {
 class CodecToJsoniterSpec extends AnyFunSuite {
   import CodecToJsoniterSpec.{*, given}
 
-  def roundTrip[T: Arbitrary: Codec as codec: TypeName: Equality] =
-    test(s"round trip ${TypeName.name[T]}") {
-
+  def roundTripImpl(variantName: String)[T: Arbitrary: JsonValueCodec: TypeName: Equality] = {
+    test(s"round trip $variantName, ${TypeName.name[T]}") {
       def failureMessage(expected: T, actual: T): String =
         s"""Round trip failed for ${TypeName.name[T]}:
          |Expected: $expected
@@ -48,8 +47,22 @@ class CodecToJsoniterSpec extends AnyFunSuite {
         }
       }
     }
+  }
 
-  def testRead[A: Codec as codec: Equality](testName: String, expected: A, json: String): Unit =
+  def roundTrip[T: Arbitrary: Codec as codec: TypeName: Equality] = {
+    roundTripImpl("wrapped")
+    {
+      given [A] => Codec[A] => JsonValueCodec[A] = CodecToJsoniter.unwrapped[A]
+      roundTripImpl("unwrapped")
+    }
+  }
+
+  def testReadUnwrapped[A: Codec as codec: Equality](testName: String, expected: A, json: String): Unit = {
+    given [A] => Codec[A] => JsonValueCodec[A] = CodecToJsoniter.unwrapped[A]
+    testRead(testName, expected, json)
+  }
+
+  def testRead[A: JsonValueCodec: Equality](testName: String, expected: A, json: String): Unit =
     test(testName) {
       val read = readFromString(json)
       assert(read === expected)
@@ -112,4 +125,6 @@ class CodecToJsoniterSpec extends AnyFunSuite {
   testRead[Float]("read Infinity from string", Float.PositiveInfinity, """{"value":"Infinity"}""")
   testRead[Double]("read -Infinity from string", Double.NegativeInfinity, """{"value":"-Infinity"}""")
   testRead[Float]("read NaN from string", Float.NaN, """{"value":"NaN"}""")
+
+  testReadUnwrapped[Seq[Int]]("read Seq[Int] unwrapped", Seq(1, 2, 3), """[1,2,3]""")
 }
