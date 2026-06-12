@@ -34,6 +34,8 @@ object CodecToJsoniter {
       case _ => xmap(create[(value: T)], (value = _), _.value)
     }
 
+  def unwrapped[T: Codec]: JsonValueCodec[T] = fromReaderWriter[T]
+
   private def getNullValue[T: Codec]: T =
     Codec[T] match {
       case Codec.Boolean => false
