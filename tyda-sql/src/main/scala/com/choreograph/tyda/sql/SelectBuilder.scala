@@ -283,7 +283,7 @@ private final case class SelectBuilder[T, R](
 
   private def containsSeqHigherOrderOp(expr: ExprNode[?]): Boolean =
     expr.exists {
-      case ExprNode.MapSeq(_, _) | ExprNode.AggregateSeq(_, _, _) => true
+      case ExprNode.MapSeq(_, _) | ExprNode.FlatMapSeq(_, _) | ExprNode.AggregateSeq(_, _, _) => true
       case _ => false
     }
 

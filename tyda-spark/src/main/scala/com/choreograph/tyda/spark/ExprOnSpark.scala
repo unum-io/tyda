@@ -151,6 +151,16 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
             new ExprOnSpark[T](cfs + (f.arg -> elemCf)).convert(f.expr)
           }
         )
+      case ExprNode.FlatMapSeq(seq, f) =>
+        val seqCol = convert(seq)
+        val transformed = transform(
+          seqCol,
+          elem => {
+            val elemCf = ColumnFactory(elem)(using f.arg.codec)
+            new ExprOnSpark[T](cfs + (f.arg -> elemCf)).convert(f.expr)
+          }
+        )
+        org.apache.spark.sql.functions.flatten(transformed)
       case ExprNode.FilterSeq(seq, predicate) =>
         val seqCol = convert(seq)
         filter(

@@ -305,6 +305,29 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
           case SqlDialect.ArrayHigherOrderFunctions.Lambda(map = mapFunction) =>
             SqlExpr.Function(mapFunction, Seq(arr, SqlExpr.LambdaFunction(arg, fExpr)))
         }
+      case ExprNode.FlatMapSeq(operand, f) =>
+
+        for {
+          arr <- inner(operand)
+          argName = args.aliasGen.column()
+          arg = unwrapArrayElement(SqlExpr.Ident(argName), operand.codec.element, dialect)
+          fExpr <- exprToSqlExpr(
+            wrapArrayElement(f.expr, dialect),
+            args.withReferences(f.arg -> IdentifierOrSqlExpr.Expr(arg))
+          )
+        } yield dialect.arrayHigherOrderFunctions match {
+          case SqlDialect.ArrayHigherOrderFunctions.Subquery(makeArray, unnest) =>
+            val from1 = From.Expr(SqlExpr.Function(unnest, Seq(arr)), argName)
+            val elemName = args.aliasGen.column()
+            val from2 = From.Expr(SqlExpr.Function(unnest, Seq(fExpr)), elemName)
+            val joinFrom = From.Join(from1, from2, com.choreograph.tyda.sql.ast.JoinType.Inner, None)
+            val elem = unwrapArrayElement(SqlExpr.Ident(elemName), f.codec.element, dialect)
+            val query = Query.Select(NonEmpty(elem), joinFrom)
+            SqlExpr.Function(makeArray, Seq(SqlExpr.Subquery(query)))
+          case SqlDialect.ArrayHigherOrderFunctions.Lambda(map = mapFunction) =>
+            val mapped = SqlExpr.Function(mapFunction, Seq(arr, SqlExpr.LambdaFunction(arg, fExpr)))
+            SqlExpr.Function("flatten", Seq(mapped))
+        }
       case ExprNode.FilterSeq(operand, predicate) => for {
           arr <- inner(operand)
           argName = args.aliasGen.column()
