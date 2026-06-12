@@ -1,0 +1,26 @@
+name: Update tlBaseVersion (PR)
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-version:
+    if: github.event.release.target_commitish == 'main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Update tlBaseVersion and create PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/scripts/bump-tlBaseVersion.sh "${{ github.event.release.tag_name }}"
+
