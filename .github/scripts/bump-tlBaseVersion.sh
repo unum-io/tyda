@@ -2,100 +2,88 @@
 
 set -euo pipefail
 
-require_env() {
-  local name="$1"
+release_tag="${1:-${GITHUB_RELEASE_TAG:-}}"
 
-  if [[ -z "${!name:-}" ]]; then
-    echo "Missing required environment variable: $name" >&2
-    exit 1
+if [[ ! "$release_tag" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+  echo "Skipping invalid tag: ${release_tag:-<empty>}"
+  exit 0
+fi
+
+major="${BASH_REMATCH[1]}"
+minor="${BASH_REMATCH[2]}"
+
+version="${major}.$((minor + 1))"
+branch="bump-base-version-${version}"
+
+echo "Release tag: ${release_tag}"
+echo "Next tlBaseVersion: ${version}"
+echo "Branch: ${branch}"
+
+git fetch origin main
+git checkout -B "$branch" origin/main
+
+if ! grep -qE '^ThisBuild / tlBaseVersion := "[^"]+"' build.sbt; then
+  echo "Could not find tlBaseVersion setting in build.sbt" >&2
+  exit 1
+fi
+
+VERSION="$version" perl -0pi -e \
+  's{(^ThisBuild / tlBaseVersion := ")[^"]*(")}{$1 . $ENV{VERSION} . $2}me' \
+  build.sbt
+
+if git diff --quiet -- build.sbt; then
+  echo "No changes. tlBaseVersion is already ${version}."
+  exit 0
+fi
+
+existing_pr_url="$(
+  gh pr list \
+    --state all \
+    --head "$branch" \
+    --json url \
+    --jq '.[0].url // ""'
+)"
+
+if [[ -n "$existing_pr_url" ]]; then
+  echo "PR already exists for ${branch}: ${existing_pr_url}"
+  exit 0
+fi
+
+if ! git config user.name >/dev/null; then
+  git config user.name "github-actions[bot]"
+fi
+
+if ! git config user.email >/dev/null; then
+  git config user.email "github-actions[bot]@users.noreply.github.com"
+fi
+
+git add build.sbt
+git commit -m "Update tlBaseVersion to ${version}"
+
+git push origin "$branch"
+
+if ! create_output="$(
+  gh pr create \
+    --title "Update tlBaseVersion to ${version}" \
+    --body "Derived from release tag ${release_tag}. Patch ignored. Next base version: ${version}." \
+    --base main \
+    --head "$branch" 2>&1
+)"; then
+  existing_pr_url="$(
+    gh pr list \
+      --state all \
+      --head "$branch" \
+      --json url \
+      --jq '.[0].url // ""'
+  )"
+
+  if [[ -n "$existing_pr_url" ]]; then
+    echo "PR already exists for ${branch}: ${existing_pr_url}"
+    exit 0
   fi
-}
 
-append_github_env() {
-  require_env GITHUB_ENV
-  echo "$1" >> "$GITHUB_ENV"
-}
+  echo "$create_output" >&2
+  exit 1
+fi
 
-append_github_output() {
-  require_env GITHUB_OUTPUT
-  echo "$1" >> "$GITHUB_OUTPUT"
-}
-
-command="${1:-}"
-
-case "$command" in
-  compute-version)
-    TAG="${GITHUB_RELEASE_TAG:-}"
-
-    if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-      echo "Skipping invalid tag"
-      append_github_output "run=false"
-      exit 0
-    fi
-
-    TAG="${TAG#v}"
-    IFS='.' read -r X Y Z <<< "$TAG"
-
-    VERSION="${X}.$((Y + 1))"
-
-    append_github_env "VERSION=$VERSION"
-    append_github_env "TAG=$TAG"
-    append_github_output "run=true"
-    ;;
-
-  check-changes)
-    require_env VERSION
-
-    sed -i -E 's|(^ThisBuild / tlBaseVersion := ")[^"]+(")|\1'"$VERSION"'\2|' build.sbt
-
-    if git diff --quiet; then
-      echo "No changes"
-      append_github_output "changed=false"
-    else
-      append_github_output "changed=true"
-    fi
-    ;;
-
-  check-pr)
-    require_env VERSION
-
-    BRANCH="bump-base-version-${VERSION}"
-    append_github_env "BRANCH=$BRANCH"
-
-    PR_EXISTS=$(gh pr list --state all --head "$BRANCH" --json number --jq 'length > 0')
-
-    append_github_output "PR_EXISTS=$PR_EXISTS"
-    echo "PR already exists: $PR_EXISTS"
-    ;;
-
-  push-branch)
-    require_env BRANCH
-    require_env VERSION
-
-    git fetch origin main
-    git checkout -B "$BRANCH" origin/main
-
-    git add build.sbt
-    git commit -m "Update tlBaseVersion to $VERSION"
-
-    git push origin "$BRANCH"
-    ;;
-
-  create-pr)
-    require_env BRANCH
-    require_env TAG
-    require_env VERSION
-
-    gh pr create \
-      --title "Update tlBaseVersion to $VERSION" \
-      --body "Derived from release tag v${TAG}. Patch ignored. Next base version: ${VERSION}." \
-      --base main \
-      --head "$BRANCH"
-    ;;
-
-  *)
-    echo "Unknown command: $command" >&2
-    exit 1
-    ;;
-esac
-
+echo "$create_output"
