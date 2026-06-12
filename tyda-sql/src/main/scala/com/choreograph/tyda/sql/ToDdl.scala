@@ -41,7 +41,7 @@ object ToDdl {
 
   private def toDdlSchema[T](codec: Codec[T], dialect: DdlDialect): Seq[DdlField] = {
     def fieldDdl(field: Field[?]): DdlField =
-      toDdlType(field.codec, dialect, notNull = true, supportsNotNull = dialect.supportsNotNullColumn).named(
+      toDdlField(field.codec, dialect, notNull = true, supportsNotNull = dialect.supportsNotNullColumn).named(
         field.name
       )
     codec match {
@@ -56,13 +56,16 @@ object ToDdl {
         val repr = sum.reprFields
         fieldDdl(repr.head).copy(comment = Some(docString)) +: repr.tail.map(fieldDdl)
       case _ =>
-        Seq(toDdlType(codec, dialect, notNull = true, supportsNotNull = dialect.supportsNotNullColumn).named(
+        Seq(toDdlField(codec, dialect, notNull = true, supportsNotNull = dialect.supportsNotNullColumn).named(
           "value"
         ))
     }
   }
 
-  private[tyda] def toDdlType[T](
+  def toDdlType[T](codec: Codec[T], dialect: DdlDialect): DdlType =
+    toDdlField(codec, dialect, notNull = true, supportsNotNull = true).tpe
+
+  private def toDdlField[T](
       codec: Codec[T],
       dialect: DdlDialect,
       notNull: Boolean,
@@ -70,7 +73,7 @@ object ToDdl {
   ): TypeAndNullabilityAndComment =
     codec match {
       case Codec.Option(element) =>
-        val innerDdlType = toDdlType(element, dialect, notNull = false, supportsNotNull)
+        val innerDdlType = toDdlField(element, dialect, notNull = false, supportsNotNull)
         if !notNull then
           TypeAndNullabilityAndComment(
             DdlType.Struct(Seq(
@@ -82,10 +85,10 @@ object ToDdl {
         else innerDdlType
       case sum: Codec.SumAsString[T] =>
         val docString = sum.encodedValues.mkString("one of: ", ", ", "")
-        toDdlType(Codec.String, dialect, notNull, supportsNotNull).copy(comment = Some(docString))
+        toDdlField(Codec.String, dialect, notNull, supportsNotNull).copy(comment = Some(docString))
       // We exclude Codec.Sum here so we can generate docs for the discriminant field
       case Codec.FromInjection(_, to) if !codec.isInstanceOf[Codec.Sum[?, ?]] =>
-        toDdlType(to, dialect, notNull, supportsNotNull)
+        toDdlField(to, dialect, notNull, supportsNotNull)
       case _ => TypeAndNullabilityAndComment(
           toNullableDdlType(codec, dialect),
           !(notNull && supportsNotNull),
@@ -120,13 +123,13 @@ object ToDdl {
       case Codec.Seq(given Codec[e]) =>
         val element = if shouldWrapArrayElement(Codec[e], dialect) then Codec[(value: e)] else Codec[e]
         DdlType.Array(
-          toDdlType(element, dialect, notNull = true, supportsNotNull = dialect.supportsNotNullArrayElement)
+          toDdlField(element, dialect, notNull = true, supportsNotNull = dialect.supportsNotNullArrayElement)
         )
       case Codec.Map(key, value) => dialect.map match {
           case DdlDialect.MapSupport.Array => mapAsArray(dialect)(using key, value)
           case DdlDialect.MapSupport.Native(supportsNotNullKey, supportsNotNullValue) => DdlType.Map(
-              toDdlType(key, dialect, notNull = true, supportsNotNull = supportsNotNullKey),
-              toDdlType(value, dialect, notNull = true, supportsNotNull = supportsNotNullValue)
+              toDdlField(key, dialect, notNull = true, supportsNotNull = supportsNotNullKey),
+              toDdlField(value, dialect, notNull = true, supportsNotNull = supportsNotNullValue)
             )
         }
 
