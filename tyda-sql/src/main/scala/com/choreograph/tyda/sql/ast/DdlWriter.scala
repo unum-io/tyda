@@ -65,9 +65,16 @@ private[sql] final case class DdlWriter(writer: Writer, pretty: Boolean) {
 }
 
 private[sql] object DdlWriter {
+  extension (c: Char) {
+    def isAsciiLetterOrDigit: Boolean =
+      (c >= 'a' && c <= 'z') ||
+        (c >= 'A' && c <= 'Z') ||
+        (c >= '0' && c <= '9')
+  }
   def shouldQuoteIdentifier(ident: Identifier): Boolean = {
     val name = ident.value
-    name.exists(c => !c.isLetterOrDigit && c != '_') || name.headOption.exists(_.isDigit) || isKeyword(name)
+    name.exists(c => !c.isAsciiLetterOrDigit && c != '_') || name.headOption.exists(_.isDigit) ||
+    isKeyword(name)
   }
 
   def writeIdentifier(writer: Writer, ident: Identifier): Unit =
