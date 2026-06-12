@@ -119,23 +119,23 @@ SELECT t1.a AS a, t1.b AS b, t1.c AS c FROM t1
 ------ end
 
 ------ Test: array element access fails on index too large
-SELECT element_at(array(CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)), (CASE WHEN (CAST(100 AS INT) < CAST(0 AS INT)) THEN raise_error('Array index is negative') ELSE CAST(100 AS INT) END + CAST(1 AS INT))) AS value FROM t1
+SELECT element_at(array(CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)), (CASE WHEN (CAST(100 AS INT) < CAST(0 AS INT)) THEN CAST(raise_error('Array index is negative') AS INT) ELSE CAST(100 AS INT) END + CAST(1 AS INT))) AS value FROM t1
 ------ end
 
 ------ Test: array element access fails on negative index
-SELECT element_at(array(CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)), (CASE WHEN (CAST(-1 AS INT) < CAST(0 AS INT)) THEN raise_error('Array index is negative') ELSE CAST(-1 AS INT) END + CAST(1 AS INT))) AS value FROM t1
+SELECT element_at(array(CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)), (CASE WHEN (CAST(-1 AS INT) < CAST(0 AS INT)) THEN CAST(raise_error('Array index is negative') AS INT) ELSE CAST(-1 AS INT) END + CAST(1 AS INT))) AS value FROM t1
 ------ end
 
 ------ Test: array element access with Expr index
-SELECT element_at(t1._1, (CASE WHEN (t1._2 < CAST(0 AS INT)) THEN raise_error('Array index is negative') ELSE t1._2 END + CAST(1 AS INT))) AS value FROM t1
+SELECT element_at(t1._1, (CASE WHEN (t1._2 < CAST(0 AS INT)) THEN CAST(raise_error('Array index is negative') AS INT) ELSE t1._2 END + CAST(1 AS INT))) AS value FROM t1
 ------ end
 
 ------ Test: array element access with literal index
-SELECT element_at(t1.value, (CASE WHEN (CAST(0 AS INT) < CAST(0 AS INT)) THEN raise_error('Array index is negative') ELSE CAST(0 AS INT) END + CAST(1 AS INT))) AS value FROM t1
+SELECT element_at(t1.value, (CASE WHEN (CAST(0 AS INT) < CAST(0 AS INT)) THEN CAST(raise_error('Array index is negative') AS INT) ELSE CAST(0 AS INT) END + CAST(1 AS INT))) AS value FROM t1
 ------ end
 
 ------ Test: array element access with literal index and array element
-SELECT element_at(t1.value, (CASE WHEN (CAST(0 AS INT) < CAST(0 AS INT)) THEN raise_error('Array index is negative') ELSE CAST(0 AS INT) END + CAST(1 AS INT))) AS value FROM t1
+SELECT element_at(t1.value, (CASE WHEN (CAST(0 AS INT) < CAST(0 AS INT)) THEN CAST(raise_error('Array index is negative') AS INT) ELSE CAST(0 AS INT) END + CAST(1 AS INT))) AS value FROM t1
 ------ end
 
 ------ Test: asBase complex
@@ -171,7 +171,7 @@ SELECT 'a' AS value FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for enum product case
-SELECT coalesce(named_struct('i', t1.i), raise_error('Failed to invert asBase')).i AS i FROM t1
+SELECT coalesce(named_struct('i', t1.i), CAST(raise_error('Failed to invert asBase') AS STRUCT<i INT NOT NULL>)).i AS i FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for enum singleton case
@@ -179,7 +179,7 @@ SELECT NULL FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for sealed trait product case
-SELECT coalesce(named_struct('i', t1.i), raise_error('Failed to invert asBase')).i AS i FROM t1
+SELECT coalesce(named_struct('i', t1.i), CAST(raise_error('Failed to invert asBase') AS STRUCT<i INT NOT NULL>)).i AS i FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for sealed trait singleton case
@@ -659,7 +659,7 @@ SELECT (t1.value IS NULL) AS value FROM t1
 ------ end
 
 ------ Test: expect does not raise error when Some
-SELECT coalesce(t1.value, raise_error('should not happen')) AS value FROM t1
+SELECT coalesce(t1.value, CAST(raise_error('should not happen') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: extra stuff after json object is ignored
@@ -1003,11 +1003,11 @@ SELECT element_at(map_from_entries(array(named_struct('_1', t1._1, '_2', t1._2))
 ------ end
 
 ------ Test: match-case all cases sealed trait
-SELECT CASE WHEN (t1.b IS NOT NULL) THEN t1.b.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN CAST(1 AS INT) ELSE raise_error('Unknown case') END AS value FROM t1
+SELECT CASE WHEN (t1.b IS NOT NULL) THEN t1.b.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(raise_error('Unknown case') AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: match-case all cases string enum
-SELECT CASE WHEN (CASE WHEN (t1.value = 'b') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN 'B' WHEN (CASE WHEN (t1.value = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN 'A' ELSE raise_error('Unknown case') END AS value FROM t1
+SELECT CASE WHEN (CASE WHEN (t1.value = 'b') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN 'B' WHEN (CASE WHEN (t1.value = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN 'A' ELSE CAST(raise_error('Unknown case') AS STRING) END AS value FROM t1
 ------ end
 
 ------ Test: match-case only otherwise
@@ -1015,7 +1015,7 @@ SELECT CAST(99 AS INT) AS value FROM t1
 ------ end
 
 ------ Test: match-case only when cases
-SELECT CASE WHEN (t1.d IS NOT NULL) THEN t1.d.i WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'b') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN CAST(2 AS INT) WHEN (CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN CAST(1 AS INT) ELSE raise_error('Unknown case') END AS value FROM t1
+SELECT CASE WHEN (t1.d IS NOT NULL) THEN t1.d.i WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'b') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN CAST(2 AS INT) WHEN (CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(raise_error('Unknown case') AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: match-case when cases + otherwise
@@ -1071,51 +1071,55 @@ SELECT t1.a AS a FROM t1
 ------ end
 
 ------ Test: raise error in expect when None
-SELECT coalesce(CAST(NULL AS INT), raise_error('oh no!')) AS value FROM t1
+SELECT coalesce(CAST(NULL AS INT), CAST(raise_error('oh no!') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in &&
-SELECT (FALSE AND raise_error('error')) AS value FROM t1
+SELECT (FALSE AND CAST(raise_error('error') AS BOOLEAN)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in coalesce
-SELECT coalesce(t1.value, raise_error('error')) AS value FROM t1
+SELECT coalesce(t1.value, CAST(raise_error('error') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in getOrElse
-SELECT coalesce(t1.value, raise_error('error')) AS value FROM t1
+SELECT coalesce(t1.value, CAST(raise_error('error') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in orElse
-SELECT coalesce(t1.value, raise_error('error')) AS value FROM t1
+SELECT coalesce(t1.value, CAST(raise_error('error') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in ternary ifFalse
-SELECT CASE WHEN TRUE THEN t1.value ELSE raise_error('error') END AS value FROM t1
+SELECT CASE WHEN TRUE THEN t1.value ELSE CAST(raise_error('error') AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in ternary ifTrue
-SELECT CASE WHEN FALSE THEN raise_error('error') ELSE t1.value END AS value FROM t1
+SELECT CASE WHEN FALSE THEN CAST(raise_error('error') AS INT) ELSE t1.value END AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in when
-SELECT CASE WHEN FALSE THEN raise_error('error') END AS value FROM t1
+SELECT CASE WHEN FALSE THEN CAST(raise_error('error') AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in ||
-SELECT (TRUE OR raise_error('error')) AS value FROM t1
+SELECT (TRUE OR CAST(raise_error('error') AS BOOLEAN)) AS value FROM t1
 ------ end
 
 ------ Test: raise error raises in coalesce after None
-SELECT coalesce(CAST(NULL AS STRING), raise_error('My error message')) AS value FROM t1
+SELECT coalesce(CAST(NULL AS STRING), CAST(raise_error('My error message') AS STRING)) AS value FROM t1
 ------ end
 
 ------ Test: raise error raises in coalesce before some
-SELECT coalesce(raise_error('My error message'), t1.value) AS value FROM t1
+SELECT coalesce(CAST(raise_error('My error message') AS STRING), t1.value) AS value FROM t1
+------ end
+
+------ Test: raiseError is strongly typed
+SELECT transform(CAST(raise_error('My error message') AS ARRAY<INT>), c0 -> (c0 + CAST(1 AS INT))) AS value FROM t1
 ------ end
 
 ------ Test: raiseError throws static error message
-SELECT raise_error('My error message') AS value FROM t1
+SELECT CAST(raise_error('My error message') AS INT) AS value FROM t1
 ------ end
 
 ------ Test: remove
@@ -1215,7 +1219,7 @@ SELECT t1.value AS value FROM t1
 ------ end
 
 ------ Test: seq zip
-SELECT transform(CASE WHEN (CASE WHEN (size(t1._1) < size(t1._2)) THEN size(t1._1) ELSE size(t1._2) END > CAST(0 AS INT)) THEN sequence(CAST(0 AS INT), (CASE WHEN (size(t1._1) < size(t1._2)) THEN size(t1._1) ELSE size(t1._2) END - CAST(1 AS INT))) ELSE CAST(array() AS ARRAY<INT>) END, c0 -> named_struct('_1', element_at(t1._1, (CASE WHEN (c0 < CAST(0 AS INT)) THEN raise_error('Array index is negative') ELSE c0 END + CAST(1 AS INT))), '_2', element_at(t1._2, (CASE WHEN (c0 < CAST(0 AS INT)) THEN raise_error('Array index is negative') ELSE c0 END + CAST(1 AS INT))))) AS value FROM t1
+SELECT transform(CASE WHEN (CASE WHEN (size(t1._1) < size(t1._2)) THEN size(t1._1) ELSE size(t1._2) END > CAST(0 AS INT)) THEN sequence(CAST(0 AS INT), (CASE WHEN (size(t1._1) < size(t1._2)) THEN size(t1._1) ELSE size(t1._2) END - CAST(1 AS INT))) ELSE CAST(array() AS ARRAY<INT>) END, c0 -> named_struct('_1', element_at(t1._1, (CASE WHEN (c0 < CAST(0 AS INT)) THEN CAST(raise_error('Array index is negative') AS INT) ELSE c0 END + CAST(1 AS INT))), '_2', element_at(t1._2, (CASE WHEN (c0 < CAST(0 AS INT)) THEN CAST(raise_error('Array index is negative') AS INT) ELSE c0 END + CAST(1 AS INT))))) AS value FROM t1
 ------ end
 
 ------ Test: size on List[String]
