@@ -756,6 +756,12 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     errorMessage
   )
 
+  testFailure[String, Seq[Int]](
+    "raiseError is strongly typed",
+    _ => raiseError[Seq[Int]](errorMessage).map(_ + 1),
+    errorMessage
+  )
+
   testHasSameBehavior[Int, Int](
     "expect does not raise error when Some",
     p => some(p).expect("should not happen"),
