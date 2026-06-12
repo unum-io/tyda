@@ -235,7 +235,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
                   case SqlDialect.MapSupport.Array => sqlExpr
                 }
               )
-              .map(SqlExpr.Cast(_, ToDdl.toDdlType(expr.codec, dialect.ddl, false, true).tpe))
+              .map(cast(_, expr.codec, dialect))
           case ArrayCodec(_) => inner(operand)
           case codec => unreachable(s"UpcastToIterable only get codecs of Map and Iterable not $codec")
         }
@@ -447,10 +447,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
       case ExprNode.Quotient(CompatibleIntegral(), lhs, rhs) => for {
           lhs <- inner(lhs)
           rhs <- inner(rhs)
-        } yield SqlExpr.Cast(
-          SqlExpr.Function("div", Seq(lhs, rhs)),
-          ToDdl.toDdlType(expr.codec, dialect.ddl, true, true).tpe
-        )
+        } yield cast(SqlExpr.Function("div", Seq(lhs, rhs)), expr.codec, dialect)
       case ExprNode.Quotient(integral, _, _) =>
         Left(DatasetToSqlError.RequiresUdfCapability(s"Quotient uses custom integral instance $integral"))
       case ExprNode.Cast(value, _) => inner(value).map(cast(_, expr.codec, dialect))
@@ -466,19 +463,17 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
           case SqlDialect.MakeDuration.DiffBigInt => inner(value)
           case SqlDialect.MakeDuration.Cast => for {
               sqlExpr <- inner(value)
-              asDecimal =
-                SqlExpr.Cast(sqlExpr, ToDdl.toDdlType(Codec[Decimal[38, 6]], dialect.ddl, false, true).tpe)
+              asDecimal = cast(sqlExpr, Codec[Decimal[38, 6]], dialect)
               micros = SqlExpr.BinaryOp("*", asDecimal, literalToSqlExpr(1000000, Codec.Int, dialect))
-            } yield SqlExpr.Cast(micros, ToDdl.toDdlType(Codec.Long, dialect.ddl, false, true).tpe)
+            } yield cast(micros, Codec.Long, dialect)
         }
       case ExprNode.MicrosToDuration(value) => dialect.makeDuration match {
           case SqlDialect.MakeDuration.DiffBigInt => inner(value)
           case SqlDialect.MakeDuration.Cast => for {
               sqlExpr <- inner(value)
-              asDecimal =
-                SqlExpr.Cast(sqlExpr, ToDdl.toDdlType(Codec[Decimal[38, 6]], dialect.ddl, false, true).tpe)
+              asDecimal = cast(sqlExpr, Codec[Decimal[38, 6]], dialect)
               duration = SqlExpr.BinaryOp("/", asDecimal, literalToSqlExpr(1000000, Codec.Int, dialect))
-            } yield SqlExpr.Cast(duration, ToDdl.toDdlType(Codec[Duration], dialect.ddl, false, true).tpe)
+            } yield cast(duration, Codec[Duration], dialect)
         }
       case ExprNode.DateToDays(value) =>
         inner(value).map(v => SqlExpr.Function(dialect.extractDateDays, Seq(v)))
@@ -539,9 +534,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
                 )
             }
         }
-      case ExprNode.None(codec) =>
-        val ddlType = ToDdl.toDdlType(codec, dialect.ddl, notNull = false, supportsNotNull = true).tpe
-        Right(SqlExpr.Cast(SqlExpr.LiteralNull, ddlType))
+      case ExprNode.None(_) => Right(cast(SqlExpr.LiteralNull, expr.codec, dialect))
       case ExprNode.ToJson(value) =>
         val hasNestedArray = Codec
           .iterate(value.codec)
@@ -560,7 +553,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
       case ExprNode.FromJson(json, codec) => dialect.fromJson match {
           case SqlDialect.FromJsonSupport.Parser(fromJson, options) => for {
               jsonExpr <- inner(json)
-              ddlType = ToDdl.toDdlType(codec, dialect.ddl, notNull = false, supportsNotNull = true).tpe
+              ddlType = ToDdl.toDdlType(codec, dialect.ddl)
               optionsExpr = optionsToSqlExpr(options)
             } yield SqlExpr.Function(fromJson, Seq(jsonExpr, ddlAsSqlString(ddlType), optionsExpr))
           case extractors @ SqlDialect.FromJsonSupport.Extractors(_, _, _) =>
@@ -612,11 +605,11 @@ private def aggregateSeq[T, R](
   }
 
 private def cast(expr: SqlExpr, to: Codec[?], dialect: SqlDialect): SqlExpr =
-  SqlExpr.Cast(expr, ToDdl.toDdlType(to, dialect.ddl, false, true).tpe)
+  SqlExpr.Cast(expr, ToDdl.toDdlType(to, dialect.ddl))
 
 private def tryCast(expr: SqlExpr, from: Codec[?], to: Codec[?], dialect: SqlDialect): SqlExpr =
   SqlExpr
-    .Cast(dialect.tryCast, expr, ToDdl.toDdlType(to, dialect.ddl, false, true).tpe)
+    .Cast(dialect.tryCast, expr, ToDdl.toDdlType(to, dialect.ddl))
     .pipe(addControlCharCheckIfNeeded(expr, _, from, dialect))
     .pipe(addIntRangeCheckIfNeeded(_, to, dialect))
     .pipe(addDecimalRangeAndRoundingIfNeeded(_, to, dialect))
@@ -817,10 +810,7 @@ private def makeArray[T](values: Seq[SqlExpr], element: Codec[T], dialect: SqlDi
   }
   if values.isEmpty then
     given Codec[T] = element
-    SqlExpr.Cast(
-      array,
-      ToDdl.toDdlType(Codec[Seq[T]], dialect.ddl, notNull = true, supportsNotNull = false).tpe
-    )
+    cast(array, Codec[Seq[T]], dialect)
   else array
 }
 
@@ -830,8 +820,7 @@ private def makeMap[K, V](pairs: SqlExpr, key: Codec[K], value: Codec[V], dialec
     case SqlDialect.MapSupport.Array =>
       given Codec[K] = key
       given Codec[V] = value
-      val ddl = ToDdl.toDdlType(Codec[Map[K, V]], dialect.ddl, notNull = true, supportsNotNull = false).tpe
-      SqlExpr.Cast(pairs, ddl)
+      cast(pairs, Codec[Map[K, V]], dialect)
   }
 
 object CompatibleSum {
