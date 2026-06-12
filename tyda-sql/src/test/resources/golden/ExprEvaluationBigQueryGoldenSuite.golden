@@ -171,7 +171,7 @@ SELECT 'a' AS value FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for enum product case
-SELECT coalesce(struct(t1.i AS i), error('Failed to invert asBase')).i AS i FROM t1
+SELECT coalesce(struct(t1.i AS i), CAST(error('Failed to invert asBase') AS STRUCT<i INT>)).i AS i FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for enum singleton case
@@ -179,7 +179,7 @@ SELECT NULL FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for sealed trait product case
-SELECT coalesce(struct(t1.i AS i), error('Failed to invert asBase')).i AS i FROM t1
+SELECT coalesce(struct(t1.i AS i), CAST(error('Failed to invert asBase') AS STRUCT<i INT>)).i AS i FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for sealed trait singleton case
@@ -659,7 +659,7 @@ SELECT (t1.value IS NULL) AS value FROM t1
 ------ end
 
 ------ Test: expect does not raise error when Some
-SELECT coalesce(t1.value, error('should not happen')) AS value FROM t1
+SELECT coalesce(t1.value, CAST(error('should not happen') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: extra stuff after json object is ignored
@@ -895,19 +895,19 @@ SELECT NULL FROM t1
 ------ end
 
 ------ Test: make map
-SELECT CASE WHEN (array_length([struct(t1._1 AS _1, t1._2 AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, t1._2 AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, t1._2 AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) ELSE error('Duplicate keys found') END AS value FROM t1
+SELECT CASE WHEN (array_length([struct(t1._1 AS _1, t1._2 AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, t1._2 AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, t1._2 AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT,value STRING>>) END AS value FROM t1
 ------ end
 
 ------ Test: make map fails on duplicate keys
-SELECT CASE WHEN (array_length([struct(t1._1 AS _1, t1._2 AS _2), struct(t1._1 AS _1, 'duplicate' AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, t1._2 AS _2), struct(t1._1 AS _1, 'duplicate' AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, t1._2 AS _2), struct(t1._1 AS _1, 'duplicate' AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) ELSE error('Duplicate keys found') END AS value FROM t1
+SELECT CASE WHEN (array_length([struct(t1._1 AS _1, t1._2 AS _2), struct(t1._1 AS _1, 'duplicate' AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, t1._2 AS _2), struct(t1._1 AS _1, 'duplicate' AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, t1._2 AS _2), struct(t1._1 AS _1, 'duplicate' AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT,value STRING>>) END AS value FROM t1
 ------ end
 
 ------ Test: make map fails on literal duplicate keys
-SELECT CASE WHEN (array_length([struct(CAST(1 AS INT) AS _1, t1.value AS _2), struct(CAST(1 AS INT) AS _1, 'duplicate' AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(CAST(1 AS INT) AS _1, t1.value AS _2), struct(CAST(1 AS INT) AS _1, 'duplicate' AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(CAST(1 AS INT) AS _1, t1.value AS _2), struct(CAST(1 AS INT) AS _1, 'duplicate' AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) ELSE error('Duplicate keys found') END AS value FROM t1
+SELECT CASE WHEN (array_length([struct(CAST(1 AS INT) AS _1, t1.value AS _2), struct(CAST(1 AS INT) AS _1, 'duplicate' AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(CAST(1 AS INT) AS _1, t1.value AS _2), struct(CAST(1 AS INT) AS _1, 'duplicate' AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(CAST(1 AS INT) AS _1, t1.value AS _2), struct(CAST(1 AS INT) AS _1, 'duplicate' AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT,value STRING>>) END AS value FROM t1
 ------ end
 
 ------ Test: make map with a mix of literal and non-literal entries
-SELECT CASE WHEN (array_length([struct(t1._1 AS _1, 'a' AS _2), struct(CAST(2 AS INT) AS _1, 'b' AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, 'a' AS _2), struct(CAST(2 AS INT) AS _1, 'b' AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, 'a' AS _2), struct(CAST(2 AS INT) AS _1, 'b' AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) ELSE error('Duplicate keys found') END AS value FROM t1
+SELECT CASE WHEN (array_length([struct(t1._1 AS _1, 'a' AS _2), struct(CAST(2 AS INT) AS _1, 'b' AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, 'a' AS _2), struct(CAST(2 AS INT) AS _1, 'b' AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, 'a' AS _2), struct(CAST(2 AS INT) AS _1, 'b' AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT,value STRING>>) END AS value FROM t1
 ------ end
 
 ------ Test: make map with multiple entries
@@ -999,15 +999,15 @@ SELECT (SELECT c0.value FROM unnest(CAST([struct(CAST(1 AS INT) AS _1, 'x' AS _2
 ------ end
 
 ------ Test: mapGet with literal key
-SELECT (SELECT c2.value FROM unnest(CASE WHEN (array_length([struct(t1._1 AS _1, t1._2 AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, t1._2 AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, t1._2 AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) ELSE error('Duplicate keys found') END) AS c2 WHERE (c2.key = t1._1)) AS value FROM t1
+SELECT (SELECT c2.value FROM unnest(CASE WHEN (array_length([struct(t1._1 AS _1, t1._2 AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, t1._2 AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, t1._2 AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT,value STRING>>) END) AS c2 WHERE (c2.key = t1._1)) AS value FROM t1
 ------ end
 
 ------ Test: match-case all cases sealed trait
-SELECT CASE WHEN (t1.b IS NOT NULL) THEN t1.b.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT) ELSE error('Unknown case') END AS value FROM t1
+SELECT CASE WHEN (t1.b IS NOT NULL) THEN t1.b.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(error('Unknown case') AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: match-case all cases string enum
-SELECT CASE WHEN (CASE WHEN (t1.value = 'b') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN 'B' WHEN (CASE WHEN (t1.value = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN 'A' ELSE error('Unknown case') END AS value FROM t1
+SELECT CASE WHEN (CASE WHEN (t1.value = 'b') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN 'B' WHEN (CASE WHEN (t1.value = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN 'A' ELSE CAST(error('Unknown case') AS STRING) END AS value FROM t1
 ------ end
 
 ------ Test: match-case only otherwise
@@ -1015,7 +1015,7 @@ SELECT CAST(99 AS INT) AS value FROM t1
 ------ end
 
 ------ Test: match-case only when cases
-SELECT CASE WHEN (t1.d IS NOT NULL) THEN t1.d.i WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'b') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(2 AS INT) WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT) ELSE error('Unknown case') END AS value FROM t1
+SELECT CASE WHEN (t1.d IS NOT NULL) THEN t1.d.i WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'b') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(2 AS INT) WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(error('Unknown case') AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: match-case when cases + otherwise
@@ -1071,51 +1071,55 @@ SELECT t1.a AS a FROM t1
 ------ end
 
 ------ Test: raise error in expect when None
-SELECT coalesce(CAST(NULL AS INT), error('oh no!')) AS value FROM t1
+SELECT coalesce(CAST(NULL AS INT), CAST(error('oh no!') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in &&
-SELECT (FALSE AND error('error')) AS value FROM t1
+SELECT (FALSE AND CAST(error('error') AS BOOLEAN)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in coalesce
-SELECT coalesce(t1.value, error('error')) AS value FROM t1
+SELECT coalesce(t1.value, CAST(error('error') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in getOrElse
-SELECT coalesce(t1.value, error('error')) AS value FROM t1
+SELECT coalesce(t1.value, CAST(error('error') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in orElse
-SELECT coalesce(t1.value, error('error')) AS value FROM t1
+SELECT coalesce(t1.value, CAST(error('error') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in ternary ifFalse
-SELECT CASE WHEN TRUE THEN t1.value ELSE error('error') END AS value FROM t1
+SELECT CASE WHEN TRUE THEN t1.value ELSE CAST(error('error') AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in ternary ifTrue
-SELECT CASE WHEN FALSE THEN error('error') ELSE t1.value END AS value FROM t1
+SELECT CASE WHEN FALSE THEN CAST(error('error') AS INT) ELSE t1.value END AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in when
-SELECT CASE WHEN FALSE THEN error('error') END AS value FROM t1
+SELECT CASE WHEN FALSE THEN CAST(error('error') AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in ||
-SELECT (TRUE OR error('error')) AS value FROM t1
+SELECT (TRUE OR CAST(error('error') AS BOOLEAN)) AS value FROM t1
 ------ end
 
 ------ Test: raise error raises in coalesce after None
-SELECT coalesce(CAST(NULL AS STRING), error('My error message')) AS value FROM t1
+SELECT coalesce(CAST(NULL AS STRING), CAST(error('My error message') AS STRING)) AS value FROM t1
 ------ end
 
 ------ Test: raise error raises in coalesce before some
-SELECT coalesce(error('My error message'), t1.value) AS value FROM t1
+SELECT coalesce(CAST(error('My error message') AS STRING), t1.value) AS value FROM t1
+------ end
+
+------ Test: raiseError is strongly typed
+SELECT array((SELECT (c0 + CAST(1 AS INT)) FROM unnest(CAST(error('My error message') AS ARRAY<INT>)) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: raiseError throws static error message
-SELECT error('My error message') AS value FROM t1
+SELECT CAST(error('My error message') AS INT) AS value FROM t1
 ------ end
 
 ------ Test: remove
@@ -1303,7 +1307,7 @@ SELECT CAST([struct(CAST(1 AS INT) AS _1, t1._1 AS _2), struct(CAST(2 AS INT) AS
 ------ end
 
 ------ Test: toMap with many
-SELECT CASE WHEN (array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT struct(c0 AS _1, c0 AS _2) FROM unnest(t1.value) AS c0))) AS c1))) = array_length(array((SELECT DISTINCT c5 FROM unnest(array((SELECT c4._1 FROM unnest(array((SELECT DISTINCT c3 FROM unnest(array((SELECT struct(c2 AS _1, c2 AS _2) FROM unnest(t1.value) AS c2))) AS c3))) AS c4))) AS c5)))) THEN CAST(array((SELECT DISTINCT c7 FROM unnest(array((SELECT struct(c6 AS _1, c6 AS _2) FROM unnest(t1.value) AS c6))) AS c7)) AS ARRAY<STRUCT<key INT,value INT>>) ELSE error('Duplicate keys found') END AS value FROM t1
+SELECT CASE WHEN (array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT struct(c0 AS _1, c0 AS _2) FROM unnest(t1.value) AS c0))) AS c1))) = array_length(array((SELECT DISTINCT c5 FROM unnest(array((SELECT c4._1 FROM unnest(array((SELECT DISTINCT c3 FROM unnest(array((SELECT struct(c2 AS _1, c2 AS _2) FROM unnest(t1.value) AS c2))) AS c3))) AS c4))) AS c5)))) THEN CAST(array((SELECT DISTINCT c7 FROM unnest(array((SELECT struct(c6 AS _1, c6 AS _2) FROM unnest(t1.value) AS c6))) AS c7)) AS ARRAY<STRUCT<key INT,value INT>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT,value INT>>) END AS value FROM t1
 ------ end
 
 ------ Test: trim string
