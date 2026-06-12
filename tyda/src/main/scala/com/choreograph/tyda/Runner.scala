@@ -14,7 +14,7 @@ trait Runner {
     */
   def explain(action: Dataset.Action): String
 
-  /** Collect the value of Dataset that known to contain a single value. */
+  /** Collect the value of a Dataset that's known to contain a single value. */
   final def collectValue[T](ds: Dataset.Single[T]): T = {
     val values = collect(ds: Dataset[T])
     assert(values.size == 1, s"Dataset did not contain exactly one value got: $values")

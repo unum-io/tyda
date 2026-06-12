@@ -74,6 +74,7 @@ class LatestSpec extends AnyFunSuite {
     val source = Latest[Table.Source, Int](
       Source.Test(Date(1) -> Seq(Model("a")), Date(2) -> Seq(Model("b")), Date(3) -> Seq(Model("c")))
     )
+    assert(source.latestDate(0).value == None)
     assert(source.latestDate(2).value == Some(2))
     assert(source.latestDate(10).value == Some(3))
   }
