@@ -1218,6 +1218,12 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     t => (t.map(_.a), t.map(_.b), t.map(_.c))
   )
 
+  testHasSameBehavior[(`瑞`: Short, `典`: Short), Int](
+    "non ascii fields",
+    r => r.`瑞`.cast[Int] + r.`典`.cast[Int],
+    (a, b) => a.toInt + b.toInt
+  )
+
   def testJsonRoundtrip[T: ClassTag: Codec: Arbitrary: TypeName: JsonArrayOrObject]: Unit =
     testHasSameBehavior[T, Option[T]](
       s"toJson/fromJson roundtrip for ${TypeName.name[T]}",
