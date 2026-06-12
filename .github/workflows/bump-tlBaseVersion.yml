@@ -19,35 +19,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up git identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Compute version from tag
-        id: tagv
-        env:
-          GITHUB_RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: .github/scripts/bump-tlBaseVersion.sh compute-version
-
-      - name: Check for changes
-        id: changes
-        if: steps.tagv.outputs.run == 'true'
-        run: .github/scripts/bump-tlBaseVersion.sh check-changes
-
-      - name: Check for existing PR
-        id: prcheck
-        if: steps.changes.outputs.changed == 'true'
+      - name: Update tlBaseVersion and create PR
         env:
           GH_TOKEN: ${{ github.token }}
-        run: .github/scripts/bump-tlBaseVersion.sh check-pr
+        run: .github/scripts/bump-tlBaseVersion.sh "${{ github.event.release.tag_name }}"
 
-      - name: Checkout commit push
-        if: steps.prcheck.outputs.PR_EXISTS == 'false'
-        run: .github/scripts/bump-tlBaseVersion.sh push-branch
-
-      - name: Create Pull Request
-        if: steps.prcheck.outputs.PR_EXISTS == 'false'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: .github/scripts/bump-tlBaseVersion.sh create-pr
