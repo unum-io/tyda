@@ -1158,6 +1158,14 @@ SELECT filter(t1.value, c0 -> (NOT (c0 <= CAST(0 AS INT)))) AS value FROM t1
 SELECT filter(t1._1, c0 -> (NOT (c0 <= t1._2))) AS value FROM t1
 ------ end
 
+------ Test: seq flatMap
+SELECT flatten(transform(t1.value, c0 -> array(CAST(div(c0, CAST(2 AS INT)) AS INT), (CAST(div(c0, CAST(2 AS INT)) AS INT) + CAST(1 AS INT))))) AS value FROM t1
+------ end
+
+------ Test: seq flatMap list
+SELECT flatten(transform(t1.value, c0 -> array(CAST(div(c0, CAST(2 AS INT)) AS INT), (CAST(div(c0, CAST(2 AS INT)) AS INT) + CAST(1 AS INT))))) AS value FROM t1
+------ end
+
 ------ Test: seq forall
 SELECT aggregate(transform(t1.value, c0 -> (c0 < CAST(0 AS INT))), TRUE, (c1, c2) -> (c1 AND c2), c3 -> c3) AS value FROM t1
 ------ end

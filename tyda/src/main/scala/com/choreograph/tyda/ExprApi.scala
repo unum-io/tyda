@@ -666,6 +666,16 @@ trait ExprApi[Expr[T]] {
       fromRepr(ExprNode.MapSeq(unlift(seq.toSeq), compiled))(using compiled.codec)
     }
 
+    /** FlatMaps each element of the sequence using the given function, then
+      * concatenates the resulting sequences into one.
+      */
+    def flatMap[U, I: AsExpr.Of[Seq[U]]](f: Expr[T] => I)(using ClassTag[CC[U]]): Expr[CC[U]] = {
+      val arg = ExprNode.Reference[T]()(using seq.valueCodec)
+      val fExpr = f.andThen(AsExpr(_))
+      val compiled = CompiledExpr(arg, unlift(fExpr(lift(arg))))
+      fromRepr(ExprNode.FlatMapSeq(unlift(seq.toSeq), compiled))(using compiled.codec.element)
+    }
+
     /** Filters the sequence to only include elements satisfying the predicate.
       */
     def filter(p: Expr[T] => Expr[Boolean]): Expr[CC[T]] = {

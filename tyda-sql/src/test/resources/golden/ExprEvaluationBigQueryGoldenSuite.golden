@@ -1158,6 +1158,14 @@ SELECT array((SELECT c0 FROM unnest(t1.value) AS c0 WHERE (NOT (c0 <= CAST(0 AS 
 SELECT array((SELECT c0 FROM unnest(t1._1) AS c0 WHERE (NOT (c0 <= t1._2)))) AS value FROM t1
 ------ end
 
+------ Test: seq flatMap
+SELECT array((SELECT c1 FROM unnest(t1.value) AS c0, unnest(struct([CAST(div(c0, CAST(2 AS INT)) AS INT), (CAST(div(c0, CAST(2 AS INT)) AS INT) + CAST(1 AS INT))] AS value)) AS c1)) AS value FROM t1
+------ end
+
+------ Test: seq flatMap list
+SELECT array((SELECT c1 FROM unnest(t1.value) AS c0, unnest(struct([CAST(div(c0, CAST(2 AS INT)) AS INT), (CAST(div(c0, CAST(2 AS INT)) AS INT) + CAST(1 AS INT))] AS value)) AS c1)) AS value FROM t1
+------ end
+
 ------ Test: seq forall
 SELECT (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT (c0 < CAST(0 AS INT)) FROM unnest(t1.value) AS c0))) AS c1) AS value FROM t1
 ------ end

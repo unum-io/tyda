@@ -156,6 +156,14 @@ private object ExprNode extends ExprApi[ExprNode] {
     }
   }
 
+  final case class FlatMapSeq[T, U](operand: ExprNode[Seq[T]], f: CompiledExpr[T, Seq[U]])
+      extends ExprNode[Seq[U]] {
+    override def codec: Codec[Seq[U]] = {
+      given Codec[U] = f.codec.element
+      Codec[Seq[U]]
+    }
+  }
+
   final case class FilterSeq[T](operand: ExprNode[Seq[T]], predicate: CompiledExpr[T, Boolean])
       extends ExprNode[Seq[T]] {
     override def codec: Codec[Seq[T]] = operand.codec
