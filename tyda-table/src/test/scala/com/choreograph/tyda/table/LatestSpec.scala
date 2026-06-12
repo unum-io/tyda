@@ -5,7 +5,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.FileMetadata
-import com.choreograph.tyda.iterator.DatasetOnIterator
+import com.choreograph.tyda.iterator.IteratorRunner
 
 object LatestSpec {
   final case class Model(f: String)
@@ -22,7 +22,8 @@ object LatestSpec {
   final case class ArgsWithSource(source: Table.Source)
   final case class ArgsWithLatestSource(source: Latest[Table.Source, Int])
 
-  extension [T](ds: Dataset[T]) { def compute: Seq[T] = DatasetOnIterator(ds).toSeq }
+  extension [T](ds: Dataset[T]) { def compute: Seq[T] = IteratorRunner.collect(ds) }
+  extension [T](ds: Dataset.Single[T]) { def value: T = IteratorRunner.collectValue(ds) }
 }
 
 class LatestSpec extends AnyFunSuite {
@@ -67,6 +68,15 @@ class LatestSpec extends AnyFunSuite {
     assert(source.readLatest(10).compute == Seq(Model("c")))
     val exception = intercept[RuntimeException](source.readLatest(-1).compute)
     assert(exception.getMessage.contains("No partitions found"))
+  }
+
+  test("support getting the latestDate") {
+    val source = Latest[Table.Source, Int](
+      Source.Test(Date(1) -> Seq(Model("a")), Date(2) -> Seq(Model("b")), Date(3) -> Seq(Model("c")))
+    )
+    assert(source.latestDate(0).value == None)
+    assert(source.latestDate(2).value == Some(2))
+    assert(source.latestDate(10).value == Some(3))
   }
 
   test("support reading for each partition from partitioned test source") {
