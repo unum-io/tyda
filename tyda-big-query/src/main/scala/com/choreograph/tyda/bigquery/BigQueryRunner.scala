@@ -142,7 +142,10 @@ object BigQueryRunner {
   private val retryJobOption: BigQuery.JobOption =
     val retryConfig = BigQueryRetryConfig
       .newBuilder()
-      .retryOnMessage("Visibility check was unavailable")
+      .retryOnMessage(
+      "Visibility check was unavailable",
+      "Error encountered during execution. Retrying may solve the problem."
+    )
       .build()
     BigQuery.JobOption.bigQueryRetryConfig(retryConfig)
 
