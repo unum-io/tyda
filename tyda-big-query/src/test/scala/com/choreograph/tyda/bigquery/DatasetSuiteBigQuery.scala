@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory
 
 import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Codec
-import com.choreograph.tyda.Codec.bigInt
 import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.Expr
 import com.choreograph.tyda.Format
@@ -91,9 +90,6 @@ abstract class DatasetReadWriteSuiteBigQuery extends DatasetReadWriteSuite, BigQ
         case ArrayCodec(Codec.Option(_)) => false
         // Nested arrays are not supported
         case ArrayCodec(ArrayCodec(_)) => false
-        // We should consider dropping this and just use Decimal(38, 0)
-        // But currently fails due to incorrect bytes handling in the bigquery dialect
-        case `bigInt` => false
         case _ => true
       }
   override def numericsReadModeForWriteTests: NumericsReadMode = NumericsReadMode.WidenBigQuery

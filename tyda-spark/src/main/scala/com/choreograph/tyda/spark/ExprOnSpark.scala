@@ -104,7 +104,8 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
   private def literal[T](value: T, codec: Codec.Primitive[T])(using SparkSession): Column =
     codec match {
       case Codec.Boolean | Codec.Byte | Codec.Short | Codec.Int | Codec.Long | Codec.Float | Codec.Double |
-          Codec.String | Codec.Bytes => lit(value)
+          Codec.String => lit(value)
+      case Codec.Bytes => lit(value.to(Array))
       case Codec.TimestampMicros =>
         convert(ExprNode.MicrosToTimestamp(ExprNode.Literal(value.toMicros, Codec.Long)))
       case Codec.Date => convert(ExprNode.DaysToDate(ExprNode.Literal(value.daysSinceEpoch, Codec.Int)))

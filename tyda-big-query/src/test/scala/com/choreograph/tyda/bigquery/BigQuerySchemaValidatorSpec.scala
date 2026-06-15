@@ -6,6 +6,7 @@ import com.google.cloud.bigquery.StandardSQLTypeName
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.must.Matchers.*
 
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
@@ -42,7 +43,7 @@ class BigQuerySchemaValidatorSpec extends AnyFunSuite {
   checkNoErrors("required Float", Codec[Float], singleRequiredField(StandardSQLTypeName.FLOAT64))
   checkNoErrors("required Double", Codec[Double], singleRequiredField(StandardSQLTypeName.FLOAT64))
   checkNoErrors("required Date", Codec[Date], singleRequiredField(StandardSQLTypeName.DATE))
-  checkNoErrors("required BigInt", Codec[BigInt], singleRequiredField(StandardSQLTypeName.BYTES))
+  checkNoErrors("required Binary", Codec[Binary], singleRequiredField(StandardSQLTypeName.BYTES))
   checkNoErrors(
     "required Decimal[38, 9]",
     Codec[Decimal[38, 9]],

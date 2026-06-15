@@ -5,6 +5,7 @@ import scala.reflect.ClassTag
 import org.scalatest.compatible.Assertion
 import org.scalatest.funsuite.AnyFunSuite
 
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
@@ -164,8 +165,8 @@ class ToDdlSpec extends AnyFunSuite {
                     |""".stripMargin)
   }
 
-  test("toDdl BigInt") {
-    val ddl = toSparkDdl(Codec[BigInt])
+  test("toDdl Binary") {
+    val ddl = toSparkDdl(Codec[Binary])
     assert(ddl == """
                     |value BINARY NOT NULL
                     |""".stripMargin)

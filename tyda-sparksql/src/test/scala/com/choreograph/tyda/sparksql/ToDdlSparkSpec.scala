@@ -6,6 +6,7 @@ import org.apache.spark.sql.types.MapType
 import org.apache.spark.sql.types.StructType
 import org.scalatest.funsuite.AnyFunSuite
 
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
@@ -124,7 +125,7 @@ class ToDdlSparkSpec extends AnyFunSuite {
 
   sameAsCodecToEncoderButMoreStrict[String]
   sameAsCodecToEncoderButMoreStrict[Decimal[10, 2]]
-  sameAsCodecToEncoderButMoreStrict[BigInt]
+  sameAsCodecToEncoderButMoreStrict[Binary]
   sameAsCodecToEncoderButMoreStrict[Enum]
   sameAsCodecToEncoderButMoreStrict[List[Option[Int]]]
   sameAsCodecToEncoderButMoreStrict[List[Option[List[Option[Int]]]]]

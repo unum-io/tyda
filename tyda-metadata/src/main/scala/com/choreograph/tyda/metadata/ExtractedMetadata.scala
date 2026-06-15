@@ -36,7 +36,7 @@ object ExtractedMetadata:
   given ExtractedMetadata[String] = empty
   given [P <: Int, S <: Int]: ExtractedMetadata[TydaDecimal[P, S]] = empty
   given ExtractedMetadata[Array[Byte]] = empty
-  given ExtractedMetadata[BigInt] = empty
+
   given ExtractedMetadata[Date] = empty
   given ExtractedMetadata[Timestamp] = empty
   given ExtractedMetadata[Duration] = empty
