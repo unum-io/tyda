@@ -36,19 +36,6 @@ if git diff --quiet -- build.sbt; then
   exit 0
 fi
 
-existing_pr_url="$(
-  gh pr list \
-    --state all \
-    --head "$branch" \
-    --json url \
-    --jq '.[0].url // ""'
-)"
-
-if [[ -n "$existing_pr_url" ]]; then
-  echo "PR already exists for ${branch}: ${existing_pr_url}"
-  exit 0
-fi
-
 if ! git config user.name >/dev/null; then
   git config user.name "github-actions[bot]"
 fi
@@ -60,7 +47,7 @@ fi
 git add build.sbt
 git commit -m "Update tlBaseVersion to ${version}"
 
-git push origin "$branch"
+git push --force-with-lease origin "HEAD:${branch}"
 
 if ! create_output="$(
   gh pr create \
