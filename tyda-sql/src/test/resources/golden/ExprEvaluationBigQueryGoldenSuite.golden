@@ -1062,6 +1062,10 @@ SELECT CASE WHEN (t1.value IS NOT NULL) THEN (t1.value.value IS NULL) END AS val
 SELECT coalesce(CASE WHEN (t1.value IS NOT NULL) THEN [struct(t1.value AS value)] END, CAST([] AS ARRAY<STRUCT<value ARRAY<INT>>>)) AS value FROM t1
 ------ end
 
+------ Test: non ascii fields
+SELECT (CAST(t1.`瑞` AS INT) + CAST(t1.`典` AS INT)) AS value FROM t1
+------ end
+
 ------ Test: not equals on primitive
 SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
 ------ end
