@@ -26,24 +26,25 @@ private[spark] object PrimitiveAggregateOnSpark {
   def resolved[T, R](cf: ColumnFactory[T], agg: PrimitiveAggregate[T, R]): Column =
     agg match {
       // Sparks collect_list will filter out nulls, so can not be used for Option
-      case PrimitiveAggregate.Collect() if !cf.codec.isInstanceOf[Codec.Option[?]] => collect_list(cf.row)
+      case PrimitiveAggregate.Collect(elementCodec) if !elementCodec.isInstanceOf[Codec.Option[?]] =>
+        collect_list(cf.row)
       case PrimitiveAggregate.Count() => count(lit(1))
       case PrimitiveAggregate.CountSome() => count(cf.row)
       case PrimitiveAggregate.BoolAnd() => bool_and(cf.row)
       case PrimitiveAggregate.BoolOr() => bool_or(cf.row)
-      case PrimitiveAggregate.Max(_) => max(cf.row)
-      case PrimitiveAggregate.Min(_) => min(cf.row)
-      case PrimitiveAggregate.MaxBy(_) =>
+      case PrimitiveAggregate.Max(_, _) => max(cf.row)
+      case PrimitiveAggregate.Min(_, _) => min(cf.row)
+      case PrimitiveAggregate.MaxBy(_, _, _) =>
         assert(cf.columns.size == 2, "MaxBy requires exactly two columns but found: " + cf.columns.size)
         max_by(cf.column("_1"), cf.column("_2"))
-      case PrimitiveAggregate.MinBy(_) =>
+      case PrimitiveAggregate.MinBy(_, _, _) =>
         assert(cf.columns.size == 2, "MinBy requires exactly two columns but found: " + cf.columns.size)
         min_by(cf.column("_1"), cf.column("_2"))
-      case PrimitiveAggregate.Sum(CompatibleSum()) => sum(cf.row)
+      case PrimitiveAggregate.Sum(CompatibleSum(), _) => sum(cf.row)
       // List PrimitiveAggregates cases explicitly to get exhaustive error when adding new aggregates
-      case PrimitiveAggregate.Collect() => fallback(agg, cf)
-      case PrimitiveAggregate.Reduce(_) => fallback(agg, cf)
-      case PrimitiveAggregate.Sum(_) => fallback(agg, cf)
+      case PrimitiveAggregate.Collect(_) => fallback(agg, cf)
+      case PrimitiveAggregate.Reduce(_, _) => fallback(agg, cf)
+      case PrimitiveAggregate.Sum(_, _) => fallback(agg, cf)
     }
 
   private def fallback[T, R](expr: PrimitiveAggregate[T, R], cf: ColumnFactory[T]): Column = {

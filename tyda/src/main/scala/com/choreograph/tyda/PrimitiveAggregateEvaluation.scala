@@ -20,29 +20,20 @@ private[tyda] object PrimitiveAggregateEvaluation {
       agg: PrimitiveAggregate[From, To]
   ): AggregatorAndIntermediateCodec[From, ?, To] =
     agg match {
-      case PrimitiveAggregate.Collect() =>
-        given Codec[To] = agg.codec
-        make(Compose(Seq(_), Reduce[Seq[From]](_ ++ _)))
+      case PrimitiveAggregate.Collect(given Codec[?]) => make(Compose(Seq(_), Reduce[Seq[From]](_ ++ _)))
       case PrimitiveAggregate.Count() => make(Compose(_ => 1L, Reduce[Long](_ + _)))
       case PrimitiveAggregate.CountSome() =>
         make(Compose(t => if t.isDefined then 1L else 0L, Reduce[Long](_ + _)))
       case PrimitiveAggregate.BoolAnd() => make(Reduce[Boolean](_ && _))
       case PrimitiveAggregate.BoolOr() => make(Reduce[Boolean](_ || _))
-      case PrimitiveAggregate.Min(comparable) =>
-        given Codec[To] = agg.codec
-        make(Reduce(comparableToOrd(comparable).min))
-      case PrimitiveAggregate.Max(comparable) =>
-        given Codec[To] = agg.codec
-        make(Reduce(comparableToOrd(comparable).max))
+      case PrimitiveAggregate.Min(comparable, given Codec[?]) => make(Reduce(comparableToOrd(comparable).min))
+      case PrimitiveAggregate.Max(comparable, given Codec[?]) => make(Reduce(comparableToOrd(comparable).max))
       case minBy: PrimitiveAggregate.MinBy[?, ?] =>
         minByAggregator(comparableToOrd(minBy.comparable))(using minBy.inputCodec)
       case maxBy: PrimitiveAggregate.MaxBy[?, ?] =>
         minByAggregator(comparableToOrd(maxBy.comparable).reverse)(using maxBy.inputCodec)
-      case PrimitiveAggregate.Reduce(f) =>
-        given Codec[To] = agg.codec
-        make(Reduce(f))
-      case PrimitiveAggregate.Sum(magnet) =>
-        given Codec[To] = magnet.codec
+      case PrimitiveAggregate.Reduce(f, given Codec[?]) => make(Reduce(f))
+      case PrimitiveAggregate.Sum(magnet, given Codec[?]) =>
         make(Compose(magnet.toResult, Reduce(magnet.add)))
     }
 

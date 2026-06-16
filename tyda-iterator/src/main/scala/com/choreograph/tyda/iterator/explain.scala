@@ -109,17 +109,17 @@ private[tyda] def explain(anyCompiled: AnyCompiledExpr): String =
 
 private def explainPrimitiveAggregate(primitive: PrimitiveAggregate[?, ?], arg: String): String =
   primitive match {
-    case PrimitiveAggregate.Collect() => "collect($arg)"
+    case PrimitiveAggregate.Collect(_) => "collect($arg)"
     case PrimitiveAggregate.Count() => "count($arg)"
     case PrimitiveAggregate.CountSome() => "countSome($arg)"
     case PrimitiveAggregate.BoolAnd() => "boolAnd($arg)"
     case PrimitiveAggregate.BoolOr() => "boolOr($arg)"
-    case PrimitiveAggregate.Min(ord) => s"min($arg)(using $ord)"
-    case PrimitiveAggregate.Max(ord) => s"max($arg)(using $ord)"
-    case PrimitiveAggregate.MinBy(ord) => s"minBy($arg)(using ${ord})"
-    case PrimitiveAggregate.MaxBy(ord) => s"maxBy($arg)(using ${ord})"
-    case PrimitiveAggregate.Reduce(f) => s"reduce($f)($arg)"
-    case PrimitiveAggregate.Sum(_) => s"sum($arg)"
+    case PrimitiveAggregate.Min(ord, _) => s"min($arg)(using $ord)"
+    case PrimitiveAggregate.Max(ord, _) => s"max($arg)(using $ord)"
+    case PrimitiveAggregate.MinBy(ord, _, _) => s"minBy($arg)(using ${ord})"
+    case PrimitiveAggregate.MaxBy(ord, _, _) => s"maxBy($arg)(using ${ord})"
+    case PrimitiveAggregate.Reduce(f, _) => s"reduce($f)($arg)"
+    case PrimitiveAggregate.Sum(_, _) => s"sum($arg)"
   }
 
 private def explainLambdaBody[T](expr: ExprNode[T], args: Map[ExprNode.Reference[?], String]): String = {
