@@ -16,10 +16,10 @@ import org.apache.spark.sql.catalyst.encoders.Codec as SparkCodec
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.catalyst.expressions.GenericRow
 import org.apache.spark.sql.catalyst.util.SparkDateTimeUtils
-import org.apache.spark.sql.catalyst.util.SparkIntervalUtils
 import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.types.Metadata
 
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Duration
@@ -35,6 +35,11 @@ object CodecToEncoder {
 
   private[spark] def convertInternal[T: Codec]: ExpressionEncoder[T] = ExpressionEncoder(toAgnostic(Codec[T]))
 
+  private object BinarySparkCodec extends SparkCodec[Binary, Array[Byte]] {
+    def encode(value: Binary): Array[Byte] = value.to(Array)
+    def decode(value: Array[Byte]): Binary = Binary.fromArray(value)
+  }
+
   private object TimestampSparkCodec extends SparkCodec[Timestamp, Instant] {
     def encode(value: Timestamp): Instant = SparkDateTimeUtils.microsToInstant(value.toMicros)
     // Using Instant.EPOCH.until(value, ChronoUnit.MICROS) will do calculation in nanos
@@ -47,10 +52,9 @@ object CodecToEncoder {
     def decode(value: LocalDate): Date = Date.fromDays(value.toEpochDay.toInt)
   }
 
-  private object DurationSparkCodec extends SparkCodec[Duration, java.time.Duration] {
-    def encode(value: Duration): java.time.Duration = SparkIntervalUtils.microsToDuration(value.toMicros)
-    def decode(value: java.time.Duration): Duration =
-      Duration.fromMicros(SparkIntervalUtils.durationToMicros(value))
+  private object DurationSparkCodec extends SparkCodec[Duration, Long] {
+    def encode(value: Duration): Long = value.toMicros
+    def decode(value: Long): Duration = Duration.fromMicros(value)
   }
 
   private class NullableSparkCodec[F, T](inner: SparkCodec[F, T]) extends SparkCodec[Option[F], Option[T]] {
@@ -78,7 +82,12 @@ object CodecToEncoder {
       case Codec.Double => AgnosticEncoders.PrimitiveDoubleEncoder
       case Codec.Boolean => AgnosticEncoders.PrimitiveBooleanEncoder
       case Codec.String => AgnosticEncoders.StringEncoder
-      case Codec.Bytes => AgnosticEncoders.BinaryEncoder
+      case Codec.Bytes => TransformingEncoder(
+          clsTag = codec.classTag,
+          transformed = AgnosticEncoders.BinaryEncoder,
+          codecProvider = () => BinarySparkCodec,
+          nullable = true
+        )
       case Codec.Decimal(precision, scale) =>
         // TYPE SAFETY: Cast is safe since tyda Decimal type is an opaque type for BigDecimal
         AgnosticEncoders.ScalaDecimalEncoder(DecimalType(precision, scale)).asInstanceOf[AgnosticEncoder[T]]
@@ -99,7 +108,7 @@ object CodecToEncoder {
         )
       case Codec.DurationMicros => TransformingEncoder(
           clsTag = codec.classTag,
-          transformed = AgnosticEncoders.DayTimeIntervalEncoder,
+          transformed = AgnosticEncoders.PrimitiveLongEncoder,
           codecProvider = () => DurationSparkCodec,
           nullable = false
         )

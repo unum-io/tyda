@@ -39,8 +39,6 @@ import com.choreograph.tyda.Codec
 import com.choreograph.tyda.CompiledAggregateExpr
 import com.choreograph.tyda.CompiledExpr
 import com.choreograph.tyda.CompiledExpr2
-import com.choreograph.tyda.Decimal
-import com.choreograph.tyda.Duration
 import com.choreograph.tyda.Errors
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.Forbidden
@@ -106,12 +104,12 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
   private def literal[T](value: T, codec: Codec.Primitive[T])(using SparkSession): Column =
     codec match {
       case Codec.Boolean | Codec.Byte | Codec.Short | Codec.Int | Codec.Long | Codec.Float | Codec.Double |
-          Codec.String | Codec.Bytes => lit(value)
+          Codec.String => lit(value)
+      case Codec.Bytes => lit(value.to(Array))
       case Codec.TimestampMicros =>
         convert(ExprNode.MicrosToTimestamp(ExprNode.Literal(value.toMicros, Codec.Long)))
       case Codec.Date => convert(ExprNode.DaysToDate(ExprNode.Literal(value.daysSinceEpoch, Codec.Int)))
-      case Codec.DurationMicros =>
-        convert(ExprNode.MicrosToDuration(ExprNode.Literal(value.toMicros, Codec.Long)))
+      case Codec.DurationMicros => lit(value.toMicros)
       case Codec.Decimal(_, _) => lit(value).cast(catalystType(codec))
     }
 
@@ -268,15 +266,8 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
         if from.codec == Codec.String then when(!convert(from).rlike("\\p{Cc}"), casted) else casted
       case ExprNode.TimestampToMicros(inner) => unix_micros(convert(inner))
       case ExprNode.MicrosToTimestamp(inner) => timestamp_micros(convert(inner))
-      // This is inefficient since Spark already stores micros internally, but provides no good methods for
-      // extracting it. Using unix_micros(<duration> + unix_timestamp(lit(0))) only when timezone is set to
-      // UTC otherwise one runs into daylight saving time issues. This seems like an insane behavior but also
-      // means that it probably not that optimized. We might want to consider not using the builint duration
-      // type since we do not seem to gain much and also not a logical type in parquet.
-      case ExprNode.DurationToMicros(inner) => (convert(inner).cast(catalystType(Codec[Decimal[38, 6]])) *
-          lit(BigDecimal(1000000))).cast(catalystType(Codec[Long]))
-      case ExprNode.MicrosToDuration(inner) => (convert(inner).cast(catalystType(Codec[Decimal[38, 6]])) /
-          lit(BigDecimal(1000000))).cast(catalystType(Codec[Duration]))
+      case ExprNode.DurationToMicros(inner) => convert(inner)
+      case ExprNode.MicrosToDuration(inner) => convert(inner)
       case ExprNode.DateToDays(inner) => unix_date(convert(inner))
       case ExprNode.DaysToDate(inner) => date_from_unix_date(convert(inner))
       case ExprNode.BytesLength(inner) => length(convert(inner))

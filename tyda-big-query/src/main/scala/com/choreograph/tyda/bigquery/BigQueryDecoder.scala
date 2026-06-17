@@ -7,6 +7,7 @@ import com.google.cloud.bigquery.FieldList
 import com.google.cloud.bigquery.FieldValue
 import com.google.cloud.bigquery.FieldValueList
 
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
@@ -59,7 +60,7 @@ private def fieldDecoder[T](codec: Codec[T], field: Field): FieldValue => T = {
     case Codec.Float => _.getDoubleValue.toFloat
     case Codec.Double => _.getDoubleValue
     case Codec.String => _.getStringValue
-    case Codec.Bytes => _.getBytesValue
+    case Codec.Bytes => fv => Binary.fromArray(fv.getBytesValue)
     case decimal @ Codec.Decimal(precision, scale) => fv =>
         Decimal(using decimal.valid)(fv.getNumericValue).getOrElse(throw new RuntimeException(s"Value ${fv
             .getNumericValue} cannot be represented as Decimal($precision, $scale)"))

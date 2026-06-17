@@ -1,3 +1,7 @@
+------ Test: write com.choreograph.tyda.Binary$package.Binary
+EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.json', format='JSON') AS SELECT t1.value AS value FROM t1
+------ end
+
 ------ Test: write com.choreograph.tyda.Date$package.Date
 EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.json', format='JSON') AS SELECT t1.value AS value FROM t1
 ------ end
@@ -123,9 +127,5 @@ EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.json', format='JSON') AS
 ------ end
 
 ------ Test: write scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.Long]]
-EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.json', format='JSON') AS SELECT t1.value AS value FROM t1
------- end
-
------- Test: write scala.math.BigInt
 EXPORT DATA OPTIONS(uri='/tmp/dataset-read-write/part-*.json', format='JSON') AS SELECT t1.value AS value FROM t1
 ------ end

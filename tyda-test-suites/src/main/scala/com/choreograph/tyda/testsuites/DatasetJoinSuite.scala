@@ -14,7 +14,7 @@ object DatasetJoinSuite {
   type NullableM2 = NamedTuple.Map[NamedTuple.From[M2], Option]
 }
 
-/* Testsuite focusing on joins that will compare a Dataset backend to a reference implementation. */
+// Testsuite focusing on joins that will compare a Dataset backend to a reference implementation.
 trait DatasetJoinSuite extends DatasetSuite {
   import DatasetJoinSuite.*
   import DatasetSuite.Pair

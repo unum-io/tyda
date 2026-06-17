@@ -69,4 +69,4 @@ libraryDependencies ++= Seq(
 
 ## Documentation
 
-Full API documentation and guides are available at TODO.
+Full API documentation and guides are available at [unum-io.github.io/tyda](https://unum-io.github.io/tyda/docs/index.html)

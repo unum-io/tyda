@@ -36,4 +36,3 @@ jobs:
           python .github/scripts/bump-tlBaseVersion.py \
             "${{ github.event.release.tag_name }}" \
             --no-switch-back
-

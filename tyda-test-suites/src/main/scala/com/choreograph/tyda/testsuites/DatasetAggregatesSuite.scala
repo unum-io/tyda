@@ -53,7 +53,7 @@ object DatasetAggregatesSuite {
   given smallDouble: Arbitrary[Double] = Arbitrary.between(0, 1)
 }
 
-/* Testsuite focusing on aggregates that will compare a Dataset backend to a reference implementation. */
+// Testsuite focusing on aggregates that will compare a Dataset backend to a reference implementation.
 trait DatasetAggregatesSuite extends DatasetSuite {
   import DatasetAggregatesSuite.{EnumWithOrdering, Inner, Outer}
   import DatasetSuite.{Pair, TinyByte}

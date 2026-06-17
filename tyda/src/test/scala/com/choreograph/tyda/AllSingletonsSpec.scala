@@ -20,9 +20,7 @@ object AllSingletonsSpec {
 class AllSingletonsSpec extends AnyFunSuite {
   import AllSingletonsSpec.*
 
-  test("exists for enum with only singletons") {
-    assert(summon[AllSingletons[E1]].values == Seq(E1.C1, E1.C2))
-  }
+  test("exists for enum with only singletons") { assert(summon[AllSingletons[E1]] == Seq(E1.C1, E1.C2)) }
 
   test("not exists for enum with non-singleton cases") {
     summon[NotGiven[AllSingletons[E2]]] // Compiletime test

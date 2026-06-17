@@ -1,6 +1,6 @@
 package com.choreograph.tyda.iterator
 
-/* Implements a nested loop join with SQL join semantics */
+// Implements a nested loop join with SQL join semantics
 private object NestedLoopJoin {
 
   def join[T, U](left: Iterator[T], right: Iterator[U], p: (T, U) => Boolean): Iterator[(T, U)] = {

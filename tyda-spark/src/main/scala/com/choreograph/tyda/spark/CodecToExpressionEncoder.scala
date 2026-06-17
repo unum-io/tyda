@@ -1,10 +1,9 @@
 package com.choreograph.tyda.spark
 
-import java.time.Duration
-
 import scala.collection.Factory
 import scala.deriving.Mirror
 import scala.reflect.ClassTag
+import scala.reflect.classTag
 
 import org.apache.commons.lang3.reflect.ConstructorUtils
 import org.apache.spark.sql.Row
@@ -28,9 +27,9 @@ import org.apache.spark.sql.catalyst.expressions.objects.UnresolvedMapObjects
 import org.apache.spark.sql.catalyst.expressions.objects.UnwrapOption
 import org.apache.spark.sql.catalyst.expressions.objects.ValidateExternalType
 import org.apache.spark.sql.catalyst.expressions.objects.WrapOption
-import org.apache.spark.sql.catalyst.util.IntervalUtils
 import org.apache.spark.sql.types.*
 
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Field
 import com.choreograph.tyda.Forbidden
@@ -39,6 +38,14 @@ import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.spark.CodecToCatalystType.catalystStructType
 import com.choreograph.tyda.spark.CodecToCatalystType.catalystType
 import com.choreograph.tyda.spark.CodecToCatalystType.nullable
+
+// Since Binary is an opaque type, we need to do something like
+// Literal.create + Invoke if we don't forward the method on an plain object.
+// This way we can use StaticInvoke as it "just works".
+private[spark] object BinaryHelper {
+  def fromArray(bytes: Array[Byte]): Binary = Binary.fromArray(bytes)
+  def toArray(b: Binary): Array[Byte] = b.to(Array)
+}
 
 /* This object currently contains code vendored from Spark 3.5.4 mainly from the files
  * https://github.com/apache/spark/blob/v3.5.4/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/DeserializerBuildHelper.scala
@@ -58,7 +65,7 @@ private object CodecToExpressionEncoder {
       case Codec.Float => FloatType
       case Codec.Double => DoubleType
       case Codec.Boolean => BooleanType
-      case Codec.Bytes => BinaryType
+      case Codec.Bytes => ObjectType(classTag[Binary].runtimeClass)
       case Codec.TimestampMicros => LongType
       case Codec.DurationMicros => LongType
       case Codec.Date => IntegerType
@@ -80,17 +87,15 @@ private object CodecToExpressionEncoder {
       case Codec.Float => input
       case Codec.Double => input
       case Codec.Boolean => input
-      case Codec.Bytes => input
-      case Codec.TimestampMicros => MicrosToTimestamp(input)
-      case Codec.DurationMicros =>
-        val duration = StaticInvoke(
-          IntervalUtils.getClass,
-          ObjectType(classOf[Duration]),
-          "microsToDuration",
+      case Codec.Bytes => StaticInvoke(
+          BinaryHelper.getClass,
+          catalystType(codec),
+          "toArray",
           input :: Nil,
           returnNullable = false
         )
-        SerializerBuildHelper.createSerializerForJavaDuration(duration)
+      case Codec.TimestampMicros => MicrosToTimestamp(input)
+      case Codec.DurationMicros => input
       case Codec.Date => DateFromUnixDate(input)
       case Codec.String => SerializerBuildHelper.createSerializerForString(input)
       case Codec.Decimal(precision, scale) =>
@@ -239,17 +244,10 @@ private object CodecToExpressionEncoder {
       case Codec.Float => path
       case Codec.Double => path
       case Codec.Boolean => path
-      case Codec.Bytes => path
+      case Codec.Bytes =>
+        StaticInvoke(BinaryHelper.getClass, jvmType(codec), "fromArray", path :: Nil, returnNullable = false)
       case Codec.TimestampMicros => UnixMicros(path)
-      case Codec.DurationMicros =>
-        val duration = DeserializerBuildHelper.createDeserializerForDuration(path)
-        StaticInvoke(
-          IntervalUtils.getClass,
-          LongType,
-          "durationToMicros",
-          duration :: Nil,
-          returnNullable = false
-        )
+      case Codec.DurationMicros => path
       case Codec.Date => UnixDate(path)
       case Codec.String => DeserializerBuildHelper.createDeserializerForString(path, returnNullable = false)
       case Codec.Decimal(precision, scale) =>
@@ -360,9 +358,9 @@ private object CodecToExpressionEncoder {
     Invoke(rowEncoder, "decode", jvmType(sum), Seq(row))
   }
 
-  /* Because we use the row encoder for sum type we need some special handling when it the top level object.
-   * Spark also has this for the RowEncoder: */
-  /* https://github.com/apache/spark/blob/7c29c664cdc9321205a98a14858aaf8daaa19db2/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/DeserializerBuildHelper.scala#L218-L223 */
+  // Because we use the row encoder for sum type we need some special handling when it the top level object.
+  // Spark also has this for the RowEncoder:
+  // https://github.com/apache/spark/blob/7c29c664cdc9321205a98a14858aaf8daaa19db2/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/DeserializerBuildHelper.scala#L218-L223
   private def createRowDeserializer(
       path: Expression,
       fields: Seq[Field[?]],
@@ -411,8 +409,8 @@ private object CodecToExpressionEncoder {
     )
   }
 
-  /* Conservative List of collections directly supported by Spark. This is needed because Spark does not
-   * correctly handle collections that takes an implicit parameter to their newBuilder method. */
+  // Conservative List of collections directly supported by Spark. This is needed because Spark does not
+  // correctly handle collections that takes an implicit parameter to their newBuilder method.
   private val sparkSupportedCollections = Seq(classOf[List[?]], classOf[Set[?]], classOf[Seq[?]])
 
   private def createDeserializerForIterable[T, C <: Iterable[T]](

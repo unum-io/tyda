@@ -53,10 +53,10 @@ object Arbitrary {
   def hackDouble: Arbitrary[Double] =
     double.filter(f => java.lang.Double.doubleToRawLongBits(f) != negativeZeroDoubleBits)
 
-  /* Create an new `Arbitrary[T]` that will generate values between `min` (inclusive) and `max` (exclusive). */
+  // Create an new `Arbitrary[T]` that will generate values between `min` (inclusive) and `max` (exclusive).
   def between[T: Between](min: T, max: T): Arbitrary[T] = Between[T](min, max)
 
-  /* Create an Arbitrary instance for `T` that will generate one of the provided values. */
+  // Create an Arbitrary instance for `T` that will generate one of the provided values.
   def oneOf[T](v0: T, vn: T*): Arbitrary[T] = {
     val values = (v0 +: vn).toIndexedSeq
     between(0, values.size).map(i => values(i))
@@ -66,11 +66,11 @@ object Arbitrary {
   def bytes(n: Int): Arbitrary[Array[Byte]] =
     FixedSizeIterableArbitrary[Byte, Array[Byte]](Arbitrary[Byte], n, summon)
 
-  /* Create an `Arbitrary[Seq[T]]` that generates sequences of length `n`. */
+  // Create an `Arbitrary[Seq[T]]` that generates sequences of length `n`.
   def seqN[T: Arbitrary](n: Int): Arbitrary[Seq[T]] =
     FixedSizeIterableArbitrary[T, Seq[T]](Arbitrary[T], n, summon)
 
-  /* Create an arbitrary instance that generates tuples of length `N` with elements of type `T`. */
+  // Create an arbitrary instance that generates tuples of length `N` with elements of type `T`.
   def tupleN[T: ClassTag: Arbitrary as arb, N <: Int: ValueOf](using
       N >= 0 =:= true
   ): Arbitrary[TupleOperations.TupleN[T, N]] =
@@ -94,7 +94,7 @@ object Arbitrary {
       Tuple.fromArray(set.toArray).asInstanceOf[TupleOperations.TupleN[T, N]]
     }
 
-  /* Create an new `Arbitrary[T]` that will use given the `Arbitrary[T]` with equal probability. */
+  // Create an new `Arbitrary[T]` that will use given the `Arbitrary[T]` with equal probability.
   def combine[T](arb0: Arbitrary[T], arb1: Arbitrary[T], arbs: Arbitrary[T]*): Arbitrary[T] = {
     val arbitraries = (arb0 +: arb1 +: arbs).toIndexedSeq
     between(0, arbitraries.size).flatMap(i => arbitraries(i))
@@ -150,7 +150,7 @@ object Arbitrary {
         FloatingArbitrary(_.between(min, max), origin)
   }
 
-  /* Arbitrary instances for primitive types that is biased towards edge cases. */
+  // Arbitrary instances for primitive types that is biased towards edge cases.
   private def integral[T: NumericLimits: Integral](genUniform: Random => T): Arbitrary[T] = {
     val edgeCases = Vector(Numeric[T].zero, NumericLimits[T].min, NumericLimits[T].max)
     val gen =
@@ -158,7 +158,7 @@ object Arbitrary {
     IntegralArbitrary(gen, negateInShrink = true)
   }
 
-  /* Arbitrary instances for floating point types that is biased towards edge cases. */
+  // Arbitrary instances for floating point types that is biased towards edge cases.
   private def floating[T: FloatingLimits: Fractional](genUniform: Random => T): Arbitrary[T] = {
     val numeric = Numeric[T]
     import numeric.mkNumericOps

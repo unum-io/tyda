@@ -61,7 +61,8 @@ private object Writer {
       case Codec.Double => (consumer, value) => consumer.addDouble(value)
       case Codec.String => (consumer, value) =>
           consumer.addBinary(Binary.fromConstantByteArray(value.getBytes(StandardCharsets.UTF_8)))
-      case Codec.Bytes => (consumer, value) => consumer.addBinary(Binary.fromConstantByteArray(value))
+      case Codec.Bytes =>
+        (consumer, value) => consumer.addBinary(Binary.fromConstantByteArray(value.to(Array)))
       case Codec.DurationMicros => (consumer, value) => consumer.addLong(value.toMicros)
       case Codec.Date => (consumer, value) => consumer.addInteger(value.daysSinceEpoch)
       case decimal: Codec.Decimal[?, ?] =>
