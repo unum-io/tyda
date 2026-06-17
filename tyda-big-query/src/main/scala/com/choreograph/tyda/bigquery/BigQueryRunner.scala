@@ -55,18 +55,14 @@ class BigQueryRunner(args: RunnerArgs.BigQuery) extends Runner {
     result.iterateAll().asScala.map(createDecoder(ds.codec, result.getSchema().getFields())).toSeq
   }
 
-  def explain[T](ds: Dataset[T]): String = explainImpl(ds)
+  def explain[T](ds: Dataset[T]): String = explainImpl(BigQueryCollectionRewrites.rewrite(ds))
   def explain(action: Dataset.Action): String = explainImpl(action)
 
   /** Provides a human-readable explanation of the execution plan for the given
     * dataset.
     */
   private def explainImpl[T](ds: Dataset[T] | Dataset.Action): String = {
-    val rewritten: Dataset[T] | Dataset.Action = ds match {
-      case dataset: Dataset[T] => BigQueryCollectionRewrites.rewrite(dataset)
-      case action: Dataset.Action => action
-    }
-    val sqlStr = sql(rewritten)
+    val sqlStr = sql(ds)
     val queryConfig = QueryJobConfiguration.newBuilder(sqlStr).setDryRun(true).build()
     val planOrError =
       try formatPlan(bigQuery.create(JobInfo.of(queryConfig)))
