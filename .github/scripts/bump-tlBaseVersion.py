@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+
+TAG_RE = re.compile(r"^v(?P<major>\d+)\.(?P<minor>\d+)\.\d+$")
+TL_BASE_VERSION_RE = re.compile(
+    r'^(ThisBuild / tlBaseVersion := ")[^"]*(")',
+    re.MULTILINE,
+)
+
+
+class Style:
+    RED = "\033[31m"
+    GREEN = "\033[32m"
+    RESET = "\033[0m"
+
+
+def run(
+    *args: str,
+    check: bool = True,
+    capture: bool = False,
+) -> subprocess.CompletedProcess[str]:
+    result = subprocess.run(
+        args,
+        text=True,
+        stdout=subprocess.PIPE if capture else None,
+        stderr=subprocess.STDOUT if capture else None,
+    )
+
+    if check and result.returncode != 0:
+        output = result.stdout or ""
+        raise RuntimeError(
+            f"Command failed with exit code {result.returncode}: {' '.join(args)}\n{output}"
+        )
+
+    return result
+
+
+def parse_release_tag(value: str) -> tuple[int, int]:
+    match = TAG_RE.fullmatch(value)
+
+    if not match:
+        print(f"{Style.RED}Skipping invalid tag: {value or '<empty>'}{Style.RESET}")
+        sys.exit(1)
+
+    return int(match["major"]), int(match["minor"])
+
+
+def next_base_version(release_tag: str) -> str:
+    major, minor = parse_release_tag(release_tag)
+    return f"{major}.{minor + 1}"
+
+
+def update_tl_base_version(path: Path, version: str):
+    content = path.read_text()
+
+    if not TL_BASE_VERSION_RE.search(content):
+        raise RuntimeError(f"Could not find tlBaseVersion setting in {path}")
+
+    updated = TL_BASE_VERSION_RE.sub(
+        rf"\g<1>{version}\2",
+        content,
+    )
+
+    if updated == content:
+        print(
+            f"{Style.GREEN}No changes. tlBaseVersion is already {version}{Style.RESET}."
+        )
+        sys.exit(0)
+
+    path.write_text(updated)
+
+
+def create_or_report_pr(branch: str, version: str, release_tag: str) -> None:
+    body = (
+        f"Derived from release tag {release_tag}. "
+        f"Patch ignored. Next base version: {version}."
+    )
+
+    create = run(
+        "gh",
+        "pr",
+        "create",
+        "--title",
+        f"Update tlBaseVersion to {version}",
+        "--body",
+        body,
+        "--base",
+        "main",
+        "--head",
+        branch,
+        check=False,
+        capture=True,
+    )
+
+    if create.returncode == 0:
+        print(create.stdout, end="")
+        return
+
+    existing = run(
+        "gh",
+        "pr",
+        "list",
+        "--state",
+        "all",
+        "--head",
+        branch,
+        "--json",
+        "url",
+        "--jq",
+        '.[0].url // ""',
+        capture=True,
+    ).stdout.strip()
+
+    if existing:
+        print(f"{Style.GREEN}PR already exists for {branch}: {existing}{Style.RESET}")
+        return
+
+    print(create.stdout, file=sys.stderr, end="")
+    sys.exit(create.returncode)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "release_tag",
+        nargs="?",
+        default=os.environ.get("GITHUB_RELEASE_TAG", ""),
+        help="Release tag to base tlBaseVersion on ( vX.Y.Z -> tlBaseVersion := X.{Y+1} )",
+    )
+    parser.add_argument(
+        "--switch-back",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Switch back to the previous Git checkout target before exiting.",
+    )
+    args = parser.parse_args()
+    switched_branch = False
+
+    # Find git repository root and change to it
+    git_root_result = run("git", "rev-parse", "--show-toplevel", capture=True)
+    git_root = Path(git_root_result.stdout.strip())
+    os.chdir(git_root)
+
+    version = next_base_version(args.release_tag)
+    branch = f"bump-base-version-{version}"
+
+    print(f"Release tag: {args.release_tag}")
+    print(f"Next tlBaseVersion: {version}")
+    print(f"Branch: {branch}")
+
+    try:
+        run("git", "fetch", "origin", "main")
+        run("git", "switch", "-C", branch, "origin/main")
+        switched_branch = True
+
+        update_tl_base_version(Path("build.sbt"), version)
+
+        run("git", "add", "build.sbt")
+        run("git", "commit", "-m", f"Update tlBaseVersion to {version}")
+        run("git", "push", "--force-with-lease", "origin", f"HEAD:{branch}")
+
+        create_or_report_pr(branch, version, args.release_tag)
+
+        return 0
+
+    finally:
+        if switched_branch and args.switch_back:
+            run("git", "switch", "-", check=False)
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except RuntimeError as exc:
+        print(exc, file=sys.stderr)
+        sys.exit(1)
