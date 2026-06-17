@@ -77,7 +77,23 @@ def update_tl_base_version(path: Path, version: str):
     path.write_text(updated)
 
 
+def repo_owner_and_name() -> str:
+    return run(
+        "gh",
+        "repo",
+        "view",
+        "--json",
+        "nameWithOwner",
+        "--jq",
+        ".nameWithOwner",
+        capture=True,
+    ).stdout.strip()
+
+
 def create_or_report_pr(branch: str, version: str, release_tag: str) -> None:
+    repo = repo_owner_and_name()
+    owner = repo.split("/", 1)[0]
+
     body = (
         f"Derived from release tag {release_tag}. "
         f"Patch ignored. Next base version: {version}."
@@ -87,6 +103,8 @@ def create_or_report_pr(branch: str, version: str, release_tag: str) -> None:
         "gh",
         "pr",
         "create",
+        "--repo",
+        repo,
         "--title",
         f"Update tlBaseVersion to {version}",
         "--body",
@@ -94,7 +112,7 @@ def create_or_report_pr(branch: str, version: str, release_tag: str) -> None:
         "--base",
         "main",
         "--head",
-        branch,
+        f"{owner}:{branch}",
         check=False,
         capture=True,
     )
@@ -107,10 +125,12 @@ def create_or_report_pr(branch: str, version: str, release_tag: str) -> None:
         "gh",
         "pr",
         "list",
+        "--repo",
+        repo,
         "--state",
         "all",
         "--head",
-        branch,
+        f"{owner}:{branch}",
         "--json",
         "url",
         "--jq",
