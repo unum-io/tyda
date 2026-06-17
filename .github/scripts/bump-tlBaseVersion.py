@@ -126,6 +126,41 @@ def create_or_report_pr(branch: str, version: str, release_tag: str) -> None:
     sys.exit(create.returncode)
 
 
+def remote_branch_oid(branch: str) -> str | None:
+    result = run(
+        "git",
+        "ls-remote",
+        "--heads",
+        "origin",
+        branch,
+        check=False,
+        capture=True,
+    )
+
+    if result.returncode != 0:
+        raise RuntimeError(result.stdout or "git ls-remote failed")
+
+    line = result.stdout.strip()
+    return line.split()[0] if line else None
+
+
+def push_branch(branch: str) -> None:
+    oid = remote_branch_oid(branch)
+
+    if oid is None:
+        # Remote branch does not exist; create it normally.
+        run("git", "push", "origin", f"HEAD:refs/heads/{branch}")
+    else:
+        # Remote branch exists; only overwrite if it is still at the OID we saw.
+        run(
+            "git",
+            "push",
+            f"--force-with-lease=refs/heads/{branch}:{oid}",
+            "origin",
+            f"HEAD:refs/heads/{branch}",
+        )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -164,7 +199,7 @@ def main() -> int:
 
         run("git", "add", "build.sbt")
         run("git", "commit", "-m", f"Update tlBaseVersion to {version}")
-        run("git", "push", "--force-with-lease", "origin", f"HEAD:{branch}")
+        push_branch(branch)
 
         create_or_report_pr(branch, version, args.release_tag)
 
