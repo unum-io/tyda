@@ -14,6 +14,8 @@ TL_BASE_VERSION_RE = re.compile(
     re.MULTILINE,
 )
 
+UPSTREAM_REPO = "unum-io/tyda"
+
 
 class Style:
     RED = "\033[31m"
@@ -104,7 +106,7 @@ def create_or_report_pr(branch: str, version: str, release_tag: str) -> None:
         "pr",
         "create",
         "--repo",
-        repo,
+        UPSTREAM_REPO,
         "--title",
         f"Update tlBaseVersion to {version}",
         "--body",
@@ -126,7 +128,7 @@ def create_or_report_pr(branch: str, version: str, release_tag: str) -> None:
         "pr",
         "list",
         "--repo",
-        repo,
+        UPSTREAM_REPO,
         "--state",
         "all",
         "--head",
