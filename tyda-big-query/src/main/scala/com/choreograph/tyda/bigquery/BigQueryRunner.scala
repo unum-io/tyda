@@ -62,7 +62,11 @@ class BigQueryRunner(args: RunnerArgs.BigQuery) extends Runner {
     * dataset.
     */
   private def explainImpl[T](ds: Dataset[T] | Dataset.Action): String = {
-    val sqlStr = sql(ds)
+    val rewritten: Dataset[T] | Dataset.Action = ds match {
+      case dataset: Dataset[T] => BigQueryCollectionRewrites.rewrite(dataset)
+      case action: Dataset.Action => action
+    }
+    val sqlStr = sql(rewritten)
     val queryConfig = QueryJobConfiguration.newBuilder(sqlStr).setDryRun(true).build()
     val planOrError =
       try formatPlan(bigQuery.create(JobInfo.of(queryConfig)))
