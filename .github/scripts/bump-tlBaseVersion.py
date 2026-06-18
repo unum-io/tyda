@@ -14,8 +14,6 @@ TL_BASE_VERSION_RE = re.compile(
     re.MULTILINE,
 )
 
-UPSTREAM_REPO = "unum-io/tyda"
-
 
 class Style:
     RED = "\033[31m"
@@ -79,11 +77,26 @@ def update_tl_base_version(path: Path, version: str):
     path.write_text(updated)
 
 
-def repo_owner_and_name() -> str:
+def upstream_repo_for(repo: str) -> str:
     return run(
         "gh",
         "repo",
         "view",
+        repo,
+        "--json",
+        "nameWithOwner,parent",
+        "--jq",
+        r'if .parent then "\(.parent.owner.login)/\(.parent.name)" else .nameWithOwner end',
+        capture=True,
+    ).stdout.strip()
+
+
+def origin_repo() -> str:
+    return run(
+        "gh",
+        "repo",
+        "view",
+        run("git", "remote", "get-url", "origin", capture=True).stdout.strip(),
         "--json",
         "nameWithOwner",
         "--jq",
@@ -93,8 +106,9 @@ def repo_owner_and_name() -> str:
 
 
 def create_or_report_pr(branch: str, version: str, release_tag: str) -> None:
-    repo = repo_owner_and_name()
-    owner = repo.split("/", 1)[0]
+    or_repo = origin_repo()
+    or_owner = or_repo.split("/", 1)[0]
+    us_repo = upstream_repo_for(or_repo)
 
     body = (
         f"Derived from release tag {release_tag}. "
@@ -106,7 +120,7 @@ def create_or_report_pr(branch: str, version: str, release_tag: str) -> None:
         "pr",
         "create",
         "--repo",
-        UPSTREAM_REPO,
+        us_repo,
         "--title",
         f"Update tlBaseVersion to {version}",
         "--body",
@@ -114,7 +128,7 @@ def create_or_report_pr(branch: str, version: str, release_tag: str) -> None:
         "--base",
         "main",
         "--head",
-        f"{owner}:{branch}",
+        f"{or_owner}:{branch}",
         check=False,
         capture=True,
     )
@@ -125,23 +139,20 @@ def create_or_report_pr(branch: str, version: str, release_tag: str) -> None:
 
     existing = run(
         "gh",
-        "pr",
-        "list",
+        "search",
+        "prs",
+        f"head:{branch}",
         "--repo",
-        UPSTREAM_REPO,
-        "--state",
-        "all",
-        "--head",
-        f"{owner}:{branch}",
+        us_repo,
         "--json",
         "url",
         "--jq",
-        '.[0].url // ""',
+        '.[].url // ""',
         capture=True,
     ).stdout.strip()
 
     if existing:
-        print(f"{Style.GREEN}PR already exists for {branch}: {existing}{Style.RESET}")
+        print(f"PR already exists:\n{existing}")
         return
 
     print(create.stdout, file=sys.stderr, end="")
