@@ -238,7 +238,7 @@ def main() -> int:
 
     finally:
         if switched_branch and args.switch_back:
-            run("git", "switch", "-", check=False)
+            run("git", "checkout", "-", check=False)
 
 
 if __name__ == "__main__":
