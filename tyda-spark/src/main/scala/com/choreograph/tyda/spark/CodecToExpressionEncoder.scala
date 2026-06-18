@@ -455,6 +455,9 @@ private object CodecToExpressionEncoder {
   private def validateAndSerializeElement(codec: Codec[?]): Expression => Expression = { input =>
     val expected = codec match {
       case _: Codec.Option[?] => jvmType(codec)
+      // ValidateExternalType has hard coded expected types for each catalyst type. But since we are using
+      // custom types for Timestamp and Date we need modify the expected type to make it work.
+      case Codec.TimestampMicros | Codec.Date => jvmType(codec)
       case codec => catalystType(codec)
     }
 
