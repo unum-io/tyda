@@ -148,7 +148,9 @@ def create_or_report_pr(branch: str, version: str, release_tag: str) -> None:
     ).stdout.strip()
 
     if existing:
+        print("--------------------------------")
         print(f"PR already exists:\n{existing}")
+        print("--------------------------------")
         return
 
     print(create.stdout, file=sys.stderr, end="")
