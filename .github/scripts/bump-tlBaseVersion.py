@@ -15,12 +15,6 @@ TL_BASE_VERSION_RE = re.compile(
 )
 
 
-class Style:
-    RED = "\033[31m"
-    GREEN = "\033[32m"
-    RESET = "\033[0m"
-
-
 def run(
     *args: str,
     check: bool = True,
@@ -46,7 +40,9 @@ def parse_release_tag(value: str) -> tuple[int, int]:
     match = TAG_RE.fullmatch(value)
 
     if not match:
-        print(f"{Style.RED}Skipping invalid tag: {value or '<empty>'}{Style.RESET}")
+        print("--------------------------------")
+        print(f"Skipping invalid tag: {value or '<empty>'}")
+        print("--------------------------------")
         sys.exit(1)
 
     return int(match["major"]), int(match["minor"])
@@ -69,9 +65,9 @@ def update_tl_base_version(path: Path, version: str):
     )
 
     if updated == content:
-        print(
-            f"{Style.GREEN}No changes. tlBaseVersion is already {version}{Style.RESET}."
-        )
+        print("--------------------------------")
+        print(f"No changes. tlBaseVersion is already {version}.")
+        print("--------------------------------")
         sys.exit(0)
 
     path.write_text(updated)
