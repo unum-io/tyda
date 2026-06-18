@@ -1117,6 +1117,9 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testLiteralCreation[Decimal[13, 2]](Decimal[13, 2](20))
   testLiteralCreation[Option[Int]](None)
   testLiteralCreation[Option[Int]](Some(0))
+  testLiteralCreation[Option[Option[Int]]](None)
+  testLiteralCreation[Option[Option[Int]]](Some(None))
+  testLiteralCreation[Option[Option[Int]]](Some(Some(0)))
   testLiteralCreation[Option[Option[Option[Int]]]](None)
   testLiteralCreation[Option[Option[Option[Int]]]](Some(None))
   testLiteralCreation[Option[Option[Option[Int]]]](Some(Some(None)))
@@ -1237,7 +1240,9 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testJsonRoundtrip[Tuple1[Timestamp]]
   testJsonRoundtrip[Tuple1[Date]]
   testJsonRoundtrip[Tuple1[Duration]]
+  testJsonRoundtrip[Tuple1[Option[Int]]]
   testJsonRoundtrip[Tuple1[Option[Option[Int]]]]
+  testJsonRoundtrip[Tuple1[Option[Option[Option[Int]]]]]
   testJsonRoundtrip[Seq[Int]]
   testJsonRoundtrip[Map[String, Int]]
   testJsonRoundtrip[Struct]
