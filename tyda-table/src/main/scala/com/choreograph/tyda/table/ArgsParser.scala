@@ -376,6 +376,15 @@ object ArgsParser {
       }
     }
 
+  given optionParser[T: ArgsParser]: ArgsParser[Option[T]] = {
+    // Remove $ from `None$` for a clearner api
+    given Labelling[Option[T]] = {
+      val default = Labelling[Option[T]]
+      Labelling[Option[T]](default.label, default.elemLabels.map(_.stripSuffix("$")))
+    }
+    sumTagged[Option[T]]
+  }
+
   private[table] def flag(path: Option[String], label: String): String = {
     val kebabLabel = camelToKebab(label)
     path.fold(kebabLabel)(p => s"$p-${kebabLabel}")
