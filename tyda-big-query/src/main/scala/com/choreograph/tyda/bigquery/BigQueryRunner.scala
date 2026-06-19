@@ -55,7 +55,7 @@ class BigQueryRunner(args: RunnerArgs.BigQuery) extends Runner {
     result.iterateAll().asScala.map(createDecoder(ds.codec, result.getSchema().getFields())).toSeq
   }
 
-  def explain[T](ds: Dataset[T]): String = explainImpl(ds)
+  def explain[T](ds: Dataset[T]): String = explainImpl(BigQueryCollectionRewrites.rewrite(ds))
   def explain(action: Dataset.Action): String = explainImpl(action)
 
   /** Provides a human-readable explanation of the execution plan for the given
@@ -142,7 +142,10 @@ object BigQueryRunner {
   private val retryJobOption: BigQuery.JobOption =
     val retryConfig = BigQueryRetryConfig
       .newBuilder()
-      .retryOnMessage("Visibility check was unavailable")
+      .retryOnMessage(
+        "Visibility check was unavailable",
+        "Error encountered during execution. Retrying may solve the problem."
+      )
       .build()
     BigQuery.JobOption.bigQueryRetryConfig(retryConfig)
 

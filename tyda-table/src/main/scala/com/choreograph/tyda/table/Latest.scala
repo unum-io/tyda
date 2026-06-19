@@ -10,7 +10,6 @@ import com.choreograph.tyda.Remover
 import com.choreograph.tyda.Selector
 import com.choreograph.tyda.aggregates.collect
 import com.choreograph.tyda.aggregates.max
-import com.choreograph.tyda.functions.lit
 import com.choreograph.tyda.functions.raiseError
 import com.choreograph.tyda.table.ArgsParser.Result
 
@@ -25,7 +24,27 @@ import com.choreograph.tyda.table.ArgsParser.Result
 final case class Latest[S <: Source[?, ?], Date](source: S, overrideDate: Option[Date] = None)
 
 object Latest {
-  extension [M: Codec, Date: Codec: Comparable, PartitionValue <: Product: Codec: Selector.To[Date]](
+  extension [M, Date: Codec: Comparable, PartitionValue: Codec: Selector.To[Date]](
+      latest: Latest[Source[M, Partitioner.Hive[PartitionValue]], Date]
+  )(using
+      decoder: Partitioner.Determinator[PartitionValue, Partitioner.Hive[PartitionValue]],
+      creator: Partitioner.Creator[PartitionValue, Partitioner.Hive[PartitionValue]]
+  ) {
+
+    /** Determine the latest date partition but no later than `runDate`.
+      */
+    def latestDate(runDate: Date): Dataset.Single[Option[Date]] =
+      latest.overrideDate match {
+        case Some(overrideDate) => Dataset.single(Some(overrideDate))
+        case None => latest
+            .source
+            .asPartitionDataset(creator.unfixed)
+            .select(_.select[Date])
+            .where(_ <= runDate)
+            .aggregate(max)
+      }
+  }
+  extension [M: Codec, Date: Codec: Comparable, PartitionValue: Codec: Selector.To[Date]](
       latest: Latest[Source[M, Partitioner.Hive[PartitionValue]], Date]
   )(using
       decoder: Partitioner.Determinator[PartitionValue, Partitioner.Hive[PartitionValue]],
@@ -35,26 +54,23 @@ object Latest {
     /** Read the latest date partition but no later than `runDate`.
       */
     def readLatestWithPartitions(runDate: Date): Dataset[(PartitionValue, M)] = {
-      val latestDate: Expr[Date] = latest.overrideDate match {
-        case Some(overrideDate) => lit(overrideDate)
-        case None => latest
-            .source
-            .asPartitionDataset(creator.unfixed)
-            .select(_.select[Date])
-            .where(_ <= runDate)
-            .aggregate(max)
-            .value
-            .getOrElse(raiseError[Date](s"No partitions found before or on ${runDate} for ${latest.source}"))
-      }
-      latest.source.asDataset(creator.unfixed).withPartitionValues.where(v => latestDate == v._1.select[Date])
+      val latestDateExpr: Expr[Date] = latest
+        .latestDate(runDate)
+        .value
+        .getOrElse(raiseError[Date](s"No partitions found before or on ${runDate} for ${latest.source}"))
+      latest
+        .source
+        .asDataset(creator.unfixed)
+        .withPartitionValues
+        .where(v => latestDateExpr == v._1.select[Date])
     }
 
     def readLatest(runDate: Date): Dataset[M] = readLatestWithPartitions(runDate).select(_._2)
   }
 
-  extension [M: Codec, Date: Codec: Comparable, PartitionValue <: Product: Codec: Remover.Of[
+  extension [M: Codec, Date: Codec: Comparable, PartitionValue: Codec: Remover.Of[Date] as r: Selector.To[
     Date
-  ] as r: Selector.To[Date]](latest: Latest[Source[M, Partitioner.Hive[PartitionValue]], Date])(using
+  ]](latest: Latest[Source[M, Partitioner.Hive[PartitionValue]], Date])(using
       decoder: Partitioner.Determinator[PartitionValue, Partitioner.Hive[PartitionValue]],
       creator: Partitioner.Creator[PartitionValue, Partitioner.Hive[PartitionValue]]
   )(using Groupable[r.Out], Codec[r.Out]) {

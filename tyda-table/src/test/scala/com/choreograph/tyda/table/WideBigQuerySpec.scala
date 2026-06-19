@@ -21,7 +21,7 @@ object WideBigQuerySpec {
   private given Arbitrary[Double] = Arbitrary[Double].filter(!_.isNaN)
 }
 
-/* This test suite is defined in tyda-iterator to leverage the iterator implmementation as part of testing */
+// This test suite is defined in tyda-iterator to leverage the iterator implmementation as part of testing
 class WideBigQuerySpec extends AnyFunSuite {
   import WideBigQuerySpec.given
   private def repr[T](codec: Codec[T]): Codec[?] =

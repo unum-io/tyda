@@ -1137,6 +1137,9 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testLiteralCreation[Decimal[13, 2]](Decimal[13, 2](20))
   testLiteralCreation[Option[Int]](None)
   testLiteralCreation[Option[Int]](Some(0))
+  testLiteralCreation[Option[Option[Int]]](None)
+  testLiteralCreation[Option[Option[Int]]](Some(None))
+  testLiteralCreation[Option[Option[Int]]](Some(Some(0)))
   testLiteralCreation[Option[Option[Option[Int]]]](None)
   testLiteralCreation[Option[Option[Option[Int]]]](Some(None))
   testLiteralCreation[Option[Option[Option[Int]]]](Some(Some(None)))
@@ -1238,6 +1241,12 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     t => (t.map(_.a), t.map(_.b), t.map(_.c))
   )
 
+  testHasSameBehavior[(`瑞`: Short, `典`: Short), Int](
+    "non ascii fields",
+    r => r.`瑞`.cast[Int] + r.`典`.cast[Int],
+    (a, b) => a.toInt + b.toInt
+  )
+
   def testJsonRoundtrip[T: ClassTag: Codec: Arbitrary: TypeName: JsonArrayOrObject]: Unit =
     testHasSameBehavior[T, Option[T]](
       s"toJson/fromJson roundtrip for ${TypeName.name[T]}",
@@ -1251,7 +1260,9 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testJsonRoundtrip[Tuple1[Timestamp]]
   testJsonRoundtrip[Tuple1[Date]]
   testJsonRoundtrip[Tuple1[Duration]]
+  testJsonRoundtrip[Tuple1[Option[Int]]]
   testJsonRoundtrip[Tuple1[Option[Option[Int]]]]
+  testJsonRoundtrip[Tuple1[Option[Option[Option[Int]]]]]
   testJsonRoundtrip[Seq[Int]]
   testJsonRoundtrip[Map[String, Int]]
   testJsonRoundtrip[Struct]
@@ -1314,4 +1325,5 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
       (int, _) => Some(Tuple1(int))
     )
   }
+  testHasSameBehavior[Seq[Int], String]("toJson Seq[Int]", toJson, _.mkString("[", ",", "]"))
 }

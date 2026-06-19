@@ -123,7 +123,7 @@ object DatasetOnSpark {
    * collected. */
   //
   // This is the same approach as is used in Spark for cleaning up persisted RDDs
-  /* https://github.com/apache/spark/blob/4e5ed454fb292bc22cbdb6fc69b7de322e0afeff/core/src/main/scala/org/apache/spark/ContextCleaner.scala#L76 */
+  // https://github.com/apache/spark/blob/4e5ed454fb292bc22cbdb6fc69b7de322e0afeff/core/src/main/scala/org/apache/spark/ContextCleaner.scala#L76
   private val referenceQueue = new ReferenceQueue[Dataset[?]]()
   private val unpersistTasks = Collections.newSetFromMap[UnpersistTask](ConcurrentHashMap())
 
@@ -248,7 +248,8 @@ object DatasetOnSpark {
             case TableLocation.Native =>
               val dfRaw = spark.sql(s"SHOW PARTITIONS `${identifier}`")
               val parser = HivePartitionParser.makeParser
-              dfRaw.select(createUdf(parser, dfRaw("partition"))).as[T]
+              val udf = createUdf(parser, dfRaw("partition"))
+              selectAndUnpack(dfRaw, udf)
             case TableLocation.BigQuery =>
               // TODO: We should generate the approriate query using tyda-sql here.
               throw new RuntimeException("Reading table partition paths is not supported for BigQuery tables")

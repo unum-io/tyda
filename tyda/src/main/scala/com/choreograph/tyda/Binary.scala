@@ -1,7 +1,9 @@
 package com.choreograph.tyda
 
 import java.nio.charset.StandardCharsets
+import java.util.Arrays
 
+import scala.collection.Factory
 import scala.collection.immutable.ArraySeq
 
 /** An immutable sequence of bytes with value semantics.
@@ -28,14 +30,10 @@ object Binary {
 
     /** Returns the number of bytes. */
     def length: Int = b.length
-  }
 
-  private object BinaryToArray extends Injection[Binary, Array[Byte]] {
-    def apply(b: Binary): Array[Byte] = b.toArray
-    def invert(arr: Array[Byte]): Binary = new ArraySeq.ofByte(arr)
+    /** Returns a copy of the bytes as C. */
+    def to[C](factory: Factory[Byte, C]): C = factory.fromSpecific(b)
   }
-
-  given codec: Codec[Binary] = Codec.fromInjection(BinaryToArray, Codec.Bytes)
 
   given arbitrary: Arbitrary[Binary] =
     for {
@@ -44,4 +42,6 @@ object Binary {
     } yield ArraySeq.ofByte(arr)
 
   given Groupable[Binary] = Groupable.derived
+
+  given Ordering[Binary] = (x, y) => Arrays.compareUnsigned(x.unsafeArray, y.unsafeArray)
 }

@@ -11,7 +11,7 @@ enum Sink[M, P <: Partitioner] {
     * @param format
     *   The data format to use when writing.
     */
-  case Path[M, P <: Partitioner](basePath: String, format: Format = Format.Parquet) extends Sink[M, P]
+  case Path(basePath: String, format: Format = Format.Parquet) extends Sink[M, P]
 
   /** Sink that is written to in a unit test.
     *

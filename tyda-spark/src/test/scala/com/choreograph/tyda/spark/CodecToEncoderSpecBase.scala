@@ -22,6 +22,7 @@ import org.apache.spark.sql.types.TimestampType
 import org.scalatest.funsuite.AnyFunSuite
 
 import com.choreograph.tyda.Arbitrary
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
@@ -198,7 +199,11 @@ trait CodecToEncoderSpecBase extends AnyFunSuite with SharedSparkSession {
   test[MyString]()
   test[NestedEnum](supportsNull = false)
   test[GenericEmptyVariants[Generic.A.type]](supportsNull = false)
-  test[BigInt](supportsNull = false)
+  test[Binary](supportsNull = false)
+  test[Option[Binary]](supportsNull = false)
+  test[Tuple1[Binary]](supportsNull = false)
+  test[Seq[Binary]]()
+  test[Map[Int, Binary]]()
   test[EnumString](supportsNull = false)
   test[(name: String, age: Int)](supportsNull = false)
   test[BigNamedTuple](supportsNull = false)
@@ -237,7 +242,7 @@ trait CodecToEncoderSpecBase extends AnyFunSuite with SharedSparkSession {
   schemaTest[Float](FloatType)
   schemaTest[Double](DoubleType)
   schemaTest[Boolean](BooleanType)
-  schemaTest[BigInt](BinaryType)
+  schemaTest[Binary](BinaryType)
   schemaTest[Timestamp](TimestampType)
   schemaTest[Duration](LongType)
   schemaTest[Date](DateType)

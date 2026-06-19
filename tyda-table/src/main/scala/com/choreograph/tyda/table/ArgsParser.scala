@@ -245,7 +245,7 @@ object ArgsParser {
     def parse(t: String): Option[T]
     final def parseResult(t: String): Result[T] = parse(t).toRight(Error.UnparsableValue(t, hint))
     def serialize(t: T, templateTag: Option[String]): String
-    /* Return information about what as valid value */
+    // Return information about what as valid value
     def hint: String
 
     def withHint(newHint: String): Arg[T] =
@@ -375,6 +375,15 @@ object ArgsParser {
         parser.help(path, default.flatten)
       }
     }
+
+  given optionParser[T: ArgsParser]: ArgsParser[Option[T]] = {
+    // Remove $ from `None$` for a clearner api
+    given Labelling[Option[T]] = {
+      val default = Labelling[Option[T]]
+      Labelling[Option[T]](default.label, default.elemLabels.map(_.stripSuffix("$")))
+    }
+    sumTagged[Option[T]]
+  }
 
   private[table] def flag(path: Option[String], label: String): String = {
     val kebabLabel = camelToKebab(label)

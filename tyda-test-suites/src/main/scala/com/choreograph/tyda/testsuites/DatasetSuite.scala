@@ -23,7 +23,9 @@ import com.choreograph.tyda.SumMagnet
 
 // This alias has been inlined because of this bug https://github.com/scala/scala3/issues/24357
 // Without inlining, the catch clause will catch too broadly.
-@deprecated("Do not used until https://github.com/scala/scala3/issues/24357 is fixed")
+@deprecated(
+  "Do not use until using Scala >3.8.1 where https://github.com/scala/scala3/issues/24357 is fixed."
+)
 type ScalaTestControlException = TestPendingException | TestCanceledException | TestFailedException
 
 object DatasetSuite {
@@ -73,7 +75,7 @@ object DatasetSuite {
   }
 }
 
-/* Testsuite that will compare a Dataset backend to a reference implementation. */
+// Testsuite that will compare a Dataset backend to a reference implementation.
 trait DatasetSuite extends AnyFunSuite {
   import DatasetSuite.Result
 
