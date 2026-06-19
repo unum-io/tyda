@@ -130,7 +130,10 @@ def create_or_report_pr(branch: str, version: str, release_tag: str) -> None:
     )
 
     if create.returncode == 0:
+        print("--------------------------------")
+        print("PR Created")
         print(create.stdout, end="")
+        print("--------------------------------")
         return
 
     existing = run(
@@ -192,6 +195,30 @@ def push_branch(branch: str) -> None:
         )
 
 
+def get_remote_name(repo: str):
+    output = run(
+        "git",
+        "remote",
+        "-v",
+        check=True,
+        capture=True,
+    ).stdout
+
+    for line in output.splitlines():
+        parts = line.split()
+
+        if len(parts) < 3:
+            continue
+
+        name, url, operation = parts[:3]
+
+        if operation != "(fetch)":
+            continue
+
+        if url.endswith(repo):
+            return name
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -222,8 +249,9 @@ def main() -> int:
     print(f"Branch: {branch}")
 
     try:
-        run("git", "fetch", "origin", "main")
-        run("git", "switch", "-C", branch, "origin/main")
+        remote_name = get_remote_name("unum-io/tyda.git") or "origin"
+        run("git", "fetch", remote_name, "main")
+        run("git", "switch", "-C", branch, f"{remote_name}/main")
         switched_branch = True
 
         update_tl_base_version(Path("build.sbt"), version)
