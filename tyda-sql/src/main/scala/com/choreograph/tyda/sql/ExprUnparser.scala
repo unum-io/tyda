@@ -39,6 +39,7 @@ import com.choreograph.tyda.sql.SqlDialect.TrimFunction
 import com.choreograph.tyda.sql.ast.DdlType
 import com.choreograph.tyda.sql.ast.DdlWriter
 import com.choreograph.tyda.sql.ast.From
+import com.choreograph.tyda.sql.ast.JoinType
 import com.choreograph.tyda.sql.ast.Query
 import com.choreograph.tyda.sql.ast.SqlExpr
 import com.choreograph.tyda.unreachable
@@ -313,7 +314,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
               val outerFrom = From.Expr(SqlExpr.Function(unnest, Seq(arr)), outerName)
               val innerFrom = From.Expr(SqlExpr.Function(unnest, Seq(SqlExpr.Ident(outerName))), innerName)
               val joinFrom =
-                From.Join(outerFrom, innerFrom, com.choreograph.tyda.sql.ast.JoinType.Inner, None)
+                From.Join(outerFrom, innerFrom, JoinType.Inner, None)
               val elem = unwrapArrayElement(SqlExpr.Ident(innerName), operand.codec.element.element, dialect)
               val query = Query.Select(NonEmpty(elem), joinFrom)
               SqlExpr.Function(makeArray, Seq(SqlExpr.Subquery(query)))
