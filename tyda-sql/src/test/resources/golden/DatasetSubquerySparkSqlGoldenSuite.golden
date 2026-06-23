@@ -2,6 +2,10 @@
 SELECT t1.value AS value FROM t1 WHERE aggregate(transform(coalesce((SELECT CASE WHEN (count(1) <> 0) THEN collect_list(t2.value) END AS value FROM t2), CAST(array() AS ARRAY<TINYINT>)), c0 -> (c0 = t1.value)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3)
 ------ end
 
+------ Test: collect toMap lookup
+SELECT t1.value AS _1, element_at(map_from_entries(coalesce((SELECT CASE WHEN (count(1) <> 0) THEN collect_list(named_struct('_1', t0._1, '_2', t0._2)) END AS value FROM (SELECT t2._1 AS _1, max(t2._2) AS _2 FROM t2 GROUP BY t2._1) AS t0), CAST(array() AS ARRAY<STRUCT<_1 TINYINT NOT NULL,_2 INT NOT NULL>>))), t1.value) AS _2 FROM t1
+------ end
+
 ------ Test: count subquery
 SELECT t1.value AS value FROM t1 WHERE (NOT (t1.value <= coalesce((SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM t2), CAST(0 AS BIGINT))))
 ------ end
