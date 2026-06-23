@@ -25,6 +25,8 @@ import com.choreograph.tyda.shapeless3extras.tupleInstances
   * the code.
   */
 trait ExprApi[Expr[T]] {
+  private[tyda] type SeqCC[X, CC[_]] = Seq[X] & SeqOps[X, CC, CC[X]]
+
   private[tyda] def lift[T](e: ExprNode[T]): Expr[T]
   private[tyda] def unlift[T](e: Expr[T]): ExprNode[T]
 
@@ -637,7 +639,7 @@ trait ExprApi[Expr[T]] {
     }
   }
 
-  extension [T, CC[X] <: Seq[X] & SeqOps[X, CC, CC[X]], C <: Seq[T] & SeqOps[T, CC, CC[T]]](seq: Expr[C]) {
+  extension [T, CC[X] <: SeqCC[X, CC], C <: SeqCC[T, CC]](seq: Expr[C]) {
     private def valueCodec: Codec[T] = unlift(seq).codec.element
 
     private def factory: IterableFactory[CC] =
@@ -717,9 +719,7 @@ trait ExprApi[Expr[T]] {
       exists(e => lift(ExprNode.Equals(unlift(e), unlift(AsExpr(value)))))
   }
 
-  extension [U, CC[X] <: Seq[X] & SeqOps[X, CC, CC[X]], C <: Seq[
-    Iterable[U]
-  ] & SeqOps[Iterable[U], CC, CC[Iterable[U]]]](seq: Expr[C]) {
+  extension [U, CC[X] <: SeqCC[X, CC], C <: SeqCC[Iterable[U], CC]](seq: Expr[C]) {
 
     /** Flattens a sequence of iterables into a single sequence.
       */
