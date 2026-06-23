@@ -117,7 +117,7 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
   private def cfFromRef(ref: ExprNode.Reference[?]): ColumnFactory[?] =
     cfs.get(ref).getOrElse(Errors.failUnexpectedReference(ref, cfs.keys))
 
-  private def transformArgs[T](seq: ExprNode[Seq[T]], compiled: CompiledExpr[T, ?])(using
+  private def buildHigherOrderArgs[T](seq: ExprNode[Seq[T]], compiled: CompiledExpr[T, ?])(using
       spark: SparkSession
   ) = (
     convert(seq),
