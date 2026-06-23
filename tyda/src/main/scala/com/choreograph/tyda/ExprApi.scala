@@ -666,16 +666,6 @@ trait ExprApi[Expr[T]] {
       fromRepr(ExprNode.MapSeq(unlift(seq.toSeq), compiled))(using compiled.codec)
     }
 
-    /** Flattens a sequence of iterables into a single sequence.
-      */
-    def flatten[U](using ev: T =:= Iterable[U], tag: ClassTag[CC[U]]): Expr[CC[U]] = {
-      val node: ExprNode[Seq[T]] = unlift(seq.toSeq)
-      // TYPE SAFETY: ev witnesses that T =:= Iterable[U], so Seq[T] =:= Seq[Iterable[U]]
-      val castNode = node.asInstanceOf[ExprNode[Seq[Iterable[U]]]]
-      given Codec[U] = castNode.codec.element.element
-      fromRepr(ExprNode.FlattenSeq(castNode))
-    }
-
     /** FlatMaps each element of the sequence using the given function, then
       * concatenates the resulting sequences into one.
       */
@@ -728,6 +718,22 @@ trait ExprApi[Expr[T]] {
       */
     def contains[I: AsExpr.Of[T]](value: I): Expr[Boolean] =
       exists(e => lift(ExprNode.Equals(unlift(e), unlift(AsExpr(value)))))
+  }
+
+  extension [U, CC[X] <: Seq[X], C <: Seq[Iterable[U]] & SeqOps[Iterable[U], CC, CC[Iterable[U]]]](
+      seq: Expr[C]
+  ) {
+
+    /** Flattens a sequence of iterables into a single sequence.
+      */
+    def flatten(using tag: ClassTag[CC[U]]): Expr[CC[U]] = {
+      val node = unlift(seq.toSeq)
+      given Codec[U] = node.codec.element.element
+      lift(ExprNode.FromRepr(
+        ExprNode.FlattenSeq(node),
+        Codec.Iterable[U, CC[U]](tag, Codec[U])(using seq.factory)
+      ))
+    }
   }
 
   extension [K, V](entries: Expr[Seq[(K, V)]]) {

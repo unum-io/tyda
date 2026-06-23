@@ -154,9 +154,9 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
         val arr = array(fieldExprs*)
         if values.isEmpty then arr.cast(catalystType(expr.codec)) else arr
       case ExprNode.ConcatSeq(lhs, rhs) => concat(convert(lhs), (convert(rhs)))
-      case ExprNode.MapSeq(seq, f) => transform.tupled(transformArgs(seq, f))
+      case ExprNode.MapSeq(seq, f) => transform.tupled(buildHigherOrderArgs(seq, f))
       case ExprNode.FlattenSeq(seq) => flatten(convert(seq))
-      case ExprNode.FilterSeq(seq, predicate) => filter.tupled(transformArgs(seq, predicate))
+      case ExprNode.FilterSeq(seq, predicate) => filter.tupled(buildHigherOrderArgs(seq, predicate))
       case ExprNode.AggregateSeq(seq, onEmpty, agg) =>
         val asFold = PrimitiveAggregateAsFold(onEmpty, agg)(using seq.codec.element)
         aggregate(
