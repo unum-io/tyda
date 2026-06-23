@@ -51,7 +51,7 @@ class BigQueryTestRunner(args: RunnerArgs.BigQuery) extends BigQueryRunner(args)
 trait WithConfiguredBigQueryTestRunner {
   def runner: BigQueryTestRunner = {
     val projectId = BigQueryIntegrationTestEnvVariables.getProjectIdOrSkip
-    new BigQueryTestRunner(RunnerArgs.BigQuery(projectId, RunnerArgs.ValidateSchema.Off))
+    new BigQueryTestRunner(RunnerArgs.BigQuery(projectId, RunnerArgs.ValidateReadSchema.Off))
   }
 }
 
