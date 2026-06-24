@@ -258,6 +258,10 @@ object ExprEvaluation {
           val mapEval = impl(map)
           val keyEval = impl(key)
           from => mapEval(from).get(keyEval(from))
+        case ExprNode.ArrayJoin(operand, separator) =>
+          val seqEval = impl(operand)
+          val sepEval = impl(separator)
+          from => seqEval(from).mkString(sepEval(from))
         case ExprNode.DistinctSeq(operand) => (impl(operand).andThen(_.distinct))
         case ExprNode.None(_) => _ => None
         case ExprNode.Rand() => _ => scala.util.Random.nextDouble()

@@ -735,6 +735,21 @@ trait ExprApi[Expr[T]] {
     }
   }
 
+  extension (strings: Expr[Seq[String]]) {
+
+    /** Joins the elements of the string sequence into a single string using the
+      * given separator.
+      */
+    def mkString(separator: Expr[String]): Expr[String] =
+      lift(ExprNode.ArrayJoin(unlift(strings.toSeq), unlift(separator)))
+
+    /** Joins the elements of the string sequence into a single string using the
+      * given separator.
+      */
+    def mkString(separator: String): Expr[String] =
+      lift(ExprNode.ArrayJoin(unlift(strings.toSeq), ExprNode.Literal(separator)))
+  }
+
   extension [K, V](entries: Expr[Seq[(K, V)]]) {
 
     /** Convert the sequence of key-value pairs into a Map.

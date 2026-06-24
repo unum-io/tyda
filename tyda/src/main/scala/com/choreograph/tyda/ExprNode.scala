@@ -395,6 +395,11 @@ private object ExprNode extends ExprApi[ExprNode] {
     override def codec: Codec[Seq[T]] = operand.codec
   }
 
+  final case class ArrayJoin(operand: ExprNode[Seq[String]], separator: ExprNode[String])
+      extends ExprNode[String] {
+    override def codec: Codec[String] = Codec[String]
+  }
+
   final case class SizeSeq[C <: Seq[?]](operand: ExprNode[C]) extends ExprNode[Int] {
     override def codec: Codec[Int] = Codec[Int]
   }
