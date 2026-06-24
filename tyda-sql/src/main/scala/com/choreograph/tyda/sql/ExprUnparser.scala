@@ -557,7 +557,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
                 )
             }
         }
-      case ExprNode.None(_) => Right(cast(SqlExpr.LiteralNull, expr.codec, dialect))
+      case ExprNode.None(_) => Right(typedNull(ToDdl.toDdlType(expr.codec, dialect.ddl)))
       case ExprNode.ToJson(value) =>
         val hasNestedArray = Codec
           .iterate(value.codec)
@@ -989,8 +989,12 @@ private def literalToSqlExpr[T](value: T, codec: Codec.Primitive[T], dialect: Sq
   }
 }
 
+def typedNull(tpe: DdlType): SqlExpr =
+  // We use scalafix to force use of this helper when creating nulls.
+  SqlExpr.Cast(SqlExpr.LiteralNull, tpe) // scalafix:ok Disallowed.Method
+
 def emptyProductFieldNull(dialect: SqlDialect): SqlExpr =
-  SqlExpr.Cast(SqlExpr.LiteralNull, DdlType.Primitive(dialect.ddl.emptyStructFieldType))
+  typedNull(DdlType.Primitive(dialect.ddl.emptyStructFieldType))
 
 /** Generate a dummy value for the given codec. This is used to create a empty
   * relation with the correct schema.
