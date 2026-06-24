@@ -107,11 +107,11 @@ SELECT t1.a AS a, t1.b AS b, t1.c AS c FROM t1
 ------ end
 
 ------ Test: apply to empty named tuple inside struct
-SELECT struct(NULL AS `the cake is a lie 🎂`) AS empty FROM t1
+SELECT struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) AS empty FROM t1
 ------ end
 
 ------ Test: apply to empty tuple inside struct
-SELECT struct(NULL AS `the cake is a lie 🎂`) AS empty FROM t1
+SELECT struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) AS empty FROM t1
 ------ end
 
 ------ Test: apply to named tuple
@@ -175,7 +175,7 @@ SELECT coalesce(struct(t1.i AS i), CAST(error('Failed to invert asBase') AS STRU
 ------ end
 
 ------ Test: asBase inverts asCase for enum singleton case
-SELECT NULL FROM t1
+SELECT CAST(NULL AS BOOL) FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for sealed trait product case
@@ -183,11 +183,11 @@ SELECT coalesce(struct(t1.i AS i), CAST(error('Failed to invert asBase') AS STRU
 ------ end
 
 ------ Test: asBase inverts asCase for sealed trait singleton case
-SELECT NULL FROM t1
+SELECT CAST(NULL AS BOOL) FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for string enum singleton case
-SELECT NULL FROM t1
+SELECT CAST(NULL AS BOOL) FROM t1
 ------ end
 
 ------ Test: asCase from enum to product case
@@ -195,7 +195,7 @@ SELECT t1.c AS value FROM t1
 ------ end
 
 ------ Test: asCase from enum to singleton case
-SELECT CASE WHEN (t1.discriminant = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END AS value FROM t1
+SELECT CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END AS value FROM t1
 ------ end
 
 ------ Test: asCase from sealed trait to product case
@@ -203,11 +203,11 @@ SELECT t1.b AS value FROM t1
 ------ end
 
 ------ Test: asCase from sealed trait to singleton case
-SELECT CASE WHEN (t1.discriminant = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END AS value FROM t1
+SELECT CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END AS value FROM t1
 ------ end
 
 ------ Test: asCase from string enum to singleton case
-SELECT CASE WHEN (t1.value = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END AS value FROM t1
+SELECT CASE WHEN (t1.value = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END AS value FROM t1
 ------ end
 
 ------ Test: asCase inverts asBase for enum product case
@@ -215,7 +215,7 @@ SELECT CASE WHEN (t1.c IS NOT NULL) THEN struct('c' AS discriminant, t1.c AS c, 
 ------ end
 
 ------ Test: asCase inverts asBase for enum singleton case
-SELECT CASE WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN struct('a' AS discriminant, CAST(NULL AS STRUCT<i INT>) AS c, CAST(NULL AS STRUCT<i INT>) AS d) END AS value FROM t1
+SELECT CASE WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN struct('a' AS discriminant, CAST(NULL AS STRUCT<i INT>) AS c, CAST(NULL AS STRUCT<i INT>) AS d) END AS value FROM t1
 ------ end
 
 ------ Test: asCase inverts asBase for sealed trait product case
@@ -223,15 +223,15 @@ SELECT CASE WHEN (t1.b IS NOT NULL) THEN struct('b' AS discriminant, t1.b AS b) 
 ------ end
 
 ------ Test: asCase inverts asBase for sealed trait singleton case
-SELECT CASE WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN struct('a' AS discriminant, CAST(NULL AS STRUCT<i INT>) AS b) END AS value FROM t1
+SELECT CASE WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN struct('a' AS discriminant, CAST(NULL AS STRUCT<i INT>) AS b) END AS value FROM t1
 ------ end
 
 ------ Test: asCase inverts asBase for string enum singleton case
-SELECT CASE WHEN (CASE WHEN (t1.value = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN 'a' END AS value FROM t1
+SELECT CASE WHEN (CASE WHEN (t1.value = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN 'a' END AS value FROM t1
 ------ end
 
 ------ Test: asCase: in option map
-SELECT CASE WHEN (t1.value IS NOT NULL) THEN struct(CASE WHEN (t1.value.discriminant = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END AS value) END AS value FROM t1
+SELECT CASE WHEN (t1.value IS NOT NULL) THEN struct(CASE WHEN (t1.value.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END AS value) END AS value FROM t1
 ------ end
 
 ------ Test: asCase: select from product case
@@ -447,7 +447,7 @@ SELECT '' AS value FROM t1
 ------ end
 
 ------ Test: create literal () scala.Tuple$package.EmptyTuple.type
-SELECT NULL FROM t1
+SELECT CAST(NULL AS BOOL) FROM t1
 ------ end
 
 ------ Test: create literal (a,1) scala.NamedTuple.NamedTuple[scala.Tuple2["a", "b"], scala.Tuple2[scala.Predef.String, scala.Int]]
@@ -554,6 +554,10 @@ SELECT CAST(NULL AS BIGINT) AS value FROM t1
 SELECT CAST(NULL AS STRUCT<a INT,b STRING,c BOOLEAN>) AS value FROM t1
 ------ end
 
+------ Test: create literal None scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum.A]
+SELECT CAST(NULL AS STRUCT<`the cake is a lie 🎂` BOOL>) AS value FROM t1
+------ end
+
 ------ Test: create literal None scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum]
 SELECT CAST(NULL AS STRUCT<discriminant STRING,c STRUCT<i INT>,d STRUCT<i INT>>) AS value FROM t1
 ------ end
@@ -619,11 +623,11 @@ SELECT CAST(1 AS INT) AS a, 'a' AS b, FALSE AS c FROM t1
 ------ end
 
 ------ Test: create literal WithEmptyTuple(()) com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithEmptyTuple
-SELECT struct(NULL AS `the cake is a lie 🎂`) AS empty FROM t1
+SELECT struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) AS empty FROM t1
 ------ end
 
 ------ Test: create literal WithNamedTupleEmpty(()) com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithNamedTupleEmpty
-SELECT struct(NULL AS `the cake is a lie 🎂`) AS empty FROM t1
+SELECT struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) AS empty FROM t1
 ------ end
 
 ------ Test: create literal false scala.Boolean
@@ -775,7 +779,7 @@ SELECT ['\b', '', '\n', '\r', '\t', '', '\'', '\\', '"', '`', '${var}'] AS val
 ------ end
 
 ------ Test: identity enum singleton
-SELECT NULL FROM t1
+SELECT CAST(NULL AS BOOL) FROM t1
 ------ end
 
 ------ Test: identity primitive
@@ -783,11 +787,11 @@ SELECT t1.value AS value FROM t1
 ------ end
 
 ------ Test: identity sealed trait singleton
-SELECT NULL FROM t1
+SELECT CAST(NULL AS BOOL) FROM t1
 ------ end
 
 ------ Test: identity string enum singleton
-SELECT NULL FROM t1
+SELECT CAST(NULL AS BOOL) FROM t1
 ------ end
 
 ------ Test: identity tuple
@@ -895,7 +899,7 @@ SELECT CAST(CAST([] AS ARRAY<STRUCT<_1 INT,_2 STRING>>) AS ARRAY<STRUCT<key INT,
 ------ end
 
 ------ Test: make empty namedTuple
-SELECT NULL FROM t1
+SELECT CAST(NULL AS BOOL) FROM t1
 ------ end
 
 ------ Test: make empty seq
@@ -903,7 +907,7 @@ SELECT CAST([] AS ARRAY<INT>) AS value FROM t1
 ------ end
 
 ------ Test: make empty tuple
-SELECT NULL FROM t1
+SELECT CAST(NULL AS BOOL) FROM t1
 ------ end
 
 ------ Test: make map
@@ -1015,11 +1019,11 @@ SELECT (SELECT c2.value FROM unnest(CASE WHEN (array_length([struct(t1._1 AS _1,
 ------ end
 
 ------ Test: match-case all cases sealed trait
-SELECT CASE WHEN (t1.b IS NOT NULL) THEN t1.b.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(error('Unknown case') AS INT) END AS value FROM t1
+SELECT CASE WHEN (t1.b IS NOT NULL) THEN t1.b.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(error('Unknown case') AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: match-case all cases string enum
-SELECT CASE WHEN (CASE WHEN (t1.value = 'b') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN 'B' WHEN (CASE WHEN (t1.value = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN 'A' ELSE CAST(error('Unknown case') AS STRING) END AS value FROM t1
+SELECT CASE WHEN (CASE WHEN (t1.value = 'b') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN 'B' WHEN (CASE WHEN (t1.value = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN 'A' ELSE CAST(error('Unknown case') AS STRING) END AS value FROM t1
 ------ end
 
 ------ Test: match-case only otherwise
@@ -1027,11 +1031,11 @@ SELECT CAST(99 AS INT) AS value FROM t1
 ------ end
 
 ------ Test: match-case only when cases
-SELECT CASE WHEN (t1.d IS NOT NULL) THEN t1.d.i WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'b') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(2 AS INT) WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(error('Unknown case') AS INT) END AS value FROM t1
+SELECT CASE WHEN (t1.d IS NOT NULL) THEN t1.d.i WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'b') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(2 AS INT) WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(error('Unknown case') AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: match-case when cases + otherwise
-SELECT CASE WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(NULL AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(99 AS INT) END AS value FROM t1
+SELECT CASE WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(99 AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: max

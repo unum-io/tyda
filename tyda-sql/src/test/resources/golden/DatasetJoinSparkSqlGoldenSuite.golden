@@ -83,7 +83,7 @@ SELECT named_struct('_1', t1._1, '_2', t1._2) AS _1, t0.value AS _2 FROM t1 LEFT
 ------ end
 
 ------ Test: leftOuterJoin singleton
-SELECT t1.value AS _1, t0.value AS _2 FROM t1 LEFT JOIN (SELECT named_struct('the cake is a lie 🎂', NULL) AS value FROM t2) AS t0 ON TRUE
+SELECT t1.value AS _1, t0.value AS _2 FROM t1 LEFT JOIN (SELECT named_struct('the cake is a lie 🎂', CAST(NULL AS void)) AS value FROM t2) AS t0 ON TRUE
 ------ end
 
 ------ Test: pair fullOuterJoin

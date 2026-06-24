@@ -541,7 +541,7 @@ private final case class SelectBuilder[T, R](
             SqlExpr.As(SqlExpr.Case(Seq((condition = nonEmpty, result = sqlAgg))), "value")
           )
           .map(NonEmpty[Seq](_))
-      case FinalSelect.Empty() => Right(NonEmpty[Seq](SqlExpr.LiteralNull))
+      case FinalSelect.Empty() => Right(NonEmpty[Seq](emptyProductFieldNull(args.dialect)))
     }
     for {
       select <- maybeSelect

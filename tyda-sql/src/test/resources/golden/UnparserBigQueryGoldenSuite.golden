@@ -95,7 +95,7 @@ SELECT (t0.value = 'second') AS value FROM (SELECT 'first' AS value) AS t0
 ------ end
 
 ------ Test: literal singleton
-SELECT NULL AS `the cake is a lie 🎂`
+SELECT CAST(NULL AS BOOL) AS `the cake is a lie 🎂`
 ------ end
 
 ------ Test: make named struct

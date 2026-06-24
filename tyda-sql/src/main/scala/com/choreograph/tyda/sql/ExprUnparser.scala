@@ -803,7 +803,7 @@ private def makeStruct(names: Seq[String], fields: Seq[SqlExpr], dialect: SqlDia
       if names.length == 0 then {
         // Empty structs are generally poorly supported, so we create a dummy fields instead
         // In the long run we should probably disallow codec for empty structs.
-        SqlExpr.Function(name, Seq(SqlExpr.LiteralString(Forbidden.column), SqlExpr.LiteralNull))
+        SqlExpr.Function(name, Seq(SqlExpr.LiteralString(Forbidden.column), emptyProductFieldNull(dialect)))
       } else {
         val nameExprs = names.map(n => SqlExpr.LiteralString(n))
         val args = nameExprs.zip(fields).flatMap { case (n, e) => Seq(n, e) }
@@ -813,7 +813,7 @@ private def makeStruct(names: Seq[String], fields: Seq[SqlExpr], dialect: SqlDia
       if names.length == 0 then {
         // Empty structs are generally poorly supported, so we create a dummy fields instead
         // In the long run we should probably disallow codec for empty structs.
-        SqlExpr.Function(name, Seq(SqlExpr.As(SqlExpr.LiteralNull, Forbidden.column)))
+        SqlExpr.Function(name, Seq(SqlExpr.As(emptyProductFieldNull(dialect), Forbidden.column)))
       } else {
         val args = fields.zip(names).map { case (e, n) => SqlExpr.As(e, n) }
         SqlExpr.Function(name, args)
@@ -938,7 +938,7 @@ private def literalProductToFields[T](
       (acc, f, elem) => acc :+ exprToSqlExpr(ExprNode.Literal.create(elem, f.codec), args)
     )
     .sequence
-    .map(NonEmpty.from(_).getOrElse(NonEmpty(SqlExpr.LiteralNull)))
+    .map(NonEmpty.from(_).getOrElse(NonEmpty(emptyProductFieldNull(args.dialect))))
 
 private def literalToSqlExpr[T](value: T, codec: Codec.Primitive[T], dialect: SqlDialect): SqlExpr = {
   def floatingPoint(value: Double, sqlType: DdlType, isFinite: Boolean): SqlExpr =
@@ -989,6 +989,9 @@ private def literalToSqlExpr[T](value: T, codec: Codec.Primitive[T], dialect: Sq
   }
 }
 
+def emptyProductFieldNull(dialect: SqlDialect): SqlExpr =
+  SqlExpr.Cast(SqlExpr.LiteralNull, DdlType.Primitive(dialect.ddl.emptyStructFieldType))
+
 /** Generate a dummy value for the given codec. This is used to create a empty
   * relation with the correct schema.
   *
@@ -1000,7 +1003,8 @@ private def dummyValue[T](
     args: UnparserArgs
 ): Result[(NonEmpty[Seq[SqlExpr]], NonEmpty[Seq[String]])] =
   codec match {
-    case Codec.Product(_, _, Some(_)) => Right((NonEmpty(SqlExpr.LiteralNull), NonEmpty(Forbidden.column)))
+    case Codec.Product(_, _, Some(_)) =>
+      Right((NonEmpty(emptyProductFieldNull(args.dialect)), NonEmpty(Forbidden.column)))
     case Codec.Product(_, fields, _) =>
       val names = NonEmpty.from(fields.mapConst[String]([t] => _.name))
       fields
