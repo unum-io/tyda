@@ -50,10 +50,14 @@ object ExprEvaluation {
     * of From.
     */
   private[tyda] def lambda[From, To](compiled: CompiledExpr[From, To]): From => To =
-    lambdaN(NonEmpty[Seq](compiled.arg), compiled.expr)
+    lambda(compiled, Limits())
+
+  private[tyda] def lambda[From, To](compiled: CompiledExpr[From, To], limits: Limits): From => To =
+    lambdaN(NonEmpty[Seq](compiled.arg), compiled.expr, limits)
 
   private[tyda] def lambda2[T1, T2, R](compiled: CompiledExpr2[T1, T2, R]): (T1, T2) => R =
-    (t1, t2) => lambdaN[(T1, T2), R](NonEmpty[Seq](compiled.arg1, compiled.arg2), compiled.expr)((t1, t2))
+    (t1, t2) =>
+      lambdaN[(T1, T2), R](NonEmpty[Seq](compiled.arg1, compiled.arg2), compiled.expr, Limits())((t1, t2))
 
   private def trimSpaces(str: String): String = {
     val first = str.indexWhere(_ != ' ')
@@ -66,7 +70,8 @@ object ExprEvaluation {
 
   private def lambdaN[From, To](
       args: NonEmpty[Seq[ExprNode.Reference[?]]],
-      expr: ExprNode[To]
+      expr: ExprNode[To],
+      limits: Limits
   ): From => To = {
     def binaryOp[To, R](lhs: ExprNode[To], rhs: ExprNode[To], op: (To, To) => R): From => R = {
       val lhsEval = impl(lhs)
@@ -118,7 +123,11 @@ object ExprEvaluation {
         case ExprNode.Range(start, end) =>
           val startEval = impl(start)
           val endEval = impl(end)
-          from => startEval(from) until endEval(from)
+          from =>
+            val start = startEval(from)
+            val end = endEval(from)
+            if end.toLong - start.toLong > limits.maxRange then throw LimitException("Hit range limit")
+            else start until end
         case ExprNode.MakeSeq(values, _) =>
           val valueLambdas = values.map(impl(_))
           from => valueLambdas.map(_(from))
@@ -128,7 +137,7 @@ object ExprEvaluation {
           from => lhsEval(from) ++ rhsEval(from)
         case ExprNode.MapSeq(seq, f) =>
           val seqEval = impl(seq)
-          val fEval = lambdaN(args :+ f.arg, f.expr)
+          val fEval = lambdaN(args :+ f.arg, f.expr, limits)
           // TYPE SAFETY: We know that when there are multiple arguments they will be wrapped in a Tuple.
           if args.size == 1 then from => seqEval(from).map(v => fEval((from, v)))
           else from => seqEval(from).map(v => fEval(from.asInstanceOf[Tuple] :* v))
@@ -137,7 +146,7 @@ object ExprEvaluation {
           from => seqEval(from).flatten
         case ExprNode.FilterSeq(seq, predicate) =>
           val seqEval = impl(seq)
-          val predEval = lambdaN(args :+ predicate.arg, predicate.expr)
+          val predEval = lambdaN(args :+ predicate.arg, predicate.expr, limits)
           // TYPE SAFETY: We know that when there are multiple arguments they will be wrapped in a Tuple.
           if args.size == 1 then from => seqEval(from).filter(v => predEval((from, v)))
           else from => seqEval(from).filter(v => predEval(from.asInstanceOf[Tuple] :* v))

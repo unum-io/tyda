@@ -22,7 +22,7 @@ object aggregates {
 
   /** AggregateExpr collecting all values into a [[Seq]].
     */
-  def collect[T]: Expr[T] => AggregateExpr[Seq[T]] = e => aggregate(e, Collect()(using e.codec))
+  def collect[T]: Expr[T] => AggregateExpr[Seq[T]] = e => aggregate(e, Collect(e.codec))
 
   /** AggregateExpr collecting all values of specified [[Expr]] into a [[Seq]].
     */
@@ -82,7 +82,7 @@ object aggregates {
 
   /** AggregateExpr returning the minium value using the given [[Comparable]].
     */
-  def min[T: Comparable](e: Expr[T]): AggregateExpr[T] = aggregate(e, Min[T](summon)(using e.codec))
+  def min[T: Comparable](e: Expr[T]): AggregateExpr[T] = aggregate(e, Min(summon, e.codec))
 
   /** AggregateExpr returning the minium of specified [[Expr]] value using the
     * given [[Comparable]].
@@ -92,7 +92,7 @@ object aggregates {
 
   /** AggregateExpr returning the maximum value using the given [[Comparable]].
     */
-  def max[T: Comparable](e: Expr[T]): AggregateExpr[T] = aggregate(e, Max[T](summon)(using e.codec))
+  def max[T: Comparable](e: Expr[T]): AggregateExpr[T] = aggregate(e, Max(summon, e.codec))
 
   /** AggregateExpr returning the maximum of specified [[Expr]] value using the
     * given [[Comparable]].
@@ -108,9 +108,7 @@ object aggregates {
   ): AggregateExpr[V] = {
     val valueExpr = AsExpr[I1, V](value)
     val byExpr = AsExpr[I2, O](by)
-    given Codec[V] = valueExpr.codec
-    given Codec[O] = byExpr.codec
-    aggregate(tuple((valueExpr, byExpr)), MinBy[V, O](Comparable[O]))
+    aggregate(tuple((valueExpr, byExpr)), MinBy(Comparable[O], valueExpr.codec, byExpr.codec))
   }
 
   /** AggregateExpr returning minimum value of the first [[Expr]] when ordered
@@ -128,9 +126,7 @@ object aggregates {
   ): AggregateExpr[V] = {
     val valueExpr = AsExpr[I1, V](value)
     val byExpr = AsExpr[I2, O](by)
-    given Codec[V] = valueExpr.codec
-    given Codec[O] = byExpr.codec
-    aggregate(tuple((valueExpr, byExpr)), MaxBy[V, O](Comparable[O]))
+    aggregate(tuple((valueExpr, byExpr)), MaxBy(Comparable[O], valueExpr.codec, byExpr.codec))
   }
 
   /** AggregateExpr returning maximum value of the first [[Expr]] when ordered
@@ -142,14 +138,14 @@ object aggregates {
 
   /** Aggregate from a binary function.
     */
-  def reduce[T](f: (T, T) => T): Expr[T] => AggregateExpr[T] = e => aggregate(e, Reduce(f)(using e.codec))
+  def reduce[T](f: (T, T) => T): Expr[T] => AggregateExpr[T] = e => aggregate(e, Reduce(f, e.codec))
 
   /** AggregateExpr returning the sum of the values.
     *
     * For all details on the sum aggregation, see [[sum]].
     */
   def sum[T: SumMagnet as magnet](e: Expr[T]): AggregateExpr[magnet.Result] =
-    aggregate(e, Sum(summon)(using magnet.codec))
+    aggregate(e, Sum(summon, magnet.codec))
 
   /** AggregateExpr returning the sum of specified [[Expr]].
     *

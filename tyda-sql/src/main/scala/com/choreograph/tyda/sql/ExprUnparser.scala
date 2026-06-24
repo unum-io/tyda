@@ -361,7 +361,8 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
               finish <- lambda(asFold.finish, args)
             } yield SqlExpr.Function(aggregate, Seq(arr, initial, merge, finish))
         }
-      case ExprNode.RaiseError(msg, _) => inner(msg).map(m => SqlExpr.Function(dialect.errorFunction, Seq(m)))
+      case ExprNode.RaiseError(msg, codec) =>
+        inner(msg).map(m => SqlExpr.Function(dialect.errorFunction, Seq(m))).map(cast(_, codec, dialect))
       case ExprNode.Cases(whenThenExpr, whenThenExprs, elseExpr) => for {
           whensSql <- (whenThenExpr +: whenThenExprs)
             .map { branch =>
@@ -892,7 +893,7 @@ private def primitiveAggregate[T: Codec](
     case PrimitiveAggregate.Count() => simple("count")
     case PrimitiveAggregate.BoolAnd() => simple(dialect.boolAndFunction)
     case PrimitiveAggregate.BoolOr() => simple(dialect.boolOrFunction)
-    case agg @ (PrimitiveAggregate.Min(_)) if isFloatingPoint(Codec[T]) =>
+    case agg @ (PrimitiveAggregate.Min(_, _)) if isFloatingPoint(Codec[T]) =>
       val function = "min"
       dialect.floatingAggregate match {
         case SqlDialect.FloatingAggregate.NaNIsLargest => simple(function)
@@ -902,20 +903,20 @@ private def primitiveAggregate[T: Codec](
             SqlExpr.Function(function, Seq(SqlExpr.Case(Seq((condition = SqlExpr.not(isNan), result = arg)))))
           Right(coalesce(minWithoutNan, literalToSqlExpr(Float.NaN, Codec.Float, dialect)))
       }
-    case PrimitiveAggregate.Max(_) => simple("max")
-    case PrimitiveAggregate.Min(_) => simple("min")
-    case PrimitiveAggregate.MaxBy(_) => binaryAgg("max_by")
-    case PrimitiveAggregate.MinBy(_) => binaryAgg("min_by")
-    case PrimitiveAggregate.Sum(CompatibleSum()) => simple("sum")
-    case PrimitiveAggregate.Sum(magnet) =>
+    case PrimitiveAggregate.Max(_, _) => simple("max")
+    case PrimitiveAggregate.Min(_, _) => simple("min")
+    case PrimitiveAggregate.MaxBy(_, _, _) => binaryAgg("max_by")
+    case PrimitiveAggregate.MinBy(_, _, _) => binaryAgg("min_by")
+    case PrimitiveAggregate.Sum(CompatibleSum(), _) => simple("sum")
+    case PrimitiveAggregate.Sum(magnet, _) =>
       Left(DatasetToSqlError.RequiresUdfCapability(s"Sum uses custom $magnet"))
-    case PrimitiveAggregate.Sum(CompatibleNumeric()) => simple("sum")
+    case PrimitiveAggregate.Sum(CompatibleNumeric(), _) => simple("sum")
     case PrimitiveAggregate.CountSome() => simple("count")
-    case PrimitiveAggregate.Collect() =>
+    case PrimitiveAggregate.Collect(_) =>
       if shouldWrapArrayElement(Codec[T], dialect.ddl) then
         simpleAggregate(dialect.collectFunction, wrapArrayElement(arg, dialect))
       else simple(dialect.collectFunction)
-    case PrimitiveAggregate.Reduce(_) =>
+    case PrimitiveAggregate.Reduce(_, _) =>
       Left(DatasetToSqlError.RequiresUdfCapability("Reduce is not supported on SQL"))
   }
 }
