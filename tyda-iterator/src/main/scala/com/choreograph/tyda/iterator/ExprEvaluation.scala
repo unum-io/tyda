@@ -46,9 +46,6 @@ object ExprEvaluation {
   def lambda2[T1: Codec, T2: Codec, R](f: (Expr[T1], Expr[T2]) => Expr[R]): (T1, T2) => R =
     lambda2(CompiledExpr2(f))
 
-  final case class Limits(maxRange: Int = Int.MaxValue)
-  final case class LimitException(msg: String) extends Exception
-
   /** Create a lambda that can be used to evaluate a Expr[To] on actual values
     * of From.
     */

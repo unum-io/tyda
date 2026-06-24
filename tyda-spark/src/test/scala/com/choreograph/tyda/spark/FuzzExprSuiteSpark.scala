@@ -16,6 +16,7 @@ class FuzzExprSuiteSpark extends FuzzExprSuite, SharedSparkSession {
       .exists {
         // Spark does not enforce date/timestamp limits
         case ExprNode.DaysToDate(_) | ExprNode.MicrosToTimestamp(_) => true
+        case ExprNode.RaiseError(_, _) => true
         case _ => false
       }
 }

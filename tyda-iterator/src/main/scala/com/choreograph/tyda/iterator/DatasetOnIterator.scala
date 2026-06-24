@@ -33,55 +33,58 @@ object DatasetOnIterator {
       case Dataset.Action.Write(input, path, Format.Json) => writeJsonToPath(input, path, input.codec)
     }
 
-  def apply[T](ds: Dataset[T]): Iterator[T] =
-    ds match {
-      case Dataset.ReadPath(path, format, false, filenameGlobFilter, codec) =>
-        readFromPath(path, filenameGlobFilter, format)(using codec)
-      case Dataset.ReadPathWithHivePartitions(
-            basePath,
-            path,
-            format,
-            filenameGlobFilter,
-            partitionCodec,
-            modelCodec
-          ) =>
-        readWithHivePartitions(basePath, path, filenameGlobFilter, format)(using partitionCodec, modelCodec)
-      case Dataset.ReadPartitionsPaths(path, codec) =>
-        val hadoopPath = new Path(path)
-        val conf = new Configuration()
-        val fs = hadoopPath.getFileSystem(conf)
-        val partitions = Option(fs.globStatus(hadoopPath))
-          .iterator
-          .flatten
-          .filter(_.isDirectory)
-          .map(_.getPath.toString)
-        val parser = HivePartitionParser.makeParser(using codec)
-        partitions.map(parser)
-      case _: (Dataset.Read[?] | Dataset.ReadWithMetadata[?] | Dataset.ReadTablePartitionsPaths[?]) =>
-        throw new NotImplementedError(
-          "DatasetOnIterator currently only has limited support for read operations. Only Parquet format is partly supported."
-        )
-      case Dataset.FromSeq(values, _) => values.iterator
-      case Dataset.Filter(input, p) => apply(input).filter(lambda(p))
-      case Dataset.Select1(input, compiled) => compiled match {
-          case c: CompiledExpr[?, ?] => apply(input).map(lambda(c))
-          case c: CompiledExplodeExpr[?, ?] => apply(input).flatMap(lambda(c.asCompiledExpr))
-        }
-      case Dataset.SelectN(input, exprs) => selectN(apply(input), exprs)
-      case Dataset.MapPartitions(input, f, _) => f(apply(input))
-      case Dataset.Distinct(input) => apply(input).distinct
-      case Dataset.Join(left, right, p) => JoinSelection.join(apply(left), apply(right), p)
-      case Dataset.LeftOuterJoin(left, right, p) => JoinSelection.leftOuterJoin(apply(left), apply(right), p)
-      case Dataset.FullOuterJoin(left, right, p) => JoinSelection.fullOuterJoin(apply(left), apply(right), p)
-      case Dataset.LeftAntiJoin(left, right, p) => JoinSelection.leftAntiJoin(apply(left), apply(right), p)
-      case Dataset.Aggregate(input, aggregateExpr) =>
-        Iterator.single(aggregate(apply(input), aggregator(aggregateExpr)))
-      case Dataset.GroupedAggregate(input, keyExpr, aggregateExpr) =>
-        groupedAggregate(apply(input), lambda(keyExpr), aggregator(aggregateExpr))
-      case Dataset.Union(left, right) => apply(left) ++ apply(right)
-      case Dataset.Cache(input) => apply(input).iterator
-      case Dataset.Limit(input, n) => apply(input).take(n)
-    }
+  def apply[T](ds: Dataset[T], limits: Limits = Limits()): Iterator[T] = {
+    def impl[A](ds: Dataset[A]): Iterator[A] =
+      ds match {
+        case Dataset.ReadPath(path, format, false, filenameGlobFilter, codec) =>
+          readFromPath(path, filenameGlobFilter, format)(using codec)
+        case Dataset.ReadPathWithHivePartitions(
+              basePath,
+              path,
+              format,
+              filenameGlobFilter,
+              partitionCodec,
+              modelCodec
+            ) =>
+          readWithHivePartitions(basePath, path, filenameGlobFilter, format)(using partitionCodec, modelCodec)
+        case Dataset.ReadPartitionsPaths(path, codec) =>
+          val hadoopPath = new Path(path)
+          val conf = new Configuration()
+          val fs = hadoopPath.getFileSystem(conf)
+          val partitions = Option(fs.globStatus(hadoopPath))
+            .iterator
+            .flatten
+            .filter(_.isDirectory)
+            .map(_.getPath.toString)
+          val parser = HivePartitionParser.makeParser(using codec)
+          partitions.map(parser)
+        case _: (Dataset.Read[?] | Dataset.ReadWithMetadata[?] | Dataset.ReadTablePartitionsPaths[?]) =>
+          throw new NotImplementedError(
+            "DatasetOnIterator currently only has limited support for read operations. Only Parquet format is partly supported."
+          )
+        case Dataset.FromSeq(values, _) => values.iterator
+        case Dataset.Filter(input, p) => impl(input).filter(lambda(p, limits))
+        case Dataset.Select1(input, compiled) => compiled match {
+            case c: CompiledExpr[?, ?] => impl(input).map(lambda(c, limits))
+            case c: CompiledExplodeExpr[?, ?] => impl(input).flatMap(lambda(c.asCompiledExpr))
+          }
+        case Dataset.SelectN(input, exprs) => selectN(impl(input), exprs)
+        case Dataset.MapPartitions(input, f, _) => f(impl(input))
+        case Dataset.Distinct(input) => impl(input).distinct
+        case Dataset.Join(left, right, p) => JoinSelection.join(impl(left), impl(right), p)
+        case Dataset.LeftOuterJoin(left, right, p) => JoinSelection.leftOuterJoin(impl(left), impl(right), p)
+        case Dataset.FullOuterJoin(left, right, p) => JoinSelection.fullOuterJoin(impl(left), impl(right), p)
+        case Dataset.LeftAntiJoin(left, right, p) => JoinSelection.leftAntiJoin(impl(left), impl(right), p)
+        case Dataset.Aggregate(input, aggregateExpr) =>
+          Iterator.single(aggregate(impl(input), aggregator(aggregateExpr)))
+        case Dataset.GroupedAggregate(input, keyExpr, aggregateExpr) =>
+          groupedAggregate(impl(input), lambda(keyExpr), aggregator(aggregateExpr))
+        case Dataset.Union(left, right) => impl(left) ++ impl(right)
+        case Dataset.Cache(input) => impl(input).iterator
+        case Dataset.Limit(input, n) => impl(input).take(n)
+      }
+    impl(ds)
+  }
 
   private def selectN[T, R <: Tuple](
       input: Iterator[T],

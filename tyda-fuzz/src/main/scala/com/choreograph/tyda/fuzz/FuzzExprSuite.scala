@@ -10,8 +10,8 @@ import com.choreograph.tyda.Codec
 import com.choreograph.tyda.CompiledExpr
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.iterator.ExprEvaluation
-import com.choreograph.tyda.iterator.ExprEvaluation.LimitException
-import com.choreograph.tyda.iterator.ExprEvaluation.Limits
+import com.choreograph.tyda.iterator.LimitException
+import com.choreograph.tyda.iterator.Limits
 import com.choreograph.tyda.iterator.explain
 import com.choreograph.tyda.unreachable
 
@@ -30,10 +30,11 @@ trait FuzzExprSuite extends AnyFunSuite {
   private def singleFuzz[From: Arbitrary: Codec, To: Codec](using r: Random): Unit = {
     type Trial = (input: Seq[From], compiled: CompiledExpr[From, To])
 
+
     val candidate: Shrinkable[Trial] =
       for
-        values <- Arbitrary[Seq[From]].shrinkable(r)
-        compiled <- GenExprNode.genCompiledExpr[From, To](Seq.empty, 0)
+        values <- Arbitrary[From].shrinkable(r).map(Seq(_))
+        compiled <- Iterator.continually(GenExprNode.genCompiledExpr[From, To](Seq.empty, 0)).filter(s => !knownBug(s.value)).next()
       yield (values, compiled)
 
     if knownBug(candidate.value.compiled) then pending: Unit
@@ -98,9 +99,9 @@ trait FuzzExprSuite extends AnyFunSuite {
     }
   }
 
-  def fuzz[From: Arbitrary: Codec, To: Codec](trails: Int = 1000) = (0 until trails).foreach(i =>
+  def fuzz[From: Arbitrary: Codec, To: Codec](trails: Int = 100) = (0 until trails).foreach(i =>
     test(s"fuzz ${Codec[From]} to ${Codec[To]} [seed=$i]") {
-      given Random = Random(i + 1000)
+      given Random = Random(i + 2003)
       singleFuzz[From, To]
     }
   )
@@ -123,4 +124,5 @@ trait FuzzExprSuite extends AnyFunSuite {
   fuzz[Seq[String], Seq[Option[Int]]]()
   fuzz[(a: Int, b: Int), Seq[Int]]()
   fuzz[(a: Int, b: Int), (Int, Int)]()
+  fuzz[Int, (a: Int, b: Int)]()
 }

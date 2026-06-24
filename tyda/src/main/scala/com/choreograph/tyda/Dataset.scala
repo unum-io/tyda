@@ -978,6 +978,9 @@ object Dataset {
     private[tyda] def transformUpExprs(f: [t] => ExprNode[t] => StopOrContinue[ExprNode[t]]): Dataset[T] =
       exprApi.transformUp(ds, f)
 
+    private[tyda] def existsExpr(f: ExprNode[?] => Boolean): Boolean =
+      exprApi.exists(ds, [t] => f(_))
+
     /** Transform the all expression trees from the bottom up.
       *
       * For details see [[com.choreograph.tyda.TreeApi.transformUp]]
