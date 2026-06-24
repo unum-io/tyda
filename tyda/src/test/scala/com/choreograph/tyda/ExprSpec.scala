@@ -148,7 +148,25 @@ class ExprSpec extends AnyFunSuite {
     val lhs = r._1
     val rhs = r._2
     val expr = lhs + rhs
-    assert(expr.node == ExprNode.Add(AdditiveExpr[Int], Expr.unlift(lhs), Expr.unlift(rhs)))
+    assert(expr.node == ExprNode.Add(Num[Int], Expr.unlift(lhs), Expr.unlift(rhs)))
+  }
+
+  test("support subtract") {
+    val rNode = ExprNode.Reference[(Int, Int)]()
+    val r = Expr.lift(rNode)
+    val lhs = r._1
+    val rhs = r._2
+    val expr = lhs - rhs
+    assert(expr.node == ExprNode.Subtract(Num[Int], Expr.unlift(lhs), Expr.unlift(rhs)))
+  }
+
+  test("support multiply") {
+    val rNode = ExprNode.Reference[(Int, Int)]()
+    val r = Expr.lift(rNode)
+    val lhs = r._1
+    val rhs = r._2
+    val expr = lhs * rhs
+    assert(expr.node == ExprNode.Multiply(Num[Int], Expr.unlift(lhs), Expr.unlift(rhs)))
   }
 
   test("support quotient") {
@@ -157,7 +175,14 @@ class ExprSpec extends AnyFunSuite {
     val lhs = r._1
     val rhs = r._2
     val expr = lhs / rhs
-    assert(expr.node == ExprNode.Quotient(Integral[Int], Expr.unlift(lhs), Expr.unlift(rhs)))
+    assert(expr.node == ExprNode.Quotient(Num[Int], Expr.unlift(lhs), Expr.unlift(rhs)))
+  }
+
+  test("support negate") {
+    val rNode = ExprNode.Reference[Int]()
+    val r = Expr.lift(rNode)
+    val expr = -r
+    assert(expr.node == ExprNode.Negate(Num[Int], Expr.unlift(r)))
   }
 
   test("Expr.apply requires exact field match") {

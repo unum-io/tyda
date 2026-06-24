@@ -222,8 +222,13 @@ object ExprEvaluation {
             branches
               .collectFirst { case (whenEval, thenEval) if whenEval(from) => thenEval(from) }
               .getOrElse(elseEval(from))
-        case ExprNode.Add(additive, lhs, rhs) => binaryOp(lhs, rhs, additive.plus)
-        case ExprNode.Quotient(integral, lhs, rhs) => binaryOp(lhs, rhs, integral.quot)
+        case ExprNode.Add(num, lhs, rhs) => binaryOp(lhs, rhs, num.plus)
+        case ExprNode.Subtract(num, lhs, rhs) => binaryOp(lhs, rhs, num.minus)
+        case ExprNode.Multiply(num, lhs, rhs) => binaryOp(lhs, rhs, num.times)
+        case ExprNode.Quotient(num, lhs, rhs) => binaryOp(lhs, rhs, num.quot)
+        case ExprNode.Negate(num, operand) =>
+          val eval = impl(operand)
+          from => num.negate(eval(from))
         case ExprNode.ToRepr(inner, Codec.FromInjection(injection, _)) =>
           val innerEval = impl(inner)
           from => injection(innerEval(from))

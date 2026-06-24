@@ -670,8 +670,20 @@ SELECT CASE WHEN (CASE WHEN ((from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 
 SELECT CAST(div(t1.value, CAST(0 AS INT)) AS INT) AS value FROM t1
 ------ end
 
+------ Test: fail on int multiply overflow
+SELECT (t1.value * CAST(2147483647 AS INT)) AS value FROM t1
+------ end
+
+------ Test: fail on int negate overflow
+SELECT (- CAST(-2147483648 AS INT)) AS value FROM t1
+------ end
+
 ------ Test: fail on int overflow
 SELECT (t1.value + CAST(2147483647 AS INT)) AS value FROM t1
+------ end
+
+------ Test: fail on int subtract overflow
+SELECT (t1.value - CAST(2147483647 AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: flatMap Option
@@ -1030,12 +1042,28 @@ SELECT CASE WHEN (t1._1 < t1._2) THEN t1._2 ELSE t1._1 END AS value FROM t1
 SELECT CASE WHEN (t1._1 < t1._2) THEN t1._1 ELSE t1._2 END AS value FROM t1
 ------ end
 
+------ Test: multiply two int numbers
+SELECT (t1._1 * t1._2) AS value FROM t1
+------ end
+
+------ Test: multiply two numbers
+SELECT (t1._1 * t1._2) AS value FROM t1
+------ end
+
 ------ Test: named tuple concat
 SELECT t1._1.a AS a, t1._1.b AS b, t1._2.c AS c, t1._2.d AS d FROM t1
 ------ end
 
 ------ Test: named tuple concat literal
 SELECT t1.a AS a, t1.b AS b, 'abc' AS c, CAST(2 AS BIGINT) AS d FROM t1
+------ end
+
+------ Test: negate a number
+SELECT (- t1.value) AS value FROM t1
+------ end
+
+------ Test: negate an int
+SELECT (- t1.value) AS value FROM t1
 ------ end
 
 ------ Test: nested Option
@@ -1240,6 +1268,14 @@ SELECT startswith(t1._1, t1._2) AS value FROM t1
 
 ------ Test: string startsWith literal
 SELECT startswith(t1._1, 'foo') AS value FROM t1
+------ end
+
+------ Test: subtract two int numbers
+SELECT (t1._1 - t1._2) AS value FROM t1
+------ end
+
+------ Test: subtract two numbers
+SELECT (t1._1 - t1._2) AS value FROM t1
 ------ end
 
 ------ Test: support field names that are SQL keywords

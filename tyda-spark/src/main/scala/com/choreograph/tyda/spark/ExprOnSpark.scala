@@ -42,6 +42,7 @@ import com.choreograph.tyda.CompiledExpr2
 import com.choreograph.tyda.Errors
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.Forbidden
+import com.choreograph.tyda.Num
 import com.choreograph.tyda.rewrite.ArrayCodec
 import com.choreograph.tyda.rewrite.IsNone
 import com.choreograph.tyda.rewrite.Nullable
@@ -50,7 +51,6 @@ import com.choreograph.tyda.rewrite.SparkJsonCompatability
 import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.shapeless3extras.tupleInstances
 import com.choreograph.tyda.spark.CodecToCatalystType.catalystType
-import com.choreograph.tyda.spark.PrimitiveAggregateOnSpark.CompatibleIntegral
 import com.choreograph.tyda.unreachable
 
 private[spark] object ExprOnSpark {
@@ -254,11 +254,13 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
         val adjustedIdx =
           when(idx >= lit(0), idx + lit(1)).otherwise(raise_error(lit("Negative array index not supported")))
         call_function("element_at", convert(array), adjustedIdx)
-      case ExprNode.Add(additive, lhs, rhs) => convert(lhs) + convert(rhs)
-      case ExprNode.Quotient(CompatibleIntegral(), lhs, rhs) =>
-        call_function("div", convert(lhs), convert(rhs)).cast(catalystType(expr.codec))
-      case ExprNode.Quotient(integral, lhs, rhs) =>
-        createUdf(integral.quot, convert(lhs), convert(rhs), s"$integral.quot")(using lhs.codec, lhs.codec)
+      case ExprNode.Add(_, lhs, rhs) => convert(lhs) + convert(rhs)
+      case ExprNode.Subtract(_, lhs, rhs) => convert(lhs) - convert(rhs)
+      case ExprNode.Multiply(_, lhs, rhs) => convert(lhs) * convert(rhs)
+      case ExprNode.Quotient(_: Num.Integral[?], lhs, rhs) => call_function("div", convert(lhs), convert(rhs))
+          .cast(catalystType(expr.codec))
+      case ExprNode.Quotient(_, lhs, rhs) => convert(lhs) / convert(rhs)
+      case ExprNode.Negate(_, operand) => -convert(operand)
       case ExprNode.Cast(from, canCast) => convert(from).cast(catalystType(expr.codec))
       case ExprNode.TryCast(from, canTryCast) =>
         val casted = tryCast(convert(from), expr.codec)

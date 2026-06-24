@@ -791,6 +791,68 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
+    given Arbitrary[Long] = Arbitrary.int.map(_.toLong)
+    testHasSameBehavior[(Long, Long), Long]("subtract two numbers", t => t._1 - t._2, (lhs, rhs) => lhs - rhs)
+  }
+
+  {
+    given Arbitrary[Int] = Arbitrary.short.map(_.toInt)
+    testHasSameBehavior[(Int, Int), Int](
+      "subtract two int numbers",
+      t => t._1 - t._2,
+      (lhs, rhs) => lhs - rhs
+    )
+  }
+
+  {
+    given Arbitrary[Int] = Arbitrary.int.filter(_ < -1)
+    testFailure[Int, Int](
+      "fail on int subtract overflow",
+      _ - Expr.lit(Int.MaxValue),
+      "(overflow)|(out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Long] = Arbitrary.short.map(_.toLong)
+    testHasSameBehavior[(Long, Long), Long]("multiply two numbers", t => t._1 * t._2, (lhs, rhs) => lhs * rhs)
+  }
+
+  {
+    given Arbitrary[Int] = Arbitrary.short.map(_.toInt)
+    testHasSameBehavior[(Int, Int), Int](
+      "multiply two int numbers",
+      t => t._1 * t._2,
+      (lhs, rhs) => lhs * rhs
+    )
+  }
+
+  {
+    given Arbitrary[Int] = Arbitrary.int.filter(_ > 1)
+    testFailure[Int, Int](
+      "fail on int multiply overflow",
+      _ * Expr.lit(Int.MaxValue),
+      "(overflow)|(out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Long] = Arbitrary.int.map(_.toLong)
+    testHasSameBehavior[Long, Long]("negate a number", e => -e, n => -n)
+  }
+
+  {
+    given Arbitrary[Int] = Arbitrary.short.map(_.toInt)
+    testHasSameBehavior[Int, Int]("negate an int", e => -e, n => -n)
+  }
+
+  testFailure[Int, Int](
+    "fail on int negate overflow",
+    _ => -Expr.lit(Int.MinValue),
+    "(overflow)|(out of range)".r
+  )
+
+  {
     given Arbitrary[Long] = Arbitrary.long.filter(_ != 0)
     testHasSameBehavior[(Long, Long), Long](
       "truncating divide first argument by second",

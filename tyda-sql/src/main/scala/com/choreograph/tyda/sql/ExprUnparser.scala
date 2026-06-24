@@ -17,6 +17,7 @@ import com.choreograph.tyda.ExprNode.KnownNotNull
 import com.choreograph.tyda.ExprNode.Or
 import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.NonEmpty
+import com.choreograph.tyda.Num
 import com.choreograph.tyda.PrimitiveAggregate
 import com.choreograph.tyda.SumMagnet
 import com.choreograph.tyda.TreeApi.Continue
@@ -444,15 +445,17 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
         }
         element.map(unwrapArrayElement(_, array.codec.element, dialect))
       case ExprNode.Add(_, lhs, rhs) => binaryOp("+", lhs, rhs)
-      case ExprNode.Quotient(CompatibleIntegral(), lhs, rhs) => for {
+      case ExprNode.Subtract(_, lhs, rhs) => binaryOp("-", lhs, rhs)
+      case ExprNode.Multiply(_, lhs, rhs) => binaryOp("*", lhs, rhs)
+      case ExprNode.Quotient(_: Num.Integral[?], lhs, rhs) => for {
           lhs <- inner(lhs)
           rhs <- inner(rhs)
         } yield SqlExpr.Cast(
           SqlExpr.Function("div", Seq(lhs, rhs)),
           ToDdl.toDdlType(expr.codec, dialect.ddl, true, true).tpe
         )
-      case ExprNode.Quotient(integral, _, _) =>
-        Left(DatasetToSqlError.RequiresUdfCapability(s"Quotient uses custom integral instance $integral"))
+      case ExprNode.Quotient(_, lhs, rhs) => binaryOp("/", lhs, rhs)
+      case ExprNode.Negate(_, operand) => inner(operand).map(e => SqlExpr.UnaryOp("-", e, isPrefix = true))
       case ExprNode.Cast(value, _) => inner(value).map(cast(_, expr.codec, dialect))
       case ExprNode.TryCast(value, canTryCast) =>
         inner(value).map(tryCast(_, value.codec, canTryCast.codec, dialect))

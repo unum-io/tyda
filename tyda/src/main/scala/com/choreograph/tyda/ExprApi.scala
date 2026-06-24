@@ -500,26 +500,47 @@ trait ExprApi[Expr[T]] {
       lift(ExprNode.LessThanOrEqual(Comparable[T], unlift(lhs), unlift(AsExpr(rhs))))
   }
 
-  extension [T: AdditiveExpr](lhs: Expr[T]) {
+  extension [T: Num](lhs: Expr[T]) {
 
-    /** Returns sum of two expressions.
+    /** Returns the negation of this expression.
       *
-      * Throws an exception if the operation leads to overflowing of integral
+      * Throws an exception if the operation leads to overflow for integral
+      * types (Int.MinValue and Long.MinValue have no representable negation).
+      */
+    def unary_- : Expr[T] = lift(ExprNode.Negate(Num[T], unlift(lhs)))
+
+    /** Returns the sum of two expressions.
+      *
+      * Throws an exception if the operation leads to overflow for integral
       * types.
       */
     infix def +[I: AsExpr.Of[T]](rhs: I): Expr[T] =
-      lift(ExprNode.Add(AdditiveExpr[T], unlift(lhs), unlift(AsExpr(rhs))))
-  }
+      lift(ExprNode.Add(Num[T], unlift(lhs), unlift(AsExpr(rhs))))
 
-  extension [T: Integral](lhs: Expr[T]) {
+    /** Returns the difference of two expressions.
+      *
+      * Throws an exception if the operation leads to overflow for integral
+      * types.
+      */
+    infix def -[I: AsExpr.Of[T]](rhs: I): Expr[T] =
+      lift(ExprNode.Subtract(Num[T], unlift(lhs), unlift(AsExpr(rhs))))
+
+    /** Returns the product of two expressions.
+      *
+      * Throws an exception if the operation leads to overflow for integral
+      * types.
+      */
+    infix def *[I: AsExpr.Of[T]](rhs: I): Expr[T] =
+      lift(ExprNode.Multiply(Num[T], unlift(lhs), unlift(AsExpr(rhs))))
 
     /** Returns the result of truncating division of the left operand by the
       * right operand.
       *
-      * Throws an exception if the divisor is zero.
+      * For floating point types this is true division. Throws an exception if
+      * the divisor is zero for integral types.
       */
     infix def /[I: AsExpr.Of[T]](rhs: I): Expr[T] =
-      lift(ExprNode.Quotient(Integral[T], unlift(lhs), unlift(AsExpr(rhs))))
+      lift(ExprNode.Quotient(Num[T], unlift(lhs), unlift(AsExpr(rhs))))
 
   }
 
