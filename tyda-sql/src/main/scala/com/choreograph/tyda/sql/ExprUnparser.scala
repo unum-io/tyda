@@ -989,11 +989,11 @@ private def literalToSqlExpr[T](value: T, codec: Codec.Primitive[T], dialect: Sq
   }
 }
 
-def typedNull(tpe: DdlType): SqlExpr =
+private def typedNull(tpe: DdlType): SqlExpr =
   // We use scalafix to force use of this helper when creating nulls.
   SqlExpr.Cast(SqlExpr.LiteralNull, tpe) // scalafix:ok Disallowed.Method
 
-def emptyProductFieldNull(dialect: SqlDialect): SqlExpr =
+private def emptyProductFieldNull(dialect: SqlDialect): SqlExpr =
   typedNull(DdlType.Primitive(dialect.ddl.emptyStructFieldType))
 
 /** Generate a dummy value for the given codec. This is used to create a empty
