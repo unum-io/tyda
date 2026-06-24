@@ -11,7 +11,7 @@ import com.choreograph.tyda.table.Partitioner.Creator
 import com.choreograph.tyda.table.Sink
 import com.choreograph.tyda.table.SourceSinkTraversal
 
-final case class TydaJobArgs(runner: RunnerArgs, validateAllSinksUsed: Boolean = true) derives ArgsParser
+final case class TydaJobArgs(runner: RunnerArgs) derives ArgsParser
 object TydaJobArgs {
   /* Currently we can not define this on RunnerArgs as ArgsParser is defined in tyda-table and runner args in
    * tyda. */
