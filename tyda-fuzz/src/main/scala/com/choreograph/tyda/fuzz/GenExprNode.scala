@@ -14,6 +14,7 @@ import com.choreograph.tyda.AdditiveExpr
 import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Arbitrary.Shrinkable
 import com.choreograph.tyda.Arbitrary.Shrinkable.toShrinkable
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.CanCast
 import com.choreograph.tyda.CanTryCast
 import com.choreograph.tyda.Codec
@@ -92,7 +93,7 @@ object GenExprNode {
           case Codec.TimestampMicros => Arbitrary[Timestamp].shrinkable(r)
           case Codec.DurationMicros => Arbitrary[Duration].shrinkable(r)
           case Codec.Date => Arbitrary[Date].shrinkable(r)
-          case Codec.Bytes => Arbitrary.bytes(8).shrinkable(r)
+          case Codec.Bytes => Arbitrary[Binary].shrinkable(r)
           case codec: Codec.Decimal[p, s] =>
             given Decimal.Valid[p, s] = codec.valid
             Arbitrary[Decimal[p, s]].shrinkable(r)

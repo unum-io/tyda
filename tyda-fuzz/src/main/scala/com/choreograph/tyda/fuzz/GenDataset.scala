@@ -8,6 +8,7 @@ import shapeless3.deriving.K0
 
 import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Arbitrary.Shrinkable
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.CompiledAggregateExpr
 import com.choreograph.tyda.CompiledExpr
@@ -44,7 +45,7 @@ object GenDataset {
       case Codec.Double => Arbitrary[Double]
       case Codec.String => Arbitrary[String]
       case Codec.Boolean => Arbitrary[Boolean]
-      case Codec.Bytes => Arbitrary.bytes(10)
+      case Codec.Bytes => Arbitrary[Binary]
       case Codec.TimestampMicros => Arbitrary[Timestamp]
       case Codec.DurationMicros => Arbitrary[Duration]
       case Codec.Date => Arbitrary[Date]
