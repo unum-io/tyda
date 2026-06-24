@@ -17,6 +17,7 @@ import com.choreograph.tyda.Format
 import com.choreograph.tyda.NumericsReadMode
 import com.choreograph.tyda.Runner
 import com.choreograph.tyda.RunnerArgs
+import com.choreograph.tyda.RunnerArgs.ValidateSchema
 import com.choreograph.tyda.TypeName
 import com.choreograph.tyda.iterator.IteratorRunner
 import com.choreograph.tyda.rewrite.ArrayCodec
@@ -51,7 +52,7 @@ class BigQueryTestRunner(args: RunnerArgs.BigQuery) extends BigQueryRunner(args)
 trait WithConfiguredBigQueryTestRunner {
   def runner: BigQueryTestRunner = {
     val projectId = BigQueryIntegrationTestEnvVariables.getProjectIdOrSkip
-    new BigQueryTestRunner(RunnerArgs.BigQuery(projectId, RunnerArgs.ValidateSchema.Off))
+    new BigQueryTestRunner(RunnerArgs.BigQuery(projectId, ValidateSchema.Strict))
   }
 }
 

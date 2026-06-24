@@ -508,6 +508,15 @@ object Dataset {
       private[tyda] def transformUp(f: [t] => Dataset[t] => StopOrContinue[Dataset[t]]): Action =
         datasetApi.transformUp(action, f)
 
+      /** Transform the all expression trees from the bottom up.
+        *
+        * For details see
+        * [[com.choreograph.tyda.TreeApi.transformAccumulateDown]]
+        */
+      private[tyda] def transformAccumulateDown[Acc](initial: Acc)(
+          f: [t] => (Acc, Dataset[t]) => Control[(Acc, Dataset[t])]
+      ): (Acc, Action) = datasetApi.transformAccumulateDown(initial, action)(f)
+
       /** Transform the all expression trees from the top down.
         *
         * For details see [[com.choreograph.tyda.TreeApi.transformDown]]
@@ -991,6 +1000,15 @@ object Dataset {
       */
     private[tyda] def transformDown(f: [t] => Dataset[t] => Control[Dataset[t]]): Dataset[T] =
       api.transformDown(ds, f)
+
+      /** Transform the all expression trees from the bottom up.
+        *
+        * For details see
+        * [[com.choreograph.tyda.TreeApi.transformAccumulateDown]]
+        */
+    private[tyda] def transformAccumulateDown[Acc](initial: Acc)(
+        f: [t] => (Acc, Dataset[t]) => Control[(Acc, Dataset[t])]
+    ): (Acc, Dataset[T]) = api.transformAccumulateDown(initial, ds)(f)
 
     /** Check if any node in the dataset tree satisfies the predicate `f`.
       *

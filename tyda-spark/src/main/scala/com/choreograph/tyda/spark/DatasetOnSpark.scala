@@ -41,6 +41,7 @@ import com.choreograph.tyda.TableLocation
 import com.choreograph.tyda.TreeApi.Continue
 import com.choreograph.tyda.TreeApi.Skip
 import com.choreograph.tyda.functions.some
+import com.choreograph.tyda.rewrite.Coercion
 import com.choreograph.tyda.rewrite.ExplodeOptionToFilter
 import com.choreograph.tyda.rewrite.ReplacementMap
 import com.choreograph.tyda.rewrite.ReplacementMap.Replacement
@@ -208,10 +209,23 @@ object DatasetOnSpark {
     def compute: IntermediateDataset[T] =
       ds match {
         case SparkJsonCompatability.AdaptReads(adapted) => toIntermediate(adapted)
-        case read @ Dataset.ReadTable(identifier, location, _, _) => readWithFlatPartitions(_ =>
-            location match {
+        case read @ Dataset.ReadTable(identifier, location, partitionCodec, modelCodec) =>
+          readWithFlatPartitions(schema =>
+            val df = location match {
               case TableLocation.Native => spark.read.table(identifier)
               case TableLocation.BigQuery => spark.read.format("bigquery").load(identifier)
+            }
+            val physical = StructTypeToCodec(df.schema)
+            // We use StructTypeToCodec also for the read schema so that the nullability matches Sparks
+            // version.
+            val read = StructTypeToCodec(schema).codec
+            Coercion(physical, read) match {
+              case Coercion.Exact => df
+              case Coercion.Widen(widen) =>
+                val cf = ColumnFactory.fromDF(df, physical.codec)
+                val coerced = ExprOnSpark.resolved(cf, CompiledExpr(widen)(using physical.codec))
+                selectAndUnpack(df, coerced)(using read).toDF
+              case Coercion.Incompatible(errors) => throw RuntimeException(errors.fmt)
             }
           )(using read.partitionCodec, read.modelCodec)
         case Dataset.ReadPath(path, format, false, filenameGlobFilter, _) =>
