@@ -37,4 +37,22 @@ class TypeSafetyCommentTest {
     val x = 1.asInstanceOf[String]
     // TYPE SAFETY: This is also safe
     x.asInstanceOf[String]
+
+  val xs: Any = List(1, 2, 3)
+
+  val _ = xs match {
+    case list: List[Int @unchecked] => list.sum // assert: TypeSafetyComment.missingComment
+    case _ => 0
+  }
+
+  // TYPE SAFETY: xs is known to be List[Int]
+  val _ = xs match {
+    case list: List[Int @unchecked] => list.sum
+    case _ => 0
+  }
+
+  val _ = xs match {
+    case list: List[Int @unchecked] => list.sum // TYPE SAFETY: xs is List[Int]
+    case _ => 0
+  }
 }

@@ -65,6 +65,8 @@ extension [T, F[_]](inst: K0.CoproductInstances[F, T]) {
 private[tyda] final case class WrappedProductInstances[F[_], T](value: K0.ProductInstances[F, T]) {
   override def equals(that: Any): Boolean =
     that match {
+      // TYPE SAFETY: This is probably not generally safe, it only being used inside Codec where we also check
+      // a ClassTag probably helps a bit. But we should prbably figure out something better.
       case that: WrappedProductInstances[F @unchecked, T @unchecked] => isEqual(value, that.value)
       case _ => false
     }
@@ -80,6 +82,8 @@ private[tyda] final case class WrappedProductInstances[F[_], T](value: K0.Produc
 private[tyda] final case class WrappedCoproductInstances[F[_], T](value: K0.CoproductInstances[F, T]) {
   override def equals(that: Any): Boolean =
     that match {
+      // TYPE SAFETY: This is probably not generally safe, it only being used inside Codec where we also check
+      // a ClassTag probably helps a bit. But we should prbably figure out something better.
       case that: WrappedCoproductInstances[F @unchecked, T @unchecked] => isEqual(value, that.value)
       case _ => false
     }

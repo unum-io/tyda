@@ -6,11 +6,12 @@ import scala.meta.*
 
 object TypeSafetyComment {
   private val asInstanceOfMatcher: SymbolMatcher = SymbolMatcher.normalized("scala.Any#asInstanceOf")
+  private val uncheckedMatcher: SymbolMatcher = SymbolMatcher.normalized("scala.unchecked")
 
   private def missingComment(pos: Position): Diagnostic =
     Diagnostic(
       "missingComment",
-      "Unsafe operation asInstanceOf requires comment containing a TYPE SAFETY: <explanation why it does not violate type safety>\n" +
+      "Unsafe operation requires comment containing a TYPE SAFETY: <explanation why it does not violate type safety>\n" +
         "Either refactor the code so the cast is not needed or add the comment.",
       pos
     )
@@ -31,7 +32,11 @@ object TypeSafetyComment {
 
   private def unsafeOperation(using SemanticDocument): PartialFunction[Tree, Tree] = {
     case t @ Term.Select(_, _) if asInstanceOfMatcher.matches(t.symbol) => t
+    case t: Pat.Typed if hasUncheckedAnnot(t) => t
   }
+
+  private def hasUncheckedAnnot(tree: Tree)(using SemanticDocument): Boolean =
+    tree.collect { case a: Mod.Annot if uncheckedMatcher.matches(a.init.tpe.symbol) => () }.nonEmpty
 
   /* When using Scala 3 optional braces syntax the first token of the block will be the actual code instead of
    * the opening brace. This means that when it starts with a comment it will be both a leading comment on the

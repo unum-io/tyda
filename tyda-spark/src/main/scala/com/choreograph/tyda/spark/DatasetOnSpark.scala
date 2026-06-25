@@ -260,9 +260,9 @@ object DatasetOnSpark {
         case Dataset.FromSeq(values, _) => IntermediateDataset(spark.createDataset(values))
         case Dataset.Filter(input, p) =>
           val dsInput = toIntermediate(input).toDataset
-          val filtered = p match {
-            case CompiledExpr(arg, ExprNode.Udf[T @unchecked, Boolean](ref, f, _)) if arg == ref =>
-              dsInput.filter(f)
+          val arg = p.arg
+          val filtered = p.expr match {
+            case ExprNode.Udf(`arg`, f, _) => dsInput.filter(f)
             case _ => dsInput.filter(ExprOnSpark.resolved(dsInput, p))
           }
           IntermediateDataset(filtered)
@@ -372,12 +372,15 @@ object DatasetOnSpark {
 
   private def select1[T, U: Codec](select1: Dataset.Select1[T, U])(using SparkSession): SparkDataset[U] = {
     val input = toIntermediate(select1.input)
+    val arg = select1.expr match {
+      case CompiledExpr(arg, _) => arg
+      case CompiledExplodeExpr(arg, _) => arg
+    }
     select1.expr match {
       /* Use map/flatMap for row level operations instead of UDFs as this allows Spark to potentially optimize
        * away serialization between operations. */
-      case CompiledExpr(arg, ExprNode.Udf[T @unchecked, U](ref, f, _)) if arg == ref => input.toDataset.map(f)
-      case CompiledExplodeExpr(arg, ExprNode.Udf[T @unchecked, Iterable[U]](ref, f, _)) if arg == ref =>
-        input.toDataset.flatMap(f)
+      case CompiledExpr(_, ExprNode.Udf(`arg`, f, _)) => input.toDataset.map(f)
+      case CompiledExplodeExpr(_, ExprNode.Udf(`arg`, f, _)) => input.toDataset.flatMap(f)
       case other =>
         val (df, cf) = input.toDataFrameAndColumnFactory
         val column = convertExplodeExpr(cf, other)

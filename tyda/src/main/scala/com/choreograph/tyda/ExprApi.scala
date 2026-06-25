@@ -633,6 +633,8 @@ trait ExprApi[Expr[T]] {
       val node = unlift(seq)
       node.codec match {
         case Codec.Seq(_) => node
+        /* TYPE SAFETY: Because of Seq being covariant the compiler can not prove this is correct. So maybe
+         * there are edge cases where this do not hold? */
         case it: Codec.Iterable[T @unchecked, C] => ExprNode.ToRepr(node, it)
         case unsupported => unreachable(s"Expected Iterable codec but got $unsupported")
       }
