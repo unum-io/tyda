@@ -898,6 +898,22 @@ SELECT CAST(NULL AS BOOL) FROM t1
 SELECT t1._1 AS _1, t1._2 AS _2 FROM t1
 ------ end
 
+------ Test: in exprs
+SELECT t1.value IN (CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)) AS value FROM t1
+------ end
+
+------ Test: in literals match
+SELECT t1.value IN (CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)) AS value FROM t1
+------ end
+
+------ Test: in literals no match
+SELECT t1.value IN (CAST(10 AS INT), CAST(20 AS INT), CAST(30 AS INT)) AS value FROM t1
+------ end
+
+------ Test: in strings
+SELECT t1.value IN ('foo', 'bar', 'baz') AS value FROM t1
+------ end
+
 ------ Test: isNaN for Double
 SELECT is_nan(t1.value) AS value FROM t1
 ------ end
@@ -1335,11 +1351,11 @@ SELECT (t1.value = TRUE) AS value FROM t1
 ------ end
 
 ------ Test: seq contains
-SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = TRUE) FROM unnest(t1.value) AS c0))) AS c1) AS value FROM t1
+SELECT TRUE IN (unnest(t1.value)) AS value FROM t1
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct
-SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = t1._2) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
+SELECT t1._2 IN (unnest(t1._1)) AS value FROM t1
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum
@@ -1347,7 +1363,7 @@ SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (((TRUE
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnumString
-SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = t1._2) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
+SELECT t1._2 IN (unnest(t1._1)) AS value FROM t1
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithOptionField
@@ -1355,11 +1371,11 @@ SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (TRUE A
 ------ end
 
 ------ Test: seq contains scala.Boolean
-SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = t1._2) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
+SELECT t1._2 IN (unnest(t1._1)) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["bool"], scala.Tuple1[scala.Boolean]]
-SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = t1._2) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
+SELECT t1._2 IN (unnest(t1._1)) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["seq"], scala.Tuple1[scala.collection.immutable.Seq[scala.Boolean]]]
@@ -1371,7 +1387,7 @@ SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT CASE WH
 ------ end
 
 ------ Test: seq contains scala.Option[scala.Boolean]
-SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 IS NOT DISTINCT FROM t1._2) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
+SELECT t1._2 IN (unnest(t1._1)) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.Option[scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]]
