@@ -5,7 +5,8 @@ import com.choreograph.tyda.ExprNode.WhenThen
 
 private[tyda] object NullIntolerant {
 
-  /** Check if expr will return null all subtrees of `arg are changed to `null`.
+  /** Check if expr will return null if all subtrees matching `arg` are changed
+    * to `null`
     *
     * This is based on interpreting ExprNode as the corresponding SQL semantics.
     */
