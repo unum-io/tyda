@@ -312,7 +312,9 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
               val outerName = args.aliasGen.column()
               val innerName = args.aliasGen.column()
               val outerFrom = From.Expr(SqlExpr.Function(unnest, Seq(arr)), outerName)
-              val innerFrom = From.Expr(SqlExpr.Function(unnest, Seq(SqlExpr.Ident(outerName))), innerName)
+              val unwrappedOuter =
+                unwrapArrayElement(SqlExpr.Ident(outerName), operand.codec.element, dialect)
+              val innerFrom = From.Expr(SqlExpr.Function(unnest, Seq(unwrappedOuter)), innerName)
               val joinFrom = From.Join(outerFrom, innerFrom, JoinType.Inner, None)
               val elem = unwrapArrayElement(SqlExpr.Ident(innerName), operand.codec.element.element, dialect)
               val query = Query.Select(NonEmpty(elem), joinFrom)
