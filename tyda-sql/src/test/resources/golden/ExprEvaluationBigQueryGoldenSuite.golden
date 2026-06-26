@@ -242,12 +242,24 @@ SELECT t1.c.i AS value FROM t1
 SELECT (t1._1 AND t1._2) AS value FROM t1
 ------ end
 
+------ Test: boolean and opt
+SELECT ((t1.value IS NOT NULL) AND (t1.value._1 OR t1.value._2)) AS value FROM t1
+------ end
+
+------ Test: boolean nested exists
+SELECT ((t1._1 IS NOT NULL) AND ((t1._2 IS NOT NULL) AND (t1._2 AND t1._1))) AS value FROM t1
+------ end
+
 ------ Test: boolean not and equals
 SELECT ((NOT t1._1) = (NOT t1._2)) AS value FROM t1
 ------ end
 
 ------ Test: boolean or
 SELECT (t1._1 OR t1._2) AS value FROM t1
+------ end
+
+------ Test: boolean or opt
+SELECT ((t1.value IS NOT NULL) AND (t1.value._1 OR t1.value._2)) AS value FROM t1
 ------ end
 
 ------ Test: bytes length

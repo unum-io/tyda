@@ -3,7 +3,7 @@ package com.choreograph.tyda.rewrite
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.ExprNode.WhenThen
 
-private[tyda] object NullIntollerant {
+private[tyda] object NullIntolerant {
 
   /** Check if expr will return null all subtrees of `arg are changed to `null`.
     *
@@ -82,7 +82,7 @@ private[tyda] object NullIntollerant {
         case ExprNode.Or(lhs, rhs) => inner(lhs) && inner(rhs)
         case ExprNode.And(lhs, rhs) => inner(lhs) || inner(rhs)
         case If(_, ifTrue, ifFalse) => inner(ifTrue) && inner(ifFalse)
-        case other => NullIntollerant(other, arg)
+        case other => NullIntolerant(other, arg)
       }
     inner(expr)
   }

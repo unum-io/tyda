@@ -11,36 +11,33 @@ private[tyda] object SimplifyOptionIf {
       case _ => None
     }
 
+  private object UselessTernary {
+
+    /** Matches a ternary expression if(opt is null, null, expr) if expr is a
+      * null-intolerant function of opt. In sql semantics, such an expression
+      * will always evaluate to just expr.
+      */
+    def unapply[U](expr: ExprNode[Option[U]]): Option[ExprNode[Option[U]]] =
+      expr match {
+        case If(IsNone(opt), ExprNode.None(_), body) if NullIntolerant(body, opt) => Some(body)
+        case _ => None
+      }
+  }
+
   private def simplifyMapOption[T](expr: ExprNode[Option[T]]): Option[ExprNode[Option[T]]] =
     expr match {
-      case MapOption(arg, body) if NullIntollerant(ExprNode.MakeSome(body), arg) =>
-        Some(ExprNode.MakeSome(body))
-      case FlatMapOption(arg, body) if NullIntollerant(body, arg) => Some(body)
+      case UselessTernary(simplified) => Some(simplified)
       case _ => None
     }
 
   private def simplifyExistsForAll(expr: ExprNode[Boolean]): Option[ExprNode[Boolean]] =
     expr match {
-      case ExistsOption(isNone, arg, body) if NullIntollerant.nullOrFalse(body, arg) =>
+      case ExistsOption(isNone, arg, body) if NullIntolerant.nullOrFalse(body, arg) =>
         Some(ExprNode.And(ExprNode.Not(isNone), body))
-      case ForallOption(isNone, arg, body) if NullIntollerant.nullOrFalse(body, arg) =>
+      case ForallOption(isNone, arg, body) if NullIntolerant.nullOrFalse(body, arg) =>
         Some(ExprNode.Or(isNone, body))
       case _ => None
     }
-
-  private object FlatMapOption {
-
-    /** Matches an ExprNode[Option[U]] that is created by flatMapping over an
-      * Option and extracts the argument and body of the flatMapping function.
-      */
-    def unapply[U](
-        expr: ExprNode[Option[U]]
-    ): Option[(arg: ExprNode.KnownNotNull[?], body: ExprNode[Option[U]])] =
-      expr match {
-        case If(IsNone(opt), ExprNode.None(_), body) => Some((ExprNode.KnownNotNull(opt), body))
-        case _ => None
-      }
-  }
 
   private object ExistsOption {
 

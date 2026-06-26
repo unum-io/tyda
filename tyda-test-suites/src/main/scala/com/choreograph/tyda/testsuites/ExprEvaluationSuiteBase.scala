@@ -160,6 +160,23 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testHasSameBehavior[(Int, Int), (Int, Int)]("identity tuple", identity, identity)
   testHasSameBehavior[(Boolean, Boolean), Boolean]("boolean and", t => t._1 && t._2, t => t._1 && t._2)
   testHasSameBehavior[(Boolean, Boolean), Boolean]("boolean or", t => t._1 || t._2, t => t._1 || t._2)
+  testHasSameBehavior[(Option[Boolean], Option[Boolean]), Boolean](
+    "boolean nested exists",
+    t => t._1.exists(v => t._2.exists(_ && v)),
+    t => t._1.exists(v => t._2.exists(_ && v))
+  )
+  testHasSameBehavior[Option[(Boolean, Boolean)], Boolean](
+    "boolean or opt",
+    t => t.exists(v => v._1 || v._2),
+    t => t.exists(v => v._1 || v._2)
+  )
+  testHasSameBehavior[Option[(Boolean, Boolean)], Boolean](
+    "boolean and opt",
+    t => t.exists(v => v._1 || v._2),
+    t => t.exists(v => v._1 || v._2)
+  )
+  // testHasSameBehavior[(Option[Boolean], Option[Boolean]), Option[Boolean]]("boolean or opt", t => t._1 ||
+  // t._2, t => t._1 || t._2)
   testHasSameBehavior[Binary, Int]("bytes length", _.length, _.length)
   testHasSameBehavior[(Boolean, Boolean), Boolean](
     "boolean not and equals",
