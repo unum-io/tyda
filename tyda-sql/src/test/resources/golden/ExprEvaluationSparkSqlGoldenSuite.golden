@@ -82,11 +82,27 @@ SELECT unix_micros(t1.value) AS value FROM t1
 SELECT timestamp_micros(unix_micros(t1.value)) AS value FROM t1
 ------ end
 
+------ Test: add two byte numbers
+SELECT (t1._1 + t1._2) AS value FROM t1
+------ end
+
+------ Test: add two double numbers
+SELECT (t1._1 + t1._2) AS value FROM t1
+------ end
+
+------ Test: add two float numbers
+SELECT (t1._1 + t1._2) AS value FROM t1
+------ end
+
 ------ Test: add two int numbers
 SELECT (t1._1 + t1._2) AS value FROM t1
 ------ end
 
 ------ Test: add two numbers
+SELECT (t1._1 + t1._2) AS value FROM t1
+------ end
+
+------ Test: add two short numbers
 SELECT (t1._1 + t1._2) AS value FROM t1
 ------ end
 
@@ -622,6 +638,14 @@ SELECT FALSE AS value FROM t1
 SELECT array_distinct(t1.value) AS value FROM t1
 ------ end
 
+------ Test: divide two double numbers
+SELECT CAST((t1._1 / t1._2) AS DOUBLE) AS value FROM t1
+------ end
+
+------ Test: divide two float numbers
+SELECT CAST((t1._1 / t1._2) AS FLOAT) AS value FROM t1
+------ end
+
 ------ Test: endsWith string
 SELECT endswith(t1._1, t1._2) AS value FROM t1
 ------ end
@@ -666,8 +690,36 @@ SELECT coalesce(t1.value, raise_error('should not happen')) AS value FROM t1
 SELECT CASE WHEN (CASE WHEN ((from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR ((from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NOT NULL) AND (CASE WHEN (NOT regexp(from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1, '\\p{Cc}')) THEN TRY_CAST(from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 AS INT) END IS NOT NULL))) THEN from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END IS NOT NULL) THEN named_struct('_1', CASE WHEN (NOT regexp(CASE WHEN ((from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR ((from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NOT NULL) AND (CASE WHEN (NOT regexp(from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1, '\\p{Cc}')) THEN TRY_CAST(from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 AS INT) END IS NOT NULL))) THEN from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1, '\\p{Cc}')) THEN TRY_CAST(CASE WHEN ((from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR ((from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NOT NULL) AND (CASE WHEN (NOT regexp(from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1, '\\p{Cc}')) THEN TRY_CAST(from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 AS INT) END IS NOT NULL))) THEN from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1 AS INT) END) END AS value FROM t1
 ------ end
 
+------ Test: fail on byte add overflow
+SELECT (t1.value + CAST(127 AS TINYINT)) AS value FROM t1
+------ end
+
+------ Test: fail on byte division by zero
+SELECT CAST(div(t1.value, CAST(0 AS TINYINT)) AS TINYINT) AS value FROM t1
+------ end
+
+------ Test: fail on byte multiply overflow
+SELECT (t1.value * CAST(127 AS TINYINT)) AS value FROM t1
+------ end
+
+------ Test: fail on byte negate overflow
+SELECT (- CAST(-128 AS TINYINT)) AS value FROM t1
+------ end
+
+------ Test: fail on byte subtract overflow
+SELECT (t1.value - CAST(127 AS TINYINT)) AS value FROM t1
+------ end
+
 ------ Test: fail on division by zero
 SELECT CAST(div(t1.value, CAST(0 AS INT)) AS INT) AS value FROM t1
+------ end
+
+------ Test: fail on double division by zero
+SELECT CAST((t1.value / CAST(0.0 AS DOUBLE)) AS DOUBLE) AS value FROM t1
+------ end
+
+------ Test: fail on float division by zero
+SELECT CAST((t1.value / CAST(0.0 AS FLOAT)) AS FLOAT) AS value FROM t1
 ------ end
 
 ------ Test: fail on int multiply overflow
@@ -684,6 +736,26 @@ SELECT (t1.value + CAST(2147483647 AS INT)) AS value FROM t1
 
 ------ Test: fail on int subtract overflow
 SELECT (t1.value - CAST(2147483647 AS INT)) AS value FROM t1
+------ end
+
+------ Test: fail on short add overflow
+SELECT (t1.value + CAST(32767 AS SMALLINT)) AS value FROM t1
+------ end
+
+------ Test: fail on short division by zero
+SELECT CAST(div(t1.value, CAST(0 AS SMALLINT)) AS SMALLINT) AS value FROM t1
+------ end
+
+------ Test: fail on short multiply overflow
+SELECT (t1.value * CAST(32767 AS SMALLINT)) AS value FROM t1
+------ end
+
+------ Test: fail on short negate overflow
+SELECT (- CAST(-32768 AS SMALLINT)) AS value FROM t1
+------ end
+
+------ Test: fail on short subtract overflow
+SELECT (t1.value - CAST(32767 AS SMALLINT)) AS value FROM t1
 ------ end
 
 ------ Test: flatMap Option
@@ -1042,11 +1114,27 @@ SELECT CASE WHEN (t1._1 < t1._2) THEN t1._2 ELSE t1._1 END AS value FROM t1
 SELECT CASE WHEN (t1._1 < t1._2) THEN t1._1 ELSE t1._2 END AS value FROM t1
 ------ end
 
+------ Test: multiply two byte numbers
+SELECT (t1._1 * t1._2) AS value FROM t1
+------ end
+
+------ Test: multiply two double numbers
+SELECT (t1._1 * t1._2) AS value FROM t1
+------ end
+
+------ Test: multiply two float numbers
+SELECT (t1._1 * t1._2) AS value FROM t1
+------ end
+
 ------ Test: multiply two int numbers
 SELECT (t1._1 * t1._2) AS value FROM t1
 ------ end
 
 ------ Test: multiply two numbers
+SELECT (t1._1 * t1._2) AS value FROM t1
+------ end
+
+------ Test: multiply two short numbers
 SELECT (t1._1 * t1._2) AS value FROM t1
 ------ end
 
@@ -1058,7 +1146,23 @@ SELECT t1._1.a AS a, t1._1.b AS b, t1._2.c AS c, t1._2.d AS d FROM t1
 SELECT t1.a AS a, t1.b AS b, 'abc' AS c, CAST(2 AS BIGINT) AS d FROM t1
 ------ end
 
+------ Test: negate a byte
+SELECT (- t1.value) AS value FROM t1
+------ end
+
+------ Test: negate a double
+SELECT (- t1.value) AS value FROM t1
+------ end
+
+------ Test: negate a float
+SELECT (- t1.value) AS value FROM t1
+------ end
+
 ------ Test: negate a number
+SELECT (- t1.value) AS value FROM t1
+------ end
+
+------ Test: negate a short
 SELECT (- t1.value) AS value FROM t1
 ------ end
 
@@ -1270,11 +1374,27 @@ SELECT startswith(t1._1, t1._2) AS value FROM t1
 SELECT startswith(t1._1, 'foo') AS value FROM t1
 ------ end
 
+------ Test: subtract two byte numbers
+SELECT (t1._1 - t1._2) AS value FROM t1
+------ end
+
+------ Test: subtract two double numbers
+SELECT (t1._1 - t1._2) AS value FROM t1
+------ end
+
+------ Test: subtract two float numbers
+SELECT (t1._1 - t1._2) AS value FROM t1
+------ end
+
 ------ Test: subtract two int numbers
 SELECT (t1._1 - t1._2) AS value FROM t1
 ------ end
 
 ------ Test: subtract two numbers
+SELECT (t1._1 - t1._2) AS value FROM t1
+------ end
+
+------ Test: subtract two short numbers
 SELECT (t1._1 - t1._2) AS value FROM t1
 ------ end
 
@@ -1356,6 +1476,14 @@ SELECT CAST(div(t1._1, t1._2) AS BIGINT) AS value FROM t1
 
 ------ Test: truncating divide first int argument by second
 SELECT CAST(div(t1._1, t1._2) AS INT) AS value FROM t1
+------ end
+
+------ Test: truncating divide two byte numbers
+SELECT CAST(div(t1._1, t1._2) AS TINYINT) AS value FROM t1
+------ end
+
+------ Test: truncating divide two short numbers
+SELECT CAST(div(t1._1, t1._2) AS SMALLINT) AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 1] to com.choreograph.tyda.Decimal$package.Decimal[19, 0]

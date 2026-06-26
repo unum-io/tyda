@@ -454,7 +454,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
           SqlExpr.Function("div", Seq(lhs, rhs)),
           ToDdl.toDdlType(expr.codec, dialect.ddl, true, true).tpe
         )
-      case ExprNode.Quotient(_, lhs, rhs) => binaryOp("/", lhs, rhs)
+      case ExprNode.Quotient(_, lhs, rhs) => binaryOp("/", lhs, rhs).map(cast(_, expr.codec, dialect))
       case ExprNode.Negate(_, operand) => inner(operand).map(e => SqlExpr.UnaryOp("-", e, isPrefix = true))
       case ExprNode.Cast(value, _) => inner(value).map(cast(_, expr.codec, dialect))
       case ExprNode.TryCast(value, canTryCast) =>

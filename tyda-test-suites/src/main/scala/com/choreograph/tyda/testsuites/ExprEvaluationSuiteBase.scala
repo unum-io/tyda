@@ -872,6 +872,238 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
 
   testFailure[Int, Int]("fail on division by zero", _ / lit(0), "by zero")
 
+  {
+    given Arbitrary[Short] = Arbitrary.between(-1000, 1000).map(_.toShort)
+    testHasSameBehavior[(Short, Short), Short](
+      "add two short numbers",
+      t => t._1 + t._2,
+      (lhs, rhs) => ((lhs + rhs).toShort)
+    )
+  }
+
+  {
+    given Arbitrary[Short] = Arbitrary.short.filter(_ > 0)
+    testFailure[Short, Short](
+      "fail on short add overflow",
+      _ + Expr.lit(Short.MaxValue),
+      "(overflow)|(out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Short] = Arbitrary.between(-1000, 1000).map(_.toShort)
+    testHasSameBehavior[(Short, Short), Short](
+      "subtract two short numbers",
+      t => t._1 - t._2,
+      (lhs, rhs) => ((lhs - rhs).toShort)
+    )
+  }
+
+  {
+    given Arbitrary[Short] = Arbitrary.short.filter(_ < -1)
+    testFailure[Short, Short](
+      "fail on short subtract overflow",
+      _ - Expr.lit(Short.MaxValue),
+      "(overflow)|(out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Short] = Arbitrary.between(-100, 100).map(_.toShort)
+    testHasSameBehavior[(Short, Short), Short](
+      "multiply two short numbers",
+      t => t._1 * t._2,
+      (lhs, rhs) => ((lhs * rhs).toShort)
+    )
+  }
+
+  {
+    given Arbitrary[Short] = Arbitrary.short.filter(_ > 1)
+    testFailure[Short, Short](
+      "fail on short multiply overflow",
+      _ * Expr.lit(Short.MaxValue),
+      "(overflow)|(out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Short] = Arbitrary.between(-1000, 1000).map(_.toShort).filter(_ != 0)
+    testHasSameBehavior[(Short, Short), Short](
+      "truncating divide two short numbers",
+      t => t._1 / t._2,
+      (lhs, rhs) => ((lhs / rhs).toShort)
+    )
+  }
+
+  testFailure[Short, Short]("fail on short division by zero", _ / lit(0.toShort), "by zero")
+
+  {
+    given Arbitrary[Short] = Arbitrary.between(-1000, 1000).map(_.toShort)
+    testHasSameBehavior[Short, Short]("negate a short", e => -e, n => ((-n).toShort))
+  }
+
+  testFailure[Short, Short](
+    "fail on short negate overflow",
+    _ => -Expr.lit(Short.MinValue),
+    "(overflow)|(out of range)".r
+  )
+
+  {
+    given Arbitrary[Byte] = Arbitrary.between(-10, 10).map(_.toByte)
+    testHasSameBehavior[(Byte, Byte), Byte](
+      "add two byte numbers",
+      t => t._1 + t._2,
+      (lhs, rhs) => ((lhs + rhs).toByte)
+    )
+  }
+
+  {
+    given Arbitrary[Byte] = Arbitrary.byte.filter(_ > 0)
+    testFailure[Byte, Byte](
+      "fail on byte add overflow",
+      _ + Expr.lit(Byte.MaxValue),
+      "(overflow)|(out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Byte] = Arbitrary.between(-10, 10).map(_.toByte)
+    testHasSameBehavior[(Byte, Byte), Byte](
+      "subtract two byte numbers",
+      t => t._1 - t._2,
+      (lhs, rhs) => ((lhs - rhs).toByte)
+    )
+  }
+
+  {
+    given Arbitrary[Byte] = Arbitrary.byte.filter(_ < -1)
+    testFailure[Byte, Byte](
+      "fail on byte subtract overflow",
+      _ - Expr.lit(Byte.MaxValue),
+      "(overflow)|(out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Byte] = Arbitrary.between(-10, 10).map(_.toByte)
+    testHasSameBehavior[(Byte, Byte), Byte](
+      "multiply two byte numbers",
+      t => t._1 * t._2,
+      (lhs, rhs) => ((lhs * rhs).toByte)
+    )
+  }
+
+  {
+    given Arbitrary[Byte] = Arbitrary.byte.filter(_ > 1)
+    testFailure[Byte, Byte](
+      "fail on byte multiply overflow",
+      _ * Expr.lit(Byte.MaxValue),
+      "(overflow)|(out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Byte] = Arbitrary.between(-10, 10).map(_.toByte).filter(_ != 0)
+    testHasSameBehavior[(Byte, Byte), Byte](
+      "truncating divide two byte numbers",
+      t => t._1 / t._2,
+      (lhs, rhs) => ((lhs / rhs).toByte)
+    )
+  }
+
+  testFailure[Byte, Byte]("fail on byte division by zero", _ / lit(0.toByte), "by zero")
+
+  {
+    given Arbitrary[Byte] = Arbitrary.between(-10, 10).map(_.toByte)
+    testHasSameBehavior[Byte, Byte]("negate a byte", e => -e, n => ((-n).toByte))
+  }
+
+  testFailure[Byte, Byte](
+    "fail on byte negate overflow",
+    _ => -Expr.lit(Byte.MinValue),
+    "(overflow)|(out of range)".r
+  )
+
+  {
+    given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isNaN && !d.isInfinite)
+    testHasSameBehavior[(Double, Double), Double](
+      "add two double numbers",
+      t => t._1 + t._2,
+      (lhs, rhs) => lhs + rhs
+    )
+  }
+
+  {
+    given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isNaN && !d.isInfinite)
+    testHasSameBehavior[(Double, Double), Double](
+      "subtract two double numbers",
+      t => t._1 - t._2,
+      (lhs, rhs) => lhs - rhs
+    )
+  }
+
+  {
+    given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isNaN && !d.isInfinite)
+    testHasSameBehavior[(Double, Double), Double](
+      "multiply two double numbers",
+      t => t._1 * t._2,
+      (lhs, rhs) => lhs * rhs
+    )
+  }
+
+  {
+    given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isNaN && !d.isInfinite && d != 0.0)
+    testHasSameBehavior[(Double, Double), Double](
+      "divide two double numbers",
+      t => t._1 / t._2,
+      (lhs, rhs) => lhs / rhs
+    )
+  }
+
+  testFailure[Double, Double]("fail on double division by zero", _ / lit(0.toDouble), "by zero")
+
+  testHasSameBehavior[Double, Double]("negate a double", e => -e, n => -n)
+
+  {
+    given Arbitrary[Float] = Arbitrary.float.filter(f => !f.isNaN && !f.isInfinite)
+    testHasSameBehavior[(Float, Float), Float](
+      "add two float numbers",
+      t => t._1 + t._2,
+      (lhs, rhs) => lhs + rhs
+    )
+  }
+
+  {
+    given Arbitrary[Float] = Arbitrary.float.filter(f => !f.isNaN && !f.isInfinite)
+    testHasSameBehavior[(Float, Float), Float](
+      "subtract two float numbers",
+      t => t._1 - t._2,
+      (lhs, rhs) => lhs - rhs
+    )
+  }
+
+  {
+    given Arbitrary[Float] = Arbitrary.float.filter(f => !f.isNaN && !f.isInfinite)
+    testHasSameBehavior[(Float, Float), Float](
+      "multiply two float numbers",
+      t => t._1 * t._2,
+      (lhs, rhs) => lhs * rhs
+    )
+  }
+
+  {
+    given Arbitrary[Float] = Arbitrary.float.filter(f => !f.isNaN && !f.isInfinite && f != 0.0f)
+    testHasSameBehavior[(Float, Float), Float](
+      "divide two float numbers",
+      t => t._1 / t._2,
+      (lhs, rhs) => lhs / rhs
+    )
+  }
+
+  testFailure[Float, Float]("fail on float division by zero", _ / lit(0.toFloat), "by zero")
+
+  testHasSameBehavior[Float, Float]("negate a float", e => -e, n => -n)
+
   testHasSameBehavior[TestEnum.A.type, TestEnum.A.type]("identity enum singleton", identity, identity)
   testHasSameBehavior[TestSealedTrait.A.type, TestSealedTrait.A.type](
     "identity sealed trait singleton",

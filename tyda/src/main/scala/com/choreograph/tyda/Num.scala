@@ -37,22 +37,30 @@ object Num {
   sealed trait Primitive[T] extends Num[T]
   sealed trait Integral[T] extends Primitive[T]
 
+  private def exactByte(value: Int): scala.Byte =
+    if value < scala.Byte.MinValue || value > scala.Byte.MaxValue then
+      throw new ArithmeticException("Byte overflow")
+    else value.toByte
+
+  private def exactShort(value: Int): scala.Short =
+    if value < scala.Short.MinValue || value > scala.Short.MaxValue then
+      throw new ArithmeticException("Short overflow")
+    else value.toShort
+
   private[tyda] case object Byte extends Integral[scala.Byte] {
-    def plus(lhs: scala.Byte, rhs: scala.Byte): scala.Byte = Math.addExact(lhs.toInt, rhs.toInt).toByte
-    def minus(lhs: scala.Byte, rhs: scala.Byte): scala.Byte = Math.subtractExact(lhs.toInt, rhs.toInt).toByte
-    def times(lhs: scala.Byte, rhs: scala.Byte): scala.Byte = Math.multiplyExact(lhs.toInt, rhs.toInt).toByte
-    def quot(lhs: scala.Byte, rhs: scala.Byte): scala.Byte = (lhs / rhs).toByte
-    def negate(t: scala.Byte): scala.Byte = Math.negateExact(t.toInt).toByte
+    def plus(lhs: scala.Byte, rhs: scala.Byte): scala.Byte = exactByte(lhs.toInt + rhs.toInt)
+    def minus(lhs: scala.Byte, rhs: scala.Byte): scala.Byte = exactByte(lhs.toInt - rhs.toInt)
+    def times(lhs: scala.Byte, rhs: scala.Byte): scala.Byte = exactByte(lhs.toInt * rhs.toInt)
+    def quot(lhs: scala.Byte, rhs: scala.Byte): scala.Byte = exactByte(lhs.toInt / rhs.toInt)
+    def negate(t: scala.Byte): scala.Byte = exactByte(-t.toInt)
   }
 
   private[tyda] case object Short extends Integral[scala.Short] {
-    def plus(lhs: scala.Short, rhs: scala.Short): scala.Short = Math.addExact(lhs.toInt, rhs.toInt).toShort
-    def minus(lhs: scala.Short, rhs: scala.Short): scala.Short =
-      Math.subtractExact(lhs.toInt, rhs.toInt).toShort
-    def times(lhs: scala.Short, rhs: scala.Short): scala.Short =
-      Math.multiplyExact(lhs.toInt, rhs.toInt).toShort
-    def quot(lhs: scala.Short, rhs: scala.Short): scala.Short = (lhs / rhs).toShort
-    def negate(t: scala.Short): scala.Short = Math.negateExact(t.toInt).toShort
+    def plus(lhs: scala.Short, rhs: scala.Short): scala.Short = exactShort(lhs.toInt + rhs.toInt)
+    def minus(lhs: scala.Short, rhs: scala.Short): scala.Short = exactShort(lhs.toInt - rhs.toInt)
+    def times(lhs: scala.Short, rhs: scala.Short): scala.Short = exactShort(lhs.toInt * rhs.toInt)
+    def quot(lhs: scala.Short, rhs: scala.Short): scala.Short = exactShort(lhs.toInt / rhs.toInt)
+    def negate(t: scala.Short): scala.Short = exactShort(-t.toInt)
   }
 
   private[tyda] case object Int extends Integral[scala.Int] {
@@ -75,7 +83,8 @@ object Num {
     def plus(lhs: scala.Float, rhs: scala.Float): scala.Float = lhs + rhs
     def minus(lhs: scala.Float, rhs: scala.Float): scala.Float = lhs - rhs
     def times(lhs: scala.Float, rhs: scala.Float): scala.Float = lhs * rhs
-    def quot(lhs: scala.Float, rhs: scala.Float): scala.Float = lhs / rhs
+    def quot(lhs: scala.Float, rhs: scala.Float): scala.Float =
+      if rhs == 0 then throw new ArithmeticException("/ by zero") else lhs / rhs
     def negate(t: scala.Float): scala.Float = -t
   }
 
@@ -83,7 +92,8 @@ object Num {
     def plus(lhs: scala.Double, rhs: scala.Double): scala.Double = lhs + rhs
     def minus(lhs: scala.Double, rhs: scala.Double): scala.Double = lhs - rhs
     def times(lhs: scala.Double, rhs: scala.Double): scala.Double = lhs * rhs
-    def quot(lhs: scala.Double, rhs: scala.Double): scala.Double = lhs / rhs
+    def quot(lhs: scala.Double, rhs: scala.Double): scala.Double =
+      if rhs == 0 then throw new ArithmeticException("/ by zero") else lhs / rhs
     def negate(t: scala.Double): scala.Double = -t
   }
 
