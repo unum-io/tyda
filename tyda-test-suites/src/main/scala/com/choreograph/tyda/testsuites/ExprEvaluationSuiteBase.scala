@@ -428,6 +428,22 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   )
   testHasSameBehavior[Seq[Int], Boolean]("seq exists", _.exists(_ < 0), _.exists(_ < 0))
   testHasSameBehavior[Seq[Boolean], Boolean]("seq contains", _.contains(true), _.contains(elem = true))
+  testHasSameBehavior[Int, Boolean]("in literals match", _.in(1, 2, 3), v => Seq(1, 2, 3).contains(v))
+  testHasSameBehavior[Int, Boolean](
+    "in literals no match",
+    _.in(10, 20, 30),
+    v => Seq(10, 20, 30).contains(v)
+  )
+  testHasSameBehavior[Int, Boolean](
+    "in exprs",
+    i => i.in(lit(1), lit(2), lit(3)),
+    v => Seq(1, 2, 3).contains(v)
+  )
+  testHasSameBehavior[String, Boolean](
+    "in strings",
+    _.in("foo", "bar", "baz"),
+    v => Seq("foo", "bar", "baz").contains(v)
+  )
   testHasSameBehavior[Seq[Int], Boolean]("seq forall", _.forall(_ < 0), _.forall(_ < 0))
   testHasSameBehavior[Seq[Seq[Int]], Seq[Boolean]](
     "seq forall nested",
