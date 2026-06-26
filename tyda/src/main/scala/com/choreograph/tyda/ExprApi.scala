@@ -721,6 +721,20 @@ trait ExprApi[Expr[T]] {
       exists(e => lift(ExprNode.Equals(unlift(e), unlift(AsExpr(value)))))
   }
 
+  extension [T: Codec](expr: Expr[T]) {
+
+    /** Check if the expression's value is contained in the given literal
+      * values.
+      */
+    @targetName("inLiteral")
+    def in(value: T, values: T*): Expr[Boolean] =
+      seq((value +: values).map(v => lift[T](ExprNode.Literal(v)))).contains(expr)
+
+    /** Check if the expression's value is contained in the given expressions.
+      */
+    def in(value: Expr[T], values: Expr[T]*): Expr[Boolean] = seq(value +: values).contains(expr)
+  }
+
   extension [U, CC[X] <: SeqCC[X, CC], C <: SeqCC[Iterable[U], CC]](seq: Expr[C]) {
 
     /** Flattens a sequence of iterables into a single sequence.

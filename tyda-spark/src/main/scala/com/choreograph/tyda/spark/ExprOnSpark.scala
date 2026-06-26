@@ -5,6 +5,7 @@ import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.aggregate
 import org.apache.spark.sql.functions.array
+import org.apache.spark.sql.functions.array_contains
 import org.apache.spark.sql.functions.array_distinct
 import org.apache.spark.sql.functions.call_function
 import org.apache.spark.sql.functions.coalesce
@@ -44,6 +45,7 @@ import com.choreograph.tyda.Errors
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.rewrite.ArrayCodec
+import com.choreograph.tyda.rewrite.ArrayContains
 import com.choreograph.tyda.rewrite.IsNone
 import com.choreograph.tyda.rewrite.Nullable
 import com.choreograph.tyda.rewrite.PrimitiveAggregateAsFold
@@ -129,6 +131,8 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
 
   def convert(expr: ExprNode[?])(using spark: SparkSession): Column =
     expr match {
+      case ArrayContains(ExprNode.MakeSeq(values, _), element) => convert(element).isin(values.map(convert)*)
+      case ArrayContains(arr, element) => array_contains(convert(arr), convert(element))
       case ExprNode.Select(ref: ExprNode.Reference[?], name) => cfFromRef(ref).column(name)
       case ExprNode.Select(p, name) => convert(p)(name)
       case ref @ ExprNode.Reference(_, _) => cfFromRef(ref).row
