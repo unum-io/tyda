@@ -4,6 +4,8 @@ import scala.NamedTuple.AnyNamedTuple
 import scala.NamedTuple.NamedTuple
 import scala.annotation.targetName
 import scala.collection.Factory
+import scala.compiletime.erasedValue
+import scala.compiletime.error
 import scala.deriving.Mirror
 import scala.reflect.ClassTag
 import scala.reflect.classTag
@@ -257,6 +259,49 @@ object Codec {
     def encodedValues: scala.Seq[String] = values.map(s => pascalCaseToCamelCase(s.toString))
     def to: Codec[String] = Codec.String
     def inj: Injection[T, String] = SumAsStringInjection(values, encodedValues)
+  }
+
+  /** A codec for single-field product types that encodes them as the inner
+    * field type directly, removing the struct wrapper.
+    *
+    * It can be used for newtype wrappers where the wrapper should not appear in
+    * the serialized schema.
+    *
+    * ```scala
+    * case class UserId(value: Int) derives Codec.Transparent
+    * ```
+    *
+    * A `UserId` will be encoded as a plain `Int` rather than a
+    * `Struct(value: Int)`.
+    */
+  sealed trait Transparent[T] extends Codec[T]
+
+  object Transparent {
+    private[tyda] final class TransparentInjection[T, F](mirror: Mirror.ProductOf[T])
+        extends Injection[T, F] {
+      def apply(from: T): F = {
+        // TYPE SAFETY: T is a case class with exactly one field of type F, enforced at the inline call site.
+        val product = from.asInstanceOf[scala.Product]
+        // TYPE SAFETY: The single element is of type F per the inline match on MirroredElemTypes.
+        product.productElement(0).asInstanceOf[F]
+      }
+      def invert(to: F): T = mirror.fromProduct(Tuple1(to))
+    }
+
+    private[tyda] final class Impl[T, F](
+        val classTag: ClassTag[T],
+        val to: Codec[F],
+        val inj: Injection[T, F]
+    ) extends Transparent[T] with FromInjection[T, F]
+
+    inline def derived[T](using m: Mirror.ProductOf[T]): Transparent[T] =
+      inline erasedValue[m.MirroredElemTypes] match {
+        case _: (f *: EmptyTuple) =>
+          val ct = scala.compiletime.summonInline[ClassTag[T]]
+          val fieldCodec = scala.compiletime.summonInline[Codec[f]]
+          Impl[T, f](ct, fieldCodec, TransparentInjection[T, f](m))
+        case _ => error("Codec.Transparent requires exactly one field")
+      }
   }
 
   /** A codec that encodes an [[Binary]] as a binary type.
