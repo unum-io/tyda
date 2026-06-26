@@ -5,7 +5,7 @@ import Keys.*
 
 object Dependencies {
   val scala3Version = "3.7.4"
-  val spark3Version = "3.5.1"
+  val spark3Version = "3.5.3"
   val spark4Version = "4.0.2"
   val jsoniterVersion = "2.38.6"
   val bigQueryConnectorVersion = "0.44.1"

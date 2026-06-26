@@ -208,7 +208,10 @@ lazy val tydaDocs = (project in file("tyda-docs"))
     // examples commonly have unused values for showing api usage and there also some mdoc internal warnings
     scalacOptions ++= Seq("-Wconf:id=E176&msg=value:s"),
     mdocIn := baseDirectory.value / "docs",
-    mdocOut := mdocOut.value / "_docs"
+    mdocOut := mdocOut.value / "_docs",
+    // We are getting collection-compat both from Spark and mdoc, so we need to exlude one of them to avoid a
+    // conflict.
+    excludeDependencies += "org.scala-lang.modules" % "scala-collection-compat_2.13"
   )
   .settings(Dependencies.tydaDocs)
   .settings(sparkRunSettings)
