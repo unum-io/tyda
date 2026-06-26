@@ -44,6 +44,7 @@ import com.choreograph.tyda.Errors
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.rewrite.ArrayCodec
+import com.choreograph.tyda.rewrite.CheckArrayIndexPositive
 import com.choreograph.tyda.rewrite.IsNone
 import com.choreograph.tyda.rewrite.Nullable
 import com.choreograph.tyda.rewrite.PrimitiveAggregateAsFold
@@ -246,11 +247,9 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
       case ExprNode.ToJson(inner) => to_json(convert(inner), jsonOptions)
       case ExprNode.FromJson(inner, codec) => from_json(convert(inner), catalystType(codec), jsonOptions)
       case ExprNode.SizeSeq(operand) => size(convert(operand))
-      case ExprNode.ElementSeq(array, index) =>
+      case CheckArrayIndexPositive(array, index) =>
         val idx = convert(index)
-        val adjustedIdx =
-          when(idx >= lit(0), idx + lit(1)).otherwise(raise_error(lit("Negative array index not supported")))
-        call_function("element_at", convert(array), adjustedIdx)
+        call_function("element_at", convert(array), idx + 1)
       case ExprNode.Add(additive, lhs, rhs) => convert(lhs) + convert(rhs)
       case ExprNode.Quotient(CompatibleIntegral(), lhs, rhs) =>
         call_function("div", convert(lhs), convert(rhs)).cast(catalystType(expr.codec))
