@@ -1042,6 +1042,14 @@ SELECT CASE WHEN (t1._1 < t1._2) THEN t1._2 ELSE t1._1 END AS value FROM t1
 SELECT CASE WHEN (t1._1 < t1._2) THEN t1._1 ELSE t1._2 END AS value FROM t1
 ------ end
 
+------ Test: mkString with Expr separator
+SELECT array_join(t1._1, t1._2) AS value FROM t1
+------ end
+
+------ Test: mkString with literal separator
+SELECT array_join(t1.value, ',') AS value FROM t1
+------ end
+
 ------ Test: named tuple concat
 SELECT t1._1.a AS a, t1._1.b AS b, t1._2.c AS c, t1._2.d AS d FROM t1
 ------ end

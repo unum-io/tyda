@@ -197,6 +197,7 @@ private def explainLambdaBody[T](expr: ExprNode[T], args: Map[ExprNode.Reference
       case ExprNode.MakeMap(pairs) => s"makeMap(${body(pairs)})"
       case ExprNode.MapEntries(map) => s"${body(map)}.entries"
       case ExprNode.MapGet(map, key) => s"${body(map)}.get(${body(key)})"
+      case ExprNode.ArrayJoin(operand, sep) => s"${body(operand)}.mkString(${body(sep)})"
       case ExprNode.DistinctSeq(operand) => s"${body(operand)}.distinct"
       case ExprNode.None(_) => "None"
       case ExprNode.Rand() => "rand()"

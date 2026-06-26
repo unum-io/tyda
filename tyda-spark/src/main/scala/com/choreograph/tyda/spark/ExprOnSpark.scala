@@ -278,6 +278,7 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
           case Codec.Map(_, Codec.Option(_)) => when(map_contains_key(mapCol, keyCol), wrapNestedSome(value))
           case _ => value
         }
+      case ExprNode.ArrayJoin(operand, sep) => call_function("array_join", convert(operand), convert(sep))
       case ExprNode.DistinctSeq(operand) => array_distinct(convert(operand))
       case ExprNode.Rand() => rand()
       case ExprNode.IsNaN(operand) => isnan(convert(operand))

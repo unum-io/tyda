@@ -660,6 +660,17 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     t => t._1.startsWith("foo")
   )
 
+  testHasSameBehavior[Seq[String], String](
+    "mkString with literal separator",
+    _.mkString(","),
+    _.mkString(",")
+  )
+  testHasSameBehavior[(Seq[String], String), String](
+    "mkString with Expr separator",
+    t => t._1.mkString(t._2),
+    t => t._1.mkString(t._2)
+  )
+
   testHasSameBehavior[Seq[Int], Int]("size on Seq[Int]", _.size, _.size)
   testHasSameBehavior[List[String], Int]("size on List[String]", _.size, _.size)
 

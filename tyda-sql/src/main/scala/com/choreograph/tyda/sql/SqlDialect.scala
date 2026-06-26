@@ -24,6 +24,7 @@ final case class SqlDialect(
     arrayDistinct: SqlDialect.ArrayDistinct,
     arrayConcat: String,
     arrayElement: SqlDialect.ArrayElement,
+    arrayJoin: String,
     arraySize: String,
     arrayHigherOrderFunctions: SqlDialect.ArrayHigherOrderFunctions,
     binaryLiteral: SqlDialect.BinaryLiteral,
@@ -352,6 +353,7 @@ object SqlDialect {
     arrayDistinct = ArrayDistinct.Subquery("array", "unnest"),
     arrayConcat = "array_concat",
     arrayElement = ArrayElement.Braces,
+    arrayJoin = "array_to_string",
     arraySize = "array_length",
     arrayHigherOrderFunctions = ArrayHigherOrderFunctions.Subquery("array", "unnest"),
     binaryLiteral = BinaryLiteral.ByteEscapeString,
@@ -419,6 +421,7 @@ object SqlDialect {
     arrayDistinct = ArrayDistinct.Function("array_distinct"),
     arrayConcat = "concat",
     arrayElement = ArrayElement.Function("element_at"),
+    arrayJoin = "array_join",
     arraySize = "size",
     arrayHigherOrderFunctions =
       ArrayHigherOrderFunctions.Lambda("transform", "aggregate", "filter", "flatten"),

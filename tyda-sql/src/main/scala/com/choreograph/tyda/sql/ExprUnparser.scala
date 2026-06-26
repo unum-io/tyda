@@ -426,6 +426,10 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
               elseExpr = Some(split)
             )
         }
+      case ExprNode.ArrayJoin(operand, separator) => for {
+          arr <- inner(operand)
+          sep <- inner(separator)
+        } yield SqlExpr.Function(dialect.arrayJoin, Seq(arr, sep))
       case ExprNode.SizeSeq(operand) =>
         inner(operand).map(arr => SqlExpr.Function(dialect.arraySize, Seq(arr)))
       case ExprNode.DistinctSeq(operand) => inner(operand).map(arr =>
