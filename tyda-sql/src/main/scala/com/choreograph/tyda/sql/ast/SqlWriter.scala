@@ -69,6 +69,8 @@ private[tyda] final case class SqlWriter(writer: Writer) {
       case SqlExpr.Cast(variant, e, toType) => writeSql"$variant($e AS $toType)"
       case SqlExpr.Subquery(query) => writeSql1"($query)"
       case SqlExpr.Exists(query) => writeSql1"EXISTS ($query)"
+      case SqlExpr.InSubquery(expr, subquery) => writeSql"$expr IN $subquery"
+      case SqlExpr.In(expr, values) => writeSql"$expr IN ($values)"
       case SqlExpr.LambdaFunction(args, body) => args match {
           case Seq(arg) => writeSql"$arg -> $body"
           case args => writeSql"($args) -> $body"

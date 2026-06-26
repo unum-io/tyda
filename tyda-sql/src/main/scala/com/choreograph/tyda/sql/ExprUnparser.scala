@@ -21,6 +21,7 @@ import com.choreograph.tyda.PrimitiveAggregate
 import com.choreograph.tyda.SumMagnet
 import com.choreograph.tyda.TreeApi.Continue
 import com.choreograph.tyda.rewrite.ArrayCodec
+import com.choreograph.tyda.rewrite.ArrayContains
 import com.choreograph.tyda.rewrite.CollectionOrNullableCollectionCodec
 import com.choreograph.tyda.rewrite.IsNone
 import com.choreograph.tyda.rewrite.MapOption
@@ -343,6 +344,19 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
             SqlExpr.Function(makeArray, Seq(SqlExpr.Subquery(query)))
           case SqlDialect.ArrayHigherOrderFunctions.Lambda(filter = filterFunction) =>
             SqlExpr.Function(filterFunction, Seq(arr, SqlExpr.LambdaFunction(arg, predExpr)))
+        }
+      case ArrayContains(ExprNode.MakeSeq(values, _), element) => for {
+          valuesExpr <- values.map(inner).sequence
+          elemExpr <- inner(element)
+        } yield SqlExpr.In(elemExpr, valuesExpr)
+      case ArrayContains(arr, element) => for {
+          arrExpr <- inner(arr)
+          elemExpr <- inner(element)
+        } yield dialect.arrayContains match {
+          case SqlDialect.ArrayContains.InUnnest =>
+            SqlExpr.In(elemExpr, Seq(SqlExpr.Function("unnest", Seq(arrExpr))))
+          case SqlDialect.ArrayContains.Function(arrayContains) =>
+            SqlExpr.Function(arrayContains, Seq(arrExpr, elemExpr))
         }
       case ExprNode.AggregateSeq(operand, onEmpty, primitive) => dialect.arrayHigherOrderFunctions match {
           case SqlDialect.ArrayHigherOrderFunctions.Subquery(makeArray, unnest) => for {
