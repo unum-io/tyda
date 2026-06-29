@@ -243,7 +243,7 @@ SELECT (t1._1 AND t1._2) AS value FROM t1
 ------ end
 
 ------ Test: boolean and opt
-SELECT ((t1.value IS NOT NULL) AND (t1.value._1 OR t1.value._2)) AS value FROM t1
+SELECT ((t1.value IS NOT NULL) AND (t1.value._1 AND t1.value._2)) AS value FROM t1
 ------ end
 
 ------ Test: boolean nested exists

@@ -30,42 +30,26 @@ private[tyda] object SimplifyOptionIf {
       case _ => None
     }
 
+  private object RedundantNullGuard {
+
+    /** Matches a boolean ternary `if(opt is null, lit, body)` where body
+      * evaluates to null or false whenever opt is null, making the null-guard
+      * branch redundant. Returns `NOT(opt is null) AND body` when lit is false
+      * (exists pattern), or `(opt is null) OR body` when lit is true (forall
+      * pattern).
+      */
+    def unapply(expr: ExprNode[Boolean]): Option[ExprNode[Boolean]] =
+      expr match {
+        case If(isNone @ IsNone(opt), ExprNode.Literal(false, _), body)
+            if NullIntolerant.nullOrFalse(body, opt) => Some(ExprNode.And(ExprNode.Not(isNone), body))
+        case If(isNone @ IsNone(opt), ExprNode.Literal(true, _), body)
+            if NullIntolerant.nullOrFalse(body, opt) => Some(ExprNode.Or(isNone, body))
+        case _ => None
+      }
+  }
   private def simplifyExistsForAll(expr: ExprNode[Boolean]): Option[ExprNode[Boolean]] =
     expr match {
-      case ExistsOption(isNone, arg, body) if NullIntolerant.nullOrFalse(body, arg) =>
-        Some(ExprNode.And(ExprNode.Not(isNone), body))
-      case ForallOption(isNone, arg, body) if NullIntolerant.nullOrFalse(body, arg) =>
-        Some(ExprNode.Or(isNone, body))
+      case RedundantNullGuard(simplified) => Some(simplified)
       case _ => None
     }
-
-  private object ExistsOption {
-
-    /** Matches an ExprNode[Boolean] that is created by checking existence over
-      * an Option and extracts the argument and body of the existence function.
-      */
-    def unapply(
-        expr: ExprNode[Boolean]
-    ): Option[(isNone: ExprNode[Boolean], arg: ExprNode.KnownNotNull[?], body: ExprNode[Boolean])] =
-      expr match {
-        case If(isNone @ IsNone(opt), ExprNode.Literal(false, _), body) =>
-          Some((isNone, ExprNode.KnownNotNull(opt), body))
-        case _ => None
-      }
-  }
-
-  private object ForallOption {
-
-    /** Matches an ExprNode[Boolean] that is created by checking existence over
-      * an Option and extracts the argument and body of the existence function.
-      */
-    def unapply(
-        expr: ExprNode[Boolean]
-    ): Option[(isNone: ExprNode[Boolean], arg: ExprNode.KnownNotNull[?], body: ExprNode[Boolean])] =
-      expr match {
-        case If(isNone @ IsNone(opt), ExprNode.Literal(true, _), body) =>
-          Some((isNone, ExprNode.KnownNotNull(opt), body))
-        case _ => None
-      }
-  }
 }

@@ -172,8 +172,8 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   )
   testHasSameBehavior[Option[(Boolean, Boolean)], Boolean](
     "boolean and opt",
-    t => t.exists(v => v._1 || v._2),
-    t => t.exists(v => v._1 || v._2)
+    t => t.exists(v => v._1 && v._2),
+    t => t.exists(v => v._1 && v._2)
   )
   testHasSameBehavior[Binary, Int]("bytes length", _.length, _.length)
   testHasSameBehavior[(Boolean, Boolean), Boolean](
