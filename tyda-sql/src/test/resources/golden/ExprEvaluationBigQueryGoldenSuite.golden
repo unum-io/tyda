@@ -634,6 +634,10 @@ SELECT struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) AS empty FROM t1
 SELECT FALSE AS value FROM t1
 ------ end
 
+------ Test: derive type WithoutStrings
+SELECT t1.b AS b, struct(t1.c.e AS e) AS c FROM t1
+------ end
+
 ------ Test: distinct on Seq[Int]
 SELECT array((SELECT DISTINCT c0 FROM unnest(t1.value) AS c0)) AS value FROM t1
 ------ end

@@ -117,6 +117,10 @@ private object ExprNode extends ExprApi[ExprNode] {
   def makeTuple[T <: Tuple](values: Tuple.Map[T, ExprNode]): ExprNode[T] =
     new MakeProduct[T, T](values, Codec.tuple(tupleInstances(values).mapK([t] => _.codec)))
 
+  def makeTupleUnsafe[T <: Tuple](values: Seq[ExprNode[?]]): ExprNode[T] =
+    // TYPE SAFETY: All elments in values is of type ExprNode
+    makeTuple(Tuple.fromArray(values.toArray).asInstanceOf)
+
   def makeNamedTuple[NT <: AnyNamedTuple](values: NamedTuple.Map[NT, ExprNode])(using
       StringLiterals[NamedTuple.Names[NT]]
   ): ExprNode[NT] = new MakeProduct(values, Codec.namedTuple(tupleInstances(values).mapK([t] => _.codec)))

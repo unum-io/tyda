@@ -12,9 +12,9 @@ import scala.reflect.ClassTag
 
 import shapeless3.deriving.K0
 
-import com.choreograph.tyda.TupleOperations.`-`
+import com.choreograph.tyda.TupleOperations.-
+import com.choreograph.tyda.TupleOperations.EqualSize
 import com.choreograph.tyda.shapeless3extras.mapConst
-import com.choreograph.tyda.shapeless3extras.toTuple
 import com.choreograph.tyda.shapeless3extras.tupleInstances
 
 /** Contains the public api for a Expr[T] the api is provided as extension
@@ -858,6 +858,11 @@ trait ExprApi[Expr[T]] {
       val codec = Codec.namedTuple(e.codec)
       lift(ExprNode.makeProductUnsafe(exprs, codec))
 
+    /** Create an expression of a tuple from a product.
+      */
+    def toTuple: Expr[m.MirroredElemTypes] =
+      val exprs = tupleInstances(unapply(e)).mapConst([t] => unlift(_))
+      lift(ExprNode.makeTupleUnsafe(exprs))
   }
 
   /** Extractor that allows Expr of Products being unwrapped to Expr of each
@@ -924,17 +929,78 @@ trait ExprApi[Expr[T]] {
 
     given expr[T]: AsExpr[Expr[T], T] = identity(_)
 
+    // We call shapeless3extras.toTuple explicitly here since there is an Expr extension method with the same
+    // name and renaming as part of the import hits this compiler bug
+    // https://github.com/scala/scala3/issues/26431
     given tuple[TRes <: Tuple, T <: Tuple: TupleAsExpr.Of[TRes]]: AsExpr[T, TRes] =
       inputTuple => {
         val tupledExpression = tupleInstances(TupleAsExpr(inputTuple)).mapK([t] => unlift(_))
-        lift(ExprNode.makeTuple(tupledExpression.toTuple))
+        lift(ExprNode.makeTuple(com.choreograph.tyda.shapeless3extras.toTuple(tupledExpression)))
       }
 
     given namedTuple[Fields <: Tuple: StringLiterals, TRes <: Tuple, T <: Tuple: TupleAsExpr.Of[TRes]]
         : AsExpr[NamedTuple[Fields, T], NamedTuple[Fields, TRes]] =
       inputTuple => {
-        val nodes = tupleInstances(TupleAsExpr(inputTuple)).mapK([t] => unlift(_)).toTuple
+        val nodes = com
+          .choreograph
+          .tyda
+          .shapeless3extras
+          .toTuple(tupleInstances(TupleAsExpr(inputTuple)).mapK([t] => unlift(_)))
         lift(ExprNode.makeNamedTuple(nodes))
+      }
+  }
+
+  extension [T <: Tuple](e: Expr[T]) {
+
+    /** Create a named tuple expression by associating field names with the
+      * elements of this tuple.
+      */
+    def withNames[N <: Tuple: StringLiterals](using EqualSize[T, N]): Expr[NamedTuple[N, T]] = {
+      val node = unlift(e)
+      node.codec match {
+        case Codec.Product(_, fields, _) =>
+          val nodes: Seq[ExprNode[?]] = (1 to fields.arity).map(i => ExprNode.Select(node, s"_$i"))
+
+          val namedFields = StringLiterals.apply[N].zip(nodes.map(_.codec)).map(Field(_, _))
+          // TYPE SAFETY: The equal size and StringLiterals evidence ensure correctness
+          lift(ExprNode.makeProductUnsafe(nodes, Codec.unsafeNamedTuple(namedFields).asInstanceOf))
+        case unsupported => unreachable(s"Tuple must be encoded using Product, but found ${unsupported}")
+      }
+    }
+  }
+
+  extension [T <: Tuple, H](e: Expr[H *: T]) {
+
+    /** Returns the head element of this non-empty tuple expression.
+      */
+    def head: Expr[H] = lift(ExprNode.Select(unlift(e), "_1"))
+
+    /** Returns a tuple expression containing all elements after the first one
+      * of this non-empty tuple expression.
+      */
+    def tail: Expr[T] =
+      val node = unlift(e)
+      node.codec match {
+        case Codec.Product(_, fields, _) =>
+          val elements = (2 to fields.arity).map(i => ExprNode.Select(node, s"_$i"))
+          lift(ExprNode.makeTupleUnsafe(elements))
+        case unsupported => unreachable(s"Tuple must be encoded using Product, but found ${unsupported}")
+      }
+  }
+
+  extension [H](head: Expr[H]) {
+
+    /** Prepend an element expression to this tuple expression.
+      */
+    infix def *:[T <: Tuple](tail: Expr[T]): Expr[H *: T] =
+      val tailNode = unlift(tail)
+      tailNode.codec match {
+        case Codec.Product(_, fields, _) =>
+          val tailNodes = (1 to fields.arity).map(i => ExprNode.Select(tailNode, s"_$i"))
+          val elements = unlift(head) +: tailNodes
+          // TYPE SAFET
+          lift(ExprNode.makeTupleUnsafe(elements))
+        case unsupported => unreachable(s"Tuple must be encoded using Product, but found ${unsupported}")
       }
   }
 

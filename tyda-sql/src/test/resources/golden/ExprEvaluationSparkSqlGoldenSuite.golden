@@ -634,6 +634,10 @@ SELECT named_struct('the cake is a lie 🎂', CAST(NULL AS void)) AS empty FROM 
 SELECT FALSE AS value FROM t1
 ------ end
 
+------ Test: derive type WithoutStrings
+SELECT t1.b AS b, named_struct('e', t1.c.e) AS c FROM t1
+------ end
+
 ------ Test: distinct on Seq[Int]
 SELECT array_distinct(t1.value) AS value FROM t1
 ------ end

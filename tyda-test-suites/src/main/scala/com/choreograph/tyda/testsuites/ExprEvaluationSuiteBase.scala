@@ -32,7 +32,9 @@ import com.choreograph.tyda.JsonArrayOrObject
 import com.choreograph.tyda.Ord
 import com.choreograph.tyda.Remover
 import com.choreograph.tyda.Selector
+import com.choreograph.tyda.StringLiterals
 import com.choreograph.tyda.Timestamp
+import com.choreograph.tyda.TupleOperations.EqualSize
 import com.choreograph.tyda.TypeName
 import com.choreograph.tyda.functions.coalesce
 import com.choreograph.tyda.functions.concat
@@ -119,6 +121,64 @@ object ExprEvaluationSuiteBase {
     }
   }
 
+  private trait WithoutStrings[T] {
+    type Out
+    def apply(e: Expr[T]): Expr[Out]
+  }
+  private object WithoutStrings {
+    type Aux[T, Out1] = WithoutStrings[T] { type Out = Out1 }
+
+    trait WithoutStringsTuple[T <: Tuple] {
+      type Out <: Tuple
+      def apply(e: Expr[T]): Expr[Out]
+    }
+    object WithoutStringsTuple {
+      type Aux[T <: Tuple, Out1] = WithoutStringsTuple[T] { type Out = Out1 }
+    }
+    given WithoutStringsTuple.Aux[EmptyTuple, EmptyTuple] =
+      new WithoutStringsTuple[EmptyTuple] {
+        type Out = EmptyTuple
+        def apply(e: Expr[EmptyTuple]): Expr[Out] = e
+      }
+    given [T <: Tuple, H](using
+        removeHead: WithoutStrings[H],
+        removeTail: WithoutStringsTuple[T]
+    ): WithoutStringsTuple.Aux[H *: T, removeHead.Out *: removeTail.Out] =
+      new WithoutStringsTuple[H *: T] {
+        type Out = removeHead.Out *: removeTail.Out
+        def apply(e: Expr[H *: T]): Expr[Out] = removeHead(e.head) *: removeTail(e.tail)
+      }
+
+    trait KeepAsIs[T] extends WithoutStrings[T] {
+      type Out = T
+      def apply(e: Expr[T]): Expr[T] = e
+    }
+
+    given KeepAsIs[Int] = new KeepAsIs[Int] {}
+    given KeepAsIs[Long] = new KeepAsIs[Long] {}
+
+    // TODO: Should be remove all instead of Remove
+    given derive[T: Mirror.ProductOf as m](using
+        remover: Remover[T, String],
+        mOut: Mirror.ProductOf[remover.Out],
+        recurse: WithoutStringsTuple[mOut.MirroredElemTypes],
+        names: StringLiterals[NamedTuple.Names[remover.Out]],
+        sizeEv: EqualSize[recurse.Out, NamedTuple.Names[remover.Out]]
+    ): WithoutStrings.Aux[T, NamedTuple[NamedTuple.Names[remover.Out], recurse.Out]] =
+      new WithoutStrings[T] {
+        type Out = NamedTuple[NamedTuple.Names[remover.Out], recurse.Out]
+        def apply(e: Expr[T]): Expr[Out] =
+          recurse(e.remove[String].toTuple).withNames[NamedTuple.Names[remover.Out]]
+      }
+  }
+
+  private final case class HasStrings(a: String, b: Int, c: (d: String, e: Long))
+  private object HasStrings {
+    val removeStrings = WithoutStrings.derive[HasStrings]
+    type Without = removeStrings.Out
+    val a: Without = (b = 1, c = (e = 1L))
+  }
+
   val errorMessage = "My error message"
 }
 
@@ -132,7 +192,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   import ExprEvaluationSuiteBase.{
     CustomIntSeq, Full, Projected, Struct, NestedOption, NamedTuple1, NamedTuple2, NamedTupleAlias,
     NamedTupleAliasWithUnused, TestEnum, TestSealedTrait, TestEnumString, WithEmptyTuple, WithNamedTupleEmpty,
-    WithOptionField, TreeBounded, Leaf, Node, errorMessage
+    WithOptionField, TreeBounded, Leaf, Node, errorMessage, HasStrings
   }
 
   /** Evaluate the expression on a sequence of inputs.
@@ -1344,4 +1404,10 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     )
   }
   testHasSameBehavior[Seq[Int], String]("toJson Seq[Int]", toJson, _.mkString("[", ",", "]"))
+
+  testHasSameBehavior[HasStrings, HasStrings.Without](
+    "derive type WithoutStrings",
+    HasStrings.removeStrings(_),
+    r => (b = r.b, c = (e = r.c.e))
+  )
 }

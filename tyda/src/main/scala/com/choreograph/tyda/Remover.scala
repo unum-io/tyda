@@ -1,5 +1,6 @@
 package com.choreograph.tyda
 
+import scala.NamedTuple.AnyNamedTuple
 import scala.NamedTuple.NamedTuple
 import scala.compiletime.constValue
 import scala.deriving.Mirror
@@ -13,7 +14,7 @@ import scala.deriving.Mirror
   * https://github.com/milessabin/shapeless/blob/de11db9ff9e26ea60dced5c6a745ad2a56f9f724/core/shared/src/main/scala/shapeless/ops/records.scala#L433-L439
   */
 sealed trait Remover[T, E] {
-  type Out
+  type Out <: AnyNamedTuple
   def apply(p: T): Out
 }
 
