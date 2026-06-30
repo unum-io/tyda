@@ -277,6 +277,7 @@ object ExprEvaluation {
 
   private def cast[From, To](canCast: CanCast[From, To]): From => To =
     canCast match {
+      case CanCast.Identity() => identity
       case CanCast.ByteToShort => _.toShort
       case CanCast.ByteToInt => _.toInt
       case CanCast.ByteToLong => _.toLong
@@ -316,6 +317,9 @@ object ExprEvaluation {
         import cast.given
         Decimal(_)
       case CanCast.SeqToSeq(innerCast) => seq => seq.map(cast(innerCast))
+      case CanCast.ProductToProduct(canCasts) =>
+        val casts = canCasts.mapK([a, b] => cast(_))
+        casts.map(_)([x, y] => (impl, x) => impl(x))
     }
 
   private def tryCast[From, To](canTryCast: CanTryCast[From, To]): From => Option[To] = {
