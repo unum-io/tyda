@@ -56,7 +56,7 @@ private[spark] object BinaryHelper {
  * just to convert of `Codec[T]` class into an `AgnosticEncoder[T]` but we will need the
  * `TransformingEncoder[T]` in order to support custom types in that approach. */
 private object CodecToExpressionEncoder {
-  private def jvmType[T](codec: Codec[T]): DataType =
+  private def jvmType[T](codec: Codec[T], valueClassIsBoxed: Boolean = true): DataType =
     codec match {
       case Codec.Byte => ByteType
       case Codec.Short => ShortType
@@ -69,6 +69,7 @@ private object CodecToExpressionEncoder {
       case Codec.TimestampMicros => LongType
       case Codec.DurationMicros => LongType
       case Codec.Date => IntegerType
+      case Codec.ValueClass(_, field) if !valueClassIsBoxed => jvmType(field.codec, valueClassIsBoxed = true)
       case Codec.String | Codec.Seq(_) | Codec.Map(_, _) | Codec.Option(_) | Codec.Decimal(_, _) | Codec
             .Product(_, _, _) | Codec.FromInjection(_, _) => ObjectType(codec.classTag.runtimeClass)
     }
@@ -78,7 +79,11 @@ private object CodecToExpressionEncoder {
     createSerializer(codec, input)
   }
 
-  private def createSerializer[T](codec: Codec[T], input: Expression): Expression =
+  private def createSerializer[T](
+      codec: Codec[T],
+      input: Expression,
+      valueClassIsBoxed: Boolean = true
+  ): Expression =
     codec match {
       case Codec.Byte => input
       case Codec.Short => input
@@ -121,8 +126,19 @@ private object CodecToExpressionEncoder {
 
       case Codec.Option(inner @ Codec.Option(_)) =>
         val unwrapped = UnwrapOption(ObjectType(classOf[Option[?]]), input)
-        createSerializerForStruct(unwrapped, Seq("value" -> createSerializer(inner, unwrapped)))
-      case Codec.Option(valueCodec) => createSerializer(valueCodec, UnwrapOption(jvmType(valueCodec), input))
+        createSerializerForStruct(
+          unwrapped,
+          Seq("value" -> createSerializer(inner, unwrapped, valueClassIsBoxed = true))
+        )
+      case Codec.Option(valueCodec) =>
+        createSerializer(valueCodec, UnwrapOption(jvmType(valueCodec), input), valueClassIsBoxed = true)
+
+      case Codec.ValueClass(_, field) =>
+        val underlying =
+          if (valueClassIsBoxed) {
+            Invoke(input, field.name, jvmType(field.codec), returnNullable = nullable(field.codec))
+          } else { input }
+        createSerializer(field.codec, underlying, valueClassIsBoxed = true)
 
       case Codec.Product(_, _, Some(_)) =>
         val nullLiteral = Literal.create(null, NullType)
@@ -143,18 +159,20 @@ private object CodecToExpressionEncoder {
 
         val cls = prod.classTag.runtimeClass
         def nameAndSerializer(field: Field[?], index: Int): (String, Expression) = {
-          def invoke(functionName: String, arguments: Expression*): Invoke =
+          def invoke(functionName: String, valueClassIsBoxed: Boolean, arguments: Expression*): Invoke =
             Invoke(
               KnownNotNull(input),
               functionName,
-              jvmType(field.codec),
+              jvmType(field.codec, valueClassIsBoxed),
               arguments,
               returnNullable = nullable(field.codec)
             )
-          val getter =
-            if isValidJavaAccessor(cls, field.name) then invoke(field.name)
-            else invoke("productElement", Literal(index))
-          field.name -> createSerializer(field.codec, getter)
+          val (getter, valueClassIsBoxed) =
+            if isValidJavaAccessor(cls, field.name) then
+              val valueClassIsBoxed = valueClassFieldWouldBeBoxedAtRuntime(prod, field.name)
+              invoke(field.name, valueClassIsBoxed) -> valueClassIsBoxed
+            else invoke("productElement", valueClassIsBoxed = true, Literal(index)) -> true
+          field.name -> createSerializer(field.codec, getter, valueClassIsBoxed)
         }
         val nameAndSerializedFields = prod
           .fields
@@ -172,7 +190,11 @@ private object CodecToExpressionEncoder {
 
       case Codec.FromInjection(inj, innerCodec) =>
         val obj = Literal.create(inj, ObjectType(classOf[Injection[?, ?]]))
-        createSerializer(innerCodec, Invoke(obj, "apply", jvmType(innerCodec), Seq(input)))
+        createSerializer(
+          innerCodec,
+          Invoke(obj, "apply", jvmType(innerCodec), Seq(input)),
+          valueClassIsBoxed = true
+        )
     }
 
   private def createSerializerForIterable[T, C <: Iterable[T]](
@@ -226,7 +248,7 @@ private object CodecToExpressionEncoder {
 
   def createDeserializer[T](codec: Codec[T], input: Expression): Expression = {
     val walkedTypePath = WalkedTypePath().recordRoot(codec.classTag.runtimeClass.getName)
-    val deserializer = createDeserializer(codec, input, walkedTypePath, topRow = true)
+    val deserializer = createDeserializer(codec, input, walkedTypePath, topRow = true, boxValueClass = true)
     expressionWithNullSafety(deserializer, nullable(codec), walkedTypePath)
   }
 
@@ -234,7 +256,8 @@ private object CodecToExpressionEncoder {
       codec: Codec[T],
       path: Expression,
       walkedTypePath: WalkedTypePath,
-      topRow: Boolean
+      topRow: Boolean,
+      boxValueClass: Boolean
   ): Expression =
     codec match {
       case Codec.Byte => path
@@ -280,8 +303,8 @@ private object CodecToExpressionEncoder {
         )
         UnresolvedCatalystToExternalMap(
           path,
-          createDeserializer(map.key, _, newTypePath, topRow = false),
-          createDeserializer(map.value, _, newTypePath, topRow = false),
+          createDeserializer(map.key, _, newTypePath, topRow = false, boxValueClass = true),
+          createDeserializer(map.value, _, newTypePath, topRow = false, boxValueClass = true),
           map.classTag.runtimeClass
         )
 
@@ -295,14 +318,41 @@ private object CodecToExpressionEncoder {
               Literal.create(None, ObjectType(classOf[Option[?]])),
               NewInstance(
                 classOf[Some[?]],
-                Seq(createDeserializer(valueCodec, innerValue, newTypePath, topRow = false)),
+                Seq(createDeserializer(
+                  valueCodec,
+                  innerValue,
+                  newTypePath,
+                  topRow = false,
+                  boxValueClass = true
+                )),
                 ObjectType(classOf[Option[?]]),
                 propagateNull = false
               )
             )
-          case _ =>
-            WrapOption(createDeserializer(valueCodec, path, newTypePath, topRow = false), jvmType(valueCodec))
+          case _ => WrapOption(
+              createDeserializer(valueCodec, path, newTypePath, topRow = false, boxValueClass = true),
+              jvmType(valueCodec)
+            )
         }
+
+      case Codec.ValueClass(_, field) =>
+        val newTypePath = walkedTypePath.recordField(field.codec.classTag.runtimeClass.getName, field.name)
+        val underlying =
+          createDeserializer(field.codec, path, newTypePath, topRow = false, boxValueClass = true)
+        if (boxValueClass) {
+          If(
+            IsNull(path),
+            Literal.create(null, jvmType(codec)),
+            NewInstance(
+              codec.classTag.runtimeClass,
+              underlying :: Nil,
+              Nil,
+              propagateNull = false,
+              jvmType(codec),
+              None
+            )
+          )
+        } else { underlying }
 
       case Codec.Product(_, _, Some(singleton)) =>
         val newInstance = Literal.create(singleton, jvmType(codec))
@@ -316,12 +366,20 @@ private object CodecToExpressionEncoder {
            * construct using the mirror instead. */
           if ConstructorUtils.getMatchingAccessibleConstructor(cls, classArgs*) != null then {
             def fieldDeserializer[T](field: Field[T]): Expression = {
+              val boxValueClass = !isValidJavaAccessor(cls, field.name) ||
+                valueClassFieldWouldBeBoxedAtRuntime(prod, field.name)
               val newTypePath =
                 walkedTypePath.recordField(field.codec.classTag.runtimeClass.getName, field.name)
               val getter =
                 DeserializerBuildHelper.addToPath(path, field.name, catalystType(field.codec), newTypePath)
               expressionWithNullSafety(
-                createDeserializer(field.codec, getter, newTypePath, topRow = false),
+                createDeserializer(
+                  field.codec,
+                  getter,
+                  newTypePath,
+                  topRow = false,
+                  boxValueClass = boxValueClass
+                ),
                 nullable(field.codec),
                 newTypePath
               )
@@ -344,7 +402,12 @@ private object CodecToExpressionEncoder {
 
       case inj: Codec.FromInjection[T, ?] =>
         val obj = Literal.create(inj.inj, ObjectType(classOf[Injection[?, ?]]))
-        Invoke(obj, "invert", jvmType(inj), Seq(createDeserializer(inj.to, path, walkedTypePath, topRow)))
+        Invoke(
+          obj,
+          "invert",
+          jvmType(inj),
+          Seq(createDeserializer(inj.to, path, walkedTypePath, topRow, boxValueClass = true))
+        )
     }
 
   private def createSumDeserializer[T](
@@ -381,7 +444,7 @@ private object CodecToExpressionEncoder {
       .zipWithIndex
       .map { case (Field(name, codec), i) =>
         val newTypePath = walkedTypePath.recordField(codec.classTag.runtimeClass.getName, name)
-        createDeserializer(codec, GetStructField(path, i), newTypePath, topRow = false)
+        createDeserializer(codec, GetStructField(path, i), newTypePath, topRow = false, boxValueClass = true)
       }
     CreateExternalRow(convertedFields, schema)
   }
@@ -399,7 +462,13 @@ private object CodecToExpressionEncoder {
         If(
           Invoke(path, "isNullAt", BooleanType, Literal(i) :: Nil),
           Literal.create(null, jvmType(codec)),
-          createDeserializer(codec, GetStructField(path, i), newTypePath, topRow = false)
+          createDeserializer(
+            codec,
+            GetStructField(path, i),
+            newTypePath,
+            topRow = false,
+            boxValueClass = true
+          )
         )
       }
     If(
@@ -428,7 +497,7 @@ private object CodecToExpressionEncoder {
         catalystType(elementCodec),
         nullable = nullable(elementCodec),
         newTypePath,
-        createDeserializer(elementCodec, _, newTypePath, topRow = false)
+        createDeserializer(elementCodec, _, newTypePath, topRow = false, boxValueClass = true)
       )
     if (sparkSupportedCollections.contains(tag.runtimeClass)) {
       UnresolvedMapObjects(mapFunction, path, Some(tag.runtimeClass))

@@ -121,6 +121,9 @@ object CodecToEncoderSpecBase {
 
   staticAssert[NamedTuple.Size[BigNamedTuple] > 22, "BigNamedTuple should exceed 22 elements."]
 
+  private final case class IntValueClass(i: Int) extends AnyVal
+  private final case class ProductWithValueClass(v: IntValueClass)
+
   // To prefer equiv from Ord and avoid diverging givens
   given [T: Ord]: Equiv[T] = Ord[T]
   given [K, V]: Equiv[Map[K, V]] = Equiv.universal
@@ -223,6 +226,10 @@ trait CodecToEncoderSpecBase extends AnyFunSuite with SharedSparkSession {
   test[Seq[OnlySingletons]]()
   test[JavaKeyword]()
   test[JavaInvalidIdentifiers]()
+  test[IntValueClass](supportsNull = false)
+  test[(value: IntValueClass)]()
+  test[Tuple1[IntValueClass]]()
+  test[ProductWithValueClass]()
 
   def schemaTest[T: Codec: TypeName](expectedType: DataType): Unit =
     test(s"schema test for ${TypeName.name[T]}") {
