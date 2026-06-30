@@ -43,7 +43,7 @@ private[tyda] object NullIntolerant {
             ExprNode.StartsWith(_, _) | ExprNode.Trim(_) | ExprNode.EndsWith(_, _) |
             ExprNode.ConcatString(_) | ExprNode.TimestampToMicros(_) | ExprNode.MicrosToTimestamp(_) |
             ExprNode.DurationToMicros(_) | ExprNode.MicrosToDuration(_) | ExprNode.DateToDays(_) | ExprNode
-              .DaysToDate(_) | ExprNode.FromJson(_, _) | ExprNode.BytesLength(_) =>
+              .DaysToDate(_) | ExprNode.FromJson(_, _) | ExprNode.BytesLength(_) | ExprNode.ArrayJoin(_, _) =>
           ExprNode.api.foldChildren(e)(false)([t] => (acc, child) => Continue(acc || inner(child)))
       }
     inner(expr)

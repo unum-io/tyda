@@ -23,7 +23,7 @@ object NoExcept {
             .DistinctSeq(_) | ExprNode.SizeSeq(_) | ExprNode.Cast(_, _) | ExprNode.TryCast(_, _) | ExprNode
             .TimestampToMicros(_) | ExprNode.MicrosToTimestamp(_) | ExprNode.DurationToMicros(_) | ExprNode
             .MicrosToDuration(_) | ExprNode.DateToDays(_) | ExprNode.DaysToDate(_) | ExprNode.BytesLength(_) |
-          ExprNode.ToRepr(_, _) | ExprNode.FromRepr(_, _) => true
+          ExprNode.ToRepr(_, _) | ExprNode.FromRepr(_, _) | ExprNode.ArrayJoin(_, _) => true
     }
 }
 
