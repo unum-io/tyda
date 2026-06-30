@@ -172,11 +172,22 @@ object ExprEvaluationSuiteBase {
       }
   }
 
-  private final case class HasStrings(a: String, b: Int, c: (d: String, e: Long))
+  private final case class HasStrings(
+      a: String,
+      b: Int,
+      c: (d: String, e: Long),
+      f: Int,
+      g: Long,
+      i: Int,
+      j: Long,
+      p: Int,
+      q: Long,
+      l: (m: String, n: Int, o: Long)
+  )
   private object HasStrings {
     val removeStrings = WithoutStrings.derive[HasStrings]
     type Without = removeStrings.Out
-    val a: Without = (b = 1, c = (e = 1L))
+    val a: Without = (b = 1, c = (e = 1L), f = 2, g = 3L, i = 4, j = 5L, p = 6, q = 7L, l = (n = 8, o = 9L))
   }
 
   val errorMessage = "My error message"
@@ -1408,6 +1419,17 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testHasSameBehavior[HasStrings, HasStrings.Without](
     "derive type WithoutStrings",
     HasStrings.removeStrings(_),
-    r => (b = r.b, c = (e = r.c.e))
+    r =>
+      (
+        b = r.b,
+        c = (e = r.c.e),
+        f = r.f,
+        g = r.g,
+        i = r.i,
+        j = r.j,
+        p = r.p,
+        q = r.q,
+        l = (n = r.l.n, o = r.l.o)
+      )
   )
 }

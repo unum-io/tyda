@@ -635,7 +635,7 @@ SELECT FALSE AS value FROM t1
 ------ end
 
 ------ Test: derive type WithoutStrings
-SELECT t1.b AS b, named_struct('e', t1.c.e) AS c FROM t1
+SELECT t1.b AS b, named_struct('e', t1.c.e) AS c, t1.f AS f, t1.g AS g, t1.i AS i, t1.j AS j, t1.p AS p, t1.q AS q, named_struct('n', t1.l.n, 'o', t1.l.o) AS l FROM t1
 ------ end
 
 ------ Test: distinct on Seq[Int]

@@ -969,20 +969,32 @@ trait ExprApi[Expr[T]] {
     }
   }
 
+  // We need to eagerly simplify selects on products to avoid exponential growth when recursing over a tuple.
+  private def tupleSelect[T <: Tuple](node: ExprNode[T]): Int => ExprNode[?] =
+    node match {
+      case ExprNode.MakeProduct(elements, _) =>
+        // TYPE SAFETY: elements is Tuple.Map[?, ExprNode] so all elements are of type ExprNode[?]
+        i => elements.apply(i).asInstanceOf[ExprNode[?]]
+      case other => i => ExprNode.Select(other, s"_${i + 1}")
+    }
+
   extension [T <: Tuple, H](e: Expr[H *: T]) {
 
     /** Returns the head element of this non-empty tuple expression.
       */
-    def head: Expr[H] = lift(ExprNode.Select(unlift(e), "_1"))
+    def head: Expr[H] =
+      // TYPE SAFETY: The types being H *: T proves that head is H
+      lift(tupleSelect(unlift(e))(0).asInstanceOf[ExprNode[H]])
 
     /** Returns a tuple expression containing all elements after the first one
       * of this non-empty tuple expression.
       */
     def tail: Expr[T] =
       val node = unlift(e)
+      val select = tupleSelect(node)
       node.codec match {
         case Codec.Product(_, fields, _) =>
-          val elements = (2 to fields.arity).map(i => ExprNode.Select(node, s"_$i"))
+          val elements = (1 until fields.arity).map(select)
           lift(ExprNode.makeTupleUnsafe(elements))
         case unsupported => unreachable(s"Tuple must be encoded using Product, but found ${unsupported}")
       }
@@ -994,9 +1006,10 @@ trait ExprApi[Expr[T]] {
       */
     infix def *:[T <: Tuple](tail: Expr[T]): Expr[H *: T] =
       val tailNode = unlift(tail)
+      val select = tupleSelect(tailNode)
       tailNode.codec match {
         case Codec.Product(_, fields, _) =>
-          val tailNodes = (1 to fields.arity).map(i => ExprNode.Select(tailNode, s"_$i"))
+          val tailNodes = (0 until fields.arity).map(select)
           val elements = unlift(head) +: tailNodes
           // TYPE SAFET
           lift(ExprNode.makeTupleUnsafe(elements))
