@@ -183,7 +183,7 @@ SELECT t1._1 AS _1, min_by(named_struct('_1', t1._1, '_2', t1._2)._1, named_stru
 ------ end
 
 ------ Test: reduce group by nested option
-SELECT count(CAST(1 AS INT)) AS value FROM t1 GROUP BY CASE WHEN CASE WHEN (t1.value IS NULL) THEN TRUE ELSE (NOT (t1.value <= CAST(0 AS INT))) END THEN named_struct('value', t1.value) END
+SELECT count(CAST(1 AS INT)) AS value FROM t1 GROUP BY CASE WHEN ((t1.value IS NULL) OR (NOT (t1.value <= CAST(0 AS INT)))) THEN named_struct('value', t1.value) END
 ------ end
 
 ------ Test: reduce group by option.map with struct

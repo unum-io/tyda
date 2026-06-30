@@ -183,7 +183,7 @@ SELECT t1._1 AS _1, min_by(struct(t1._1 AS _1, t1._2 AS _2)._1, struct(t1._1 AS 
 ------ end
 
 ------ Test: reduce group by nested option
-SELECT count(CAST(1 AS INT)) AS value FROM (SELECT t1.value AS _1, struct(CASE WHEN CASE WHEN (t1.value IS NULL) THEN TRUE ELSE (NOT (t1.value <= CAST(0 AS INT))) END THEN struct(t1.value AS value) END AS key) AS _2 FROM t1) AS t0 GROUP BY t0._2
+SELECT count(CAST(1 AS INT)) AS value FROM (SELECT t1.value AS _1, struct(CASE WHEN ((t1.value IS NULL) OR (NOT (t1.value <= CAST(0 AS INT)))) THEN struct(t1.value AS value) END AS key) AS _2 FROM t1) AS t0 GROUP BY t0._2
 ------ end
 
 ------ Test: reduce group by option.map with struct
