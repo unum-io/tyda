@@ -2,6 +2,7 @@ package com.choreograph.tyda.rewrite
 
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.ExprNode.WhenThen
+import com.choreograph.tyda.TreeApi.Continue
 
 private[tyda] object NullIntolerant {
 
@@ -14,62 +15,36 @@ private[tyda] object NullIntolerant {
     def inner(e: ExprNode[?]): Boolean =
       e match {
         case `arg` => true
-        case ExprNode.None(_) => true
-        case If(_, ifTrue, ifFalse) => inner(ifTrue) && inner(ifFalse)
-        case ExprNode.Cases(WhenThen(_, thenExpr), cases, elseExpr) => inner(thenExpr) &&
-          cases.map(_.thenExpr).forall(inner) && inner(elseExpr)
-        case ExprNode.MakeSome(Nullable(_)) => false
-        case ExprNode.MakeSome(expr) => inner(expr)
-        case ExprNode.KnownNotNull(expr) => inner(expr)
-        case ExprNode.Coalesce(operands) => operands.forall(inner)
-        case ExprNode.Add(_, lhs, rhs) => inner(lhs) || inner(rhs)
-        case ExprNode.Quotient(_, lhs, rhs) => inner(lhs) || inner(rhs)
-        case ExprNode.Split(string, delimiter) => inner(string) || inner(delimiter)
-        case ExprNode.And(lhs, rhs) => inner(lhs) && inner(rhs)
-        case ExprNode.Or(lhs, rhs) => inner(lhs) && inner(rhs)
-        case ExprNode.Not(operand) => inner(operand)
-        case ExprNode.Equals(Nullable(_), Nullable(_)) =>
-          false // We perform null safe equals which is never null
-        case ExprNode.Equals(lhs, rhs) => inner(lhs) || inner(rhs)
-        case ExprNode.LessThan(_, lhs, rhs) => inner(lhs) || inner(rhs)
-        case ExprNode.LessThanOrEqual(_, lhs, rhs) => inner(lhs) || inner(rhs)
-        case ExprNode.Select(expr, _) => inner(expr)
-        case ExprNode.OptionToIterable(expr) => inner(expr)
-        case ExprNode.UpcastToIterable(expr) => inner(expr)
-        // For bigquery our sql is not. Should we have a dialect here?
-        case ExprNode.MapSeq(_, _) | ExprNode.FilterSeq(_, _) | ExprNode.DistinctSeq(_) |
-            ExprNode.FlattenSeq(_) => false
-        case ExprNode.MakeMap(entries) => inner(entries)
-        case ExprNode.AggregateSeq(expr, _, _) => inner(expr)
-        case ExprNode.Range(start, end) => inner(start) || inner(end)
-        case ExprNode.TryCast(expr, _) => inner(expr)
-        case ExprNode.Cast(expr, _) => inner(expr)
-        case ExprNode.ElementSeq(array, index) => inner(array) || inner(index)
-        case ExprNode.ToRepr(expr, _) => inner(expr)
-        case ExprNode.FromRepr(expr, _) => inner(expr)
-        case ExprNode.ConcatSeq(lhs, rhs) => inner(lhs) || inner(rhs)
-        case ExprNode.SizeSeq(expr) => inner(expr)
-        case ExprNode.MapEntries(expr) => inner(expr)
-        case ExprNode.MapGet(map, value) => inner(map) || inner(value)
-        case ExprNode.StartsWith(str, prefix) => inner(str) || inner(prefix)
-        case ExprNode.Trim(expr) => inner(expr)
-        case ExprNode.EndsWith(str, suffix) => inner(str) || inner(suffix)
-        case ExprNode.ConcatString(exprs) => exprs.exists(inner)
-        case ExprNode.TimestampToMicros(expr) => inner(expr)
-        case ExprNode.MicrosToTimestamp(expr) => inner(expr)
-        case ExprNode.DurationToMicros(expr) => inner(expr)
-        case ExprNode.MicrosToDuration(expr) => inner(expr)
-        case ExprNode.DateToDays(expr) => inner(expr)
-        case ExprNode.DaysToDate(expr) => inner(expr)
-        // For spark it is not.
-        case ExprNode.IsNaN(_) => false
-        // BigQuery supports arbirary types and ToJson for a null will return the string "null"
-        case ExprNode.ToJson(expr) => false
-        case ExprNode.FromJson(expr, _) => inner(expr)
-        case ExprNode.BytesLength(expr) => inner(expr)
         case ExprNode.MakeProduct(_, _) | ExprNode.Aggregate(_, _) | ExprNode.Udf(_, _, _) | ExprNode
               .Reference(_, _) | ExprNode.Literal(_, _) | ExprNode.MakeSeq(_, _) | ExprNode.RaiseError(_, _) |
             ExprNode.ScalarSubquery(_) | ExprNode.ExistsSubquery(_) | ExprNode.Rand() => false
+        // For bigquery our sql is not. Should we have a dialect here?
+        case ExprNode.MapSeq(_, _) | ExprNode.FilterSeq(_, _) | ExprNode.DistinctSeq(_) |
+            ExprNode.FlattenSeq(_) => false
+        case ExprNode.Equals(Nullable(_), Nullable(_)) =>
+          false // We perform null safe equals which is never null
+        case ExprNode.MakeSome(Nullable(_)) => false
+        // For spark it is not.
+        case ExprNode.IsNaN(_) => false
+        // BigQuery supports arbitrary types and ToJson for a null will return the string "null"
+        case ExprNode.ToJson(_) => false
+        case ExprNode.And(lhs, rhs) => inner(lhs) && inner(rhs)
+        case ExprNode.Or(lhs, rhs) => inner(lhs) && inner(rhs)
+        case ExprNode.Cases(WhenThen(_, thenExpr), cases, elseExpr) => inner(thenExpr) &&
+          cases.map(_.thenExpr).forall(inner) && inner(elseExpr)
+        case ExprNode.None(_) => true
+        case ExprNode.MakeSome(_) | ExprNode.KnownNotNull(_) | ExprNode.Coalesce(_) | ExprNode.Add(_, _, _) |
+            ExprNode.Quotient(_, _, _) | ExprNode.Split(_, _) | ExprNode.Not(_) | ExprNode.Equals(_, _) |
+            ExprNode.LessThan(_, _, _) | ExprNode.LessThanOrEqual(_, _, _) | ExprNode.Select(_, _) | ExprNode
+              .OptionToIterable(_) | ExprNode.UpcastToIterable(_) | ExprNode.MakeMap(_) | ExprNode
+              .AggregateSeq(_, _, _) | ExprNode.Range(_, _) | ExprNode.TryCast(_, _) | ExprNode.Cast(_, _) |
+            ExprNode.ElementSeq(_, _) | ExprNode.ToRepr(_, _) | ExprNode.FromRepr(_, _) |
+            ExprNode.ConcatSeq(_, _) | ExprNode.SizeSeq(_) | ExprNode.MapEntries(_) | ExprNode.MapGet(_, _) |
+            ExprNode.StartsWith(_, _) | ExprNode.Trim(_) | ExprNode.EndsWith(_, _) |
+            ExprNode.ConcatString(_) | ExprNode.TimestampToMicros(_) | ExprNode.MicrosToTimestamp(_) |
+            ExprNode.DurationToMicros(_) | ExprNode.MicrosToDuration(_) | ExprNode.DateToDays(_) | ExprNode
+              .DaysToDate(_) | ExprNode.FromJson(_, _) | ExprNode.BytesLength(_) =>
+          ExprNode.api.foldChildren(e)(false)([t] => (acc, child) => Continue(acc || inner(child)))
       }
     inner(expr)
   }

@@ -11,6 +11,9 @@ private[tyda] object SimplifyOptionIf {
       case _ => None
     }
 
+  private def canSafelyOptimize(opt: ExprNode[Option[?]], body: ExprNode[?]): Boolean =
+    allDeterministic(opt) && allDeterministic(opt) && allNoExcept(body) && allNoExcept(opt)
+
   private object UselessTernary {
 
     /** Matches a ternary expression if(opt is null, null, expr) if expr is a
@@ -19,7 +22,8 @@ private[tyda] object SimplifyOptionIf {
       */
     def unapply[U](expr: ExprNode[Option[U]]): Option[ExprNode[Option[U]]] =
       expr match {
-        case If(IsNone(opt), ExprNode.None(_), body) if NullIntolerant(body, opt) => Some(body)
+        case If(IsNone(opt), ExprNode.None(_), body)
+            if NullIntolerant(body, opt) && canSafelyOptimize(opt, body) => Some(body)
         case _ => None
       }
   }
@@ -41,9 +45,11 @@ private[tyda] object SimplifyOptionIf {
     def unapply(expr: ExprNode[Boolean]): Option[ExprNode[Boolean]] =
       expr match {
         case If(isNone @ IsNone(opt), ExprNode.Literal(false, _), body)
-            if NullIntolerant.nullOrFalse(body, opt) => Some(ExprNode.And(ExprNode.Not(isNone), body))
+            if NullIntolerant.nullOrFalse(body, opt) && canSafelyOptimize(opt, body) =>
+          Some(ExprNode.And(ExprNode.Not(isNone), body))
         case If(isNone @ IsNone(opt), ExprNode.Literal(true, _), body)
-            if NullIntolerant.nullOrFalse(body, opt) => Some(ExprNode.Or(isNone, body))
+            if NullIntolerant.nullOrFalse(body, opt) && canSafelyOptimize(opt, body) =>
+          Some(ExprNode.Or(isNone, body))
         case _ => None
       }
   }
