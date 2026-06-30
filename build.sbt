@@ -10,7 +10,7 @@ import scala.util.Failure
 
 import com.github.sbt.git.SbtGit.GitKeys.useConsoleForROGit
 
-ThisBuild / tlBaseVersion := "0.7"
+ThisBuild / tlBaseVersion := "0.8"
 ThisBuild / organization := "com.wppresolve.tyda"
 ThisBuild / organizationName := "WPP"
 ThisBuild / licenses := Seq(License.MIT)
