@@ -1136,8 +1136,8 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testTryCast[Decimal[19, 1], Decimal[19, 0]](v => Decimal[19, 0](v.toBigDecimal))
   testTryCast[Decimal[19, 3], Decimal[10, 3]](v => Decimal[10, 3](v.toBigDecimal))
 
-  def testLiteralCreation[T: Codec: TypeName](fixed: T) =
-    testHasSameBehavior[EmptyTuple, T](
+  def testLiteralCreation[T: ClassTag: Arbitrary: Codec: TypeName](fixed: T) =
+    testHasSameBehavior[T, T](
       s"create literal ${fixed.toString} ${TypeName.name[T]}",
       _ => lit(fixed),
       _ => fixed
@@ -1179,6 +1179,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testLiteralCreation[Option[Struct]](Some(Struct(1, "a", false)))
   testLiteralCreation[TestEnum](TestEnum.A)
   testLiteralCreation[Option[TestEnum]](None)
+  testLiteralCreation[Option[TestEnum.A.type]](None)
   testLiteralCreation[Option[TestEnum]](Some(TestEnum.C(1)))
   testLiteralCreation[Timestamp](Timestamp.fromMicros(1))
   testLiteralCreation[Timestamp](Timestamp.fromMicros(148600399274030924L))

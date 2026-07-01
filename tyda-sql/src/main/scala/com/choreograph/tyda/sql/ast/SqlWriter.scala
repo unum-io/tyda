@@ -60,7 +60,7 @@ private[tyda] final case class SqlWriter(writer: Writer) {
         write("'")
       case SqlExpr.LiteralNumeric(value) => write(value)
       case SqlExpr.LiteralBool(value) => if value then write("TRUE") else write("FALSE")
-      case SqlExpr.LiteralNull => write("NULL")
+      case SqlExpr.LiteralNull => write("NULL") // scalafix:ok Disallowed.Method
       case SqlExpr.Case(whens, elseExpr) =>
         write("CASE")
         whens.foreach { case (cond, result) => writeSql" WHEN $cond THEN $result" }
