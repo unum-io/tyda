@@ -28,7 +28,9 @@ import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
 import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Expr
+import com.choreograph.tyda.ExprDepFn1
 import com.choreograph.tyda.JsonArrayOrObject
+import com.choreograph.tyda.Mapper
 import com.choreograph.tyda.Ord
 import com.choreograph.tyda.Remover
 import com.choreograph.tyda.Selector
@@ -121,33 +123,9 @@ object ExprEvaluationSuiteBase {
     }
   }
 
-  private trait WithoutStrings[T] {
-    type Out
-    def apply(e: Expr[T]): Expr[Out]
-  }
+  private trait WithoutStrings[T] extends ExprDepFn1[T]
   private object WithoutStrings {
     type Aux[T, Out1] = WithoutStrings[T] { type Out = Out1 }
-
-    trait WithoutStringsTuple[T <: Tuple] {
-      type Out <: Tuple
-      def apply(e: Expr[T]): Expr[Out]
-    }
-    object WithoutStringsTuple {
-      type Aux[T <: Tuple, Out1] = WithoutStringsTuple[T] { type Out = Out1 }
-    }
-    given WithoutStringsTuple.Aux[EmptyTuple, EmptyTuple] =
-      new WithoutStringsTuple[EmptyTuple] {
-        type Out = EmptyTuple
-        def apply(e: Expr[EmptyTuple]): Expr[Out] = e
-      }
-    given [T <: Tuple, H](using
-        removeHead: WithoutStrings[H],
-        removeTail: WithoutStringsTuple[T]
-    ): WithoutStringsTuple.Aux[H *: T, removeHead.Out *: removeTail.Out] =
-      new WithoutStringsTuple[H *: T] {
-        type Out = removeHead.Out *: removeTail.Out
-        def apply(e: Expr[H *: T]): Expr[Out] = removeHead(e.head) *: removeTail(e.tail)
-      }
 
     trait KeepAsIs[T] extends WithoutStrings[T] {
       type Out = T
@@ -161,7 +139,7 @@ object ExprEvaluationSuiteBase {
     given derive[T: Mirror.ProductOf as m](using
         remover: Remover[T, String],
         mOut: Mirror.ProductOf[remover.Out],
-        recurse: WithoutStringsTuple[mOut.MirroredElemTypes],
+        recurse: Mapper[WithoutStrings, mOut.MirroredElemTypes],
         names: StringLiterals[NamedTuple.Names[remover.Out]],
         sizeEv: EqualSize[recurse.Out, NamedTuple.Names[remover.Out]]
     ): WithoutStrings.Aux[T, NamedTuple[NamedTuple.Names[remover.Out], recurse.Out]] =
