@@ -1,27 +1,39 @@
 package com.choreograph.tyda
 
-import com.choreograph.tyda.Expr
+import scala.NamedTuple.NamedTuple
+import scala.deriving.Mirror
 
-/** Helper class for applying [[ExprDepFn1]] to each element of tuple. */
-trait Mapper[HK[X] <: ExprDepFn1[X], T <: Tuple] extends ExprDepFn1[T] {
-  type Out <: Tuple
+import com.choreograph.tyda.TupleOperations.EqualSize
+
+/** Type class for applying an [[ExprDepFn1]] to each field of a product type.
+  *
+  * Unlike [[TupleMapper]] which operates on positional tuples, `Mapper` works
+  * with any type that has a `Mirror.ProductOf` (case classes, named tuples,
+  * etc.) and produces a named tuple preserving the original field names.
+  *
+  * Example:
+  * {{{
+  * trait ToStr[T] extends ExprDepFn1[T] { type Out = String }
+  * given ToStr[Int] with { def apply(e: Expr[Int]): Expr[String] = e.cast[String] }
+  *
+  * val mapper = summon[Mapper[ToStr, (name: String, age: Int)]]
+  * // mapper.Out =:= (name: String, age: String)
+  * }}}
+  */
+trait Mapper[HK[X] <: ExprDepFn1[X], T] extends ExprDepFn1[T] {
+  type Out
 }
 
 object Mapper {
-  type Aux[HK[X] <: ExprDepFn1[X], T <: Tuple, Out1 <: Tuple] = Mapper[HK, T] { type Out = Out1 }
+  type Aux[HK[X] <: ExprDepFn1[X], T, Out0] = Mapper[HK, T] { type Out = Out0 }
 
-  given empty[HK[X] <: ExprDepFn1[X]]: Aux[HK, EmptyTuple, EmptyTuple] =
-    new Mapper[HK, EmptyTuple] {
-      type Out = EmptyTuple
-      def apply(e: Expr[EmptyTuple]): Expr[Out] = e
-    }
-
-  given cons[HK[X] <: ExprDepFn1[X], T <: Tuple, H](using
-      mapHead: HK[H],
-      mapTail: Mapper[HK, T]
-  ): Aux[HK, H *: T, mapHead.Out *: mapTail.Out] =
-    new Mapper[HK, H *: T] {
-      type Out = mapHead.Out *: mapTail.Out
-      def apply(e: Expr[H *: T]): Expr[mapHead.Out *: mapTail.Out] = mapHead(e.head) *: mapTail(e.tail)
+  given product[HK[X] <: ExprDepFn1[X], T: Mirror.ProductOf as m](using
+      tupleMapper: TupleMapper[HK, m.MirroredElemTypes],
+      names: StringLiterals[m.MirroredElemLabels],
+      sizeEv: EqualSize[tupleMapper.Out, m.MirroredElemLabels]
+  ): Aux[HK, T, NamedTuple[m.MirroredElemLabels, tupleMapper.Out]] =
+    new Mapper[HK, T] {
+      type Out = NamedTuple[m.MirroredElemLabels, tupleMapper.Out]
+      def apply(e: Expr[T]): Expr[Out] = tupleMapper(e.toTuple).withNames[m.MirroredElemLabels]
     }
 }

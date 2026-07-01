@@ -36,7 +36,6 @@ import com.choreograph.tyda.Remover
 import com.choreograph.tyda.Selector
 import com.choreograph.tyda.StringLiterals
 import com.choreograph.tyda.Timestamp
-import com.choreograph.tyda.TupleOperations.EqualSize
 import com.choreograph.tyda.TypeName
 import com.choreograph.tyda.functions.coalesce
 import com.choreograph.tyda.functions.concat
@@ -138,15 +137,11 @@ object ExprEvaluationSuiteBase {
     // TODO: Should be remove all instead of Remove
     given derive[T: Mirror.ProductOf as m](using
         remover: Remover[T, String],
-        mOut: Mirror.ProductOf[remover.Out],
-        recurse: Mapper[WithoutStrings, mOut.MirroredElemTypes],
-        names: StringLiterals[NamedTuple.Names[remover.Out]],
-        sizeEv: EqualSize[recurse.Out, NamedTuple.Names[remover.Out]]
-    ): WithoutStrings.Aux[T, NamedTuple[NamedTuple.Names[remover.Out], recurse.Out]] =
+        recurse: Mapper[WithoutStrings, remover.Out]
+    ): WithoutStrings.Aux[T, recurse.Out] =
       new WithoutStrings[T] {
-        type Out = NamedTuple[NamedTuple.Names[remover.Out], recurse.Out]
-        def apply(e: Expr[T]): Expr[Out] =
-          recurse(e.remove[String].toTuple).withNames[NamedTuple.Names[remover.Out]]
+        type Out = recurse.Out
+        def apply(e: Expr[T]): Expr[Out] = recurse(e.remove[String])
       }
   }
 
