@@ -140,6 +140,21 @@ object Codec {
       Some((codec.classTag, codec.fields, codec.singleton))
   }
 
+  private class ValueClassInjection[T, U](mirror: ValueClassMirror[T] { type MirroredElemType = U })
+      extends Injection[T, U] {
+
+    def apply(from: T): U = from.toMirroredElemTypes(using mirror).head
+    def invert(to: U): T = mirror.fromValue(to)
+  }
+
+  private[tyda] final case class ValueClass[T, U](classTag: ClassTag[T], field: Field[U])(using
+      m: ValueClassMirror[T] { type MirroredElemType = U }
+  ) extends Codec[T], FromInjection[T, U] {
+    def to: Codec[U] = field.codec
+    def inj: Injection[T, U] = ValueClassInjection(m)
+    def fromValue(u: U): T = m.fromValue(u)
+  }
+
   private[tyda] final case class Sum[T: Mirror.SumOf, Repr <: AnyNamedTuple & scala.Product](
       classTag: ClassTag[T],
       wrappedVariants: WrappedCoproductInstances[Variant, T]
@@ -372,6 +387,11 @@ object Codec {
       scala.Option.when(inst.arity == 0)(m.fromProduct(EmptyTuple))
     )
   }
+
+  given valueClass[T <: AnyVal: ClassTag as tag: ValueClassMirror as m](using
+      fieldName: ValueOf[m.MirroredElemLabel],
+      codec: Codec[m.MirroredElemType]
+  ): Codec[T] = ValueClass(tag, Field(fieldName.value, codec))
 
   /** Creates a default codec for a sum type (sealed trait or enum).
     *

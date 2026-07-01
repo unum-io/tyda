@@ -158,7 +158,17 @@ object CodecToEncoder {
         )
 
       case prod: Codec.Product[T] if allFieldsHaveJavaAccessor(prod) =>
-        val fields = encoderFields(prod.fields.mapConst[Field[?]]([t] => identity(_)))
+        val fields = encoderFields(
+          prod
+            .fields
+            .mapConst[Field[?]]([t] =>
+              _ match {
+                case Field(name, Codec.ValueClass(_, Field(_, underlying)))
+                    if !valueClassFieldWouldBeBoxedAtRuntime(prod, name) => Field(name, underlying)
+                case field => field
+              }
+            )
+        )
         AgnosticEncoders.ProductEncoder(clsTag = prod.classTag, fields = fields, outerPointerGetter = None)
 
       // This fallback handles products where the fields are not valid java accssors. For example NamedTuples
