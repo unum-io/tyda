@@ -950,6 +950,15 @@ trait ExprApi[Expr[T]] {
       }
   }
 
+  // We need to eagerly simplify selects on products to avoid exponential growth when recursing over a tuple.
+  private def tupleSelect[T <: Tuple](node: ExprNode[T]): Int => ExprNode[?] =
+    node match {
+      case ExprNode.MakeProduct(elements, _) =>
+        // TYPE SAFETY: elements is Tuple.Map[?, ExprNode] so all elements are of type ExprNode[?]
+        i => elements.apply(i).asInstanceOf[ExprNode[?]]
+      case other => i => ExprNode.Select(other, s"_${i + 1}")
+    }
+
   extension [T <: Tuple](e: Expr[T]) {
 
     /** Create a named tuple expression by associating field names with the
@@ -959,7 +968,8 @@ trait ExprApi[Expr[T]] {
       val node = unlift(e)
       node.codec match {
         case Codec.Product(_, fields, _) =>
-          val nodes: Seq[ExprNode[?]] = (1 to fields.arity).map(i => ExprNode.Select(node, s"_$i"))
+          val select = tupleSelect(node)
+          val nodes: Seq[ExprNode[?]] = (0 until fields.arity).map(select)
 
           val namedFields = StringLiterals.apply[N].zip(nodes.map(_.codec)).map(Field(_, _))
           // TYPE SAFETY: The equal size and StringLiterals evidence ensure correctness
@@ -968,15 +978,6 @@ trait ExprApi[Expr[T]] {
       }
     }
   }
-
-  // We need to eagerly simplify selects on products to avoid exponential growth when recursing over a tuple.
-  private def tupleSelect[T <: Tuple](node: ExprNode[T]): Int => ExprNode[?] =
-    node match {
-      case ExprNode.MakeProduct(elements, _) =>
-        // TYPE SAFETY: elements is Tuple.Map[?, ExprNode] so all elements are of type ExprNode[?]
-        i => elements.apply(i).asInstanceOf[ExprNode[?]]
-      case other => i => ExprNode.Select(other, s"_${i + 1}")
-    }
 
   extension [T <: Tuple, H](e: Expr[H *: T]) {
 
@@ -991,9 +992,9 @@ trait ExprApi[Expr[T]] {
       */
     def tail: Expr[T] =
       val node = unlift(e)
-      val select = tupleSelect(node)
       node.codec match {
         case Codec.Product(_, fields, _) =>
+          val select = tupleSelect(node)
           val elements = (1 until fields.arity).map(select)
           lift(ExprNode.makeTupleUnsafe(elements))
         case unsupported => unreachable(s"Tuple must be encoded using Product, but found ${unsupported}")
@@ -1011,7 +1012,6 @@ trait ExprApi[Expr[T]] {
         case Codec.Product(_, fields, _) =>
           val tailNodes = (0 until fields.arity).map(select)
           val elements = unlift(head) +: tailNodes
-          // TYPE SAFET
           lift(ExprNode.makeTupleUnsafe(elements))
         case unsupported => unreachable(s"Tuple must be encoded using Product, but found ${unsupported}")
       }

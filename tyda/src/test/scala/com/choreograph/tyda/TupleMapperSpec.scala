@@ -9,17 +9,9 @@ object TupleMapperSpec {
     type Out = String
   }
 
-  given ToStr[Int] with {
-    def apply(e: Expr[Int]): Expr[String] = e.cast[String]
-  }
-
-  given ToStr[Long] with {
-    def apply(e: Expr[Long]): Expr[String] = e.cast[String]
-  }
-
-  given ToStr[Short] with {
-    def apply(e: Expr[Short]): Expr[String] = e.cast[String]
-  }
+  given ToStr[Int] = _.cast[String]
+  given ToStr[Long] = _.cast[String]
+  given ToStr[Short] = _.cast[String]
 }
 
 class TupleMapperSpec extends AnyFunSuite {
