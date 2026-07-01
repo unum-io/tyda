@@ -42,6 +42,9 @@ object CodecSpec {
     case Red, Green, Blue
   }
 
+  final case class TransparentInt(eraseMePlease: Int) derives Codec.Transparent
+  final case class TransparentString(value: String) derives Codec.Transparent
+
   enum EnumWithManyCase extends EnumStableHashCode derives Codec {
     case A
     case B(a: Int)
@@ -164,6 +167,57 @@ class CodecSpec extends AnyFunSuite {
   testSumAsInjection[Hierarchy1]
   testSumAsInjection[Color]
   testSumAsInjection[EnumWithManyCase]
+
+  test("Transparent codec should encode single-field case class as inner type") {
+    val codec = Codec[TransparentInt]
+    codec match {
+      case Codec.FromInjection(inj, innerCodec) =>
+        assert(innerCodec == Codec.Int)
+        assert(inj(TransparentInt(42)) == 42)
+        val encoded = inj(TransparentInt(42))
+        assert(inj.invert(encoded) == TransparentInt(42))
+      case _ => fail("Expected a FromInjection codec")
+    }
+  }
+
+  test("Transparent codec should roundtrip correctly") {
+    val codec = Codec[TransparentInt] match {
+      case inj: Codec.FromInjection[TransparentInt, ?] => inj
+      case _ => fail("Expected a FromInjection codec")
+    }
+    val original = TransparentInt(123)
+    assert(codec.inj.invert(codec.inj(original)) == original)
+  }
+
+  test("Transparent codec should work with String field") {
+    val codec = Codec[TransparentString]
+    codec match {
+      case Codec.FromInjection(inj, innerCodec) =>
+        assert(innerCodec == Codec.String)
+        assert(inj(TransparentString("hello")) == "hello")
+        val encoded = inj(TransparentString("hello"))
+        assert(inj.invert(encoded) == TransparentString("hello"))
+      case _ => fail("Expected a FromInjection codec")
+    }
+  }
+
+  test("Transparent codec should work with named tuple") {
+    Codec.Transparent.derived[(name: String)] match {
+      case Codec.FromInjection(inj, innerCodec) =>
+        assert(innerCodec == Codec.String)
+        val value = (name = "hello")
+        assert(inj(value) == "hello")
+        val encoded = inj(value)
+        assert(inj.invert(encoded) == value)
+    }
+  }
+
+  test("Transparent codec should not compile for multi-field case class") {
+    assertCompileTimeError(
+      """case class Pair(a: Int, b: Int) derives Codec.Transparent""",
+      "Codec.Transparent requires exactly one field"
+    )
+  }
 
   test("allow adding Option parameters to singletons") {
     def inj[T: Codec]: Injection[T, ?] = {
