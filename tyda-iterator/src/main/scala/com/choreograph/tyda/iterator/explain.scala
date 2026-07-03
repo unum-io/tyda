@@ -109,11 +109,11 @@ private[tyda] def explain(anyCompiled: AnyCompiledExpr): String =
 
 private def explainPrimitiveAggregate(primitive: PrimitiveAggregate[?, ?], arg: String): String =
   primitive match {
-    case PrimitiveAggregate.Collect() => "collect($arg)"
-    case PrimitiveAggregate.Count() => "count($arg)"
-    case PrimitiveAggregate.CountSome() => "countSome($arg)"
-    case PrimitiveAggregate.BoolAnd() => "boolAnd($arg)"
-    case PrimitiveAggregate.BoolOr() => "boolOr($arg)"
+    case PrimitiveAggregate.Collect() => s"collect($arg)"
+    case PrimitiveAggregate.Count() => s"count($arg)"
+    case PrimitiveAggregate.CountSome() => s"countSome($arg)"
+    case PrimitiveAggregate.BoolAnd() => s"boolAnd($arg)"
+    case PrimitiveAggregate.BoolOr() => s"boolOr($arg)"
     case PrimitiveAggregate.Min(ord) => s"min($arg)(using $ord)"
     case PrimitiveAggregate.Max(ord) => s"max($arg)(using $ord)"
     case PrimitiveAggregate.MinBy(ord) => s"minBy($arg)(using ${ord})"
