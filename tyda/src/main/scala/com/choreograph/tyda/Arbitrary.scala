@@ -107,7 +107,9 @@ object Arbitrary {
   given float: Arbitrary[Float] = floating(r => java.lang.Float.intBitsToFloat(r.nextInt()))
   given double: Arbitrary[Double] = floating(r => java.lang.Double.longBitsToDouble(r.nextLong()))
   given boolean: Arbitrary[Boolean] = oneOf(v0 = true, vn = false)
-  given string: Arbitrary[String] = combine(mkString(ascii), StringArbitrary(5))
+  given string: Arbitrary[String] =
+    // We bias the String generator towards ASCII values, as edge cases commonly involve ASCII characters.
+    combine(mkString(ascii), StringArbitrary(5))
 
   given bigInt: Arbitrary[BigInt] =
     for {
