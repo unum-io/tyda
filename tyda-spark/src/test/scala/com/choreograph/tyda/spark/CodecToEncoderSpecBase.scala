@@ -181,6 +181,7 @@ trait CodecToEncoderSpecBase extends AnyFunSuite with SharedSparkSession {
   test[(Int, Double)]()
   test[Seq[(Int, Double)]]()
   test[Seq[Timestamp]]()
+  test[Seq[Option[Timestamp]]]()
   test[Seq[Date]]()
   test[Seq[Duration]]()
   test[ArraySeq[Int]]()
