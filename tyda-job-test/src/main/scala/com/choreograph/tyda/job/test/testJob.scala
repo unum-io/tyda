@@ -7,7 +7,6 @@ import com.choreograph.tyda.UnionMirror.derived
 import com.choreograph.tyda.iterator.IteratorRunner
 import com.choreograph.tyda.job.TydaJob
 import com.choreograph.tyda.job.TydaJobContext
-import com.choreograph.tyda.spark.SparkRunner
 import com.choreograph.tyda.table.ArgsParser
 
 private val runnerEnvironmentVariable = "TYDA_JOB_TEST_RUNNER"
@@ -41,13 +40,15 @@ def testJob[Args](args: Args)(using job: TydaJob[Args]): Unit = {
   val runner = runnerArg match {
     case RunnerArgs.Iterator => IteratorRunner
     case RunnerArgs.Spark =>
-      val spark = SparkSession
+      val name = "unittest"
+      // Ensure a appropriately configured session exists
+      val _ = SparkSession
         .builder()
         .config("spark.log.level", "WARN")
         .master("local[2]")
-        .appName("unittest")
+        .appName(name)
         .getOrCreate()
-      new SparkRunner(using spark)
+      RunnerArgs.createRunner(runnerArg, name)
   }
   val context = TydaJobContext(runner)
   job.run(args)(using context)
