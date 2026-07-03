@@ -14,7 +14,7 @@ private val runnerEnvironmentVariable = "TYDA_JOB_TEST_RUNNER"
   * This is needed because of existing code that is not compatible with spark.
   * But this should only be used as a last resort in new code and ideally never.
   */
-def isTestSparkRunner: Boolean = getRunnerArg == RunnerArgs.Spark
+def isTestSparkRunner: Boolean = getRunnerArg == TestRunnerArg.Spark
 
 private def getRunnerArg: TestRunnerArg =
   sys.env.get(runnerEnvironmentVariable) match {
