@@ -22,7 +22,7 @@ object TydaRepl {
 
   def run(args: Args, initCode: Option[String] = None, infoMessage: Option[String] = None): Unit = {
     args.runner match
-      case RunnerArgs.Spark => if System.getProperty("spark.master") == null then
+      case RunnerArgs.Spark(master=_) => if System.getProperty("spark.master") == null then
           System.setProperty("spark.master", "local[*]"): Unit
       case _ =>
 

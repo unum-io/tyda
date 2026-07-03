@@ -1,6 +1,7 @@
 package com.choreograph.tyda.spark
 
 import scala.collection.immutable.ArraySeq
+import scala.util.chaining.given
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.ExtendedMode
@@ -21,6 +22,7 @@ class SparkRunner(using spark: SparkSession) extends Runner {
 }
 
 object SparkRunner {
-  def apply(name: String, args: RunnerArgs.Spark.type): SparkRunner =
-    new SparkRunner(using SparkSession.builder().appName(name).getOrCreate())
+  def apply(name: String, args: RunnerArgs.Spark): SparkRunner =
+    val spark = SparkSession.builder().appName(name).pipe(b => args.master.fold(b)(b.master(_))).getOrCreate()
+    new SparkRunner(using spark)
 }

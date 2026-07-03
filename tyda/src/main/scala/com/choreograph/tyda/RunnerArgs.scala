@@ -6,7 +6,7 @@ enum RunnerArgs {
       validateSchemas: RunnerArgs.ValidateSchema = RunnerArgs.ValidateSchema.Strict
   )
   case Iterator
-  case Spark
+  case Spark(master: Option[String] = None)
 }
 
 object RunnerArgs {
@@ -17,14 +17,14 @@ object RunnerArgs {
     arg match {
       case BigQuery(projectId = _) => "com.choreograph.tyda.bigquery.BigQueryRunner$"
       case Iterator => "com.choreograph.tyda.iterator.IteratorRunner$"
-      case Spark => "com.choreograph.tyda.spark.SparkRunner$"
+      case Spark(master = _) => "com.choreograph.tyda.spark.SparkRunner$"
     }
 
   private def dependencyName(arg: RunnerArgs): String =
     arg match {
       case BigQuery(projectId = _) => "tyda-big-query"
       case Iterator => "tyda-iterator"
-      case Spark => "tyda-spark"
+      case Spark(master = _) => "tyda-spark"
     }
 
   // We dynamically load the runner classes so that users only need to include
@@ -38,9 +38,9 @@ object RunnerArgs {
             s"Runner for '$arg' not found. Make sure that '${dependencyName(arg)}' is on your classpath."
           )
     val argsClass = arg match {
-      case BigQuery(projectId = _) => arg.getClass
+      case BigQuery(projectId = _) | Spark(master = _) => arg.getClass
       // Singletons are erased to the base type.
-      case Iterator | Spark => classOf[RunnerArgs]
+      case Iterator => classOf[RunnerArgs]
     }
     val companion = companionClass.getDeclaredField("MODULE$").get(null)
     val applyMethod = companionClass.getMethod("apply", classOf[String], argsClass)
