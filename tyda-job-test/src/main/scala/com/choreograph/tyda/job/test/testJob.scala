@@ -1,6 +1,7 @@
 package com.choreograph.tyda.job.test
 
 import com.choreograph.tyda.RunnerArgs
+import com.choreograph.tyda.RunnerArgs.SparkLogLevels
 import com.choreograph.tyda.iterator.IteratorRunner
 import com.choreograph.tyda.job.TydaJob
 import com.choreograph.tyda.job.TydaJobContext
@@ -33,8 +34,10 @@ def testJob[Args](args: Args)(using job: TydaJob[Args]): Unit = {
   val runnerArg = getRunnerArg
   val runner = runnerArg match {
     case TestRunnerArg.Iterator => IteratorRunner
-    case TestRunnerArg.Spark =>
-      RunnerArgs.createRunner(RunnerArgs.Spark(master = Some("local[2]")), "unittest")
+    case TestRunnerArg.Spark => RunnerArgs.createRunner(
+        RunnerArgs.Spark(master = Some("local[2]"), logLevel = Some(SparkLogLevels.Warn)),
+        "unittest"
+      )
   }
   val context = TydaJobContext(runner)
   job.run(args)(using context)

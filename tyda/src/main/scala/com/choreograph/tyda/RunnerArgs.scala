@@ -6,10 +6,16 @@ enum RunnerArgs {
       validateSchemas: RunnerArgs.ValidateSchema = RunnerArgs.ValidateSchema.Strict
   )
   case Iterator
-  case Spark(master: Option[String] = None)
+  case Spark(master: Option[String] = None, logLevel: Option[RunnerArgs.SparkLogLevels] = None)
 }
 
 object RunnerArgs {
+  enum SparkLogLevels {
+    case All, Debug, Error, Fatal, Info, Off, Trace, Warn
+
+    def toSparkConf: String = toString.toUpperCase
+  }
+
   enum ValidateSchema {
     case Strict, Warn, Off
   }
