@@ -117,5 +117,5 @@ object Dependencies {
     Seq(CompileDeps.slf4j, TestDeps.scalatest.exclude("org.scala-lang.modules", "scala-xml_3"))
 
   val tydaJobTest = libraryDependencies ++=
-    Seq(CompileDeps.scalatest.exclude("org.scala-lang.modules", "scala-xml_3"), CompileDeps.spark3Sql)
+    Seq(CompileDeps.scalatest.exclude("org.scala-lang.modules", "scala-xml_3"))
 }
