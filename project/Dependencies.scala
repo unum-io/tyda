@@ -61,7 +61,8 @@ object Dependencies {
 
   val tydaCollection = libraryDependencies ++= Seq(TestDeps.scalatest)
 
-  val tydaDocs = libraryDependencies ++= Seq(CompileDeps.spark3Sql)
+  val tydaDocs = libraryDependencies ++=
+    Seq(CompileDeps.spark3Sql.exclude("org.scala-lang.modules", "scala-xml_2.13"))
 
   val tydaTestSuites = libraryDependencies ++= Seq(CompileDeps.scalatest, CompileDeps.commonsIo)
 
@@ -116,6 +117,5 @@ object Dependencies {
   val tydaJob = libraryDependencies ++=
     Seq(CompileDeps.slf4j, TestDeps.scalatest.exclude("org.scala-lang.modules", "scala-xml_3"))
 
-  val tydaJobTest = libraryDependencies ++=
-    Seq(CompileDeps.scalatest.exclude("org.scala-lang.modules", "scala-xml_3"), CompileDeps.spark3Sql)
+  val tydaJobTest = libraryDependencies ++= Seq(CompileDeps.scalatest)
 }

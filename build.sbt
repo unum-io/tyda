@@ -435,7 +435,7 @@ lazy val tydaJobTest = (project in file("tyda-job-test"))
   .settings(tydaJobSettings)
   .settings(Dependencies.tydaJobTest)
   .dependsOn(scalafixRules % ScalafixConfig)
-  .dependsOn(tydaJob, tydaSpark3, tydaIterator)
+  .dependsOn(tydaJob, tydaIterator)
 
 lazy val tydaParquet = (project in file("tyda-parquet"))
   .settings(name := "tyda-parquet")
