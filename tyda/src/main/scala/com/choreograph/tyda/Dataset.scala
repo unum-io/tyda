@@ -234,7 +234,7 @@ sealed trait Dataset[T: Codec] {
   def aggregate[R1, R2](
       e1: Expr[T] => AggregateExpr[R1],
       e2: Expr[T] => AggregateExpr[R2]
-  ): Dataset[Option[(R1, R2)]] = aggregateN((e1, e2))
+  ): Dataset.Single[Option[(R1, R2)]] = aggregateN((e1, e2))
 
   /** Aggregate the values using 3 [[AggregateExpr]]s.
     *
@@ -244,7 +244,7 @@ sealed trait Dataset[T: Codec] {
       e1: Expr[T] => AggregateExpr[R1],
       e2: Expr[T] => AggregateExpr[R2],
       e3: Expr[T] => AggregateExpr[R3]
-  ): Dataset[Option[(R1, R2, R3)]] = aggregateN((e1, e2, e3))
+  ): Dataset.Single[Option[(R1, R2, R3)]] = aggregateN((e1, e2, e3))
 
   /** Aggregate the values using 4 [[AggregateExpr]]s.
     *
@@ -255,7 +255,7 @@ sealed trait Dataset[T: Codec] {
       e2: Expr[T] => AggregateExpr[R2],
       e3: Expr[T] => AggregateExpr[R3],
       e4: Expr[T] => AggregateExpr[R4]
-  ): Dataset[Option[(R1, R2, R3, R4)]] = aggregateN((e1, e2, e3, e4))
+  ): Dataset.Single[Option[(R1, R2, R3, R4)]] = aggregateN((e1, e2, e3, e4))
 
   /** Aggregate the values using 5 [[AggregateExpr]]s.
     *
@@ -267,7 +267,7 @@ sealed trait Dataset[T: Codec] {
       e3: Expr[T] => AggregateExpr[R3],
       e4: Expr[T] => AggregateExpr[R4],
       e5: Expr[T] => AggregateExpr[R5]
-  ): Dataset[Option[(R1, R2, R3, R4, R5)]] = aggregateN((e1, e2, e3, e4, e5))
+  ): Dataset.Single[Option[(R1, R2, R3, R4, R5)]] = aggregateN((e1, e2, e3, e4, e5))
 
   /** Aggregate the values using 6 [[AggregateExpr]]s.
     *
@@ -280,7 +280,7 @@ sealed trait Dataset[T: Codec] {
       e4: Expr[T] => AggregateExpr[R4],
       e5: Expr[T] => AggregateExpr[R5],
       e6: Expr[T] => AggregateExpr[R6]
-  ): Dataset[Option[(R1, R2, R3, R4, R5, R6)]] = aggregateN((e1, e2, e3, e4, e5, e6))
+  ): Dataset.Single[Option[(R1, R2, R3, R4, R5, R6)]] = aggregateN((e1, e2, e3, e4, e5, e6))
 
   /** Aggregate the values using 7 [[AggregateExpr]]s.
     *
@@ -294,11 +294,11 @@ sealed trait Dataset[T: Codec] {
       e5: Expr[T] => AggregateExpr[R5],
       e6: Expr[T] => AggregateExpr[R6],
       e7: Expr[T] => AggregateExpr[R7]
-  ): Dataset[Option[(R1, R2, R3, R4, R5, R6, R7)]] = aggregateN((e1, e2, e3, e4, e5, e6, e7))
+  ): Dataset.Single[Option[(R1, R2, R3, R4, R5, R6, R7)]] = aggregateN((e1, e2, e3, e4, e5, e6, e7))
 
   private def aggregateN[Result <: NonEmptyTuple](
       exprs: Tuple.Map[Result, [X] =>> Expr[T] => AggregateExpr[X]]
-  ): Dataset[Option[Result]] = Aggregate(this, CompiledAggregateExpr(exprs))
+  ): Dataset.Single[Option[Result]] = Dataset.Single.unsafe(Aggregate(this, CompiledAggregateExpr(exprs)))
 
   /** Collect the dataset this to as a sequence.
     */
