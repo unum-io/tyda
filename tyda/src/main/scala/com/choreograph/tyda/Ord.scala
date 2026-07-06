@@ -103,6 +103,7 @@ object Ord extends LowPriorityOrd {
   given seq[T: Ord as ord, S[X] <: Seq[X]]: Ord[S[T]] = SeqOrdering[T, S](Ordering.Implicits.seqOrdering)
   given product[T: K0.ProductInstancesOf[Ord] as inst]: Ord[T] = ProductOrd[T](inst)
   given sum[T: {K0.CoproductInstancesOf[Ord] as inst, Labelling}]: Ord[T] = SumOrd[T](inst)
+  given valueClass[T: ValueClassMirror as m](using Ord[m.MirroredElemType]): Ord[T] = product
 
   inline def derived[T](using m: Mirror.Of[T]): Ord[T] =
     inline m match {

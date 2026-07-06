@@ -125,6 +125,9 @@ object Arbitrary {
 
   given product[T](using inst: K0.ProductInstances[Arbitrary, T]): Arbitrary[T] = ProductArbitrary(inst)
 
+  given valueClass[T: ValueClassMirror as m](using inner: Arbitrary[m.MirroredElemType]): Arbitrary[T] =
+    inner.map(m.fromValue)
+
   inline def derived[T](using gen: K0.Generic[T]): Arbitrary[T] = gen.derive(product, sum)
 
   trait Between[T] extends Function2[T, T, Arbitrary[T]]
