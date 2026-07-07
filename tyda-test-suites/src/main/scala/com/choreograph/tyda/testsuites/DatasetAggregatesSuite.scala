@@ -31,6 +31,7 @@ import com.choreograph.tyda.functions.lit
 import com.choreograph.tyda.functions.some
 import com.choreograph.tyda.functions.tuple
 import com.choreograph.tyda.functions.when
+import com.choreograph.tyda.testsuites.DatasetSuite.TinyByte
 
 object DatasetAggregatesSuite {
   enum EnumWithOrdering {
@@ -52,12 +53,14 @@ object DatasetAggregatesSuite {
 
   given smallFloat: Arbitrary[Float] = Arbitrary.between(0, 1)
   given smallDouble: Arbitrary[Double] = Arbitrary.between(0, 1)
+
+  type PairSeq = (TinyByte, Seq[TinyByte])
 }
 
 // Testsuite focusing on aggregates that will compare a Dataset backend to a reference implementation.
 trait DatasetAggregatesSuite extends DatasetSuite {
-  import DatasetAggregatesSuite.{EnumWithOrdering, Inner, Outer}
-  import DatasetSuite.{Pair, TinyByte}
+  import DatasetAggregatesSuite.{EnumWithOrdering, Inner, Outer, PairSeq}
+  import DatasetSuite.Pair
 
   given Ordering[Pair] = Ordering.by(_._1)
 
@@ -108,6 +111,12 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     ds => ds.groupByKey(_ => lit(1)).aggregateValue(collect).values
   )
   test[Seq[Int], Seq[Int]]("concat seq", ds => ds.groupByKey(_ => 1).aggregateValue(concat).values)
+  test[PairSeq, Seq[TinyByte]]("concat column", ds => ds.groupByKey(_._1).aggregateValue(concat(_._2)).values)
+  test[PairSeq, PairSeq]("concat seq by group", ds => ds.groupByKey(_._1).aggregateValue(concat(_._2)).pairs)
+  test[PairSeq, Seq[Int]](
+    "concat and map",
+    ds => ds.groupByKey(_._1).aggregateValue(concat(_._2)).values.select(_.map(_.cast[Int] + 1))
+  )
   test[Option[Int], Option[Option[Long]]]("aggregate nested Option", ds => ds.aggregate(sum))
   test[Pair, Seq[TinyByte]]("collect column", ds => ds.groupByKey(_._1).aggregateValue(collect(_._2)).values)
   test[Pair, Seq[Int]](
