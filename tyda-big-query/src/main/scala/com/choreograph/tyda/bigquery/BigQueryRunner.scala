@@ -20,13 +20,15 @@ import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.Runner
 import com.choreograph.tyda.RunnerArgs
-import com.choreograph.tyda.RunnerArgs.ValidateSchema
+import com.choreograph.tyda.RunnerArgs.ValidateReadSchema
+import com.choreograph.tyda.RunnerArgs.ValidateWriteCompatibility
 import com.choreograph.tyda.bigquery.BigQueryRunner.buildClient
+import com.choreograph.tyda.rewrite.ArrayCodec
 import com.choreograph.tyda.sql.SqlDialect
 import com.choreograph.tyda.sql.toSql
 
 class BigQueryRunner(args: RunnerArgs.BigQuery) extends Runner {
-  import BigQueryRunner.{logger, formatPlan}
+  import BigQueryRunner.{logger, formatPlan, checkWriteCompatibility}
   val bigQuery = buildClient(args.projectId)
 
   def sql(ds: Dataset[?] | Dataset.Action): String =
@@ -36,7 +38,8 @@ class BigQueryRunner(args: RunnerArgs.BigQuery) extends Runner {
     }
 
   def execute(ds: Dataset.Action): Unit = {
-    validateReadTableSchemas(ds, args.validateSchemas)
+    validateReadTableSchemas(ds, args.validateReadSchemas)
+    checkWriteCompatibility(ds, args.validateWriteCompatibility)
     val query = sql(ds)
     logger.info(s"Executing query:\n$query")
     val queryConfig = QueryJobConfiguration.newBuilder(query).build()
@@ -48,7 +51,7 @@ class BigQueryRunner(args: RunnerArgs.BigQuery) extends Runner {
   }
 
   def collect[T](ds: Dataset[T]): Seq[T] = {
-    validateReadTableSchemas(ds, args.validateSchemas)
+    validateReadTableSchemas(ds, args.validateReadSchemas)
     val queryConfig = QueryJobConfiguration.newBuilder(sql(BigQueryCollectionRewrites.rewrite(ds))).build()
     val result = bigQuery.query(queryConfig, BigQueryRunner.retryJobOption)
     assert(!(result.getSchema == null), "Query did not return a schema unable to decode results.")
@@ -113,12 +116,12 @@ class BigQueryRunner(args: RunnerArgs.BigQuery) extends Runner {
 
   private def validateReadTableSchemas[T](
       ds: Dataset[T] | Dataset.Action,
-      validateSchemas: ValidateSchema
+      validateSchemas: ValidateReadSchema
   ): Unit = {
     val failOnSchemaIssue = validateSchemas match {
-      case ValidateSchema.Off => return
-      case ValidateSchema.Warn => false
-      case ValidateSchema.Strict => true
+      case ValidateReadSchema.Off => return
+      case ValidateReadSchema.Warn => false
+      case ValidateReadSchema.Strict => true
     }
     def log(message: String): Unit = if (failOnSchemaIssue) logger.error(message) else logger.warn(message)
     val check: Dataset[?] => Boolean = _ match {
@@ -165,6 +168,72 @@ object BigQueryRunner {
           .mkString("\n")
       )
       .getOrElse("No query plan available")
+  }
+
+  private enum Compatibility {
+    case Lossy, Incompatible, Compatible
+
+    def merge(other: Compatibility): Compatibility =
+      (this, other) match {
+        case (Compatible, Compatible) => Compatible
+        case (Incompatible, _) | (_, Incompatible) => Incompatible
+        case (Lossy, _) | (_, Lossy) => Lossy
+      }
+  }
+
+  private[bigquery] def checkWriteCompatibility[T](
+      ds: Dataset.Action,
+      validateSchemas: ValidateWriteCompatibility
+  ): Unit = {
+    val (failOnLossy, failOnIncompatible) = validateSchemas match {
+      case ValidateWriteCompatibility.Off => return
+      case ValidateWriteCompatibility.Warn => (false, false)
+      case ValidateWriteCompatibility.Lossy => (false, true)
+      case ValidateWriteCompatibility.Strict => (true, true)
+    }
+    def logIncompatible(message: String): Unit =
+      if (failOnIncompatible) logger.error(message) else logger.warn(message)
+    def logLossy(message: String): Unit = if (failOnLossy) logger.error(message) else logger.warn(message)
+    val compatibility = ds match {
+      case Dataset.Action.Write(input = ds, path = path) => Codec
+          .iterate(ds.codec)
+          .foldLeft(Compatibility.Compatible) { (compat, codec) =>
+            codec match {
+              case ArrayCodec(ArrayCodec(_)) =>
+                logIncompatible(
+                  s"Dataset writes to '$path' have nested arrays which is not supported in BigQuery."
+                )
+                Compatibility.Incompatible
+              case ArrayCodec(Codec.Option(_)) =>
+                logIncompatible(
+                  s"Dataset writes to '$path' have arrays of optional values which is not supported in BigQuery."
+                )
+                Compatibility.Incompatible
+              case Codec.Map(_, _) =>
+                logIncompatible(s"Dataset writes to '$path' have maps which are not supported in BigQuery.")
+                Compatibility.Incompatible
+              case Codec.Option(ArrayCodec(_)) =>
+                logLossy(
+                  s"Dataset writes to '$path' have optional arrays, Nones will be written as empty arrays."
+                )
+                compat.merge(Compatibility.Lossy)
+              case _ => compat
+            }
+          }
+    }
+    compatibility match {
+      case Compatibility.Compatible => ()
+      case Compatibility.Lossy if failOnLossy =>
+        throw new RuntimeException(
+          "Dataset has lossy write compatibility issues: see logs for details. " +
+            "If the lossy behavior is acceptable you can set the validate-write-compatibility runner flag to 'lossy'."
+        )
+      case Compatibility.Incompatible if failOnIncompatible =>
+        throw new RuntimeException(
+          "Dataset has incompatible write compatibility issues: see logs for details."
+        )
+      case _ => ()
+    }
   }
 
   /** Factory method for reflection-based runner creation. */
