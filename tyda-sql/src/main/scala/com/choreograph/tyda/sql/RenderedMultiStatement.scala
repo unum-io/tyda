@@ -22,7 +22,7 @@ final case class RenderedMultiStatement(setup: Seq[String], query: String, teard
     catch {
       case NonFatal(e) =>
         cleanup(executeQuery)
-        throw e
+        throw RuntimeException(s"Failed to execute query $single", e)
     }
 
   /** Execute the query and setup as a single multi statement query.

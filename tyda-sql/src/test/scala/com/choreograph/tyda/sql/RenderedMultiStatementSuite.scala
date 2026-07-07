@@ -15,7 +15,10 @@ class RenderedMultiStatementSuite extends AnyFunSuite {
       onSql: String => Unit = _ => ()
   )(run: (String => Unit) => Any): (Seq[String], Option[Throwable]) = {
     val executed = ArrayBuffer.empty[String]
-    val executeQuery: String => Unit = sql => { executed += sql; onSql(sql); (): Unit }
+    val executeQuery: String => Unit = sql => {
+      executed += sql
+      onSql(sql)
+    }
     try {
       run(executeQuery)
       (executed.toSeq, None)
