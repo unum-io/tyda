@@ -1,15 +1,16 @@
 package com.choreograph.tyda.testsuites
 
+import org.scalactic.Equality
+
 import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
-import com.choreograph.tyda.Timestamp
+import com.choreograph.tyda.Orderable
 import com.choreograph.tyda.SimpleTypeName
+import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.aggregates.count
 import com.choreograph.tyda.testsuites.FloatingPointEquality.given
-import org.scalactic.Equality
-import com.choreograph.tyda.Orderable
 
 object DatasetOrderBySuite {
   private final case class Inner(x: Int, y: String) derives Arbitrary, Codec

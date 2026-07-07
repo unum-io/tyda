@@ -203,8 +203,6 @@ object DatasetOnIterator {
     }
   }
 
-  type Id[x] = x
-
   private def ordFromCodec[T](codec: Codec[T]): Ord[T] =
     codec match {
       case Codec.Boolean => Ord[Boolean]
