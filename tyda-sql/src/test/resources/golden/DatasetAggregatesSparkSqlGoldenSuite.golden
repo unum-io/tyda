@@ -90,8 +90,20 @@ SELECT collect_list(t1._2) AS value FROM t1 GROUP BY t1._1
 SELECT collect_list(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
 ------ end
 
+------ Test: concat and map
+SELECT transform(flatten(collect_list(t1._2)), c0 -> (CAST(c0 AS INT) + CAST(1 AS INT))) AS value FROM t1 GROUP BY t1._1
+------ end
+
+------ Test: concat column
+SELECT flatten(collect_list(t1._2)) AS value FROM t1 GROUP BY t1._1
+------ end
+
 ------ Test: concat seq
 SELECT flatten(collect_list(t1.value)) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: concat seq by group
+SELECT t1._1 AS _1, flatten(collect_list(t1._2)) AS _2 FROM t1 GROUP BY t1._1
 ------ end
 
 ------ Test: count group by
