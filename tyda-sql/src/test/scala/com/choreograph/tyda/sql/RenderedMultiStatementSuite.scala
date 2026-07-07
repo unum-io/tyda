@@ -64,7 +64,7 @@ class RenderedMultiStatementSuite extends AnyFunSuite {
     val boom = new RuntimeException("single failed")
     val (executed, thrown) =
       recordExecution(sql => if sql == multi.single then throw boom)(multi.executeSingle)
-    assert(thrown.exists(_ eq boom))
+    assert(thrown.exists(_.getCause() eq boom))
     assert(executed == Seq(multi.single) ++ teardown)
   }
 
