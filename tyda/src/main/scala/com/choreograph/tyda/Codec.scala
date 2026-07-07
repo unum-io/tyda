@@ -30,7 +30,7 @@ private[tyda] final case class Field[T](name: String, codec: Codec[T])
 private[tyda] enum Variant[T] {
   def name: String
 
-  case Product(name: String, codec: Codec.Product[T])
+  case Product(name: String, codec: Codec[T])
   case Singleton(name: String, value: T, codec: Codec.Product[T])
 
   /** Try to construct an instance of T where all fields are None.
@@ -40,15 +40,13 @@ private[tyda] enum Variant[T] {
     */
   def allNone: scala.Option[T] =
     this match {
-      case Variant.Singleton(_, value, _) => None
-      case Variant.Product(_, codec) => codec
-          .fields
-          .constructA([t] =>
-            _ match {
-              case Field(_, Codec.Option(_)) => Some(None)
-              case _ => None
-            }
-          )(Variant.optionPure, Variant.optionMap, Variant.optionAp)
+      case Variant.Product(_, Codec.Product(_, fields, _)) => fields.constructA([t] =>
+          _ match {
+            case Field(_, Codec.Option(_)) => Some(None)
+            case _ => None
+          }
+        )(Variant.optionPure, Variant.optionMap, Variant.optionAp)
+      case Variant.Singleton(_, _, _) | Variant.Product(_, _) => None
     }
 
   def toField: scala.Option[Field[Option[T]]] =
@@ -61,10 +59,11 @@ object Variant {
   private val optionAp: Ap[scala.Option] = [a, b] =>
     (ff: scala.Option[a => b], fa: scala.Option[a]) => ff.flatMap(f => fa.map(f))
 
-  def apply[T](name: String, codec: Codec.Product[T]): Variant[T] =
+  def apply[T](name: String, codec: Codec[T]): Variant[T] =
     val camelCaseName = pascalCaseToCamelCase(name)
     codec match {
-      case Codec.Product(_, _, Some(value)) => Singleton(camelCaseName, codec.fromProduct(EmptyTuple), codec)
+      case codec @ Codec.Product(_, _, Some(value)) =>
+        Singleton(camelCaseName, codec.fromProduct(EmptyTuple), codec)
       case _ => Product(camelCaseName, codec)
     }
 }
@@ -402,9 +401,7 @@ object Codec {
     * `StatusRepr("inactive", None, None)`, and `Status.Active(0)` would map to
     * `StatusRepr("active", Status.Active(0), None)`.
     */
-  given sum[T: ClassTag: Mirror.SumOf: Labelling](using
-      inst: K0.CoproductInstances[Codec.Product, T]
-  ): Codec[T] =
+  given sum[T: ClassTag: Mirror.SumOf: Labelling](using inst: K0.CoproductInstances[Codec, T]): Codec[T] =
 
     val wrappedVariants = WrappedCoproductInstances(inst.labelled.mapK[Variant]([t] => Variant[t].tupled(_)))
     val sum = Sum(summon[ClassTag[T]], wrappedVariants)

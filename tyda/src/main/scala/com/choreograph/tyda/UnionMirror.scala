@@ -13,7 +13,7 @@ import scala.quoted.*
   * Note: This private to tyda while we experiment with it and learn if a good
   * way of doing this.
   */
-private[tyda] trait UnionMirror[U] extends Mirror.Sum {
+private[tyda] trait UnionMirror[U] extends Mirror.Sum, Serializable {
   type MirroredType = U
   type MirroredMonoType = U
   type MirroredElemTypes <: Tuple
@@ -66,6 +66,7 @@ private[tyda] object UnionMirror {
       case '[elems] => labelsType match {
           case '[labels] => '{
               new UnionMirror[U] {
+                type MirroredLabel = "TODO: Proper label"
                 type MirroredElemTypes = elems & Tuple
                 type MirroredElemLabels = labels & Tuple
                 def ordinal(x: U): Int = ${ ordinalLambda.asExprOf[U => Int] }(x)

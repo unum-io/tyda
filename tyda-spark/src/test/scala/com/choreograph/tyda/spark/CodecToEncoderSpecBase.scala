@@ -1,6 +1,8 @@
 package com.choreograph.tyda.spark
+
 import scala.collection.immutable.ArraySeq
 import scala.compiletime.ops.int.>
+import scala.deriving.Mirror
 import scala.reflect.ClassTag
 
 import org.apache.spark.sql.types.ArrayType
@@ -119,6 +121,11 @@ object CodecToEncoderSpecBase {
       f23: Int
   )
 
+  opaque type MyUnion = Int | String
+  object MyUnion {
+    transparent inline given Mirror.SumOf[MyUnion] = com.choreograph.tyda.UnionMirror.derived
+  }
+
   staticAssert[NamedTuple.Size[BigNamedTuple] > 22, "BigNamedTuple should exceed 22 elements."]
 
   // To prefer equiv from Ord and avoid diverging givens
@@ -223,6 +230,7 @@ trait CodecToEncoderSpecBase extends AnyFunSuite with SharedSparkSession {
   test[Seq[OnlySingletons]]()
   test[JavaKeyword]()
   test[JavaInvalidIdentifiers]()
+  test[MyUnion](supportsNull = false)
 
   def schemaTest[T: Codec: TypeName](expectedType: DataType): Unit =
     test(s"schema test for ${TypeName.name[T]}") {
@@ -265,6 +273,11 @@ trait CodecToEncoderSpecBase extends AnyFunSuite with SharedSparkSession {
   schemaTest[(name: String, age: Int)](StructType(
     Seq(StructField("name", StringType, true), StructField("age", IntegerType, false))
   ))
+  schemaTest[MyUnion](StructType(Seq(
+    StructField(Codec.Sum.discriminant, StringType, true),
+    StructField("string", StringType, true),
+    StructField("int", IntegerType, true)
+  )))
 
   val expectedLocationRepr = StructType(Seq(
     StructField(Codec.Sum.discriminant, StringType, true),
