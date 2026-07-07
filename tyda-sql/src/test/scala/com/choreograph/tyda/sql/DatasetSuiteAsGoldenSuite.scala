@@ -48,4 +48,21 @@ trait DatasetSuiteAsGoldenSuite extends DatasetSuite, SqlGoldenTestSuite {
       computation: Dataset[T] => Dataset[R],
       expectedError: String
   ): Unit = { testSqlOrSkip(name) { computation(Dataset.readTable[T, EmptyTuple]("t1").select(_._1)) } }
+
+  override def testOrdered[T: Arbitrary: Codec, R: Equality](
+      name: String,
+      computation: Dataset[T] => Dataset[R],
+      inputs: Seq[T]*
+  ): Unit = testSqlOrSkip(name) { computation(Dataset.readTable[T, EmptyTuple]("t1").select(_._1)) }
+
+  override def testOrdered[T1: Arbitrary: Codec, T2: Arbitrary: Codec, R: Equality](
+      name: String,
+      computation: (Dataset[T1], Dataset[T2]) => Dataset[R]
+  ): Unit =
+    testSqlOrSkip(name) {
+      computation(
+        Dataset.readTable[T1, EmptyTuple]("t1").select(_._1),
+        Dataset.readTable[T2, EmptyTuple]("t2").select(_._1)
+      )
+    }
 }

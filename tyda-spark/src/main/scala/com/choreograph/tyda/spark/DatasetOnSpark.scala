@@ -365,6 +365,9 @@ object DatasetOnSpark {
             """.stripMargin)
           }
           IntermediateDataset(toIntermediate(input).toDataset.limit(n))
+        case Dataset.OrderBy(input, key) =>
+          val (df, cf) = toIntermediate(input).toDataFrameAndColumnFactory
+          IntermediateDataset(df.sort(ExprOnSpark.resolved(cf, key)), cf)
       }
     // TYPE SAFETY: The type parameter of the key is the same as the value
     existingConversions.computeIfAbsent(ds, _ => compute).asInstanceOf[IntermediateDataset[T]]

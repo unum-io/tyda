@@ -41,6 +41,7 @@ final case class SqlDialect(
     floatingAggregate: SqlDialect.FloatingAggregate,
     floatingCompare: SqlDialect.FloatingCompare,
     fromJson: SqlDialect.FromJsonSupport,
+    floatingOrder: SqlDialect.FloatingOrder,
     intergerSupport: SqlDialect.IntegerSupport,
     isNanFunction: String,
     makeArray: SqlDialect.MakeArray,
@@ -64,6 +65,9 @@ final case class SqlDialect(
     // BigQuery does not support EXCEPT DISTINCT when any SELECT column is of STRUCT type.
     // When false, the Distinct(LeftAntiJoin(_ == _)) pattern uses NOT EXISTS + DISTINCT instead.
     supportsExceptDistinctOnStructColumns: Boolean = true,
+    // BigQuery does not support struct types in ORDER BY at all, requiring individual fields to be
+    // listed explicitly.
+    flattenStructInOrderBy: Boolean = false,
     values: SqlDialect.Values,
     writeSupport: SqlDialect.WriteSupport,
     rand: String,
@@ -231,6 +235,20 @@ object SqlDialect {
     case NaNIsLargest
   }
 
+  enum FloatingOrder {
+
+    /** ORDER BY follows IEEE semantics: any comparison with NaN is false, so
+      * NaN can appear anywhere. An explicit IS_NAN() discriminator is added to
+      * ensure NaN sorts last.
+      */
+    case NaNFirst
+
+    /** ORDER BY follows the more common SQL semantics where NaN is considered
+      * larger than all other values.
+      */
+    case NaNLast
+  }
+
   enum FloatingAggregate {
     case NaNIsSmallestAndLargest
     case NaNIsLargest
@@ -385,6 +403,7 @@ object SqlDialect {
       extractArray = "json_query_array",
       extractObject = "json_query"
     ),
+    floatingOrder = FloatingOrder.NaNFirst,
     intergerSupport = IntegerSupport.OnlyBigInt,
     isNanFunction = "is_nan",
     makeArray = MakeArray.Brackets,
@@ -402,6 +421,7 @@ object SqlDialect {
     tryCast = "SAFE_CAST",
     useSubqueryToAvoidStructInGroupBy = true,
     supportsExceptDistinctOnStructColumns = false,
+    flattenStructInOrderBy = true,
     values = Values.SelectUnionAll,
     rand = "RAND",
     writeSupport = WriteSupport.ExportData,
@@ -439,6 +459,7 @@ object SqlDialect {
     floatingAggregate = FloatingAggregate.NaNIsLargest,
     floatingCompare = FloatingCompare.NaNIsLargest,
     fromJson = FromJsonSupport.Parser("from_json", Map("mode" -> "PERMISSIVE") ++ sparkJsonOptions),
+    floatingOrder = FloatingOrder.NaNLast,
     intergerSupport = IntegerSupport.AllSizes,
     isNanFunction = "isnan",
     makeArray = MakeArray.Function("array"),

@@ -1,0 +1,143 @@
+------ Test: distinct then orderBy
+SELECT t0.value AS value FROM (SELECT DISTINCT t1.value AS value FROM t1) AS t0 ORDER BY t0.value
+------ end
+
+------ Test: filter then orderBy
+SELECT t1.value AS value FROM t1 WHERE (NOT (t1.value <= CAST(0 AS INT))) ORDER BY t1.value
+------ end
+
+------ Test: groupBy aggregate then orderBy
+SELECT t1._1 AS _1, count(CAST(1 AS INT)) AS _2 FROM t1 GROUP BY t1._1 ORDER BY t1._1
+------ end
+
+------ Test: join then orderBy
+SELECT t1.value AS value FROM t1 JOIN t2 ON (t1.value = t2.value) ORDER BY t1.value
+------ end
+
+------ Test: orderBy 2 keys
+SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 ORDER BY t1._1, t1._2
+------ end
+
+------ Test: orderBy 3 keys
+SELECT t1._1 AS _1, t1._2 AS _2, t1._3 AS _3 FROM t1 ORDER BY t1._1, t1._2, t1._3
+------ end
+
+------ Test: orderBy 4 keys
+SELECT t1._1 AS _1, t1._2 AS _2, t1._3 AS _3, t1._4 AS _4 FROM t1 ORDER BY t1._1, t1._2, t1._3, t1._4
+------ end
+
+------ Test: orderBy 5 keys
+SELECT t1._1 AS _1, t1._2 AS _2, t1._3 AS _3, t1._4 AS _4, t1._5 AS _5 FROM t1 ORDER BY t1._1, t1._2, t1._3, t1._4, t1._5
+------ end
+
+------ Test: orderBy 6 keys
+SELECT t1._1 AS _1, t1._2 AS _2, t1._3 AS _3, t1._4 AS _4, t1._5 AS _5, t1._6 AS _6 FROM t1 ORDER BY t1._1, t1._2, t1._3, t1._4, t1._5, t1._6
+------ end
+
+------ Test: orderBy 7 keys
+SELECT t1._1 AS _1, t1._2 AS _2, t1._3 AS _3, t1._4 AS _4, t1._5 AS _5, t1._6 AS _6, t1._7 AS _7 FROM t1 ORDER BY t1._1, t1._2, t1._3, t1._4, t1._5, t1._6, t1._7
+------ end
+
+------ Test: orderBy Boolean, input: ArraySeq()
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy Byte, input: ArraySeq()
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy Date, input: ArraySeq()
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy Decimal[Int,Int], input: ArraySeq()
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy Double, input: ArraySeq()
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy Float, input: ArraySeq()
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy Inner, input: ArraySeq()
+SELECT t1.x AS x, t1.y AS y FROM t1 ORDER BY t1.x, t1.y
+------ end
+
+------ Test: orderBy Int, input: ArraySeq()
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy Long, input: ArraySeq()
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy Option[AllNullable], input: ArraySeq()
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy Option[Double], input: ArraySeq(List(None, Some(NaN), Some(Infinity), Some(-Infinity), Some(-0.0), Some(0.0)))
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy Option[Inner], input: ArraySeq()
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy Option[Int], input: ArraySeq()
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy Option[Option[Int]], input: ArraySeq()
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy Outer, input: ArraySeq()
+SELECT t1.a AS a, t1.b AS b FROM t1 ORDER BY t1.a, t1.b
+------ end
+
+------ Test: orderBy Short, input: ArraySeq()
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy String, input: ArraySeq()
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy Timestamp, input: ArraySeq()
+SELECT t1.value AS value FROM t1 ORDER BY t1.value
+------ end
+
+------ Test: orderBy nested struct inner field
+SELECT t1.a AS a, t1.b AS b FROM t1 ORDER BY t1.a
+------ end
+
+------ Test: orderBy then distinct
+SELECT DISTINCT t0.value AS value FROM (SELECT t1.value AS value FROM t1 ORDER BY t1.value) AS t0
+------ end
+
+------ Test: orderBy then filter
+SELECT t0.value AS value FROM (SELECT t1.value AS value FROM t1 ORDER BY t1.value) AS t0 WHERE (NOT (t0.value <= CAST(0 AS INT)))
+------ end
+
+------ Test: orderBy then groupBy aggregate
+SELECT t0._1 AS _1, count(CAST(1 AS INT)) AS _2 FROM (SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 ORDER BY t1._1) AS t0 GROUP BY t0._1
+------ end
+
+------ Test: orderBy then join
+SELECT t0.value AS value FROM (SELECT t1.value AS value FROM t1 ORDER BY t1.value) AS t0 JOIN t2 ON (t0.value = t2.value)
+------ end
+
+------ Test: orderBy then limit
+SELECT t0.value AS value FROM (SELECT t1.value AS value FROM t1 ORDER BY t1.value) AS t0 LIMIT 3
+------ end
+
+------ Test: orderBy then select
+SELECT t0._2 AS value FROM (SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 ORDER BY t1._1) AS t0
+------ end
+
+------ Test: orderBy tuple with struct
+SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 ORDER BY t1._1
+------ end

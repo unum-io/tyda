@@ -4,6 +4,7 @@ import com.choreograph.tyda.Format
 import com.choreograph.tyda.testsuites.DatasetAggregatesSuite
 import com.choreograph.tyda.testsuites.DatasetBasicSuite
 import com.choreograph.tyda.testsuites.DatasetJoinSuite
+import com.choreograph.tyda.testsuites.DatasetOrderBySuite
 import com.choreograph.tyda.testsuites.DatasetSubquerySuite
 
 trait SparkSqlGoldenSuite {
@@ -19,6 +20,8 @@ class DatasetBasicSparkSqlGoldenSuite
 class DatasetJoinSparkSqlGoldenSuite extends DatasetSuiteAsGoldenSuite, SparkSqlGoldenSuite, DatasetJoinSuite
 class DatasetSubquerySparkSqlGoldenSuite
     extends DatasetSuiteAsGoldenSuite, SparkSqlGoldenSuite, DatasetSubquerySuite
+class DatasetOrderBySparkSqlGoldenSuite
+    extends DatasetSuiteAsGoldenSuite, SparkSqlGoldenSuite, DatasetOrderBySuite
 class DatasetReadWriteParquetSparkSqlGoldenSuite
     extends DatasetReadWriteSuiteAsGoldenSuite, SparkSqlGoldenSuite {
   override def format = Format.Parquet
@@ -40,6 +43,8 @@ class DatasetBasicBigQueryGoldenSuite
 class DatasetJoinBigQueryGoldenSuite extends DatasetSuiteAsGoldenSuite, BigQueryGoldenSuite, DatasetJoinSuite
 class DatasetSubqueryBigQueryGoldenSuite
     extends DatasetSuiteAsGoldenSuite, BigQueryGoldenSuite, DatasetSubquerySuite
+class DatasetOrderByBigQueryGoldenSuite
+    extends DatasetSuiteAsGoldenSuite, BigQueryGoldenSuite, DatasetOrderBySuite
 class DatasetReadWriteParquetBigQueryGoldenSuite
     extends DatasetReadWriteSuiteAsGoldenSuite, BigQueryGoldenSuite {
   override def format = Format.Parquet
