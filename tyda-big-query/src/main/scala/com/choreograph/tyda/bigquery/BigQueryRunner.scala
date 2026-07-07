@@ -177,7 +177,7 @@ object BigQueryRunner {
       (this, other) match {
         case (Compatible, Compatible) => Compatible
         case (Incompatible, _) | (_, Incompatible) => Incompatible
-        case _ => Lossy
+        case (Lossy, _) | (_, Lossy) => Lossy
       }
   }
 
@@ -214,7 +214,7 @@ object BigQueryRunner {
                 Compatibility.Incompatible
               case Codec.Option(ArrayCodec(_)) =>
                 logLossy(
-                  s"Dataset writes to '$path' have optional nested arrays, nulls will be written as empty arrays."
+                  s"Dataset writes to '$path' have optional arrays, Nones will be written as empty arrays."
                 )
                 compat.merge(Compatibility.Lossy)
               case _ => compat
