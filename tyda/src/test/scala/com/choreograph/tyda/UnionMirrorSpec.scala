@@ -16,6 +16,7 @@ class UnionMirrorSpec extends AnyFunSuite {
   test("mirror for Int | String should work") {
     val mirror = summon[Mirror.SumOf[Int | String]]
     summon[mirror.MirroredMonoType =:= (Int | String)]
+    summon[mirror.MirroredLabel =:= "Int | String"]
     summon[mirror.MirroredElemTypes =:= String *: Int *: EmptyTuple]
     summon[mirror.MirroredElemLabels =:= "String" *: "Int" *: EmptyTuple]
     (0 to 100).foreach(_ => assert(mirror.ordinal(Arbitrary[String]()) == 0))
@@ -25,6 +26,7 @@ class UnionMirrorSpec extends AnyFunSuite {
   test("mirror for List[Int] | Int should work") {
     val mirror = summon[Mirror.SumOf[List[Int] | Int]]
     summon[mirror.MirroredMonoType =:= (List[Int] | Int)]
+    summon[mirror.MirroredLabel =:= "List[Int] | Int"]
     summon[mirror.MirroredElemTypes =:= Int *: List[Int] *: EmptyTuple]
     summon[mirror.MirroredElemLabels =:= "Int" *: "List[Int]" *: EmptyTuple]
   }
@@ -34,6 +36,7 @@ class UnionMirrorSpec extends AnyFunSuite {
     val mirror2 = summon[Mirror.SumOf[Int | Int | String]]
     val mirror3 = summon[Mirror.SumOf[String | Int | Int]]
     summon[mirror1.MirroredMonoType =:= (Int | String)]
+    summon[mirror1.MirroredLabel =:= "Int | String"]
     summon[mirror1.MirroredElemTypes =:= String *: Int *: EmptyTuple]
     summon[mirror1.MirroredElemLabels =:= "String" *: "Int" *: EmptyTuple]
     summon[mirror1.MirroredMonoType =:= mirror2.MirroredMonoType]
@@ -56,6 +59,8 @@ class UnionMirrorSpec extends AnyFunSuite {
     summon[mirror1.MirroredMonoType =:= mirror2.MirroredMonoType]
     summon[mirror1.MirroredElemTypes =:= mirror2.MirroredElemTypes]
     summon[mirror1.MirroredElemLabels =:= mirror2.MirroredElemLabels]
+    summon[mirror1.MirroredLabel =:= "Int | String"]
+    summon[mirror2.MirroredLabel =:= "Int | String"]
     assert(mirror1.ordinal(Arbitrary[Int]()) == mirror2.ordinal(Arbitrary[Int]()))
     assert(mirror1.ordinal(Arbitrary[String]()) == mirror2.ordinal(Arbitrary[String]()))
   }
@@ -63,6 +68,7 @@ class UnionMirrorSpec extends AnyFunSuite {
   test("mirror array of primitive") {
     val mirror = summon[Mirror.SumOf[Array[Int] | Array[Long]]]
     summon[mirror.MirroredMonoType =:= (Array[Int] | Array[Long])]
+    summon[mirror.MirroredLabel =:= "Array[Long] | Array[Int]"]
     summon[mirror.MirroredElemTypes =:= Array[Int] *: Array[Long] *: EmptyTuple]
     summon[mirror.MirroredElemLabels =:= "Array[Int]" *: "Array[Long]" *: EmptyTuple]
     assert(mirror.ordinal(Array(1)) == 0)
@@ -74,16 +80,19 @@ class UnionMirrorSpec extends AnyFunSuite {
   /* The test here is that a warning is produced. This works because nowarn that silences nothing generates a
    * separate warning. */
   test("mirror should warn where ordinal implementation does not work") {
-    summon[Mirror.SumOf[List[Int] | List[String]]]: @nowarn("id=E092")
+    val mirror = (summon[Mirror.SumOf[List[Int] | List[String]]]: @nowarn("id=E092"))
+    summon[mirror.MirroredLabel =:= "List[String] | List[Int]"]
   }
 
   test("mirror should warn for opaque types same erasure") {
     // This could never work since MyInt and Int are indistinguishable at runtime.
-    summon[Mirror.SumOf[MyInt | Int]]: @nowarn("id=E092")
+    val mirror = (summon[Mirror.SumOf[MyInt | Int]]: @nowarn("id=E092"))
+    summon[mirror.MirroredLabel =:= "Int | MyInt"]
   }
 
   test("mirror should warn for opaque types different erasure") {
     // This could in theory be supported, but it unclear how to implement the ordinal method.
-    summon[Mirror.SumOf[MyInt | Double]]: @nowarn("id=E092")
+    val mirror = (summon[Mirror.SumOf[MyInt | Double]]: @nowarn("id=E092"))
+    summon[mirror.MirroredLabel =:= "Double | MyInt"]
   }
 }
