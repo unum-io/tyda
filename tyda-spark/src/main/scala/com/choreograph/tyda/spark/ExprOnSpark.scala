@@ -6,6 +6,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.aggregate
 import org.apache.spark.sql.functions.array
 import org.apache.spark.sql.functions.array_distinct
+import org.apache.spark.sql.functions.base64
 import org.apache.spark.sql.functions.call_function
 import org.apache.spark.sql.functions.coalesce
 import org.apache.spark.sql.functions.concat
@@ -280,6 +281,12 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
         }
       case ExprNode.ArrayJoin(operand, sep) => call_function("array_join", convert(operand), convert(sep))
       case ExprNode.DistinctSeq(operand) => array_distinct(convert(operand))
+      case ExprNode.FromBase64(string) => call_function("try_to_binary", convert(string), lit("base64"))
+      case ExprNode.ToBase64(binary) =>
+        // Spark accdentially started chunking their base64: https://issues.apache.org/jira/browse/SPARK-47307
+        // And did not dare to revert back to the sane default. If we had a good mechanism for controlling the
+        // spark config we could replace this with a config.
+        replace(base64(convert(binary)), lit("\r\n"), lit(""))
       case ExprNode.Rand() => rand()
       case ExprNode.IsNaN(operand) => isnan(convert(operand))
     }

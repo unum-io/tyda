@@ -31,6 +31,8 @@ final case class SqlDialect(
     boolAndFunction: String,
     boolOrFunction: String,
     bytesLength: String,
+    fromBase64: SqlDialect.FromBase64Support,
+    toBase64: SqlDialect.ToBase64Support.Function,
     collectFunction: String,
     countIfFunction: String,
     ddl: DdlDialect,
@@ -81,6 +83,33 @@ final case class SqlDialect(
 )
 
 object SqlDialect {
+
+  /** How to decode a Base64 string to binary, returning null on invalid input.
+    */
+  enum FromBase64Support {
+
+    /** A function call with a format argument, e.g.
+      * `try_to_binary(str, 'base64')` in Spark SQL.
+      */
+    case TryFunction(name: String, format: String)
+
+    /** A simple function call where `null` is returned on invalid input, e.g.
+      * `SAFE.FROM_BASE64(str)`.
+      */
+    case Function(name: String)
+  }
+
+  /** How to encode binary to a Base64 string. */
+  enum ToBase64Support {
+
+    /** A simple function taking the binary and encodes it.
+      *
+      * If isChunked is true it produces a values chunked by newlines with needs
+      * to be filtered out to have correct behavior.
+      */
+    case Function(name: String, isChunked: Boolean)
+  }
+
   enum Values {
 
     /** Supports the SQL standard `VALUES` clause in the FROM clause. e.g.
@@ -378,6 +407,8 @@ object SqlDialect {
     boolAndFunction = "logical_and",
     boolOrFunction = "logical_or",
     bytesLength = "byte_length",
+    fromBase64 = FromBase64Support.Function("SAFE.FROM_BASE64"),
+    toBase64 = ToBase64Support.Function("TO_BASE64", false),
     collectFunction = "array_agg",
     countIfFunction = "countif",
     ddl = DdlDialect(
@@ -449,6 +480,8 @@ object SqlDialect {
     boolAndFunction = "bool_and",
     boolOrFunction = "bool_or",
     bytesLength = "length",
+    fromBase64 = FromBase64Support.TryFunction("try_to_binary", "base64"),
+    toBase64 = ToBase64Support.Function("base64", true),
     collectFunction = "collect_list",
     countIfFunction = "count_if",
     ddl = DdlDialect.Spark,

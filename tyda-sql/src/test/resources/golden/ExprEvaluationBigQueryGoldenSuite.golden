@@ -694,6 +694,10 @@ SELECT (t1.value + CAST(2147483647 AS INT)) AS value FROM t1
 SELECT CASE WHEN (t1.value IS NULL) THEN CAST(NULL AS INT) ELSE t1.value.value END AS value FROM t1
 ------ end
 
+------ Test: fromBase64
+SELECT SAFE.FROM_BASE64(t1.value) AS value FROM t1
+------ end
+
 ------ Test: gt for com.choreograph.tyda.Date$package.Date
 SELECT (NOT (t1._1 <= t1._2)) AS value FROM t1
 ------ end
@@ -1300,6 +1304,14 @@ SELECT CASE WHEN t1._1 THEN t1._2 ELSE t1._3 END AS value FROM t1
 
 ------ Test: ternary with Option branches
 SELECT CASE WHEN t1._1 THEN t1._2 ELSE t1._3 END AS value FROM t1
+------ end
+
+------ Test: toBase64
+SELECT TO_BASE64(t1.value) AS value FROM t1
+------ end
+
+------ Test: toBase64 and fromBase64 should roundtrip
+SELECT SAFE.FROM_BASE64(TO_BASE64(t1.value)) AS value FROM t1
 ------ end
 
 ------ Test: toJson Seq[Int]
