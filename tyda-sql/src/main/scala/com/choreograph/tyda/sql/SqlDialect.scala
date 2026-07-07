@@ -104,8 +104,8 @@ object SqlDialect {
 
     /** A simple function taking the binary and encodes it.
       *
-      * If isChucked is true it produces a values chunked by newlines with needs
-      * to be filtered out to have correct behaviror.
+      * If isChunked is true it produces a values chunked by newlines with needs
+      * to be filtered out to have correct behavior.
       */
     case Function(name: String, isChunked: Boolean)
   }
