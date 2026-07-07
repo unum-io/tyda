@@ -28,10 +28,13 @@ import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
 import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Expr
+import com.choreograph.tyda.ExprDepFn1
 import com.choreograph.tyda.JsonArrayOrObject
+import com.choreograph.tyda.Mapper
 import com.choreograph.tyda.Ord
 import com.choreograph.tyda.Remover
 import com.choreograph.tyda.Selector
+import com.choreograph.tyda.StringLiterals
 import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.TypeName
 import com.choreograph.tyda.functions.coalesce
@@ -119,6 +122,47 @@ object ExprEvaluationSuiteBase {
     }
   }
 
+  private trait WithoutStrings[T] extends ExprDepFn1[T]
+  private object WithoutStrings {
+    type Aux[T, Out1] = WithoutStrings[T] { type Out = Out1 }
+
+    trait KeepAsIs[T] extends WithoutStrings[T] {
+      type Out = T
+      def apply(e: Expr[T]): Expr[T] = e
+    }
+
+    given KeepAsIs[Int] = new KeepAsIs[Int] {}
+    given KeepAsIs[Long] = new KeepAsIs[Long] {}
+
+    // TODO: Should be remove all instead of Remove
+    given derive[T: Mirror.ProductOf as m](using
+        remover: Remover[T, String],
+        recurse: Mapper[WithoutStrings, remover.Out]
+    ): WithoutStrings.Aux[T, recurse.Out] =
+      new WithoutStrings[T] {
+        type Out = recurse.Out
+        def apply(e: Expr[T]): Expr[Out] = recurse(e.remove[String])
+      }
+  }
+
+  private final case class HasStrings(
+      a: String,
+      b: Int,
+      c: (d: String, e: Long),
+      f: Int,
+      g: Long,
+      i: Int,
+      j: Long,
+      p: Int,
+      q: Long,
+      l: (m: String, n: Int, o: Long)
+  )
+  private object HasStrings {
+    val removeStrings = WithoutStrings.derive[HasStrings]
+    type Without = removeStrings.Out
+    val a: Without = (b = 1, c = (e = 1L), f = 2, g = 3L, i = 4, j = 5L, p = 6, q = 7L, l = (n = 8, o = 9L))
+  }
+
   val errorMessage = "My error message"
 }
 
@@ -132,7 +176,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   import ExprEvaluationSuiteBase.{
     CustomIntSeq, Full, Projected, Struct, NestedOption, NamedTuple1, NamedTuple2, NamedTupleAlias,
     NamedTupleAliasWithUnused, TestEnum, TestSealedTrait, TestEnumString, WithEmptyTuple, WithNamedTupleEmpty,
-    WithOptionField, TreeBounded, Leaf, Node, errorMessage
+    WithOptionField, TreeBounded, Leaf, Node, errorMessage, HasStrings
   }
 
   /** Evaluate the expression on a sequence of inputs.
@@ -1344,4 +1388,21 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     )
   }
   testHasSameBehavior[Seq[Int], String]("toJson Seq[Int]", toJson, _.mkString("[", ",", "]"))
+
+  testHasSameBehavior[HasStrings, HasStrings.Without](
+    "derive type WithoutStrings",
+    HasStrings.removeStrings(_),
+    r =>
+      (
+        b = r.b,
+        c = (e = r.c.e),
+        f = r.f,
+        g = r.g,
+        i = r.i,
+        j = r.j,
+        p = r.p,
+        q = r.q,
+        l = (n = r.l.n, o = r.l.o)
+      )
+  )
 }

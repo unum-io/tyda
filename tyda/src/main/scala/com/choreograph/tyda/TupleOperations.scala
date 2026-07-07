@@ -34,3 +34,5 @@ object TupleOperations:
   type TupleN[T, N <: Int] <: Tuple = Max[N, 0] match
     case 0 => EmptyTuple
     case S[n] => T *: TupleN[T, n]
+
+  type EqualSize[T1 <: Tuple, T2 <: Tuple] = Tuple.Size[T1] =:= Tuple.Size[T2]
