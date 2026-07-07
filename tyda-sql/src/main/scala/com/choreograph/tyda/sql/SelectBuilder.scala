@@ -84,7 +84,7 @@ private final case class SelectBuilder[T, R](
     }
 
     // TODO: We always force a subquery after order by for simplicity. But in the future we might
-    // want to allow it to be comined with more operations.
+    // want to allow it to be combined with more operations.
     ordered.flatMap(_.toSubquery)
   }
 
@@ -544,12 +544,12 @@ private final case class SelectBuilder[T, R](
     }
     def groupByToSqlExpr(compiled: CompiledExpr[T, ?]): Result[Seq[SqlExpr]] = {
       val node = compiled.expr.replace(compiled.arg, output)
-      flattenMakeStruct(node).map(simplifyAndToSqlExpr(_, ids, args)).sequence
+      flattenMakeStructAndRemoveLiterals(node).map(simplifyAndToSqlExpr(_, ids, args)).sequence
     }
 
     def orderByToSqlExpr(compiled: CompiledExpr[T, ?]): Result[Seq[SqlExpr]] = {
       val node = compiled.expr.replace(compiled.arg, output)
-      val nodes = flattenMakeStruct(node).flatMap(flattenForOrderBy(args.dialect, _))
+      val nodes = flattenMakeStructAndRemoveLiterals(node).flatMap(flattenForOrderBy(args.dialect, _))
       nodes.map(simplifyAndToSqlExpr(_, ids, args)).sequence
     }
 
@@ -742,27 +742,22 @@ private object SelectBuilder {
     }
 
   private def hasMakeProductAfterFlattening(newGroupBy: CompiledExpr[?, ?]): Boolean =
-    flattenMakeStruct(newGroupBy.expr).exists(_.exists {
+    flattenMakeStructAndRemoveLiterals(newGroupBy.expr).exists(_.exists {
       case ExprNode.MakeProduct(_, _) => true
       case ExprNode.MakeSome(Nullable(_)) => true
       case _ => false
     })
 
-  private def flattenMakeStruct(node: ExprNode[?]): Seq[ExprNode[?]] = {
+  private def flattenMakeStructAndRemoveLiterals(node: ExprNode[?]): Seq[ExprNode[?]] = {
     val exprs = simplifySelects(node)
       .fold(Seq.empty[ExprNode[?]])((acc, expr) =>
         expr match {
-          // Remove any MakeAdt nodes from the group by expressions as they are not needed and will
-          // be rejected by BigQuery for example.
           case ExprNode.MakeProduct(_, _) => Continue(acc)
+          case ExprNode.Literal(_, _) | ExprNode.None(_) => Skip(acc)
           // MakeSome are either no-op or make struct so we need to continue into them
           case ExprNode.MakeSome(_) => Continue(acc)
-          // MakeNone is never needed in group by
-          case ExprNode.None(_) => Continue(acc)
           // The as and from sum repr are just no-ops in the this backend
           case ExprNode.FromRepr(_, _) | ExprNode.ToRepr(_, _) => Continue(acc)
-          // Literals are not needed in group by as they are also in the select expressions
-          case ExprNode.Literal(_, _) => Skip(acc)
           // References to top level product will result as a make struct so we need to unpack them
           case expr @ ExprNode.Reference(_, _) => expr match {
               case StructFields(fields) => Skip(acc ++ fields)

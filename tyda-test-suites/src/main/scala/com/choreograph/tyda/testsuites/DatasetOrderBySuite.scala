@@ -5,52 +5,50 @@ import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Timestamp
+import com.choreograph.tyda.SimpleTypeName
 import com.choreograph.tyda.aggregates.count
 import com.choreograph.tyda.testsuites.FloatingPointEquality.given
+import org.scalactic.Equality
+import com.choreograph.tyda.Orderable
 
 object DatasetOrderBySuite {
-  final case class Inner(x: Int, y: String) derives Arbitrary, Codec
-  final case class Outer(a: Inner, b: Int) derives Arbitrary, Codec
-  final case class AllNullable(a: Option[Int], b: Option[String]) derives Arbitrary, Codec
+  private final case class Inner(x: Int, y: String) derives Arbitrary, Codec
+  private final case class Outer(a: Inner, b: Int) derives Arbitrary, Codec
+  private final case class AllNullable(a: Option[Int], b: Option[String]) derives Arbitrary, Codec
 }
 
 trait DatasetOrderBySuite extends DatasetSuite {
   import DatasetOrderBySuite.*
 
-  testOrdered[Int, Int]("orderBy int", _.orderBy(identity))
-  testOrdered[Long, Long]("orderBy long", _.orderBy(identity))
-  testOrdered[Short, Short]("orderBy short", _.orderBy(identity))
-  testOrdered[Byte, Byte]("orderBy byte", _.orderBy(identity))
-  testOrdered[Boolean, Boolean]("orderBy boolean", _.orderBy(identity))
-  testOrdered[Float, Float]("orderBy float", _.orderBy(identity))
-  testOrdered[Double, Double]("orderBy double", _.orderBy(identity))
-  testOrdered[String, String]("orderBy string", _.orderBy(identity))
-  testOrdered[Date, Date]("orderBy date", _.orderBy(identity))
-  testOrdered[Timestamp, Timestamp]("orderBy timestamp", _.orderBy(identity))
-  testOrdered[Decimal[38, 9], Decimal[38, 9]]("orderBy decimal", _.orderBy(identity))
+  def testOrderBy[T: Arbitrary: Codec: Equality: SimpleTypeName: Orderable](inputs: Seq[T]*): Unit =
+    testOrdered[T, T](s"orderBy ${SimpleTypeName.name}, input: ${inputs}", _.orderBy(identity), inputs*)
 
-  testOrdered[Option[Int], Option[Int]]("orderBy Option[Int]", _.orderBy(identity))
-  testOrdered[Option[Double], Option[Double]](
-    "orderBy Option[Double]",
-    _.orderBy(identity),
-    Seq(
-      None,
-      Some(Double.NaN),
-      Some(Double.PositiveInfinity),
-      Some(Double.NegativeInfinity),
-      Some(-0.0),
-      Some(0.0)
-    )
-  )
-  testOrdered[Option[Inner], Option[Inner]]("orderBy nested nullable struct", _.orderBy(identity))
-  testOrdered[Option[AllNullable], Option[AllNullable]](
-    "orderBy nullable struct with only null fields",
-    _.orderBy(identity)
-  )
-  testOrdered[Option[Option[Int]], Option[Option[Int]]]("orderBy Option[Option[Int]]", _.orderBy(identity))
+  testOrderBy[Int]()
+  testOrderBy[Long]()
+  testOrderBy[Short]()
+  testOrderBy[Byte]()
+  testOrderBy[Boolean]()
+  testOrderBy[Float]()
+  testOrderBy[Double]()
+  testOrderBy[String]()
+  testOrderBy[Date]()
+  testOrderBy[Timestamp]()
+  testOrderBy[Decimal[38, 9]]()
+  testOrderBy[Option[Int]]()
+  testOrderBy[Option[Double]](Seq(
+    None,
+    Some(Double.NaN),
+    Some(Double.PositiveInfinity),
+    Some(Double.NegativeInfinity),
+    Some(-0.0),
+    Some(0.0)
+  ))
+  testOrderBy[Option[Inner]]()
+  testOrderBy[Option[AllNullable]]()
+  testOrderBy[Option[Option[Int]]]()
+  testOrderBy[Inner]()
+  testOrderBy[Outer]()
 
-  testOrdered[Inner, Inner]("orderBy nested struct", _.orderBy(identity))
-  testOrdered[Outer, Outer]("orderBy deeply nested struct", _.orderBy(identity))
   testOrdered[Outer, Outer]("orderBy nested struct inner field", _.orderBy(_.a))
   testOrdered[(Inner, Int), (Inner, Int)]("orderBy tuple with struct", _.orderBy(_._1))
 
