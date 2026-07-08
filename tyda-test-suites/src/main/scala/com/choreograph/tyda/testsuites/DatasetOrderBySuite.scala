@@ -22,7 +22,7 @@ trait DatasetOrderBySuite extends DatasetSuite {
   import DatasetOrderBySuite.*
 
   def testOrderBy[T: Arbitrary: Codec: Equality: SimpleTypeName: Orderable](inputs: Seq[T]*): Unit =
-    testOrdered[T, T](s"orderBy ${SimpleTypeName.name}, input: ${inputs}", _.orderBy(identity), inputs*)
+    testOrdered[T, T](s"orderBy ${SimpleTypeName.name}", _.orderBy(identity), inputs*)
 
   testOrderBy[Int]()
   testOrderBy[Long]()
