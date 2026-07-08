@@ -21,6 +21,7 @@ import com.choreograph.tyda.TypeName
 import com.choreograph.tyda.iterator.IteratorRunner
 import com.choreograph.tyda.rewrite.ArrayCodec
 import com.choreograph.tyda.sql.DatasetToSqlError
+import com.choreograph.tyda.sql.RenderedMultiStatement
 import com.choreograph.tyda.sql.SqlDialect
 import com.choreograph.tyda.sql.toSql
 import com.choreograph.tyda.testsuites.BigQueryIntegrationTestEnvVariables
@@ -36,7 +37,7 @@ import com.choreograph.tyda.testsuites.ExprEvaluationSuite
 import com.choreograph.tyda.unreachable
 
 class BigQueryTestRunner(args: RunnerArgs.BigQuery) extends BigQueryRunner(args) {
-  override def sql(ds: Dataset[?] | Dataset.Action): String = {
+  override def sql(ds: Dataset[?] | Dataset.Action): RenderedMultiStatement = {
     toSql(ds, SqlDialect.BigQuery) match {
       case Left(DatasetToSqlError.RequiresUdfCapability(msg)) =>
         pending
@@ -119,5 +120,5 @@ class ExprEvaluationSuiteBigQuery
   override def evaluate[From: Codec, To](expr: Expr[From] => Expr[To], values: Seq[From]): Seq[To] =
     runner.collect(Dataset.from(values).select(expr))
   override def explain[From: Codec, To](expr: Expr[From] => Expr[To], values: Seq[From]): String =
-    runner.sql(Dataset.from(values).select(expr))
+    runner.sql(Dataset.from(values).select(expr)).single
 }

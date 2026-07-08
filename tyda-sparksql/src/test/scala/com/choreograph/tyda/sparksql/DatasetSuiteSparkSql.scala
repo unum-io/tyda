@@ -12,6 +12,7 @@ import com.choreograph.tyda.Runner
 import com.choreograph.tyda.iterator.IteratorRunner
 import com.choreograph.tyda.spark.CodecToEncoder.convert
 import com.choreograph.tyda.sql.DatasetToSqlError
+import com.choreograph.tyda.sql.RenderedMultiStatement
 import com.choreograph.tyda.sql.SqlDialect
 import com.choreograph.tyda.sql.toSql
 import com.choreograph.tyda.testsuites.DatasetAggregatesSuite
@@ -44,7 +45,8 @@ trait SharedSparkSession {
 }
 
 class SparkSqlRunner(using spark: SparkSession) extends Runner {
-  def sql(ds: Dataset[?] | Dataset.Action): String = {
+
+  def sql(ds: Dataset[?] | Dataset.Action): RenderedMultiStatement = {
     toSql(ds, SqlDialect.Spark) match {
       case Left(DatasetToSqlError.RequiresUdfCapability(msg)) =>
         // Using assume which cancels the test is counted as failure by some test runners like bloop
@@ -58,11 +60,11 @@ class SparkSqlRunner(using spark: SparkSession) extends Runner {
   }
   def collect[T](ds: Dataset[T]): Seq[T] = {
     given Codec[T] = ds.codec
-    withAnsiMode { spark.sql(sql(ds)).as[T].collect().toSeq }
+    withAnsiMode { sql(ds).execute(spark.sql).as[T].collect().toSeq }
   }
-  def execute(ds: Dataset.Action): Unit = withAnsiMode { spark.sql(sql(ds)): Unit }
-  def explain[T](ds: Dataset[T]): String = sql(ds)
-  def explain(action: Dataset.Action): String = sql(action)
+  def execute(ds: Dataset.Action): Unit = withAnsiMode { sql(ds).execute(spark.sql): Unit }
+  def explain[T](ds: Dataset[T]): String = sql(ds).single
+  def explain(action: Dataset.Action): String = sql(action).single
 
   private def withAnsiMode[T](f: => T)(using spark: SparkSession): T = {
     val oldSetting = spark.conf.getOption("spark.sql.ansi.enabled")
