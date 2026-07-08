@@ -111,10 +111,8 @@ object CodecToJsonSchema {
         (variant: Variant[t]) =>
           variant match {
             case Variant.Product(name, codec) => JsonSchema.obj(
-                properties = ListMap(
-                  Codec.Sum.discriminant -> JsonSchema.stringConst(name),
-                  name -> productSchema(codec)
-                ),
+                properties =
+                  ListMap(Codec.Sum.discriminant -> JsonSchema.stringConst(name), name -> fieldSchema(codec)),
                 required = Seq(Codec.Sum.discriminant, name),
                 additionalProperties = true
               )
