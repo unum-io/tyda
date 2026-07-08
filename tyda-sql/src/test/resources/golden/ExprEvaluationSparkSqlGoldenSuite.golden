@@ -254,6 +254,30 @@ SELECT (t1._1 OR t1._2) AS value FROM t1
 SELECT length(t1.value) AS value FROM t1
 ------ end
 
+------ Test: cases.when first matching branch is used
+SELECT CASE WHEN (NOT (t1.value <= CAST(0 AS INT))) THEN CAST(1 AS INT) WHEN (NOT (t1.value <= CAST(-5 AS INT))) THEN CAST(2 AS INT) ELSE CAST(3 AS INT) END AS value FROM t1
+------ end
+
+------ Test: cases.when with Option result and otherwise
+SELECT CASE WHEN (NOT (t1.value <= CAST(0 AS INT))) THEN t1.value END AS value FROM t1
+------ end
+
+------ Test: cases.when with literal then-expressions
+SELECT CASE WHEN t1._1 THEN t1._2 ELSE t1._3 END AS value FROM t1
+------ end
+
+------ Test: cases.when with many branches and literal otherwise
+SELECT CASE WHEN (t1.value < CAST(0 AS INT)) THEN 'negative' WHEN (t1.value = CAST(0 AS INT)) THEN 'zero' ELSE 'positive' END AS value FROM t1
+------ end
+
+------ Test: cases.when with multiple branches and otherwise
+SELECT CASE WHEN (NOT (t1._1 <= CAST(0 AS INT))) THEN t1._1 WHEN (NOT (t1._2 <= CAST(0 AS INT))) THEN t1._2 ELSE CAST(0 AS INT) END AS value FROM t1
+------ end
+
+------ Test: cases.when with single branch and otherwise
+SELECT CASE WHEN t1._1 THEN t1._2 ELSE t1._3 END AS value FROM t1
+------ end
+
 ------ Test: cast com.choreograph.tyda.Decimal$package.Decimal[10, 0] to com.choreograph.tyda.Decimal$package.Decimal[20, 5]
 SELECT CAST(t1.value AS DECIMAL(20,5)) AS value FROM t1
 ------ end

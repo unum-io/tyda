@@ -12,7 +12,7 @@ import scala.reflect.ClassTag
 
 import shapeless3.deriving.K0
 
-import com.choreograph.tyda.TupleOperations.`-`
+import com.choreograph.tyda.TupleOperations.-
 import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.shapeless3extras.toTuple
 import com.choreograph.tyda.shapeless3extras.tupleInstances
@@ -936,6 +936,22 @@ trait ExprApi[Expr[T]] {
         val nodes = tupleInstances(TupleAsExpr(inputTuple)).mapK([t] => unlift(_)).toTuple
         lift(ExprNode.makeNamedTuple(nodes))
       }
+  }
+
+  object cases {
+    final class CasesBuilder[R] private[tyda] (
+        private val head: ExprNode.WhenThen[R],
+        private val tail: Seq[ExprNode.WhenThen[R]]
+    ) {
+      def when[I: AsExpr.Of[R]](cond: Expr[Boolean], thenExpr: I): CasesBuilder[R] =
+        new CasesBuilder(head, tail :+ ExprNode.WhenThen(unlift(cond), unlift(AsExpr(thenExpr))))
+
+      def otherwise[I: AsExpr.Of[R]](default: I): Expr[R] =
+        lift(ExprNode.Cases(head, tail, unlift(AsExpr(default))))
+    }
+
+    def when[R, I: AsExpr.Of[R]](cond: Expr[Boolean], thenExpr: I): CasesBuilder[R] =
+      new CasesBuilder(head = ExprNode.WhenThen(unlift(cond), unlift(AsExpr(thenExpr))), tail = Seq.empty)
   }
 
   /** Construct an Expr[To] where To is a product with named fields or a named
