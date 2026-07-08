@@ -90,6 +90,8 @@ object CodecToEncoderSpecBase {
     case A
     case B
   }
+
+  final case class UserId(value: Int) derives Codec.Transparent
   private final case class JavaKeyword(`class`: String) derives Codec, Ord
   private final case class JavaInvalidIdentifiers(`0`: String) derives Codec, Ord
 
@@ -312,4 +314,5 @@ trait CodecToEncoderSpecBase extends AnyFunSuite with SharedSparkSession {
   ))
 
   schemaTest[EnumString](StringType)
+  schemaTest[UserId](StructType(Seq(StructField("value", IntegerType, true))))
 }

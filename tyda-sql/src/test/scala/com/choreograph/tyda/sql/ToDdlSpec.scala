@@ -40,6 +40,8 @@ object ToDdlSpec {
     case B
   }
 
+  final case class TransparentProduct(value: Int) derives Codec.Transparent
+
   final case class Containers(arr: List[Person], map: Map[String, List[Person]], opt: Option[List[Person]])
       derives Codec
 
@@ -393,4 +395,5 @@ class ToDdlSpec extends AnyFunSuite {
   testSparkDdlType[Seq[Int]]("ARRAY<INT>")
   testSparkDdlType[Seq[Option[Int]]]("ARRAY<INT>")
   testSparkDdlType[(value: Int)]("STRUCT<value INT NOT NULL>")
+  testSparkDdlType[ToDdlSpec.TransparentProduct]("INT")
 }
