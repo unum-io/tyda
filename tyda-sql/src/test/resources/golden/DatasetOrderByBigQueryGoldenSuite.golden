@@ -110,10 +110,6 @@ SELECT t1.value AS value FROM t1 ORDER BY t1.value
 SELECT t1.value AS value FROM t1 ORDER BY t1.value
 ------ end
 
------- Test: orderBy literal
-SELECT t1.a AS a, t1.b AS b FROM t1 ORDER BY CAST(NULL AS INT)
------- end
-
 ------ Test: orderBy nested struct inner field
 SELECT t1.a AS a, t1.b AS b FROM t1 ORDER BY t1.a.x, t1.a.y
 ------ end
