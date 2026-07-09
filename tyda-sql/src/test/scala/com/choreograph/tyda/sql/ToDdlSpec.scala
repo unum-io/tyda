@@ -9,7 +9,6 @@ import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
-import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.SimpleTypeName
 import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.sql.DdlDialect.MapSupport
@@ -28,14 +27,14 @@ object ToDdlSpec {
       boolean: Boolean,
       string: String
   ) derives Codec
-  enum Enum extends EnumStableHashCode derives Codec {
+  enum Enum derives Codec {
     case Singleton
     case Product1(a: Int, b: String)
     case Product2(c: Int, d: Option[Long])
     case Product3(c: Int, d: Product1)
   }
 
-  enum EnumString extends EnumStableHashCode derives Codec.EnumAsString {
+  enum EnumString derives Codec.EnumAsString {
     case A
     case B
   }

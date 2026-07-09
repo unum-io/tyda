@@ -5,7 +5,6 @@ import scala.reflect.ClassTag
 import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Dataset
-import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Expr
 import com.choreograph.tyda.Format
 import com.choreograph.tyda.aggregates.countIf
@@ -19,11 +18,11 @@ import com.choreograph.tyda.functions.tuple
 private object UnparserSuite {
   final case class O(a: Option[Option[Int]])
   final case class M1(a: Int, b: String, c: Boolean, d: Seq[Double])
-  enum E1 extends EnumStableHashCode {
+  enum E1 {
     case A(a: Int)
     case C
   }
-  enum E2 extends EnumStableHashCode derives Codec.EnumAsString {
+  enum E2 derives Codec.EnumAsString {
     case First
     case Second
   }

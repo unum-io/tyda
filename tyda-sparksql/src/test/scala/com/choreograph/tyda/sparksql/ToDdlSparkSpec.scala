@@ -10,7 +10,6 @@ import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
-import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.TypeName
 import com.choreograph.tyda.spark.CodecToEncoder
@@ -23,12 +22,12 @@ object ToDdlSparkSpec {
   private final case class NestedFields(optionalFields: Option[Fields]) derives Codec
   private final case class NotOptionalFields(name: String, age: Int) derives Codec
   private final case class NestedNotOptionalFields(notOptionalFields: NotOptionalFields) derives Codec
-  private enum Enum extends EnumStableHashCode derives Codec {
+  private enum Enum derives Codec {
     case Singleton
     case Product1(a: Int, b: String)
     case Product2(c: Int, d: Long)
   }
-  private enum EnumString extends EnumStableHashCode derives Codec.EnumAsString {
+  private enum EnumString derives Codec.EnumAsString {
     case A
     case B
   }

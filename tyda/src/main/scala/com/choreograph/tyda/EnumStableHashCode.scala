@@ -13,6 +13,7 @@ import scala.util.hashing.MurmurHash3
   * Note: That stable here only promises that the hashCode is stable across jvm
   * executions but the implementation might be changed in the future.
   */
+@deprecated("No longer needed since Scala 3.7.3")
 trait EnumStableHashCode {
   self: scala.reflect.Enum =>
   override def hashCode(): Int = MurmurHash3.productHash(this)

@@ -237,11 +237,8 @@ object Codec {
   }
 
   object EnumAsString {
-    inline def derived[T: ClassTag: AllSingletons as singletons]: Codec.EnumAsString[T] = {
-      val tag = summon[ClassTag[T]]
-      checkStableHashCode(tag)
+    inline def derived[T: ClassTag: AllSingletons as singletons]: Codec.EnumAsString[T] =
       SumAsString[T](summon, singletons)
-    }
   }
 
   private final case class SumAsStringInjection[T](values: scala.Seq[T], encodedValues: scala.Seq[String])
@@ -315,18 +312,6 @@ object Codec {
       def to: Codec[To] = withTo
       def classTag: ClassTag[From] = summon
     }
-
-  private def checkStableHashCode[S](tag: ClassTag[S]): Unit = {
-    val isEnum = classOf[scala.reflect.Enum].isAssignableFrom(tag.runtimeClass)
-    val hasWorkaround = classOf[EnumStableHashCode].isAssignableFrom(tag.runtimeClass)
-    if isEnum && !hasWorkaround then
-      throw new RuntimeException(
-        s"Enum ${tag
-            .runtimeClass
-            .getName} might not have stable hashCode due to https://github.com/scala/scala3/issues/19177." +
-          " Please mixing the trait EnumStableHashCode to make the hashCode stable."
-      )
-  }
 
   given byte: Codec[scala.Byte] = Byte
   given short: Codec[scala.Short] = Short
@@ -412,8 +397,6 @@ object Codec {
       throw new RuntimeException(
         s"Camel cased variant names of ${summon[ClassTag[T]].runtimeClass.getName} are not unique"
       )
-    if sum.variants.mapConst([t] => _.isInstanceOf[Variant.Singleton[t]]).exists(identity) then
-      checkStableHashCode(summon[ClassTag[T]])
     sum
 
   inline def derived[T: ClassTag](using m: Mirror.Of[T]): Codec[T] =
