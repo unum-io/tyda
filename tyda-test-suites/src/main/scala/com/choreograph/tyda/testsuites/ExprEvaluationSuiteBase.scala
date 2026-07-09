@@ -815,6 +815,42 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     t => Option.when(t._1)(t._2)
   )
 
+  testHasSameBehavior[(Boolean, Int, Int), Int](
+    "cases.when with single branch and otherwise",
+    t => Expr.cases.when(t._1, t._2).otherwise(t._3),
+    t => if t._1 then t._2 else t._3
+  )
+
+  testHasSameBehavior[(Int, Int), Int](
+    "cases.when with multiple branches and otherwise",
+    t => Expr.cases.when(t._1 > 0, t._1).when(t._2 > 0, t._2).otherwise(lit(0)),
+    t => if t._1 > 0 then t._1 else if t._2 > 0 then t._2 else 0
+  )
+
+  testHasSameBehavior[Int, Int](
+    "cases.when first matching branch is used",
+    t => Expr.cases.when(t > 0, lit(1)).when(t > -5, lit(2)).otherwise(lit(3)),
+    t => if t > 0 then 1 else if t > -5 then 2 else 3
+  )
+
+  testHasSameBehavior[Int, Option[Int]](
+    "cases.when with Option result and otherwise",
+    t => Expr.cases.when(t > 0, some(t)).otherwise(none[Int]),
+    t => Option.when(t > 0)(t)
+  )
+
+  testHasSameBehavior[(Boolean, String, String), String](
+    "cases.when with literal then-expressions",
+    t => Expr.cases.when(t._1, t._2).otherwise(t._3),
+    t => if t._1 then t._2 else t._3
+  )
+
+  testHasSameBehavior[Int, String](
+    "cases.when with many branches and literal otherwise",
+    t => Expr.cases.when(t < 0, lit("negative")).when(t == 0, lit("zero")).otherwise(lit("positive")),
+    t => if t < 0 then "negative" else if t == 0 then "zero" else "positive"
+  )
+
   {
     given Arbitrary[Long] = Arbitrary.int.map(_.toLong)
     testHasSameBehavior[(Long, Long), Long]("add two numbers", t => t._1 + t._2, (lhs, rhs) => lhs + rhs)
