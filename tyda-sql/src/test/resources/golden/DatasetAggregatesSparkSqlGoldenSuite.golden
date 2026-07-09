@@ -135,7 +135,7 @@ SELECT count(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: explode after aggregate
-SELECT explode(table1.d) AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.d
+SELECT t0._2 AS _1, t0._1._2 AS _2 FROM (SELECT named_struct('_1', table1.d, '_2', min(table1.a)) AS _1, explode(table1.d) AS _2 FROM table1 GROUP BY table1.d) AS t0
 ------ end
 
 ------ Test: group by whole enum row

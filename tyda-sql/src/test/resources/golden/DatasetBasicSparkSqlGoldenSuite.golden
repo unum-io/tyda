@@ -31,7 +31,7 @@ SELECT t0._1._1 AS _1, t0._1._2 AS _2 FROM (SELECT explode(CAST(map_entries(tabl
 ------ end
 
 ------ Test: explode Map and select Int
-SELECT explode(CAST(map_entries(table1._1) AS ARRAY<STRUCT<_1 INT NOT NULL,_2 INT NOT NULL>>)) AS _1, table1._2 AS _2 FROM table1
+SELECT t0._2 AS _1, t0._1._2 AS _2 FROM (SELECT named_struct('_1', table1._1, '_2', table1._2) AS _1, explode(CAST(map_entries(table1._1) AS ARRAY<STRUCT<_1 INT NOT NULL,_2 INT NOT NULL>>)) AS _2 FROM table1) AS t0
 ------ end
 
 ------ Test: explode Option
@@ -39,19 +39,19 @@ SELECT table1.value AS value FROM table1 WHERE (table1.value IS NOT NULL)
 ------ end
 
 ------ Test: explode Seq
-SELECT explode(table1.value) AS value FROM table1
+SELECT t0._1 AS value FROM (SELECT explode(table1.value) AS _1 FROM table1) AS t0
 ------ end
 
 ------ Test: explode Seq Option Seq
-SELECT explode(t0.value) AS value FROM (SELECT explode(table1.value) AS value FROM table1) AS t0 WHERE (t0.value IS NOT NULL)
+SELECT t1._1 AS value FROM (SELECT explode(t0._1) AS _1 FROM (SELECT explode(table1.value) AS _1 FROM table1) AS t0 WHERE (t0._1 IS NOT NULL)) AS t1
 ------ end
 
 ------ Test: explode multiple nested Seq
-SELECT explode(table1._1) AS _1, explode(table1._2) AS _2 FROM table1
+SELECT t0._1 AS _1, t0._2 AS _2 FROM (SELECT explode(table1._1) AS _1, explode(table1._2) AS _2 FROM table1) AS t0
 ------ end
 
 ------ Test: explode nested Seq
-SELECT explode(t0.value) AS value FROM (SELECT explode(table1.value) AS value FROM table1) AS t0
+SELECT t1._1 AS value FROM (SELECT explode(t0._1) AS _1 FROM (SELECT explode(table1.value) AS _1 FROM table1) AS t0) AS t1
 ------ end
 
 ------ Test: limit after aggregate
@@ -59,7 +59,7 @@ SELECT table1._1 AS key, sum(table1._2) AS value FROM table1 GROUP BY table1._1 
 ------ end
 
 ------ Test: limit after explode
-SELECT t0.value AS value FROM (SELECT explode(table1._2) AS value FROM table1) AS t0 LIMIT 5
+SELECT t0._1 AS value FROM (SELECT explode(table1._2) AS _1 FROM table1) AS t0 LIMIT 5
 ------ end
 
 ------ Test: limit after filter
@@ -83,7 +83,7 @@ SELECT t0._1 AS key, sum(t0._2) AS value FROM (SELECT table1._1 AS _1, table1._2
 ------ end
 
 ------ Test: limit before explode
-SELECT explode(t0._2) AS value FROM (SELECT table1._1 AS _1, table1._2 AS _2 FROM table1 LIMIT 5) AS t0
+SELECT t1._1 AS value FROM (SELECT explode(t0._2) AS _1 FROM (SELECT table1._1 AS _1, table1._2 AS _2 FROM table1 LIMIT 5) AS t0) AS t1
 ------ end
 
 ------ Test: limit before filter
@@ -99,7 +99,7 @@ SELECT table1.value AS value FROM table1 LIMIT 0
 ------ end
 
 ------ Test: multiple explodes in separate selects
-SELECT t0._2 AS _1, explode(t0._1.d) AS _2 FROM (SELECT named_struct('a', table1.a, 'b', table1.b, 'c', table1.c, 'd', table1.d) AS _1, explode(table1.d) AS _2 FROM table1) AS t0
+SELECT t1._1._2 AS _1, t1._2 AS _2 FROM (SELECT named_struct('_1', t0._1, '_2', t0._2) AS _1, explode(t0._1.d) AS _2 FROM (SELECT named_struct('a', table1.a, 'b', table1.b, 'c', table1.c, 'd', table1.d) AS _1, explode(table1.d) AS _2 FROM table1) AS t0) AS t1
 ------ end
 
 ------ Test: nested option upcast
@@ -131,7 +131,7 @@ SELECT table1._1 AS _1, table1._2 AS _2, table1._3 AS _3, table1._4 AS _4, table
 ------ end
 
 ------ Test: select 7 explode
-SELECT explode(table1._1) AS _1, explode(table1._2) AS _2, explode(table1._3) AS _3, explode(table1._4) AS _4, explode(table1._5) AS _5, explode(table1._6) AS _6, explode(table1._7) AS _7 FROM table1
+SELECT t0._1 AS _1, t0._2 AS _2, t0._3 AS _3, t0._4 AS _4, t0._5 AS _5, t0._6 AS _6, t0._7 AS _7 FROM (SELECT explode(table1._1) AS _1, explode(table1._2) AS _2, explode(table1._3) AS _3, explode(table1._4) AS _4, explode(table1._5) AS _5, explode(table1._6) AS _6, explode(table1._7) AS _7 FROM table1) AS t0
 ------ end
 
 ------ Test: select Product
@@ -151,11 +151,19 @@ SELECT table1._1 AS _1, table1._2 AS _2 FROM table1 WHERE ((table1._1 IS NOT NUL
 ------ end
 
 ------ Test: select multiple explode seq
-SELECT explode(table1._1) AS _1, explode(table1._2) AS _2 FROM table1
+SELECT t0._1 AS _1, t0._2 AS _2 FROM (SELECT explode(table1._1) AS _1, explode(table1._2) AS _2 FROM table1) AS t0
+------ end
+
+------ Test: select multiple explode seq namedtuple
+SELECT t0._1 AS first, t0._2 AS second FROM (SELECT explode(table1._1) AS _1, explode(table1._2) AS _2 FROM table1) AS t0
 ------ end
 
 ------ Test: select nested access
 SELECT table1._1._1 AS value FROM table1
+------ end
+
+------ Test: select one explode seq
+SELECT t0._1 AS int FROM (SELECT explode(table1.seq) AS _1 FROM table1) AS t0
 ------ end
 
 ------ Test: select primitive
@@ -179,11 +187,11 @@ SELECT table1.value AS value FROM table1 WHERE table1.value
 ------ end
 
 ------ Test: where after explode
-SELECT t0._1 AS _1, t0._2 AS _2, t0._3 AS _3 FROM (SELECT explode(table1._2) AS _1, explode(table1._2) AS _2, table1._1 AS _3 FROM table1) AS t0 WHERE (t0._1 < CAST(0 AS INT))
+SELECT t0._2 AS _1, t0._3 AS _2, t0._1._1 AS _3 FROM (SELECT named_struct('_1', table1._1, '_2', table1._2) AS _1, explode(table1._2) AS _2, explode(table1._2) AS _3 FROM table1) AS t0 WHERE (t0._2 < CAST(0 AS INT))
 ------ end
 
 ------ Test: where before explode
-SELECT explode(table1._2) AS _1, explode(table1._2) AS _2, table1._1 AS _3 FROM table1 WHERE (size(table1._2) < CAST(2 AS INT))
+SELECT t0._2 AS _1, t0._3 AS _2, t0._1._1 AS _3 FROM (SELECT named_struct('_1', table1._1, '_2', table1._2) AS _1, explode(table1._2) AS _2, explode(table1._2) AS _3 FROM table1 WHERE (size(table1._2) < CAST(2 AS INT))) AS t0
 ------ end
 
 ------ Test: where literal

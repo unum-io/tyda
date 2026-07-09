@@ -45,7 +45,7 @@ abstract class UnparserSuite extends SqlGoldenTestSuite {
 
   testSql("group by all") { ds4.groupByKey(_ => lit(None)).aggregateValue(countIf(!_.a.isEmpty)).values }
 
-  testSql("explode multiple expression") { ds.select(_.a, explode(_.d)) }
+  testSql("explode multiple expression") { ds.select(x => (x.a, explode(x.d))) }
 
   testSql("aggregate after grouped aggregate") {
     ds.groupByKey(_.b).aggregateValue(min(_.a)).pairs.aggregate(min(_._2))

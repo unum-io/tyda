@@ -117,6 +117,13 @@ private object ExprNode extends ExprApi[ExprNode] {
       }
   }
 
+  /** Explode should only be constructible in the public api as a top-level node
+    * or directly inside MakeProduct, and cannot appear inside an ExplodeExpr.
+    */
+  final case class Explode[T](expr: ExprNode[Iterable[T]]) extends ExprNode[T] {
+    override def codec: Codec[T] = expr.codec.element
+  }
+
   final case class MakeProduct[P, Elems <: Tuple](
       values: Tuple.Map[Elems, ExprNode],
       override val codec: Codec.Product[P]

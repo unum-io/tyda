@@ -16,8 +16,6 @@ import com.choreograph.tyda.functions.coalesce
 import com.choreograph.tyda.functions.explode
 import com.choreograph.tyda.functions.namedTuple
 import com.choreograph.tyda.functions.seq
-import com.choreograph.tyda.shapeless3extras.toTuple
-import com.choreograph.tyda.shapeless3extras.tupleInstances
 
 sealed trait Dataset[T: Codec] {
   import Dataset.*
@@ -43,13 +41,13 @@ sealed trait Dataset[T: Codec] {
     * ds.select(_._1) // Select single column
     * ds.select(v => (v._1, 1)) // Select tuple with expr and literal
     * import com.choreograph.tyda.functions.explode
-    * ds.select(explode(_._2)) // Select and explode a iterable expression
+    * ds.select(x => explode(x._2)) // Select and explode a iterable expression
     * ```
     * By using a type class for the conversion this can be supported without
     * needing to enable implicit conversions.
     */
   def select[R, I: AsExprOrExplode.Of[R]](s1: Expr[T] => I): Dataset[R] =
-    Dataset.Select1[T, R](this, CompiledExprOrExplode(s1))
+    Dataset.Select[T, R](this, CompiledExplodeExpr(s1))
 
   /** Select 2 expressions from the Dataset.
     *
@@ -58,7 +56,7 @@ sealed trait Dataset[T: Codec] {
   def select[R1, I1: AsExprOrExplode.Of[R1] as asExpr1, R2, I2: AsExprOrExplode.Of[R2] as asExpr2](
       s1: Expr[T] => I1,
       s2: Expr[T] => I2
-  ): Dataset[(R1, R2)] = selectN((s1.andThen(asExpr1), s2.andThen(asExpr2)))
+  ): Dataset[(R1, R2)] = select(x => (s1(x), s2(x)))
 
   /** Select 3 expressions from the Dataset.
     *
@@ -70,7 +68,7 @@ sealed trait Dataset[T: Codec] {
       s1: Expr[T] => I1,
       s2: Expr[T] => I2,
       s3: Expr[T] => I3
-  ): Dataset[(R1, R2, R3)] = selectN((s1.andThen(asExpr1), s2.andThen(asExpr2), s3.andThen(asExpr3)))
+  ): Dataset[(R1, R2, R3)] = select(x => (s1(x), s2(x), s3(x)))
 
   /** Select 4 expressions from the Dataset.
     *
@@ -83,8 +81,7 @@ sealed trait Dataset[T: Codec] {
       s2: Expr[T] => I2,
       s3: Expr[T] => I3,
       s4: Expr[T] => I4
-  ): Dataset[(R1, R2, R3, R4)] =
-    selectN((s1.andThen(asExpr1), s2.andThen(asExpr2), s3.andThen(asExpr3), s4.andThen(asExpr4)))
+  ): Dataset[(R1, R2, R3, R4)] = select(x => (s1(x), s2(x), s3(x), s4(x)))
 
   /** Select 5 expressions from the Dataset.
     *
@@ -107,14 +104,7 @@ sealed trait Dataset[T: Codec] {
       s3: Expr[T] => I3,
       s4: Expr[T] => I4,
       s5: Expr[T] => I5
-  ): Dataset[(R1, R2, R3, R4, R5)] =
-    selectN((
-      s1.andThen(asExpr1),
-      s2.andThen(asExpr2),
-      s3.andThen(asExpr3),
-      s4.andThen(asExpr4),
-      s5.andThen(asExpr5)
-    ))
+  ): Dataset[(R1, R2, R3, R4, R5)] = select(x => (s1(x), s2(x), s3(x), s4(x), s5(x)))
 
   /** Select 6 expressions from the Dataset.
     *
@@ -140,15 +130,7 @@ sealed trait Dataset[T: Codec] {
       s4: Expr[T] => I4,
       s5: Expr[T] => I5,
       s6: Expr[T] => I6
-  ): Dataset[(R1, R2, R3, R4, R5, R6)] =
-    selectN((
-      s1.andThen(asExpr1),
-      s2.andThen(asExpr2),
-      s3.andThen(asExpr3),
-      s4.andThen(asExpr4),
-      s5.andThen(asExpr5),
-      s6.andThen(asExpr6)
-    ))
+  ): Dataset[(R1, R2, R3, R4, R5, R6)] = select(x => (s1(x), s2(x), s3(x), s4(x), s5(x), s6(x)))
 
   /** Select 7 expressions from the Dataset.
     *
@@ -177,24 +159,7 @@ sealed trait Dataset[T: Codec] {
       s5: Expr[T] => I5,
       s6: Expr[T] => I6,
       s7: Expr[T] => I7
-  ): Dataset[(R1, R2, R3, R4, R5, R6, R7)] =
-    selectN((
-      s1.andThen(asExpr1),
-      s2.andThen(asExpr2),
-      s3.andThen(asExpr3),
-      s4.andThen(asExpr4),
-      s5.andThen(asExpr5),
-      s6.andThen(asExpr6),
-      s7.andThen(asExpr7)
-    ))
-
-  private def selectN[Result <: NonEmptyTuple](
-      exprs: Tuple.Map[Result, [X] =>> Expr[T] => Expr[X] | ExplodeExpr[X]]
-  ): Dataset[Result] = {
-    val instances: K0.ProductInstances[CompiledExprOrExplode.From[T], Result] = tupleInstances(exprs)
-      .mapK([t] => CompiledExprOrExplode[T, t](_))
-    Dataset.SelectN[T, Result](this, instances.toTuple)
-  }
+  ): Dataset[(R1, R2, R3, R4, R5, R6, R7)] = select(x => (s1(x), s2(x), s3(x), s4(x), s5(x), s6(x), s7(x)))
 
   /** Projects the Dataset to a subset defined by the target type `To`.
     *
@@ -332,7 +297,7 @@ sealed trait Dataset[T: Codec] {
     */
   def flatMap[U: Codec](f: T => Iterable[U]): Dataset[U] = {
     given Codec[Iterable[U]] = Codec.iterable
-    select(explode(_.udf(f)))
+    select(x => explode(x.udf(f)))
   }
 
   /** Create a tuple Dataset of the key and the original value.
@@ -783,7 +748,7 @@ object Dataset {
       */
     def flatMapValues[U: Codec](f: V => Iterable[U]): Dataset[(K, U)] = {
       given Codec[Iterable[U]] = Codec.iterable
-      selectValues(explode(_.udf(f)))
+      selectValues(x => explode(x.udf(f)))
     }
 
     /** Perform an inner equi-join on the key with another GroupedDataset. */
@@ -945,14 +910,6 @@ object Dataset {
       NamedTuple[m2.MirroredElemLabels, m2.MirroredElemTypes]
     ]] = ds.select { case Expr(v1, v2) => v1.toNamedTuple ++ v2.toNamedTuple }
 
-  extension [T, R](compiled: CompiledExprOrExplode[T, R]) {
-    def codec: Codec[R] =
-      compiled match {
-        case c: CompiledExpr[T, R] => c.codec
-        case c: CompiledExplodeExpr[T, R] => c.codec
-      }
-  }
-
   /** Trait for Dataset that is created directly from reading from storage.
     *
     * This allows to call `withMetadata` to get a Dataset that includes the
@@ -1017,12 +974,12 @@ object Dataset {
   ) extends Dataset[P](using codec)
   private[tyda] final case class Filter[T](input: Dataset[T], p: CompiledExpr[T, Boolean])
       extends Dataset[T](using input.codec)
-  private[tyda] final case class Select1[T, R](input: Dataset[T], expr: CompiledExprOrExplode[T, R])
+  private[tyda] final case class Select[T, R](input: Dataset[T], expr: CompiledExplodeExpr[T, R])
       extends Dataset[R](using expr.codec)
-  private[tyda] final case class SelectN[T, R <: Tuple](
-      input: Dataset[T],
-      exprs: Tuple.Map[R, CompiledExprOrExplode.From[T]]
-  ) extends Dataset[R](using Codec.tuple(tupleInstances(exprs).mapK([t] => _.codec)))
+  object Select {
+    def apply[T, R](input: Dataset[T], expr: CompiledExpr[T, R]): Select[T, R] =
+      Select(input, CompiledExplodeExpr(expr))
+  }
   private[tyda] final case class MapPartitions[T, U](
       input: Dataset[T],
       f: Iterator[T] => Iterator[U],
@@ -1114,12 +1071,6 @@ object Dataset {
    * all T */
   private val cachedExprApi: TreeApi[Dataset[Any], ExprNode] = {
     import ExprNode.ExprNodeLeafs.given
-    given compiledOrExplode[T, R]: TreeApi[CompiledExprOrExplode[T, R], ExprNode] = {
-      import UnionMirror.derived
-      TreeApi.coproductContainer
-    }
-    given selectN[T, R <: Tuple]: TreeApi[Tuple.Map[R, CompiledExprOrExplode.From[T]], ExprNode] =
-      TreeApi.mappedTuple([t] => () => compiledOrExplode)
     TreeApi.coproductContainer
   }
 
@@ -1128,12 +1079,6 @@ object Dataset {
 
   private val cachedApi: TreeApi[Dataset[Any], Dataset] = {
     import ExprNode.DatasetLeafs.given
-    given compiledOrExplode[T, R]: TreeApi[CompiledExprOrExplode[T, R], Dataset] = {
-      import UnionMirror.derived
-      TreeApi.coproductContainer
-    }
-    given selectN[T, R <: Tuple]: TreeApi[Tuple.Map[R, CompiledExprOrExplode.From[T]], Dataset] =
-      TreeApi.mappedTuple([t] => () => compiledOrExplode)
     TreeApi.coproduct
   }
 

@@ -327,6 +327,6 @@ trait DatasetAggregatesSuite extends DatasetSuite {
 
   test[M1, (Long, Int)](
     "explode after aggregate",
-    ds => ds.groupByKey(_.d).aggregateValue(min(_.a)).pairs.select(explode(_._1), _._2)
+    ds => ds.groupByKey(_.d).aggregateValue(min(_.a)).pairs.select(x => (explode(x._1), x._2))
   )
 }

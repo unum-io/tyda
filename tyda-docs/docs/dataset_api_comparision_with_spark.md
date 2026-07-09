@@ -85,7 +85,7 @@ val sparkUsersWithLocation: DataFrame =
     sparkUsers.where($"location".isNotNull).select($"id", $"location")
 
 val tydaUsersWithLocation: Dataset[(UserId, String)] =
-    tydaUsers.select(_.id, explode(_.location))
+    tydaUsers.select(user => (user.id, explode(user.location)))
 ```
 
 ## Joins

@@ -8,6 +8,8 @@ import org.scalatest.funsuite.AnyFunSuite
 import com.choreograph.tyda.TreeApi.Continue
 import com.choreograph.tyda.aggregates.sum
 import com.choreograph.tyda.compiletimeextras.assertCompileTimeError
+import com.choreograph.tyda.functions.explode
+import com.choreograph.tyda.functions.seq
 
 class DatasetSpec extends AnyFunSuite {
   test("support where") {
@@ -73,6 +75,27 @@ class DatasetSpec extends AnyFunSuite {
     assertCompileTimeError("ds.aggregate(sum(_._1))", "Sum is not supported for type String")
   }
 
+  test("reject nested explode inside struct") {
+    val ds: Dataset[(Seq[(String, Int)], Seq[(String, Int)])] =
+      Dataset.FromSeq(Seq((Seq(("a", 1)), Seq(("a", 1)))))
+    val _ = ds.select(x => explode(seq(x)))
+    assertCompileTimeError(
+      "ds.select(x => (explode(Tuple1(explode(x)))))",
+      "No given instance of type",
+      "tyda.Expr.AsExpr"
+    )
+  }
+
+  test("reject nested explode") {
+    val ds: Dataset[Seq[Seq[Int]]] = Dataset.FromSeq(Seq(Seq(Seq(1))))
+    val _ = ds
+    assertCompileTimeError(
+      "ds.select(x => explode(explode(x)))",
+      "No given instance of type",
+      "tyda.Expr.AsExpr"
+    )
+  }
+
   /* We are not using the public api here since different since for value equality the references in compiled
    * expression will make the differ. If we and some semantic equality we could use that instead. */
   private val ref = ExprNode.Reference[(Int, Int)]()
@@ -80,7 +103,7 @@ class DatasetSpec extends AnyFunSuite {
     CompiledExpr[(Int, Int), Boolean](ref, (ref: ExprNode[(Int, Int)])._1 > limit)
   private val statement = CompiledExpr[(Int, Int), Int](_._2)
   private def compute(ds: Dataset[(Int, Int)], limit: Int = 0): Dataset[Int] =
-    Dataset.Select1(Dataset.Filter(ds, pred(limit)), statement)
+    Dataset.Select(Dataset.Filter(ds, pred(limit)), statement)
 
   test("Support TreeApi") {
     val ds = compute(Dataset.from(Seq((1, 1))))

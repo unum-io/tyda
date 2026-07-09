@@ -27,27 +27,35 @@ trait DatasetBasicSuite extends DatasetSuite {
   test[Boolean, Int]("select primitive", _.select(_ => 1))
   test[MyEnum, MyEnum]("select enum", _.select(identity))
   test[Boolean, Map[Int, Int]]("select complex", _.select(_ => Map.empty[Int, Int]))
+  test[(seq: Seq[Int]), (int: Int)]("select one explode seq", _.select(x => (int = explode(x.seq))))
   test[(Seq[Int], Seq[Int]), (Int, Int)](
     "select multiple explode seq",
-    _.select(explode(_._1), explode(_._2))
+    _.select(x => (explode(x._1), explode(x._2)))
+  )
+  test[(Seq[Int], Seq[Int]), (first: Int, second: Int)](
+    "select multiple explode seq namedtuple",
+    _.select(x => (first = explode(x._1), second = explode(x._2)))
   )
   test[(Option[Int], Option[Int]), (Int, Int)](
     "select multiple explode options",
-    _.select(explode(_._1), explode(_._2))
+    _.select(x => (explode(x._1), explode(x._2)))
   )
-  test[Seq[Int], Int]("explode Seq", _.select(explode(identity)))
-  test[Seq[Seq[Int]], Int]("explode nested Seq", _.select(explode(identity)).select(explode(identity)))
+  test[Seq[Int], Int]("explode Seq", _.select(explode(_)))
+  test[Seq[Seq[Int]], Int]("explode nested Seq", _.select(explode(_)).select(explode(_)))
   test[Seq[Option[Seq[Int]]], Int](
     "explode Seq Option Seq",
-    _.select(explode(identity)).select(explode(identity)).select(explode(identity))
+    _.select(explode(_)).select(explode(_)).select(explode(_))
   )
   test[(Seq[Seq[Int]], Seq[Seq[Int]]), (Seq[Int], Seq[Int])](
     "explode multiple nested Seq",
-    _.select(explode(_._1), explode(_._2))
+    _.select(x => (explode(x._1), explode(x._2)))
   )
-  test[Map[Int, Int], (Int, Int)]("explode Map", _.select(explode(identity)))
-  test[(Map[Int, Int], Int), ((Int, Int), Int)]("explode Map and select Int", _.select(explode(_._1), _._2))
-  test[Option[Int], Int]("explode Option", _.select(explode(identity)))
+  test[Map[Int, Int], (Int, Int)]("explode Map", _.select(explode(_)))
+  test[(Map[Int, Int], Int), ((Int, Int), Int)](
+    "explode Map and select Int",
+    _.select(x => (explode(x._1), x._2))
+  )
+  test[Option[Int], Int]("explode Option", _.select(explode(_)))
   test[Option[Option[Int]], Iterable[Option[Int]]]("nested option upcast", _.select(v => v))
 
   test[Int, Int]("mapPartitions", _.mapPartitions(_.map(_ + 1)))
@@ -69,14 +77,16 @@ trait DatasetBasicSuite extends DatasetSuite {
     (Int, Int, Int, Int, Int, Int, Int)
   ](
     "select 7 explode",
-    _.select(
-      explode(_._1),
-      explode(_._2),
-      explode(_._3),
-      explode(_._4),
-      explode(_._5),
-      explode(_._6),
-      explode(_._7)
+    _.select(x =>
+      (
+        explode(x._1),
+        explode(x._2),
+        explode(x._3),
+        explode(x._4),
+        explode(x._5),
+        explode(x._6),
+        explode(x._7)
+      )
     )
   )
 
@@ -103,15 +113,15 @@ trait DatasetBasicSuite extends DatasetSuite {
   test[(Int, Int), (Int, Int)]("limit after select", _.select(x => (x._1, x._2)).limit(3))
   test[Int, Int]("limit before filter", _.limit(5).where(_ > 2))
   test[Int, Int]("limit after filter", _.where(_ > 5).limit(3))
-  test[(String, Seq[Int]), Int]("limit before explode", _.limit(5).select(explode(_._2)))
-  test[(String, Seq[Int]), Int]("limit after explode", _.select(explode(_._2)).limit(5))
+  test[(String, Seq[Int]), Int]("limit before explode", _.limit(5).select(x => explode(x._2)))
+  test[(String, Seq[Int]), Int]("limit after explode", _.select(x => explode(x._2)).limit(5))
   test[(String, Seq[Int]), (Int, Int, String)](
     "where before explode",
-    _.where(_._2.size < 2).select(explode(_._2), explode(_._2), _._1)
+    _.where(_._2.size < 2).select(x => (explode(x._2), explode(x._2), x._1))
   )
   test[(String, Seq[Int]), (Int, Int, String)](
     "where after explode",
-    _.select(explode(_._2), explode(_._2), _._1).where(_._1 < 0)
+    _.select(x => (explode(x._2), explode(x._2), x._1)).where(_._1 < 0)
   )
   test[(String, Int), (key: String, value: Long)](
     "limit before aggregate",
@@ -125,6 +135,6 @@ trait DatasetBasicSuite extends DatasetSuite {
   test[Int, Int, (Int, Int)]("limit after join", (left, right) => left.join(right, _ == _).limit(5))
   test[M1, (Long, Long)](
     "multiple explodes in separate selects",
-    ds => ds.select(identity, explode(_.d)).select(_._2, explode(_._1.d))
+    ds => ds.select(x => (x, explode(x.d))).select(x => (x._2, explode(x._1.d)))
   )
 }

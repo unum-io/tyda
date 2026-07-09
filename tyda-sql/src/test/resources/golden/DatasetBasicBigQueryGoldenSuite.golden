@@ -154,8 +154,16 @@ SELECT table1._1 AS _1, table1._2 AS _2 FROM table1 WHERE ((table1._1 IS NOT NUL
 SELECT t0 AS _1, t1 AS _2 FROM table1, unnest(table1._1) AS t0, unnest(table1._2) AS t1
 ------ end
 
+------ Test: select multiple explode seq namedtuple
+SELECT t0 AS first, t1 AS second FROM table1, unnest(table1._1) AS t0, unnest(table1._2) AS t1
+------ end
+
 ------ Test: select nested access
 SELECT table1._1._1 AS value FROM table1
+------ end
+
+------ Test: select one explode seq
+SELECT t0 AS int FROM table1, unnest(table1.seq) AS t0
 ------ end
 
 ------ Test: select primitive
