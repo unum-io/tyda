@@ -46,8 +46,8 @@ import com.choreograph.tyda.Errors
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.rewrite.ArrayCodec
-import com.choreograph.tyda.rewrite.CheckArrayIndexPositive
 import com.choreograph.tyda.rewrite.ArrayContains
+import com.choreograph.tyda.rewrite.CheckArrayIndexPositive
 import com.choreograph.tyda.rewrite.IsNone
 import com.choreograph.tyda.rewrite.Nullable
 import com.choreograph.tyda.rewrite.PrimitiveAggregateAsFold

@@ -354,7 +354,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
           elemExpr <- inner(element)
         } yield dialect.arrayContains match {
           case SqlDialect.ArrayContains.InUnnest =>
-            SqlExpr.In(elemExpr, Seq(SqlExpr.Function("unnest", Seq(arrExpr))))
+            SqlExpr.InSubquery(elemExpr, SqlExpr.Function("unnest", Seq(arrExpr)))
           case SqlDialect.ArrayContains.Function(arrayContains) =>
             SqlExpr.Function(arrayContains, Seq(arrExpr, elemExpr))
         }

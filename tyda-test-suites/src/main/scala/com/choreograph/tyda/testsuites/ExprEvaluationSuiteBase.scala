@@ -52,6 +52,7 @@ import com.choreograph.tyda.functions.range
 import com.choreograph.tyda.functions.seq
 import com.choreograph.tyda.functions.some
 import com.choreograph.tyda.functions.startsWith
+import com.choreograph.tyda.functions.ternary
 import com.choreograph.tyda.functions.toBase64
 import com.choreograph.tyda.functions.toJson
 import com.choreograph.tyda.functions.tuple
@@ -432,20 +433,16 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testHasSameBehavior[Seq[Int], Boolean]("seq exists", _.exists(_ < 0), _.exists(_ < 0))
   testHasSameBehavior[Seq[Boolean], Boolean]("seq contains", _.contains(true), _.contains(elem = true))
   testHasSameBehavior[Int, Boolean]("in literals match", _.in(1, 2, 3), v => Seq(1, 2, 3).contains(v))
-  testHasSameBehavior[Int, Boolean](
-    "in literals no match",
-    _.in(10, 20, 30),
-    v => Seq(10, 20, 30).contains(v)
-  )
-  testHasSameBehavior[Int, Boolean](
+  testHasSameBehavior[Int, Boolean]("in literals", _.in(1, 2, 3), v => Seq(1, 2, 3).contains(v))
+  testHasSameBehavior[(Int, Int, Int, Boolean), Boolean](
     "in exprs",
-    i => i.in(lit(1), lit(2), lit(3)),
-    v => Seq(1, 2, 3).contains(v)
+    { case Expr(i1, i2, i3, b) => i1.in(i2, ternary(b, i1, i3)) },
+    (i1, i2, i3, b) => i1 == i2 || i1 == (if b then i1 else i3)
   )
-  testHasSameBehavior[String, Boolean](
-    "in strings",
-    _.in("foo", "bar", "baz"),
-    v => Seq("foo", "bar", "baz").contains(v)
+  testHasSameBehavior[(Struct, Struct, Struct), Boolean](
+    "in match struct",
+    { case Expr(a, b, c) => a.in(b, c) },
+    { case (a, b, c) => Seq(b, c).contains(a) }
   )
   testHasSameBehavior[Seq[Int], Boolean]("seq forall", _.forall(_ < 0), _.forall(_ < 0))
   testHasSameBehavior[Seq[Seq[Int]], Seq[Boolean]](

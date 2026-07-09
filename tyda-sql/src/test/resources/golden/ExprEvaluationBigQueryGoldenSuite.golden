@@ -803,6 +803,10 @@ SELECT t1._1 AS _1, t1._2 AS _2 FROM t1
 ------ end
 
 ------ Test: in exprs
+SELECT t1._1 IN (t1._2, CASE WHEN t1._4 THEN t1._1 ELSE t1._3 END) AS value FROM t1
+------ end
+
+------ Test: in literals
 SELECT t1.value IN (CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)) AS value FROM t1
 ------ end
 
@@ -810,12 +814,8 @@ SELECT t1.value IN (CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)) AS value FRO
 SELECT t1.value IN (CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)) AS value FROM t1
 ------ end
 
------- Test: in literals no match
-SELECT t1.value IN (CAST(10 AS INT), CAST(20 AS INT), CAST(30 AS INT)) AS value FROM t1
------- end
-
------- Test: in strings
-SELECT t1.value IN ('foo', 'bar', 'baz') AS value FROM t1
+------ Test: in match struct
+SELECT t1._1 IN (t1._2, t1._3) AS value FROM t1
 ------ end
 
 ------ Test: isNaN for Double
@@ -1187,7 +1187,7 @@ SELECT (t1.value = TRUE) AS value FROM t1
 ------ end
 
 ------ Test: seq contains
-SELECT TRUE IN (unnest(t1.value)) AS value FROM t1
+SELECT TRUE IN unnest(t1.value) AS value FROM t1
 ------ end
 
 ------ Test: seq exists
