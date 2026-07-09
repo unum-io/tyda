@@ -35,35 +35,60 @@ trait DatasetBasicSuite extends DatasetSuite {
   test[Boolean, Int]("select primitive", _.select(_ => 1))
   test[MyEnum, MyEnum]("select enum", _.select(identity))
   test[Boolean, Map[Int, Int]]("select complex", _.select(_ => Map.empty[Int, Int]))
-  test[Seq[SimpleProduct], SimpleProduct]("explode to product", _.select(explode(identity)))
-  test[Seq[SimpleProduct], Int]("select after explode to product", _.select(explode(identity)).select(_.a))
+  test[Seq[SimpleProduct], SimpleProduct]("explode to product", _.select(explode))
+  test[Seq[SimpleProduct], Int]("select after explode to product", _.select(explode).select(_.a))
   test[(Tuple1[Int], Seq[SimpleProduct]), Int](
     "select different after explode to product",
     _.select(_._1, explode(_._2)).select(_._1._1)
   )
-  test[Seq[SimpleEnum], SimpleEnum]("explode to simple enum", _.select(explode(identity)))
-  test[Seq[MyEnum], MyEnum]("explode to complex enum", _.select(explode(identity)))
+  test[Seq[SimpleEnum], SimpleEnum]("explode to simple enum", _.select(explode))
+  test[Seq[MyEnum], MyEnum]("explode to complex enum", _.select(explode))
+  test[(seq: Seq[Int]), (int: Int)]("select one explode seq", _.select(x => (int = explode(x.seq))))
+  test[(seq: Seq[Int]), (wrapper: (int: Int))](
+    "select one explode seq nested",
+    _.select(x => (wrapper = (int = explode(x.seq))))
+  )
+  test[(seq: Seq[Int]), (int: Int, seq: Seq[Int])](
+    "select one explode seq with reference to input",
+    _.select(x => (int = explode(x.seq), seq = x.seq))
+  )
   test[(Seq[Int], Seq[Int]), (Int, Int)](
     "select multiple explode seq",
     _.select(explode(_._1), explode(_._2))
+  )
+  test[(Seq[Int], Seq[Int]), (Int, Int)](
+    "select multiple explode seq single select syntax",
+    _.select(x => (explode(x._1), explode(x._2)))
+  )
+  test[(Seq[Int], Seq[Int]), (first: Int, second: Int)](
+    "select multiple explode seq namedtuple",
+    _.select(x => (first = explode(x._1), second = explode(x._2)))
+  )
+  test[(Seq[Int], Seq[Int]), (first: Int, wrapper: (second: Int))](
+    "select multiple explode seq namedtuple nested",
+    _.select(x => (first = explode(x._1), wrapper = (second = explode(x._2))))
+  )
+  test[(Seq[Int], Seq[Int], String), (first: Int, string: String, second: Int)](
+    "select multiple explode seq namedtuple with reference to input",
+    _.select(x => (first = explode(x._1), string = x._3, second = explode(x._2)))
   )
   test[(Option[Int], Option[Int]), (Int, Int)](
     "select multiple explode options",
     _.select(explode(_._1), explode(_._2))
   )
   test[Seq[Int], Int]("explode Seq", _.explode(identity))
-  test[Seq[Seq[Int]], Int]("explode nested Seq", _.select(explode(identity)).select(explode(identity)))
+  test[Seq[Seq[Int]], Int]("explode nested Seq", _.select(explode).select(explode))
   test[Seq[Option[Seq[Int]]], Int](
     "explode Seq Option Seq",
-    _.select(explode(identity)).select(explode(identity)).select(explode(identity))
+    _.select(explode).select(explode).select(explode)
   )
   test[(Seq[Seq[Int]], Seq[Seq[Int]]), (Seq[Int], Seq[Int])](
     "explode multiple nested Seq",
     _.select(explode(_._1), explode(_._2))
   )
-  test[Map[Int, Int], (Int, Int)]("explode Map", _.select(explode(identity)))
+  test[Map[Int, Int], (Int, Int)]("explode Map", _.select(explode))
   test[(Map[Int, Int], Int), ((Int, Int), Int)]("explode Map and select Int", _.select(explode(_._1), _._2))
-  test[Option[Int], Int]("explode Option", _.select(explode(identity)))
+  test[Option[Int], Int]("explode Option", _.select(explode))
   test[Option[Option[Int]], Iterable[Option[Int]]]("nested option upcast", _.select(v => v))
 
   test[Int, Int]("mapPartitions", _.mapPartitions(_.map(_ + 1)))
