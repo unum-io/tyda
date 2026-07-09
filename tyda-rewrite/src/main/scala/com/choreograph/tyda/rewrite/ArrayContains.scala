@@ -19,14 +19,27 @@ private[tyda] object ArrayContains {
     }
   }
 
-  // Matches trees that does a contains check on a array that can we rewritten into a `In` expression in SQL.
+  private object ArrayAny {
+    def unapply[U](expr: ExprNode[U]): Option[ExprNode[?]] =
+      expr match {
+        case ExprNode.AggregateSeq(arr, ExprNode.Literal(false, _), PrimitiveAggregate.BoolOr()) => Some(arr)
+        case _ => None
+      }
+  }
+
+  private object MapEq {
+    def unapply[U](expr: ExprNode[U]): Option[Result[?]] =
+      expr match {
+        case ExprNode.MapSeq(arr, EqPredicate(elem)) => Some(Result(arr, elem))
+        case _ => None
+      }
+  }
+
+  // Matches trees that do a contains check on a array that can we rewritten into a `In` expression in SQL.
   def unapply[U](expr: ExprNode[U]): Option[Result[?]] =
     expr match {
-      case ExprNode.AggregateSeq(
-            ExprNode.MapSeq(arr, EqPredicate(elem)),
-            ExprNode.Literal(false, _),
-            PrimitiveAggregate.BoolOr()
-          ) => Some(Result(arr, elem))
+      case ArrayAny(MapEq(res)) => Some(res)
+      case ArrayAny(ToFromRepr(MapEq(res))) => Some(res)
       case _ => None
     }
 }
