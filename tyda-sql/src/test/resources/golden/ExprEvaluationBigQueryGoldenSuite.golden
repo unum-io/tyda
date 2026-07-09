@@ -906,10 +906,6 @@ SELECT t1._1 IN (t1._2, CASE WHEN t1._4 THEN t1._1 ELSE t1._3 END) AS value FROM
 SELECT t1.value IN (CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)) AS value FROM t1
 ------ end
 
------- Test: in literals match
-SELECT t1.value IN (CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)) AS value FROM t1
------- end
-
 ------ Test: in match struct
 SELECT t1._1 IN (t1._2, t1._3) AS value FROM t1
 ------ end
@@ -1355,7 +1351,7 @@ SELECT TRUE IN unnest(t1.value) AS value FROM t1
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct
-SELECT t1._2 IN (unnest(t1._1)) AS value FROM t1
+SELECT t1._2 IN unnest(t1._1) AS value FROM t1
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum
@@ -1363,7 +1359,7 @@ SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (((TRUE
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnumString
-SELECT t1._2 IN (unnest(t1._1)) AS value FROM t1
+SELECT t1._2 IN unnest(t1._1) AS value FROM t1
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithOptionField
@@ -1371,11 +1367,11 @@ SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (TRUE A
 ------ end
 
 ------ Test: seq contains scala.Boolean
-SELECT t1._2 IN (unnest(t1._1)) AS value FROM t1
+SELECT t1._2 IN unnest(t1._1) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["bool"], scala.Tuple1[scala.Boolean]]
-SELECT t1._2 IN (unnest(t1._1)) AS value FROM t1
+SELECT t1._2 IN unnest(t1._1) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["seq"], scala.Tuple1[scala.collection.immutable.Seq[scala.Boolean]]]
@@ -1387,7 +1383,7 @@ SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT CASE WH
 ------ end
 
 ------ Test: seq contains scala.Option[scala.Boolean]
-SELECT t1._2 IN (unnest(t1._1)) AS value FROM t1
+SELECT t1._2 IN unnest(t1._1) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.Option[scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]]
