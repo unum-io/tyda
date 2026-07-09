@@ -79,6 +79,12 @@ object DatasetReadWriteSuite {
 
   private given Equality[Float] = equalityFromOrd[Float]
   private given Equality[Double] = equalityFromOrd[Double]
+
+  private def anyCauseContains(throwable: Throwable, expectedOneOf: Seq[String]): Boolean =
+    Iterator
+      .iterate(throwable)(_.getCause)
+      .takeWhile(_ != null)
+      .exists(t => expectedOneOf.exists(t.getMessage.contains))
 }
 
 trait DatasetReadWriteSuite extends DatasetSuite {
@@ -229,9 +235,10 @@ trait DatasetReadWriteSuite extends DatasetSuite {
         val exception = intercept[Exception](implementation.execute(write))
         val expectedOneOf = List("already exists", "destination is not empty")
         assert(
-          expectedOneOf.exists(snippet => exception.getMessage.contains(snippet)),
-          s"Exception message '${exception
-              .getMessage}' did not contain any of expected snippets: ${expectedOneOf.mkString(", ")}"
+          anyCauseContains(exception, expectedOneOf),
+          s"Exception '${exception}' did not contain any of expected snippets: ${expectedOneOf.mkString(
+              ", "
+            )}"
         )
       }: Unit
     }
