@@ -1,5 +1,5 @@
 ------ Test: collect subquery
-SELECT table1.value AS value FROM table1 WHERE table1.value IN (unnest(coalesce((SELECT CASE WHEN (count(1) <> 0) THEN array_agg(table2.value) END AS value FROM table2), CAST([] AS ARRAY<TINYINT>))))
+SELECT table1.value AS value FROM table1 WHERE table1.value IN unnest(coalesce((SELECT CASE WHEN (count(1) <> 0) THEN array_agg(table2.value) END AS value FROM table2), CAST([] AS ARRAY<TINYINT>)))
 ------ end
 
 ------ Test: count subquery
