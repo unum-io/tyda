@@ -67,6 +67,30 @@ libraryDependencies ++= Seq(
 )
 ```
 
+## Interactive shell
+
+You can explore the API in a REPL without setting up a project, using
+[scala-cli](https://scala-cli.virtuslab.org). The `tyda-repl` module launches a
+Scala 3 REPL preloaded with the Tyda API, an execution engine, and a few
+interactive helpers.
+
+Pass `tyda-repl` together with the engine you want on the classpath. For example
+`tyda-spark4` for Spark 4.
+
+```sh
+scala-cli run -S 3.7.4 \
+  --dep com.wppresolve.tyda::tyda-repl:<version> \
+  --dep com.wppresolve.tyda::tyda-spark4:<version> \
+  --dep org.apache.spark:spark-sql_2.13:4.1.2 \
+  --main-class com.choreograph.tyda.repl.TydaRepl -- --runner spark
+```
+
+```scala
+val ds = Dataset.from(Seq((Seq(1,2,3), 2))).select { case Expr(arr, value) => arr.map(_ < value) }
+ds.show()
+ds.select(_._1).explain()
+```
+
 ## Documentation
 
 Full API documentation and guides are available at [unum-io.github.io/tyda](https://unum-io.github.io/tyda/docs/index.html)

@@ -51,7 +51,7 @@ object TydaRepl {
       .serialize[RunnerArgs](args)
       .map(_.replace("\\", "\\\\").replace("\"", "\\\""))
       .mkString("Seq(\"", "\", \"", "\")")
-    s"""|import com.choreograph.tyda.{Dataset, Date}
+    s"""|import com.choreograph.tyda.{Dataset, Date, Expr}
         |import com.choreograph.tyda.functions.*
         |import com.choreograph.tyda.aggregates.*
         |import com.choreograph.tyda.repl.ReplMethods.*
@@ -63,7 +63,7 @@ object TydaRepl {
     ArgsParser.parse[Args](args.toSeq) match
       case Right(parsed) => run(parsed)
       case Left(error) =>
-        System.err.println(error.formatted(0))
+        System.err.println(error.formatted)
         sys.exit(1)
 
   private val Banner = """
