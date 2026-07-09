@@ -545,7 +545,7 @@ object SqlDialect {
       SparkJsonCompatability.AdaptReads,
       SparkJsonCompatability.ConvertWrites,
       SparkJsonCompatability.AdaptToJson,
-      SparkJsonCompatability.ConvertFromJson
+      SparkJsonCompatability.ConvertFromJson,
       RemoveMultipleExplodes
     )
   )

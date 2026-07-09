@@ -64,7 +64,7 @@ object RemoveMultipleExplodes extends DatasetRule {
       val row = column[T](1)
       val adaptedExpr = compiled.compose(row)
 
-      /* TYPE SAFETY: All exprs are of type CompiledExprOrExplode.From[U] */
+      // TYPE SAFETY: All exprs are of type CompiledExprOrExplode.From[U]
       val nextResults = Tuple
         .fromArray((existingResults :+ adaptedExpr).toArray)
         .asInstanceOf[Tuple.Map[Tuple, CompiledExprOrExplode.From[U]]]
@@ -80,7 +80,7 @@ object RemoveMultipleExplodes extends DatasetRule {
         (nextDs, idx + 1)
       }
 
-    /* TYPE SAFETY: In the final select each of the tuple elements is the same as the original select */
+    // TYPE SAFETY: In the final select each of the tuple elements is the same as the original select
     result.asInstanceOf[Dataset[R]]
   }
 }
