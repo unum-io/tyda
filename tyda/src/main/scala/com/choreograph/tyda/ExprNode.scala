@@ -80,6 +80,14 @@ private sealed trait ExprNode[T] extends Selectable {
             case other => Continue(other)
           }
       )
+
+  final def simpleShow: String = {
+    val children = ExprNode
+      .api
+      .foldChildren(this)(Vector.empty[String])([t] => (acc, child) => Continue(acc :+ child.simpleShow))
+    val name = getClass.getSimpleName
+    if children.isEmpty then name else children.mkString(s"$name(", ", ", ")")
+  }
 }
 
 private object ExprNode extends ExprApi[ExprNode] {

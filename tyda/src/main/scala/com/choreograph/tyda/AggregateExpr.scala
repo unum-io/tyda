@@ -19,6 +19,8 @@ final class AggregateExpr[T] private (private[tyda] val node: ExprNode[T]) exten
     new AggregateExpr(ExprNode.Equals(this.node, rhs.node))
   def ==(rhs: T): AggregateExpr[Boolean] =
     new AggregateExpr(ExprNode.Equals(this.node, ExprNode.Literal.create(rhs, codec)))
+
+  final override def toString: String = node.simpleShow
 }
 
 object AggregateExpr extends ExprApi[AggregateExpr] {

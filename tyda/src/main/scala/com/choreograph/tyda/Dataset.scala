@@ -9,6 +9,7 @@ import shapeless3.deriving.K0
 
 import com.choreograph.tyda.Expr.AsExpr
 import com.choreograph.tyda.Expr.knownNotNull
+import com.choreograph.tyda.TreeApi.Continue
 import com.choreograph.tyda.TreeApi.Control
 import com.choreograph.tyda.TreeApi.StopOrContinue
 import com.choreograph.tyda.functions.coalesce
@@ -577,6 +578,14 @@ sealed trait Dataset[T: Codec] {
     * }}}
     */
   def exists: Expr[Boolean] = Expr.lift(ExprNode.ExistsSubquery(this.select(_ => 1)))
+
+  final override def toString: String = {
+    val children = Dataset
+      .api
+      .foldChildren(this)(Vector.empty[String])([t] => (acc, child) => Continue(acc :+ child.toString))
+    val name = getClass.getSimpleName
+    if children.isEmpty then name else children.mkString(s"$name(", ", ", ")")
+  }
 }
 
 object Dataset {
