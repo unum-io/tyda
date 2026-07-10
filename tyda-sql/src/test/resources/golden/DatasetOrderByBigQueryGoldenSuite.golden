@@ -38,75 +38,75 @@ SELECT t1._1 AS _1, t1._2 AS _2, t1._3 AS _3, t1._4 AS _4, t1._5 AS _5, t1._6 AS
 SELECT t1._1 AS _1, t1._2 AS _2, t1._3 AS _3, t1._4 AS _4, t1._5 AS _5, t1._6 AS _6, t1._7 AS _7 FROM t1 ORDER BY t1._1, t1._2, t1._3, t1._4, t1._5, t1._6, t1._7
 ------ end
 
------- Test: orderBy Boolean, input: ArraySeq()
+------ Test: orderBy Boolean
 SELECT t1.value AS value FROM t1 ORDER BY t1.value
 ------ end
 
------- Test: orderBy Byte, input: ArraySeq()
+------ Test: orderBy Byte
 SELECT t1.value AS value FROM t1 ORDER BY t1.value
 ------ end
 
------- Test: orderBy Date, input: ArraySeq()
+------ Test: orderBy Date
 SELECT t1.value AS value FROM t1 ORDER BY t1.value
 ------ end
 
------- Test: orderBy Decimal[Int,Int], input: ArraySeq()
+------ Test: orderBy Decimal[Int,Int]
 SELECT t1.value AS value FROM t1 ORDER BY t1.value
 ------ end
 
------- Test: orderBy Double, input: ArraySeq()
+------ Test: orderBy Double
 SELECT t1.value AS value FROM t1 ORDER BY is_nan(t1.value), t1.value
 ------ end
 
------- Test: orderBy Float, input: ArraySeq()
+------ Test: orderBy Float
 SELECT t1.value AS value FROM t1 ORDER BY is_nan(t1.value), t1.value
 ------ end
 
------- Test: orderBy Inner, input: ArraySeq()
+------ Test: orderBy Inner
 SELECT t1.x AS x, t1.y AS y FROM t1 ORDER BY t1.x, t1.y
 ------ end
 
------- Test: orderBy Int, input: ArraySeq()
+------ Test: orderBy Int
 SELECT t1.value AS value FROM t1 ORDER BY t1.value
 ------ end
 
------- Test: orderBy Long, input: ArraySeq()
+------ Test: orderBy Long
 SELECT t1.value AS value FROM t1 ORDER BY t1.value
 ------ end
 
------- Test: orderBy Option[AllNullable], input: ArraySeq()
+------ Test: orderBy Option[AllNullable]
 SELECT t1.value AS value FROM t1 ORDER BY (t1.value IS NOT NULL), t1.value.a, t1.value.b
 ------ end
 
------- Test: orderBy Option[Double], input: ArraySeq(List(None, Some(NaN), Some(Infinity), Some(-Infinity), Some(-0.0), Some(0.0)))
+------ Test: orderBy Option[Double]
 SELECT t1.value AS value FROM t1 ORDER BY is_nan(t1.value), t1.value
 ------ end
 
------- Test: orderBy Option[Inner], input: ArraySeq()
+------ Test: orderBy Option[Inner]
 SELECT t1.value AS value FROM t1 ORDER BY (t1.value IS NOT NULL), t1.value.x, t1.value.y
 ------ end
 
------- Test: orderBy Option[Int], input: ArraySeq()
+------ Test: orderBy Option[Int]
 SELECT t1.value AS value FROM t1 ORDER BY t1.value
 ------ end
 
------- Test: orderBy Option[Option[Int]], input: ArraySeq()
+------ Test: orderBy Option[Option[Int]]
 SELECT t1.value AS value FROM t1 ORDER BY (t1.value IS NOT NULL), t1.value.value
 ------ end
 
------- Test: orderBy Outer, input: ArraySeq()
+------ Test: orderBy Outer
 SELECT t1.a AS a, t1.b AS b FROM t1 ORDER BY t1.a.x, t1.a.y, t1.b
 ------ end
 
------- Test: orderBy Short, input: ArraySeq()
+------ Test: orderBy Short
 SELECT t1.value AS value FROM t1 ORDER BY t1.value
 ------ end
 
------- Test: orderBy String, input: ArraySeq()
+------ Test: orderBy String
 SELECT t1.value AS value FROM t1 ORDER BY t1.value
 ------ end
 
------- Test: orderBy Timestamp, input: ArraySeq()
+------ Test: orderBy Timestamp
 SELECT t1.value AS value FROM t1 ORDER BY t1.value
 ------ end
 
