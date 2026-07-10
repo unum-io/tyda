@@ -88,7 +88,7 @@ scala-cli run -S 3.7.4 \
 ```scala
 val ds = Dataset.from(Seq((Seq(1,2,3), 2))).select { case Expr(arr, value) => arr.map(_ < value) }
 ds.show()
-ds.select(_._1).explain()
+ds.explain()
 ```
 
 ## Documentation
