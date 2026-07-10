@@ -79,8 +79,8 @@ Pass `tyda-repl` together with the engine you want on the classpath. For example
 
 ```sh
 scala-cli run -S 3.7.4 \
-  --dep com.wppresolve.tyda::tyda-repl:<version> \
-  --dep com.wppresolve.tyda::tyda-spark4:<version> \
+  --dep com.wppresolve.tyda::tyda-repl:latest.release \
+  --dep com.wppresolve.tyda::tyda-spark4:latest.release \
   --dep org.apache.spark:spark-sql_2.13:4.1.2 \
   --main-class com.choreograph.tyda.repl.TydaRepl -- --runner spark
 ```
