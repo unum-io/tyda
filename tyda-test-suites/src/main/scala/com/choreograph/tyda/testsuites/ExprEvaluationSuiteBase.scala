@@ -29,6 +29,7 @@ import com.choreograph.tyda.Duration
 import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Expr
 import com.choreograph.tyda.JsonArrayOrObject
+import com.choreograph.tyda.Num
 import com.choreograph.tyda.Ord
 import com.choreograph.tyda.Remover
 import com.choreograph.tyda.Selector
@@ -776,23 +777,17 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   )
 
   {
-    given Arbitrary[Long] = Arbitrary.int.map(_.toLong)
-    testHasSameBehavior[(Long, Long), Long]("add two numbers", t => t._1 + t._2, (lhs, rhs) => lhs + rhs)
-  }
-
-  {
     given Arbitrary[Int] = Arbitrary.short.map(_.toInt)
     testHasSameBehavior[(Int, Int), Int]("add two int numbers", t => t._1 + t._2, (lhs, rhs) => lhs + rhs)
   }
 
   {
     given Arbitrary[Int] = Arbitrary.int.filter(_ > 0)
-    testFailure[Int, Int]("fail on int overflow", _ + Expr.lit(Int.MaxValue), "(overflow)|(out of range)".r)
-  }
-
-  {
-    given Arbitrary[Long] = Arbitrary.int.map(_.toLong)
-    testHasSameBehavior[(Long, Long), Long]("subtract two numbers", t => t._1 - t._2, (lhs, rhs) => lhs - rhs)
+    testFailure[Int, Int](
+      "fail on int addition overflow",
+      _ + Expr.lit(Int.MaxValue),
+      "(?i)(overflow|out of range)".r
+    )
   }
 
   {
@@ -809,13 +804,8 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     testFailure[Int, Int](
       "fail on int subtract overflow",
       _ - Expr.lit(Int.MaxValue),
-      "(overflow)|(out of range)".r
+      "(?i)(overflow|out of range)".r
     )
-  }
-
-  {
-    given Arbitrary[Long] = Arbitrary.short.map(_.toLong)
-    testHasSameBehavior[(Long, Long), Long]("multiply two numbers", t => t._1 * t._2, (lhs, rhs) => lhs * rhs)
   }
 
   {
@@ -832,13 +822,8 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     testFailure[Int, Int](
       "fail on int multiply overflow",
       _ * Expr.lit(Int.MaxValue),
-      "(overflow)|(out of range)".r
+      "(?i)(overflow|out of range)".r
     )
-  }
-
-  {
-    given Arbitrary[Long] = Arbitrary.int.map(_.toLong)
-    testHasSameBehavior[Long, Long]("negate a number", e => -e, n => -n)
   }
 
   {
@@ -849,28 +834,91 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testFailure[Int, Int](
     "fail on int negate overflow",
     _ => -Expr.lit(Int.MinValue),
-    "(overflow)|(out of range)".r
+    "(?i)(overflow|out of range)".r
   )
-
-  {
-    given Arbitrary[Long] = Arbitrary.long.filter(_ != 0)
-    testHasSameBehavior[(Long, Long), Long](
-      "truncating divide first argument by second",
-      t => t._1 / t._2,
-      (lhs, rhs) => lhs / rhs
-    )
-  }
 
   {
     given Arbitrary[Int] = Arbitrary.int.filter(_ != 0)
     testHasSameBehavior[(Int, Int), Int](
-      "truncating divide first int argument by second",
+      "truncating divide two int numbers",
       t => t._1 / t._2,
       (lhs, rhs) => lhs / rhs
     )
   }
 
-  testFailure[Int, Int]("fail on division by zero", _ / lit(0), "by zero")
+  testFailure[Int, Int]("fail on int division by zero", _ / lit(0), "by zero")
+
+  {
+    given Arbitrary[Long] = Arbitrary.int.map(_.toLong)
+    testHasSameBehavior[(Long, Long), Long]("add two long numbers", t => t._1 + t._2, (lhs, rhs) => lhs + rhs)
+  }
+
+  {
+    given Arbitrary[Long] = Arbitrary.long.filter(_ > 0)
+    testFailure[Long, Long](
+      "fail on Long addition overflow",
+      _ + Expr.lit(Long.MaxValue),
+      "(?i)(overflow|out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Long] = Arbitrary.int.map(_.toLong)
+    testHasSameBehavior[(Long, Long), Long](
+      "subtract two long numbers",
+      t => t._1 - t._2,
+      (lhs, rhs) => lhs - rhs
+    )
+  }
+
+  {
+    given Arbitrary[Long] = Arbitrary.long.filter(_ < -1)
+    testFailure[Long, Long](
+      "fail on long subtract overflow",
+      _ - Expr.lit(Long.MaxValue),
+      "(?i)(overflow|out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Long] = Arbitrary.short.map(_.toLong)
+    testHasSameBehavior[(Long, Long), Long](
+      "multiply two long numbers",
+      t => t._1 * t._2,
+      (lhs, rhs) => lhs * rhs
+    )
+  }
+
+  {
+    given Arbitrary[Long] = Arbitrary.long.filter(_ > 1L)
+    testFailure[Long, Long](
+      "fail on long multiply overflow",
+      _ * Expr.lit(Long.MaxValue),
+      "(?i)(overflow|out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Long] = Arbitrary.int.map(_.toLong)
+    testHasSameBehavior[Long, Long]("negate a long number", e => -e, n => -n)
+  }
+
+  testFailure[Long, Long](
+    "fail on long negate overflow",
+    _ => -Expr.lit(Long.MinValue),
+    "(?i)(overflow|out of range)".r
+  )
+
+  {
+    given Arbitrary[Long] = Arbitrary.long.filter(_ != 0L)
+    testHasSameBehavior[(Long, Long), Long](
+      "truncating divide two long numbers",
+      t => t._1 / t._2,
+      (lhs, rhs) => lhs / rhs
+    )
+  }
+
+  testFailure[Long, Long]("fail on long division by zero", _ / lit(0L), "by zero")
 
   {
     given Arbitrary[Short] = Arbitrary.between(-1000, 1000).map(_.toShort)
@@ -886,7 +934,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     testFailure[Short, Short](
       "fail on short add overflow",
       _ + Expr.lit(Short.MaxValue),
-      "(overflow)|(out of range)".r
+      "(?i)(overflow|out of range)".r
     )
   }
 
@@ -904,7 +952,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     testFailure[Short, Short](
       "fail on short subtract overflow",
       _ - Expr.lit(Short.MaxValue),
-      "(overflow)|(out of range)".r
+      "(?i)(overflow|out of range)".r
     )
   }
 
@@ -922,7 +970,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     testFailure[Short, Short](
       "fail on short multiply overflow",
       _ * Expr.lit(Short.MaxValue),
-      "(overflow)|(out of range)".r
+      "(?i)(overflow|out of range)".r
     )
   }
 
@@ -945,7 +993,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testFailure[Short, Short](
     "fail on short negate overflow",
     _ => -Expr.lit(Short.MinValue),
-    "(overflow)|(out of range)".r
+    "(?i)(overflow|out of range)".r
   )
 
   {
@@ -962,7 +1010,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     testFailure[Byte, Byte](
       "fail on byte add overflow",
       _ + Expr.lit(Byte.MaxValue),
-      "(overflow)|(out of range)".r
+      "(?i)(overflow|out of range)".r
     )
   }
 
@@ -980,7 +1028,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     testFailure[Byte, Byte](
       "fail on byte subtract overflow",
       _ - Expr.lit(Byte.MaxValue),
-      "(overflow)|(out of range)".r
+      "(?i)(overflow|out of range)".r
     )
   }
 
@@ -998,7 +1046,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     testFailure[Byte, Byte](
       "fail on byte multiply overflow",
       _ * Expr.lit(Byte.MaxValue),
-      "(overflow)|(out of range)".r
+      "(?i)(overflow|out of range)".r
     )
   }
 
@@ -1021,11 +1069,11 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testFailure[Byte, Byte](
     "fail on byte negate overflow",
     _ => -Expr.lit(Byte.MinValue),
-    "(overflow)|(out of range)".r
+    "(?i)(overflow|out of range)".r
   )
 
   {
-    given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isNaN && !d.isInfinite)
+    given Arbitrary[Double] = Arbitrary.double.filter(Math.abs(_) <= Double.MaxValue / 2.0)
     testHasSameBehavior[(Double, Double), Double](
       "add two double numbers",
       t => t._1 + t._2,
@@ -1034,7 +1082,16 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isNaN && !d.isInfinite)
+    given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isInfinite && d > 2e292d)
+    testFailure[Double, Double](
+      "fail on double addition overflow",
+      _ + Expr.lit(Double.MaxValue),
+      "(?i)(overflow|out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Double] = Arbitrary.double.filter(Math.abs(_) <= Double.MaxValue / 2.0)
     testHasSameBehavior[(Double, Double), Double](
       "subtract two double numbers",
       t => t._1 - t._2,
@@ -1043,7 +1100,16 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isNaN && !d.isInfinite)
+    given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isInfinite && d > 2e292d)
+    testFailure[Double, Double](
+      "fail on double subtraction overflow",
+      _ - Expr.lit(-Double.MaxValue),
+      "(?i)(overflow|out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Double] = Arbitrary.double.filter(Math.abs(_) < Math.sqrt(Double.MaxValue))
     testHasSameBehavior[(Double, Double), Double](
       "multiply two double numbers",
       t => t._1 * t._2,
@@ -1052,7 +1118,17 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isNaN && !d.isInfinite && d != 0.0)
+    // given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isInfinite && d > 2e292d)
+    given Arbitrary[Double] = Arbitrary.double.filter(d => d > 2e292d)
+    testFailure[Double, Double](
+      "fail on double multiplication overflow",
+      _ * Expr.lit(Double.MaxValue),
+      "overflow".r
+    )
+  }
+
+  {
+    given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isInfinite && Math.abs(d) > 1.0)
     testHasSameBehavior[(Double, Double), Double](
       "divide two double numbers",
       t => t._1 / t._2,
@@ -1062,10 +1138,15 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
 
   testFailure[Double, Double]("fail on double division by zero", _ / lit(0.toDouble), "by zero")
 
+  {
+    given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isInfinite && d > Double.MaxValue * 0.5)
+    testFailure[Double, Double]("fail on double division overflow", _ / 0.1, "overflow")
+  }
+
   testHasSameBehavior[Double, Double]("negate a double", e => -e, n => -n)
 
   {
-    given Arbitrary[Float] = Arbitrary.float.filter(f => !f.isNaN && !f.isInfinite)
+    given Arbitrary[Float] = Arbitrary.float.filter(Math.abs(_) <= Float.MaxValue / 2.0f)
     testHasSameBehavior[(Float, Float), Float](
       "add two float numbers",
       t => t._1 + t._2,
@@ -1074,7 +1155,17 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Float] = Arbitrary.float.filter(f => !f.isNaN && !f.isInfinite)
+    given Arbitrary[Float] = Arbitrary.float.filter(f => !f.isInfinite && f > 2.03e31f)
+    testFailure[Float, Float](
+      "fail on float addition overflow",
+      _ + Expr.lit(Float.MaxValue),
+      "(?i)(overflow|out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Float] =
+      Arbitrary.float.filter(f => !f.isInfinite && Math.abs(f) <= Float.MaxValue / 2.0f)
     testHasSameBehavior[(Float, Float), Float](
       "subtract two float numbers",
       t => t._1 - t._2,
@@ -1083,7 +1174,17 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Float] = Arbitrary.float.filter(f => !f.isNaN && !f.isInfinite)
+    given Arbitrary[Float] = Arbitrary.float.filter(f => f.isInfinite && f > 2.03e31f)
+    testFailure[Float, Float](
+      "fail on float subtraction overflow",
+      _ - Expr.lit(-Float.MaxValue),
+      "(?i)(overflow|out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Float] =
+      Arbitrary.float.filter(f => !f.isInfinite && Math.abs(f) < Math.sqrt(Float.MaxValue))
     testHasSameBehavior[(Float, Float), Float](
       "multiply two float numbers",
       t => t._1 * t._2,
@@ -1092,7 +1193,16 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Float] = Arbitrary.float.filter(f => !f.isNaN && !f.isInfinite && f != 0.0f)
+    given Arbitrary[Float] = Arbitrary.float.filter(_ > 1.01f)
+    testFailure[Float, Float](
+      "fail on float multiplication overflow",
+      _ * Expr.lit(Float.MaxValue),
+      "(?i)(overflow|out of range)".r
+    )
+  }
+
+  {
+    given Arbitrary[Float] = Arbitrary.float.filter(f => !f.isInfinite && Math.abs(f) > 1.0f)
     testHasSameBehavior[(Float, Float), Float](
       "divide two float numbers",
       t => t._1 / t._2,
@@ -1100,7 +1210,12 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     )
   }
 
-  testFailure[Float, Float]("fail on float division by zero", _ / lit(0.toFloat), "by zero")
+  testFailure[Float, Float]("fail on float division by zero", _ / lit(0.0f), "by zero")
+
+  {
+    given Arbitrary[Float] = Arbitrary.float.filter(f => !f.isInfinite && f > Float.MaxValue * 0.5f)
+    testFailure[Float, Float]("fail on float division overflow", _ / 0.1f, "overflow")
+  }
 
   testHasSameBehavior[Float, Float]("negate a float", e => -e, n => -n)
 

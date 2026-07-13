@@ -87,18 +87,18 @@ SELECT (t1._1 + t1._2) AS value FROM t1
 ------ end
 
 ------ Test: add two double numbers
-SELECT (t1._1 + t1._2) AS value FROM t1
+SELECT CASE WHEN ((NOT isnan((t1._1 + t1._2))) AND (((t1._1 + t1._2) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1._1 + t1._2) > CAST(1.7976931348623157E308 AS DOUBLE)))) THEN raise_error('Double overflow') ELSE (t1._1 + t1._2) END AS value FROM t1
 ------ end
 
 ------ Test: add two float numbers
-SELECT (t1._1 + t1._2) AS value FROM t1
+SELECT CASE WHEN ((NOT isnan((t1._1 + t1._2))) AND (((t1._1 + t1._2) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1._1 + t1._2) > CAST(3.4028234663852886E38 AS FLOAT)))) THEN raise_error('Float overflow') ELSE (t1._1 + t1._2) END AS value FROM t1
 ------ end
 
 ------ Test: add two int numbers
 SELECT (t1._1 + t1._2) AS value FROM t1
 ------ end
 
------- Test: add two numbers
+------ Test: add two long numbers
 SELECT (t1._1 + t1._2) AS value FROM t1
 ------ end
 
@@ -639,11 +639,11 @@ SELECT array_distinct(t1.value) AS value FROM t1
 ------ end
 
 ------ Test: divide two double numbers
-SELECT CAST((t1._1 / t1._2) AS DOUBLE) AS value FROM t1
+SELECT CASE WHEN ((NOT isnan((t1._1 / t1._2))) AND (((t1._1 / t1._2) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1._1 / t1._2) > CAST(1.7976931348623157E308 AS DOUBLE)))) THEN raise_error('Double overflow') ELSE CAST((t1._1 / t1._2) AS DOUBLE) END AS value FROM t1
 ------ end
 
 ------ Test: divide two float numbers
-SELECT CAST((t1._1 / t1._2) AS FLOAT) AS value FROM t1
+SELECT CASE WHEN ((NOT isnan((t1._1 / t1._2))) AND (((t1._1 / t1._2) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1._1 / t1._2) > CAST(3.4028234663852886E38 AS FLOAT)))) THEN raise_error('Float overflow') ELSE CAST((t1._1 / t1._2) AS FLOAT) END AS value FROM t1
 ------ end
 
 ------ Test: endsWith string
@@ -690,6 +690,10 @@ SELECT coalesce(t1.value, raise_error('should not happen')) AS value FROM t1
 SELECT CASE WHEN (CASE WHEN ((from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR ((from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NOT NULL) AND (CASE WHEN (NOT regexp(from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1, '\\p{Cc}')) THEN TRY_CAST(from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 AS INT) END IS NOT NULL))) THEN from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END IS NOT NULL) THEN named_struct('_1', CASE WHEN (NOT regexp(CASE WHEN ((from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR ((from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NOT NULL) AND (CASE WHEN (NOT regexp(from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1, '\\p{Cc}')) THEN TRY_CAST(from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 AS INT) END IS NOT NULL))) THEN from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1, '\\p{Cc}')) THEN TRY_CAST(CASE WHEN ((from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR ((from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NOT NULL) AND (CASE WHEN (NOT regexp(from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1, '\\p{Cc}')) THEN TRY_CAST(from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 AS INT) END IS NOT NULL))) THEN from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1 AS INT) END) END AS value FROM t1
 ------ end
 
+------ Test: fail on Long addition overflow
+SELECT (t1.value + CAST(9223372036854775807 AS BIGINT)) AS value FROM t1
+------ end
+
 ------ Test: fail on byte add overflow
 SELECT (t1.value + CAST(127 AS TINYINT)) AS value FROM t1
 ------ end
@@ -710,16 +714,52 @@ SELECT (- CAST(-128 AS TINYINT)) AS value FROM t1
 SELECT (t1.value - CAST(127 AS TINYINT)) AS value FROM t1
 ------ end
 
------- Test: fail on division by zero
-SELECT CAST(div(t1.value, CAST(0 AS INT)) AS INT) AS value FROM t1
+------ Test: fail on double addition overflow
+SELECT CASE WHEN ((NOT isnan((t1.value + CAST(1.7976931348623157E308 AS DOUBLE)))) AND (((t1.value + CAST(1.7976931348623157E308 AS DOUBLE)) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1.value + CAST(1.7976931348623157E308 AS DOUBLE)) > CAST(1.7976931348623157E308 AS DOUBLE)))) THEN raise_error('Double overflow') ELSE (t1.value + CAST(1.7976931348623157E308 AS DOUBLE)) END AS value FROM t1
 ------ end
 
 ------ Test: fail on double division by zero
-SELECT CAST((t1.value / CAST(0.0 AS DOUBLE)) AS DOUBLE) AS value FROM t1
+SELECT CASE WHEN ((NOT isnan((t1.value / CAST(0.0 AS DOUBLE)))) AND (((t1.value / CAST(0.0 AS DOUBLE)) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1.value / CAST(0.0 AS DOUBLE)) > CAST(1.7976931348623157E308 AS DOUBLE)))) THEN raise_error('Double overflow') ELSE CAST((t1.value / CAST(0.0 AS DOUBLE)) AS DOUBLE) END AS value FROM t1
+------ end
+
+------ Test: fail on double division overflow
+SELECT CASE WHEN ((NOT isnan((t1.value / CAST(0.1 AS DOUBLE)))) AND (((t1.value / CAST(0.1 AS DOUBLE)) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1.value / CAST(0.1 AS DOUBLE)) > CAST(1.7976931348623157E308 AS DOUBLE)))) THEN raise_error('Double overflow') ELSE CAST((t1.value / CAST(0.1 AS DOUBLE)) AS DOUBLE) END AS value FROM t1
+------ end
+
+------ Test: fail on double multiplication overflow
+SELECT CASE WHEN ((NOT isnan((t1.value * CAST(1.7976931348623157E308 AS DOUBLE)))) AND (((t1.value * CAST(1.7976931348623157E308 AS DOUBLE)) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1.value * CAST(1.7976931348623157E308 AS DOUBLE)) > CAST(1.7976931348623157E308 AS DOUBLE)))) THEN raise_error('Double overflow') ELSE (t1.value * CAST(1.7976931348623157E308 AS DOUBLE)) END AS value FROM t1
+------ end
+
+------ Test: fail on double subtraction overflow
+SELECT CASE WHEN ((NOT isnan((t1.value - CAST(-1.7976931348623157E308 AS DOUBLE)))) AND (((t1.value - CAST(-1.7976931348623157E308 AS DOUBLE)) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1.value - CAST(-1.7976931348623157E308 AS DOUBLE)) > CAST(1.7976931348623157E308 AS DOUBLE)))) THEN raise_error('Double overflow') ELSE (t1.value - CAST(-1.7976931348623157E308 AS DOUBLE)) END AS value FROM t1
+------ end
+
+------ Test: fail on float addition overflow
+SELECT CASE WHEN ((NOT isnan((t1.value + CAST(3.4028234663852886E38 AS FLOAT)))) AND (((t1.value + CAST(3.4028234663852886E38 AS FLOAT)) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1.value + CAST(3.4028234663852886E38 AS FLOAT)) > CAST(3.4028234663852886E38 AS FLOAT)))) THEN raise_error('Float overflow') ELSE (t1.value + CAST(3.4028234663852886E38 AS FLOAT)) END AS value FROM t1
 ------ end
 
 ------ Test: fail on float division by zero
-SELECT CAST((t1.value / CAST(0.0 AS FLOAT)) AS FLOAT) AS value FROM t1
+SELECT CASE WHEN ((NOT isnan((t1.value / CAST(0.0 AS FLOAT)))) AND (((t1.value / CAST(0.0 AS FLOAT)) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1.value / CAST(0.0 AS FLOAT)) > CAST(3.4028234663852886E38 AS FLOAT)))) THEN raise_error('Float overflow') ELSE CAST((t1.value / CAST(0.0 AS FLOAT)) AS FLOAT) END AS value FROM t1
+------ end
+
+------ Test: fail on float division overflow
+SELECT CASE WHEN ((NOT isnan((t1.value / CAST(0.10000000149011612 AS FLOAT)))) AND (((t1.value / CAST(0.10000000149011612 AS FLOAT)) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1.value / CAST(0.10000000149011612 AS FLOAT)) > CAST(3.4028234663852886E38 AS FLOAT)))) THEN raise_error('Float overflow') ELSE CAST((t1.value / CAST(0.10000000149011612 AS FLOAT)) AS FLOAT) END AS value FROM t1
+------ end
+
+------ Test: fail on float multiplication overflow
+SELECT CASE WHEN ((NOT isnan((t1.value * CAST(3.4028234663852886E38 AS FLOAT)))) AND (((t1.value * CAST(3.4028234663852886E38 AS FLOAT)) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1.value * CAST(3.4028234663852886E38 AS FLOAT)) > CAST(3.4028234663852886E38 AS FLOAT)))) THEN raise_error('Float overflow') ELSE (t1.value * CAST(3.4028234663852886E38 AS FLOAT)) END AS value FROM t1
+------ end
+
+------ Test: fail on float subtraction overflow
+SELECT CASE WHEN ((NOT isnan((t1.value - CAST(-3.4028234663852886E38 AS FLOAT)))) AND (((t1.value - CAST(-3.4028234663852886E38 AS FLOAT)) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1.value - CAST(-3.4028234663852886E38 AS FLOAT)) > CAST(3.4028234663852886E38 AS FLOAT)))) THEN raise_error('Float overflow') ELSE (t1.value - CAST(-3.4028234663852886E38 AS FLOAT)) END AS value FROM t1
+------ end
+
+------ Test: fail on int addition overflow
+SELECT (t1.value + CAST(2147483647 AS INT)) AS value FROM t1
+------ end
+
+------ Test: fail on int division by zero
+SELECT CAST(div(t1.value, CAST(0 AS INT)) AS INT) AS value FROM t1
 ------ end
 
 ------ Test: fail on int multiply overflow
@@ -730,12 +770,24 @@ SELECT (t1.value * CAST(2147483647 AS INT)) AS value FROM t1
 SELECT (- CAST(-2147483648 AS INT)) AS value FROM t1
 ------ end
 
------- Test: fail on int overflow
-SELECT (t1.value + CAST(2147483647 AS INT)) AS value FROM t1
------- end
-
 ------ Test: fail on int subtract overflow
 SELECT (t1.value - CAST(2147483647 AS INT)) AS value FROM t1
+------ end
+
+------ Test: fail on long division by zero
+SELECT CAST(div(t1.value, CAST(0 AS BIGINT)) AS BIGINT) AS value FROM t1
+------ end
+
+------ Test: fail on long multiply overflow
+SELECT (t1.value * CAST(9223372036854775807 AS BIGINT)) AS value FROM t1
+------ end
+
+------ Test: fail on long negate overflow
+SELECT (- CAST(-9223372036854775808 AS BIGINT)) AS value FROM t1
+------ end
+
+------ Test: fail on long subtract overflow
+SELECT (t1.value - CAST(9223372036854775807 AS BIGINT)) AS value FROM t1
 ------ end
 
 ------ Test: fail on short add overflow
@@ -1119,18 +1171,18 @@ SELECT (t1._1 * t1._2) AS value FROM t1
 ------ end
 
 ------ Test: multiply two double numbers
-SELECT (t1._1 * t1._2) AS value FROM t1
+SELECT CASE WHEN ((NOT isnan((t1._1 * t1._2))) AND (((t1._1 * t1._2) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1._1 * t1._2) > CAST(1.7976931348623157E308 AS DOUBLE)))) THEN raise_error('Double overflow') ELSE (t1._1 * t1._2) END AS value FROM t1
 ------ end
 
 ------ Test: multiply two float numbers
-SELECT (t1._1 * t1._2) AS value FROM t1
+SELECT CASE WHEN ((NOT isnan((t1._1 * t1._2))) AND (((t1._1 * t1._2) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1._1 * t1._2) > CAST(3.4028234663852886E38 AS FLOAT)))) THEN raise_error('Float overflow') ELSE (t1._1 * t1._2) END AS value FROM t1
 ------ end
 
 ------ Test: multiply two int numbers
 SELECT (t1._1 * t1._2) AS value FROM t1
 ------ end
 
------- Test: multiply two numbers
+------ Test: multiply two long numbers
 SELECT (t1._1 * t1._2) AS value FROM t1
 ------ end
 
@@ -1158,7 +1210,7 @@ SELECT (- t1.value) AS value FROM t1
 SELECT (- t1.value) AS value FROM t1
 ------ end
 
------- Test: negate a number
+------ Test: negate a long number
 SELECT (- t1.value) AS value FROM t1
 ------ end
 
@@ -1379,18 +1431,18 @@ SELECT (t1._1 - t1._2) AS value FROM t1
 ------ end
 
 ------ Test: subtract two double numbers
-SELECT (t1._1 - t1._2) AS value FROM t1
+SELECT CASE WHEN ((NOT isnan((t1._1 - t1._2))) AND (((t1._1 - t1._2) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1._1 - t1._2) > CAST(1.7976931348623157E308 AS DOUBLE)))) THEN raise_error('Double overflow') ELSE (t1._1 - t1._2) END AS value FROM t1
 ------ end
 
 ------ Test: subtract two float numbers
-SELECT (t1._1 - t1._2) AS value FROM t1
+SELECT CASE WHEN ((NOT isnan((t1._1 - t1._2))) AND (((t1._1 - t1._2) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1._1 - t1._2) > CAST(3.4028234663852886E38 AS FLOAT)))) THEN raise_error('Float overflow') ELSE (t1._1 - t1._2) END AS value FROM t1
 ------ end
 
 ------ Test: subtract two int numbers
 SELECT (t1._1 - t1._2) AS value FROM t1
 ------ end
 
------- Test: subtract two numbers
+------ Test: subtract two long numbers
 SELECT (t1._1 - t1._2) AS value FROM t1
 ------ end
 
@@ -1470,16 +1522,16 @@ SELECT map_from_entries(array_distinct(transform(t1.value, c0 -> named_struct('_
 SELECT trim(t1.value) AS value FROM t1
 ------ end
 
------- Test: truncating divide first argument by second
-SELECT CAST(div(t1._1, t1._2) AS BIGINT) AS value FROM t1
+------ Test: truncating divide two byte numbers
+SELECT CAST(div(t1._1, t1._2) AS TINYINT) AS value FROM t1
 ------ end
 
------- Test: truncating divide first int argument by second
+------ Test: truncating divide two int numbers
 SELECT CAST(div(t1._1, t1._2) AS INT) AS value FROM t1
 ------ end
 
------- Test: truncating divide two byte numbers
-SELECT CAST(div(t1._1, t1._2) AS TINYINT) AS value FROM t1
+------ Test: truncating divide two long numbers
+SELECT CAST(div(t1._1, t1._2) AS BIGINT) AS value FROM t1
 ------ end
 
 ------ Test: truncating divide two short numbers

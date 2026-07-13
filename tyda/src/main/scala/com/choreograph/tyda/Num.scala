@@ -47,6 +47,14 @@ object Num {
       throw new ArithmeticException("Short overflow")
     else value.toShort
 
+  private def checkedFloat(operation: => Float): Float =
+    if operation.isInfinite() then throw new ArithmeticException(s"Float overflow: $operation")
+    operation
+
+  private def checkedDouble(operation: => Double): Double =
+    if operation.isInfinite() then throw new ArithmeticException(s"Double overflow: $operation")
+    operation
+
   private[tyda] case object Byte extends Integral[scala.Byte] {
     def plus(lhs: scala.Byte, rhs: scala.Byte): scala.Byte = exactByte(lhs.toInt + rhs.toInt)
     def minus(lhs: scala.Byte, rhs: scala.Byte): scala.Byte = exactByte(lhs.toInt - rhs.toInt)
@@ -80,20 +88,20 @@ object Num {
   }
 
   private[tyda] case object Float extends Primitive[scala.Float] {
-    def plus(lhs: scala.Float, rhs: scala.Float): scala.Float = lhs + rhs
-    def minus(lhs: scala.Float, rhs: scala.Float): scala.Float = lhs - rhs
-    def times(lhs: scala.Float, rhs: scala.Float): scala.Float = lhs * rhs
+    def plus(lhs: scala.Float, rhs: scala.Float): scala.Float = checkedFloat(lhs + rhs)
+    def minus(lhs: scala.Float, rhs: scala.Float): scala.Float = checkedFloat(lhs - rhs)
+    def times(lhs: scala.Float, rhs: scala.Float): scala.Float = checkedFloat(lhs * rhs)
     def quot(lhs: scala.Float, rhs: scala.Float): scala.Float =
-      if rhs == 0 then throw new ArithmeticException("/ by zero") else lhs / rhs
+      if rhs == 0 then throw new ArithmeticException("/ by zero") else checkedFloat(lhs / rhs)
     def negate(t: scala.Float): scala.Float = -t
   }
 
   private[tyda] case object Double extends Primitive[scala.Double] {
-    def plus(lhs: scala.Double, rhs: scala.Double): scala.Double = lhs + rhs
-    def minus(lhs: scala.Double, rhs: scala.Double): scala.Double = lhs - rhs
-    def times(lhs: scala.Double, rhs: scala.Double): scala.Double = lhs * rhs
+    def plus(lhs: scala.Double, rhs: scala.Double): scala.Double = checkedDouble(lhs + rhs)
+    def minus(lhs: scala.Double, rhs: scala.Double): scala.Double = checkedDouble(lhs - rhs)
+    def times(lhs: scala.Double, rhs: scala.Double): scala.Double = checkedDouble(lhs * rhs)
     def quot(lhs: scala.Double, rhs: scala.Double): scala.Double =
-      if rhs == 0 then throw new ArithmeticException("/ by zero") else lhs / rhs
+      if rhs == 0 then throw new ArithmeticException("/ by zero") else checkedDouble(lhs / rhs)
     def negate(t: scala.Double): scala.Double = -t
   }
 

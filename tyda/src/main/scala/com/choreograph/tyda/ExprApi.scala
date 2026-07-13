@@ -533,11 +533,10 @@ trait ExprApi[Expr[T]] {
     infix def *[I: AsExpr.Of[T]](rhs: I): Expr[T] =
       lift(ExprNode.Multiply(Num[T], unlift(lhs), unlift(AsExpr(rhs))))
 
-    /** Returns the result of truncating division of the left operand by the
-      * right operand.
+    /** Returns the result of division of the left operand by the right operand.
+      * Uses truncating division for Integral types.
       *
-      * For floating point types this is true division. Throws an exception if
-      * the divisor is zero for integral types.
+      * Throws an exception if the divisor is zero.
       */
     infix def /[I: AsExpr.Of[T]](rhs: I): Expr[T] =
       lift(ExprNode.Quotient(Num[T], unlift(lhs), unlift(AsExpr(rhs))))

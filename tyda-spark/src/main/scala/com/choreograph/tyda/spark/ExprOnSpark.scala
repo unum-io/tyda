@@ -115,6 +115,27 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
   private def cfFromRef(ref: ExprNode.Reference[?]): ColumnFactory[?] =
     cfs.get(ref).getOrElse(Errors.failUnexpectedReference(ref, cfs.keys))
 
+  private def overflowCheckedFloatingResult(
+      checkedResult: Column,
+      returnedResult: Column,
+      codec: Codec[?]
+  ): Column =
+    codec match {
+      case Codec.Float => when(
+          !isnan(checkedResult) &&
+            (checkedResult < lit(-Float.MaxValue) || checkedResult > lit(Float.MaxValue)),
+          raise_error(lit("Float overflow")).cast(catalystType(codec))
+        ).otherwise(returnedResult)
+
+      case Codec.Double => when(
+          !isnan(checkedResult) &&
+            (checkedResult < lit(-Double.MaxValue) || checkedResult > lit(Double.MaxValue)),
+          raise_error(lit("Double overflow")).cast(catalystType(codec))
+        ).otherwise(returnedResult)
+
+      case _ => returnedResult
+    }
+
   def convert(expr: ExprNode[?])(using spark: SparkSession): Column =
     expr match {
       case ExprNode.Select(ref: ExprNode.Reference[?], name) => cfFromRef(ref).column(name)
@@ -254,12 +275,20 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
         val adjustedIdx =
           when(idx >= lit(0), idx + lit(1)).otherwise(raise_error(lit("Negative array index not supported")))
         call_function("element_at", convert(array), adjustedIdx)
-      case ExprNode.Add(_, lhs, rhs) => convert(lhs) + convert(rhs)
-      case ExprNode.Subtract(_, lhs, rhs) => convert(lhs) - convert(rhs)
-      case ExprNode.Multiply(_, lhs, rhs) => convert(lhs) * convert(rhs).cast(catalystType(expr.codec))
+      case ExprNode.Add(_, lhs, rhs) =>
+        val sum = convert(lhs) + convert(rhs)
+        overflowCheckedFloatingResult(sum, sum, expr.codec)
+      case ExprNode.Subtract(_, lhs, rhs) =>
+        val diff = convert(lhs) - convert(rhs)
+        overflowCheckedFloatingResult(diff, diff, expr.codec)
+      case ExprNode.Multiply(_, lhs, rhs) =>
+        val product = convert(lhs) * convert(rhs).cast(catalystType(expr.codec))
+        overflowCheckedFloatingResult(product, product, expr.codec)
       case ExprNode.Quotient(_: Num.Integral[?], lhs, rhs) => call_function("div", convert(lhs), convert(rhs))
           .cast(catalystType(expr.codec))
-      case ExprNode.Quotient(_, lhs, rhs) => (convert(lhs) / convert(rhs)).cast(catalystType(expr.codec))
+      case ExprNode.Quotient(_, lhs, rhs) =>
+        val quotient = convert(lhs) / convert(rhs)
+        overflowCheckedFloatingResult(quotient, quotient.cast(catalystType(expr.codec)), expr.codec)
       case ExprNode.Negate(_, operand) => -convert(operand)
       case ExprNode.Cast(from, canCast) => convert(from).cast(catalystType(expr.codec))
       case ExprNode.TryCast(from, canTryCast) =>
