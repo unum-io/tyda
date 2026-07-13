@@ -1118,8 +1118,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    // given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isInfinite && d > 2e292d)
-    given Arbitrary[Double] = Arbitrary.double.filter(d => d > 2e292d)
+    given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isInfinite && d > 2e292d)
     testFailure[Double, Double](
       "fail on double multiplication overflow",
       _ * Expr.lit(Double.MaxValue),
@@ -1164,8 +1163,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Float] =
-      Arbitrary.float.filter(f => !f.isInfinite && Math.abs(f) <= Float.MaxValue / 2.0f)
+    given Arbitrary[Float] = Arbitrary.float.filter(Math.abs(_) <= Float.MaxValue / 2.0f)
     testHasSameBehavior[(Float, Float), Float](
       "subtract two float numbers",
       t => t._1 - t._2,
@@ -1174,7 +1172,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Float] = Arbitrary.float.filter(f => f.isInfinite && f > 2.03e31f)
+    given Arbitrary[Float] = Arbitrary.float.filter(f => !f.isInfinite && f > 2.03e31f)
     testFailure[Float, Float](
       "fail on float subtraction overflow",
       _ - Expr.lit(-Float.MaxValue),
@@ -1183,8 +1181,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Float] =
-      Arbitrary.float.filter(f => !f.isInfinite && Math.abs(f) < Math.sqrt(Float.MaxValue))
+    given Arbitrary[Float] = Arbitrary.float.filter(Math.abs(_) < Math.sqrt(Float.MaxValue))
     testHasSameBehavior[(Float, Float), Float](
       "multiply two float numbers",
       t => t._1 * t._2,
@@ -1193,7 +1190,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Float] = Arbitrary.float.filter(_ > 1.01f)
+    given Arbitrary[Float] = Arbitrary.float.filter(f => !f.isInfinite && f > 1.01f)
     testFailure[Float, Float](
       "fail on float multiplication overflow",
       _ * Expr.lit(Float.MaxValue),
