@@ -2,9 +2,9 @@ package com.choreograph.tyda.sql
 
 import scala.reflect.ClassTag
 
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Dataset
-import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Expr
 import com.choreograph.tyda.Format
 import com.choreograph.tyda.aggregates.countIf
@@ -18,11 +18,11 @@ import com.choreograph.tyda.functions.tuple
 private object UnparserSuite {
   final case class O(a: Option[Option[Int]])
   final case class M1(a: Int, b: String, c: Boolean, d: Seq[Double])
-  enum E1 extends EnumStableHashCode {
+  enum E1 {
     case A(a: Int)
     case C
   }
-  enum E2 extends EnumStableHashCode derives Codec.EnumAsString {
+  enum E2 derives Codec.EnumAsString {
     case First
     case Second
   }
@@ -110,7 +110,9 @@ abstract class UnparserSuite extends SqlGoldenTestSuite {
 
   testSql("literal enum as string") { Dataset.FromSeq(Seq(E2.First)).select(_ == E2.Second) }
 
-  testSql("bytes literal") { Dataset.FromSeq(Seq(BigInt(3405691582L))) }
+  testSql("bytes literal") {
+    Dataset.FromSeq(Seq(Binary.fromArray(Array(0x00, 0xca, 0xfe, 0xba, 0xbe).map(_.toByte))))
+  }
 
   testSql("empty collection") { Dataset.FromSeq[M1](Seq()) }
 

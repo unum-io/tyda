@@ -9,6 +9,7 @@ import shapeless3.deriving.K0
 
 import com.choreograph.tyda.Expr.AsExpr
 import com.choreograph.tyda.Expr.knownNotNull
+import com.choreograph.tyda.TreeApi.Continue
 import com.choreograph.tyda.TreeApi.Control
 import com.choreograph.tyda.TreeApi.StopOrContinue
 import com.choreograph.tyda.functions.coalesce
@@ -234,7 +235,7 @@ sealed trait Dataset[T: Codec] {
   def aggregate[R1, R2](
       e1: Expr[T] => AggregateExpr[R1],
       e2: Expr[T] => AggregateExpr[R2]
-  ): Dataset[Option[(R1, R2)]] = aggregateN((e1, e2))
+  ): Dataset.Single[Option[(R1, R2)]] = aggregateN((e1, e2))
 
   /** Aggregate the values using 3 [[AggregateExpr]]s.
     *
@@ -244,7 +245,7 @@ sealed trait Dataset[T: Codec] {
       e1: Expr[T] => AggregateExpr[R1],
       e2: Expr[T] => AggregateExpr[R2],
       e3: Expr[T] => AggregateExpr[R3]
-  ): Dataset[Option[(R1, R2, R3)]] = aggregateN((e1, e2, e3))
+  ): Dataset.Single[Option[(R1, R2, R3)]] = aggregateN((e1, e2, e3))
 
   /** Aggregate the values using 4 [[AggregateExpr]]s.
     *
@@ -255,7 +256,7 @@ sealed trait Dataset[T: Codec] {
       e2: Expr[T] => AggregateExpr[R2],
       e3: Expr[T] => AggregateExpr[R3],
       e4: Expr[T] => AggregateExpr[R4]
-  ): Dataset[Option[(R1, R2, R3, R4)]] = aggregateN((e1, e2, e3, e4))
+  ): Dataset.Single[Option[(R1, R2, R3, R4)]] = aggregateN((e1, e2, e3, e4))
 
   /** Aggregate the values using 5 [[AggregateExpr]]s.
     *
@@ -267,7 +268,7 @@ sealed trait Dataset[T: Codec] {
       e3: Expr[T] => AggregateExpr[R3],
       e4: Expr[T] => AggregateExpr[R4],
       e5: Expr[T] => AggregateExpr[R5]
-  ): Dataset[Option[(R1, R2, R3, R4, R5)]] = aggregateN((e1, e2, e3, e4, e5))
+  ): Dataset.Single[Option[(R1, R2, R3, R4, R5)]] = aggregateN((e1, e2, e3, e4, e5))
 
   /** Aggregate the values using 6 [[AggregateExpr]]s.
     *
@@ -280,7 +281,7 @@ sealed trait Dataset[T: Codec] {
       e4: Expr[T] => AggregateExpr[R4],
       e5: Expr[T] => AggregateExpr[R5],
       e6: Expr[T] => AggregateExpr[R6]
-  ): Dataset[Option[(R1, R2, R3, R4, R5, R6)]] = aggregateN((e1, e2, e3, e4, e5, e6))
+  ): Dataset.Single[Option[(R1, R2, R3, R4, R5, R6)]] = aggregateN((e1, e2, e3, e4, e5, e6))
 
   /** Aggregate the values using 7 [[AggregateExpr]]s.
     *
@@ -294,11 +295,11 @@ sealed trait Dataset[T: Codec] {
       e5: Expr[T] => AggregateExpr[R5],
       e6: Expr[T] => AggregateExpr[R6],
       e7: Expr[T] => AggregateExpr[R7]
-  ): Dataset[Option[(R1, R2, R3, R4, R5, R6, R7)]] = aggregateN((e1, e2, e3, e4, e5, e6, e7))
+  ): Dataset.Single[Option[(R1, R2, R3, R4, R5, R6, R7)]] = aggregateN((e1, e2, e3, e4, e5, e6, e7))
 
   private def aggregateN[Result <: NonEmptyTuple](
       exprs: Tuple.Map[Result, [X] =>> Expr[T] => AggregateExpr[X]]
-  ): Dataset[Option[Result]] = Aggregate(this, CompiledAggregateExpr(exprs))
+  ): Dataset.Single[Option[Result]] = Dataset.Single.unsafe(Aggregate(this, CompiledAggregateExpr(exprs)))
 
   /** Collect the dataset this to as a sequence.
     */
@@ -375,6 +376,114 @@ sealed trait Dataset[T: Codec] {
     require(n >= 0, s"Limit must be non-negative, got: $n")
     Dataset.Limit(this, n)
   }
+
+  /** Returns a new Dataset sorted by the given expression in ascending order.
+    *
+    * Only types for which [[Orderable]] evidence exists can be used as sort
+    * keys.
+    */
+  def orderBy[I: AsExpr.Of[K], K: Orderable](key: Expr[T] => I): Dataset[T] =
+    Dataset.OrderBy(this, CompiledExpr(key))
+
+  /** Returns a new Dataset sorted by two expressions in ascending order.
+    *
+    * For detailed usage see [[orderBy]].
+    */
+  def orderBy[I1: AsExpr.Of[K1], K1: Orderable, I2: AsExpr.Of[K2], K2: Orderable](
+      k1: Expr[T] => I1,
+      k2: Expr[T] => I2
+  ): Dataset[T] = orderBy(v => (k1(v), k2(v)))
+
+  /** Returns a new Dataset sorted by three expressions in ascending order.
+    *
+    * For detailed usage see [[orderBy]].
+    */
+  def orderBy[I1: AsExpr.Of[K1], K1: Orderable, I2: AsExpr.Of[K2], K2: Orderable, I3: AsExpr.Of[
+    K3
+  ], K3: Orderable](k1: Expr[T] => I1, k2: Expr[T] => I2, k3: Expr[T] => I3): Dataset[T] =
+    orderBy(v => (k1(v), k2(v), k3(v)))
+
+  /** Returns a new Dataset sorted by four expressions in ascending order.
+    *
+    * For detailed usage see [[orderBy]].
+    */
+  def orderBy[I1: AsExpr.Of[K1], K1: Orderable, I2: AsExpr.Of[K2], K2: Orderable, I3: AsExpr.Of[
+    K3
+  ], K3: Orderable, I4: AsExpr.Of[K4], K4: Orderable](
+      k1: Expr[T] => I1,
+      k2: Expr[T] => I2,
+      k3: Expr[T] => I3,
+      k4: Expr[T] => I4
+  ): Dataset[T] = orderBy(v => (k1(v), k2(v), k3(v), k4(v)))
+
+  /** Returns a new Dataset sorted by five expressions in ascending order.
+    *
+    * For detailed usage see [[orderBy]].
+    */
+  def orderBy[I1: AsExpr.Of[K1], K1: Orderable, I2: AsExpr.Of[K2], K2: Orderable, I3: AsExpr.Of[
+    K3
+  ], K3: Orderable, I4: AsExpr.Of[K4], K4: Orderable, I5: AsExpr.Of[K5], K5: Orderable](
+      k1: Expr[T] => I1,
+      k2: Expr[T] => I2,
+      k3: Expr[T] => I3,
+      k4: Expr[T] => I4,
+      k5: Expr[T] => I5
+  ): Dataset[T] = orderBy(v => (k1(v), k2(v), k3(v), k4(v), k5(v)))
+
+  /** Returns a new Dataset sorted by six expressions in ascending order.
+    *
+    * For detailed usage see [[orderBy]].
+    */
+  def orderBy[
+      I1: AsExpr.Of[K1],
+      K1: Orderable,
+      I2: AsExpr.Of[K2],
+      K2: Orderable,
+      I3: AsExpr.Of[K3],
+      K3: Orderable,
+      I4: AsExpr.Of[K4],
+      K4: Orderable,
+      I5: AsExpr.Of[K5],
+      K5: Orderable,
+      I6: AsExpr.Of[K6],
+      K6: Orderable
+  ](
+      k1: Expr[T] => I1,
+      k2: Expr[T] => I2,
+      k3: Expr[T] => I3,
+      k4: Expr[T] => I4,
+      k5: Expr[T] => I5,
+      k6: Expr[T] => I6
+  ): Dataset[T] = orderBy(v => (k1(v), k2(v), k3(v), k4(v), k5(v), k6(v)))
+
+  /** Returns a new Dataset sorted by seven expressions in ascending order.
+    *
+    * For detailed usage see [[orderBy]].
+    */
+  def orderBy[
+      I1: AsExpr.Of[K1],
+      K1: Orderable,
+      I2: AsExpr.Of[K2],
+      K2: Orderable,
+      I3: AsExpr.Of[K3],
+      K3: Orderable,
+      I4: AsExpr.Of[K4],
+      K4: Orderable,
+      I5: AsExpr.Of[K5],
+      K5: Orderable,
+      I6: AsExpr.Of[K6],
+      K6: Orderable,
+      I7: AsExpr.Of[K7],
+      K7: Orderable
+  ](
+      k1: Expr[T] => I1,
+      k2: Expr[T] => I2,
+      k3: Expr[T] => I3,
+      k4: Expr[T] => I4,
+      k5: Expr[T] => I5,
+      k6: Expr[T] => I6,
+      k7: Expr[T] => I7
+  ): Dataset[T] = orderBy(v => (k1(v), k2(v), k3(v), k4(v), k5(v), k6(v), k7(v)))
 
   /** Perform a inner join with another [[Dataset]] using the given join
     * condition.
@@ -469,6 +578,14 @@ sealed trait Dataset[T: Codec] {
     * }}}
     */
   def exists: Expr[Boolean] = Expr.lift(ExprNode.ExistsSubquery(this.select(_ => 1)))
+
+  final override def toString: String = {
+    val children = Dataset
+      .api
+      .foldChildren(this)(Vector.empty[String])([t] => (acc, child) => Continue(acc :+ child.toString))
+    val name = getClass.getSimpleName
+    if children.isEmpty then name else children.mkString(s"$name(", ", ", ")")
+  }
 }
 
 object Dataset {
@@ -957,6 +1074,8 @@ object Dataset {
       extends Dataset[T](using left.codec)
   private[tyda] final case class Cache[T](input: Dataset[T]) extends Dataset[T](using input.codec)
   private[tyda] final case class Limit[T](input: Dataset[T], n: Int) extends Dataset[T](using input.codec)
+  private[tyda] final case class OrderBy[T, K](input: Dataset[T], key: CompiledExpr[T, K])
+      extends Dataset[T](using input.codec)
 
   private def tuple2Codec[A: Codec, B: Codec]: Codec[(A, B)] = summon
   private def leftOuterCodec[A: Codec, B: Codec]: Codec[(A, Option[B])] = summon

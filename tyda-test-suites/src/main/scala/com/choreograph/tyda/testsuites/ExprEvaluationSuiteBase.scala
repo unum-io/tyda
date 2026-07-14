@@ -1,5 +1,6 @@
 package com.choreograph.tyda.testsuites
 
+import java.util.Base64
 import java.util.regex.Pattern
 
 import scala.NamedTuple.NamedTuple
@@ -26,7 +27,6 @@ import com.choreograph.tyda.Comparable
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
-import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Expr
 import com.choreograph.tyda.JsonArrayOrObject
 import com.choreograph.tyda.Num
@@ -39,6 +39,7 @@ import com.choreograph.tyda.functions.coalesce
 import com.choreograph.tyda.functions.concat
 import com.choreograph.tyda.functions.daysToDate
 import com.choreograph.tyda.functions.endsWith
+import com.choreograph.tyda.functions.fromBase64
 import com.choreograph.tyda.functions.fromJson
 import com.choreograph.tyda.functions.lit
 import com.choreograph.tyda.functions.makeMap
@@ -51,6 +52,7 @@ import com.choreograph.tyda.functions.range
 import com.choreograph.tyda.functions.seq
 import com.choreograph.tyda.functions.some
 import com.choreograph.tyda.functions.startsWith
+import com.choreograph.tyda.functions.toBase64
 import com.choreograph.tyda.functions.toJson
 import com.choreograph.tyda.functions.tuple
 import com.choreograph.tyda.testsuites.FloatingPointEquality.given
@@ -63,7 +65,7 @@ object ExprEvaluationSuiteBase {
   private type NamedTupleAlias = (a: Int, b: String, c: Boolean)
   private type NamedTupleAliasWithUnused = (a: Int, b: String, c: Boolean, unused: String)
 
-  private enum TestEnum extends EnumStableHashCode {
+  private enum TestEnum {
     case A, B
     case C(i: Int)
     case D(i: Int)
@@ -75,7 +77,7 @@ object ExprEvaluationSuiteBase {
     final case class B(i: Int) extends TestSealedTrait
   }
 
-  private enum TestEnumString extends EnumStableHashCode derives Codec.EnumAsString {
+  private enum TestEnumString derives Codec.EnumAsString {
     case A, B
   }
 
@@ -384,6 +386,26 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     _.map(Seq(_)).getOrElse(Seq.empty)
   )
   testHasSameBehavior[List[Int], List[Int]]("seq map list", _.map(_ / 2), _.map(_ / 2))
+  testHasSameBehavior[Seq[Int], Seq[Int]](
+    "seq flatMap",
+    _.flatMap(x => seq(x / 2, x / 2 + 1)),
+    values => values.flatMap(x => Seq(x / 2, x / 2 + 1))
+  )
+  testHasSameBehavior[List[Int], List[Int]](
+    "seq flatMap list",
+    _.flatMap(x => seq(x / 2, x / 2 + 1)),
+    values => values.flatMap(x => List(x / 2, x / 2 + 1))
+  )
+  testHasSameBehavior[Seq[Int], Seq[Int]](
+    "seq flatMap with Option keeps Some, drops None",
+    _.flatMap(x => Expr.when(x > 0, x)),
+    _.flatMap(x => Option.when(x > 0)(x))
+  )
+  testHasSameBehavior[List[Int], List[Int]](
+    "seq flatMap list with Option keeps Some, drops None",
+    _.flatMap(x => Expr.when(x > 0, x)),
+    _.flatMap(x => Option.when(x > 0)(x))
+  )
   testHasSameBehavior[CustomIntSeq, IndexedSeq[Int]]("seq map custom collection", _.map(_ / 2), _.map(_ / 2))
   testHasSameBehavior[Int, Seq[Int]](
     "seq map constructed",
@@ -641,6 +663,17 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     t => t._1.startsWith("foo")
   )
 
+  testHasSameBehavior[Seq[String], String](
+    "mkString with literal separator",
+    _.mkString(","),
+    _.mkString(",")
+  )
+  testHasSameBehavior[(Seq[String], String), String](
+    "mkString with Expr separator",
+    t => t._1.mkString(t._2),
+    t => t._1.mkString(t._2)
+  )
+
   testHasSameBehavior[Seq[Int], Int]("size on Seq[Int]", _.size, _.size)
   testHasSameBehavior[List[String], Int]("size on List[String]", _.size, _.size)
 
@@ -757,6 +790,12 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     errorMessage
   )
 
+  testFailure[String, Seq[Int]](
+    "raiseError is strongly typed",
+    _ => raiseError[Seq[Int]](errorMessage).map(_ + 1),
+    errorMessage
+  )
+
   testHasSameBehavior[Int, Int](
     "expect does not raise error when Some",
     p => some(p).expect("should not happen"),
@@ -774,6 +813,42 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     "when",
     t => Expr.when(t._1, t._2),
     t => Option.when(t._1)(t._2)
+  )
+
+  testHasSameBehavior[(Boolean, Int, Int), Int](
+    "cases.when with single branch and otherwise",
+    t => Expr.cases.when(t._1, t._2).otherwise(t._3),
+    t => if t._1 then t._2 else t._3
+  )
+
+  testHasSameBehavior[(Int, Int), Int](
+    "cases.when with multiple branches and otherwise",
+    t => Expr.cases.when(t._1 > 0, t._1).when(t._2 > 0, t._2).otherwise(lit(0)),
+    t => if t._1 > 0 then t._1 else if t._2 > 0 then t._2 else 0
+  )
+
+  testHasSameBehavior[Int, Int](
+    "cases.when first matching branch is used",
+    t => Expr.cases.when(t > 0, lit(1)).when(t > -5, lit(2)).otherwise(lit(3)),
+    t => if t > 0 then 1 else if t > -5 then 2 else 3
+  )
+
+  testHasSameBehavior[Int, Option[Int]](
+    "cases.when with Option result and otherwise",
+    t => Expr.cases.when(t > 0, some(t)).otherwise(none[Int]),
+    t => Option.when(t > 0)(t)
+  )
+
+  testHasSameBehavior[(Boolean, String, String), String](
+    "cases.when with literal then-expressions",
+    t => Expr.cases.when(t._1, t._2).otherwise(t._3),
+    t => if t._1 then t._2 else t._3
+  )
+
+  testHasSameBehavior[Int, String](
+    "cases.when with many branches and literal otherwise",
+    t => Expr.cases.when(t < 0, lit("negative")).when(t == 0, lit("zero")).otherwise(lit("positive")),
+    t => if t < 0 then "negative" else if t == 0 then "zero" else "positive"
   )
 
   {
@@ -1509,8 +1584,8 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testTryCast[Decimal[19, 1], Decimal[19, 0]](v => Decimal[19, 0](v.toBigDecimal))
   testTryCast[Decimal[19, 3], Decimal[10, 3]](v => Decimal[10, 3](v.toBigDecimal))
 
-  def testLiteralCreation[T: Codec: TypeName](fixed: T) =
-    testHasSameBehavior[EmptyTuple, T](
+  def testLiteralCreation[T: ClassTag: Arbitrary: Codec: TypeName](fixed: T) =
+    testHasSameBehavior[T, T](
       s"create literal ${fixed.toString} ${TypeName.name[T]}",
       _ => lit(fixed),
       _ => fixed
@@ -1527,6 +1602,9 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testLiteralCreation[Decimal[13, 2]](Decimal[13, 2](20))
   testLiteralCreation[Option[Int]](None)
   testLiteralCreation[Option[Int]](Some(0))
+  testLiteralCreation[Option[Option[Int]]](None)
+  testLiteralCreation[Option[Option[Int]]](Some(None))
+  testLiteralCreation[Option[Option[Int]]](Some(Some(0)))
   testLiteralCreation[Option[Option[Option[Int]]]](None)
   testLiteralCreation[Option[Option[Option[Int]]]](Some(None))
   testLiteralCreation[Option[Option[Option[Int]]]](Some(Some(None)))
@@ -1549,6 +1627,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testLiteralCreation[Option[Struct]](Some(Struct(1, "a", false)))
   testLiteralCreation[TestEnum](TestEnum.A)
   testLiteralCreation[Option[TestEnum]](None)
+  testLiteralCreation[Option[TestEnum.A.type]](None)
   testLiteralCreation[Option[TestEnum]](Some(TestEnum.C(1)))
   testLiteralCreation[Timestamp](Timestamp.fromMicros(1))
   testLiteralCreation[Timestamp](Timestamp.fromMicros(148600399274030924L))
@@ -1628,6 +1707,12 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     t => (t.map(_.a), t.map(_.b), t.map(_.c))
   )
 
+  testHasSameBehavior[(`瑞`: Short, `典`: Short), Int](
+    "non ascii fields",
+    r => r.`瑞`.cast[Int] + r.`典`.cast[Int],
+    (a, b) => a.toInt + b.toInt
+  )
+
   def testJsonRoundtrip[T: ClassTag: Codec: Arbitrary: TypeName: JsonArrayOrObject]: Unit =
     testHasSameBehavior[T, Option[T]](
       s"toJson/fromJson roundtrip for ${TypeName.name[T]}",
@@ -1641,12 +1726,37 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testJsonRoundtrip[Tuple1[Timestamp]]
   testJsonRoundtrip[Tuple1[Date]]
   testJsonRoundtrip[Tuple1[Duration]]
+  testJsonRoundtrip[Tuple1[Option[Int]]]
   testJsonRoundtrip[Tuple1[Option[Option[Int]]]]
+  testJsonRoundtrip[Tuple1[Option[Option[Option[Int]]]]]
   testJsonRoundtrip[Seq[Int]]
   testJsonRoundtrip[Map[String, Int]]
   testJsonRoundtrip[Struct]
   testJsonRoundtrip[Seq[Struct]]
   testJsonRoundtrip[Seq[Seq[Int]]]
+  {
+    val chunked = Arbitrary.string.map(s => Base64.getMimeEncoder.encodeToString(s.getBytes))
+    val normal = Arbitrary.string.map(s => Base64.getEncoder.encodeToString(s.getBytes))
+    given Arbitrary[String] = Arbitrary.combine(Arbitrary.string, chunked, normal)
+    testHasSameBehavior[String, Option[Binary]](
+      "fromBase64",
+      str => fromBase64(str),
+      str => Binary.fromBase64(str)
+    )
+  }
+  {
+    val longerBinary = for {
+      size <- Arbitrary.between(0, 1000)
+      arr <- Arbitrary.bytes(size)
+    } yield Binary.fromArray(arr)
+    given Arbitrary[Binary] = Arbitrary.combine(longerBinary, Binary.arbitrary)
+    testHasSameBehavior[Binary, String]("toBase64", bin => toBase64(bin), _.toBase64)
+  }
+  testHasSameBehavior[Binary, Option[Binary]](
+    "toBase64 and fromBase64 should roundtrip",
+    bin => fromBase64(toBase64(bin)),
+    Some(_)
+  )
   {
     given Arbitrary[(Date, String)] = Arbitrary[Date].map(date => date -> s"""{"_1":"${date.toIsoString}"}""")
     testHasSameBehavior[(Date, String), Option[Date]](
@@ -1704,4 +1814,5 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
       (int, _) => Some(Tuple1(int))
     )
   }
+  testHasSameBehavior[Seq[Int], String]("toJson Seq[Int]", toJson, _.mkString("[", ",", "]"))
 }

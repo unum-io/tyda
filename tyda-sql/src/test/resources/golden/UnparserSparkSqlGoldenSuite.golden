@@ -67,7 +67,7 @@ SELECT table1.a AS _1, table2.a AS _2 FROM table1 JOIN table2 ON (table1.a = tab
 ------ end
 
 ------ Test: join and then explode
-SELECT t1.row AS row, t1._1 AS _1, explode(t1.row._2.d) AS _2 FROM (SELECT t0.row AS row, explode(t0.row._1.d) AS _1 FROM (SELECT named_struct('_1', named_struct('a', table1.a, 'b', table1.b, 'c', table1.c, 'd', table1.d), '_2', named_struct('a', table2.a, 'b', table2.b, 'c', table2.c, 'd', table2.d)) AS row FROM table1 JOIN table2 ON (table1.a = table2.a)) AS t0) AS t1
+SELECT explode(table1.d) AS _1, explode(table2.d) AS _2 FROM table1 JOIN table2 ON (table1.a = table2.a)
 ------ end
 
 ------ Test: join+aggregate on lhs
@@ -95,7 +95,7 @@ SELECT (t0.value = 'second') AS value FROM VALUES ('first') AS t0(value)
 ------ end
 
 ------ Test: literal singleton
-SELECT NULL FROM VALUES (NULL) AS t0(`the cake is a lie 🎂`)
+SELECT CAST(NULL AS void) FROM VALUES (CAST(NULL AS void)) AS t0(`the cake is a lie 🎂`)
 ------ end
 
 ------ Test: make named struct

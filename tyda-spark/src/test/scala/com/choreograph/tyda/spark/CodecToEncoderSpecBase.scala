@@ -22,11 +22,11 @@ import org.apache.spark.sql.types.TimestampType
 import org.scalatest.funsuite.AnyFunSuite
 
 import com.choreograph.tyda.Arbitrary
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
-import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Ord
 import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.TypeName
@@ -37,7 +37,7 @@ object CodecToEncoderSpecBase {
   final case class Person(name: String, age: Int, alias: Option[String] = None) derives Codec, Ord
   final case class Employee(person: Person, salary: Double) derives Codec, Ord
 
-  enum Location extends EnumStableHashCode derives Codec, Ord {
+  enum Location derives Codec, Ord {
     case Null extends Location
     case City(name: String) extends Location
     case Country(name: String) extends Location
@@ -45,12 +45,12 @@ object CodecToEncoderSpecBase {
     case Missing extends Location
     case Region(name: Int) extends Location
   }
-  enum OnlySingletons extends EnumStableHashCode derives Codec, Ord {
+  enum OnlySingletons derives Codec, Ord {
     case A
     case B
   }
 
-  enum MyOption[+T] extends EnumStableHashCode derives Codec, Ord {
+  enum MyOption[+T] derives Codec, Ord {
     case Some(x: T)
     case None
   }
@@ -73,11 +73,11 @@ object CodecToEncoderSpecBase {
     case Enum(location: Location)
   }
 
-  enum Generic extends EnumStableHashCode derives Codec, Ord {
+  enum Generic derives Codec, Ord {
     case A
   }
 
-  enum GenericEmptyVariants[+T <: Generic] extends EnumStableHashCode {
+  enum GenericEmptyVariants[+T <: Generic] {
     case Empty1, Empty2
   }
   object GenericEmptyVariants {
@@ -85,7 +85,7 @@ object CodecToEncoderSpecBase {
     given Ordering[GenericEmptyVariants[Nothing]] = Ord.sum[GenericEmptyVariants[Nothing]]
   }
 
-  enum EnumString extends EnumStableHashCode derives Codec.EnumAsString, Ord {
+  enum EnumString derives Codec.EnumAsString, Ord {
     case A
     case B
   }
@@ -179,10 +179,19 @@ trait CodecToEncoderSpecBase extends AnyFunSuite with SharedSparkSession {
   test[Option[Option[Option[Option[Person]]]]](supportsNull = false)
   test[(Int, Double)]()
   test[Seq[(Int, Double)]]()
+  test[Seq[Timestamp]]()
+  test[Seq[Option[Timestamp]]]()
+  test[Seq[Date]]()
+  test[Seq[Duration]]()
   test[ArraySeq[Int]]()
   test[ArraySeq[Person]]()
   test[Map[Int, Int]]()
   test[Map[Person, String]]()
+  test[Map[Timestamp, Int]]()
+  test[Map[Date, Int]]()
+  test[Map[Int, Date]]()
+  test[Map[Duration, Int]]()
+  test[Map[Int, Duration]]()
   test[Person]()
   test[Employee]()
   test[(Int, Option[Int])]()
@@ -198,7 +207,11 @@ trait CodecToEncoderSpecBase extends AnyFunSuite with SharedSparkSession {
   test[MyString]()
   test[NestedEnum](supportsNull = false)
   test[GenericEmptyVariants[Generic.A.type]](supportsNull = false)
-  test[BigInt](supportsNull = false)
+  test[Binary](supportsNull = false)
+  test[Option[Binary]](supportsNull = false)
+  test[Tuple1[Binary]](supportsNull = false)
+  test[Seq[Binary]]()
+  test[Map[Int, Binary]]()
   test[EnumString](supportsNull = false)
   test[(name: String, age: Int)](supportsNull = false)
   test[BigNamedTuple](supportsNull = false)
@@ -237,12 +250,13 @@ trait CodecToEncoderSpecBase extends AnyFunSuite with SharedSparkSession {
   schemaTest[Float](FloatType)
   schemaTest[Double](DoubleType)
   schemaTest[Boolean](BooleanType)
-  schemaTest[BigInt](BinaryType)
+  schemaTest[Binary](BinaryType)
   schemaTest[Timestamp](TimestampType)
   schemaTest[Duration](LongType)
   schemaTest[Date](DateType)
   schemaTest[Seq[Int]](ArrayType(IntegerType, false))
   schemaTest[Map[Int, Int]](MapType(IntegerType, IntegerType, false))
+  schemaTest[Map[Timestamp, Timestamp]](MapType(TimestampType, TimestampType, false))
   schemaTest[Map[Int, Option[Int]]](MapType(IntegerType, IntegerType, true))
 
   val expectedPerson = StructType(Seq(
@@ -255,6 +269,7 @@ trait CodecToEncoderSpecBase extends AnyFunSuite with SharedSparkSession {
     StructType(Seq(StructField("person", expectedPerson, true), StructField("salary", DoubleType, false)))
   schemaTest[Employee](expectedEmployee)
   schemaTest[Seq[Employee]](ArrayType(expectedEmployee))
+  schemaTest[Seq[Timestamp]](ArrayType(TimestampType, false))
   schemaTest[Map[Int, Employee]](MapType(IntegerType, expectedEmployee, true))
   schemaTest[Map[Employee, Int]](MapType(expectedEmployee, IntegerType, false))
   schemaTest[(name: String, age: Int)](StructType(

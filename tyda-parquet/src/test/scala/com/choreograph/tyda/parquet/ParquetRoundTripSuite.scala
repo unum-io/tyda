@@ -12,11 +12,11 @@ import org.scalactic.Equality
 import org.scalatest.funsuite.AnyFunSuite
 
 import com.choreograph.tyda.Arbitrary
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
-import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Ord
 import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.TypeName
@@ -24,7 +24,7 @@ import com.choreograph.tyda.TypeName
 object ParquetRoundTripSuite {
   private final case class MyProduct(a: Option[Int], b: String, c: (Int, Option[Int]))
       derives Arbitrary, Codec
-  private enum MyEnum extends EnumStableHashCode derives Arbitrary, Codec {
+  private enum MyEnum derives Arbitrary, Codec {
     case A, B
     case C(a: Int, b: Option[Int])
     case D(a: Int, b: Option[Int])
@@ -32,7 +32,7 @@ object ParquetRoundTripSuite {
     case F(prod: MyProduct)
   }
 
-  private enum SimpleEnum extends EnumStableHashCode derives Arbitrary, Codec.EnumAsString {
+  private enum SimpleEnum derives Arbitrary, Codec.EnumAsString {
     case X, Y, Z
   }
 
@@ -92,7 +92,7 @@ class ParquetRoundTripSuite extends AnyFunSuite {
   testRoundTrip[Seq[Decimal[15, 5]]]
   testRoundTrip[Option[Decimal[38, 3]]]
   testRoundTrip[(Decimal[15, 5], Decimal[3, 0])]
-  testRoundTrip[BigInt]
+  testRoundTrip[Binary]
   testRoundTrip[Date]
   testRoundTrip[Timestamp]
   testRoundTrip[Duration]

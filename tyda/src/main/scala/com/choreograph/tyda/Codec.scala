@@ -237,11 +237,8 @@ object Codec {
   }
 
   object EnumAsString {
-    inline def derived[T: ClassTag: AllSingletons as singletons]: Codec.EnumAsString[T] = {
-      val tag = summon[ClassTag[T]]
-      checkStableHashCode(tag)
+    inline def derived[T: ClassTag: AllSingletons as singletons]: Codec.EnumAsString[T] =
       SumAsString[T](summon, singletons)
-    }
   }
 
   private final case class SumAsStringInjection[T](values: scala.Seq[T], encodedValues: scala.Seq[String])
@@ -259,7 +256,7 @@ object Codec {
     def inj: Injection[T, String] = SumAsStringInjection(values, encodedValues)
   }
 
-  /** A codec that encodes an [[Array[Byte]]] as a binary type.
+  /** A codec that encodes an [[Binary]] as a binary type.
     *
     * Note: This is distinct from encoding a [[scala.Seq[Byte]]], which is
     * represented as an array where each element is a byte.
@@ -294,7 +291,7 @@ object Codec {
     * The deserializer is not supported: need a(n) "ARRAY" field but got "BINARY".
     * ```
     */
-  private[tyda] case object Bytes extends Primitive[Array[Byte]]
+  private[tyda] case object Bytes extends Primitive[Binary]
 
   private[tyda] sealed trait FromInjection[From, To] extends Codec[From] {
     def inj: Injection[From, To]
@@ -316,23 +313,6 @@ object Codec {
       def classTag: ClassTag[From] = summon
     }
 
-  private object BigIntAsBytes extends Injection[scala.BigInt, Array[Byte]] {
-    def apply(from: scala.BigInt): Array[Byte] = from.toByteArray
-    def invert(to: Array[Byte]): scala.BigInt = scala.BigInt(to)
-  }
-
-  private def checkStableHashCode[S](tag: ClassTag[S]): Unit = {
-    val isEnum = classOf[scala.reflect.Enum].isAssignableFrom(tag.runtimeClass)
-    val hasWorkaround = classOf[EnumStableHashCode].isAssignableFrom(tag.runtimeClass)
-    if isEnum && !hasWorkaround then
-      throw new RuntimeException(
-        s"Enum ${tag
-            .runtimeClass
-            .getName} might not have stable hashCode due to https://github.com/scala/scala3/issues/19177." +
-          " Please mixing the trait EnumStableHashCode to make the hashCode stable."
-      )
-  }
-
   given byte: Codec[scala.Byte] = Byte
   given short: Codec[scala.Short] = Short
   given int: Codec[scala.Int] = Int
@@ -349,13 +329,7 @@ object Codec {
   given decimal[P <: Int, S <: Int](using valid: TydaDecimal.Valid[P, S]): Codec[TydaDecimal[P, S]] =
     Decimal[P, S](valid.precision, valid.scale)
 
-  /** Encodes a [[BigInt]] as an array of bytes.
-    *
-    * Note: This is different from Spark that will store BigInt as a fixed size
-    * array of 16 bytes. This instead uses a variable length array and can
-    * therefore support all values of [[BigInt]].
-    */
-  given bigInt: Codec[BigInt] = fromInjection(BigIntAsBytes, Codec.Bytes)
+  given binary: Codec[Binary] = Codec.Bytes
 
   given seq[T: Codec, C <: scala.Seq[T]: ClassTag as tag](using Factory[T, C]): Codec[C] = {
     val seqTag = classTag[scala.Seq[T]]
@@ -423,8 +397,6 @@ object Codec {
       throw new RuntimeException(
         s"Camel cased variant names of ${summon[ClassTag[T]].runtimeClass.getName} are not unique"
       )
-    if sum.variants.mapConst([t] => _.isInstanceOf[Variant.Singleton[t]]).exists(identity) then
-      checkStableHashCode(summon[ClassTag[T]])
     sum
 
   inline def derived[T: ClassTag](using m: Mirror.Of[T]): Codec[T] =

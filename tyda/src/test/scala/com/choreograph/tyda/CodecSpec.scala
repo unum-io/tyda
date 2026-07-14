@@ -14,12 +14,12 @@ object CodecSpec {
   final case class Person(name: String, age: Int) derives Codec
   final case class User(person: Person) derives Codec
 
-  enum AnimalEnum extends EnumStableHashCode derives Codec {
+  enum AnimalEnum derives Codec {
     case Dog(name: String)
     case Cat
   }
 
-  enum AnimalEnum2 extends EnumStableHashCode derives Codec {
+  enum AnimalEnum2 derives Codec {
     case Dog(name: String)
     case Cat(age: Option[Int])
   }
@@ -38,11 +38,11 @@ object CodecSpec {
     final case class Node1(id: Int) extends Hierarchy1
   }
 
-  enum Color extends EnumStableHashCode derives Codec.EnumAsString {
+  enum Color derives Codec.EnumAsString {
     case Red, Green, Blue
   }
 
-  enum EnumWithManyCase extends EnumStableHashCode derives Codec {
+  enum EnumWithManyCase derives Codec {
     case A
     case B(a: Int)
     case C(a: Int)

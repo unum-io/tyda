@@ -3,8 +3,6 @@ package com.choreograph.tyda.metadata
 import org.scalatest.compatible.Assertion
 import org.scalatest.funsuite.AnyFunSuite
 
-import com.choreograph.tyda.EnumStableHashCode
-
 object ExtractedMetadataSpec {
 
   /** person scaladoc
@@ -29,7 +27,7 @@ object ExtractedMetadataSpec {
 
   /** enum scaladoc
     */
-  enum Enum extends EnumStableHashCode {
+  enum Enum {
 
     /** singleton scaladoc
       */

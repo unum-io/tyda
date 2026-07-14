@@ -11,7 +11,7 @@ import com.choreograph.tyda.functions.tuple
 
 object ExprSpec {
   final case class Person(name: String, age: Int)
-  enum MyEnum extends EnumStableHashCode {
+  enum MyEnum {
     case A, B, C
     case D(i: Int)
   }

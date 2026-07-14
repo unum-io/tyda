@@ -12,12 +12,12 @@ import org.scalatest.enablers.Aggregating
 import shapeless3.deriving.Labelling
 
 import com.choreograph.tyda.Arbitrary
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
-import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Format
 import com.choreograph.tyda.NumericsReadMode
 import com.choreograph.tyda.Ord
@@ -38,7 +38,7 @@ object DatasetReadWriteSuite {
   }
   private final case class MyProduct(a: Option[Long], b: String, c: (Long, Option[Long]))
       derives Arbitrary, Codec
-  private enum MyEnum extends EnumStableHashCode derives Arbitrary, Codec {
+  private enum MyEnum derives Arbitrary, Codec {
     case A, B
     case C(a: Long, b: Option[Long])
     case D(a: Long, b: Option[Long])
@@ -46,20 +46,20 @@ object DatasetReadWriteSuite {
     case F(prod: MyProduct)
   }
 
-  private enum SimpleEnum extends EnumStableHashCode derives Arbitrary, Codec.EnumAsString {
+  private enum SimpleEnum derives Arbitrary, Codec.EnumAsString {
     case X, Y, Z
   }
 
   private final case class Model(column: String, value: String) derives Arbitrary, Codec
   private final case class ModelExtended(column: String, value: String, extra: Option[Int]) derives Codec
 
-  private enum Type extends EnumStableHashCode derives Arbitrary, Codec {
+  private enum Type derives Arbitrary, Codec {
     case FixedString(n: Int)
     case Int
     case Decimal
   }
 
-  private enum TypeExtended extends EnumStableHashCode derives Codec {
+  private enum TypeExtended derives Codec {
     case FixedByteArray(n: Int)
     case FixedString(n: Int)
     case Int
@@ -78,6 +78,12 @@ object DatasetReadWriteSuite {
 
   private given Equality[Float] = equalityFromOrd[Float]
   private given Equality[Double] = equalityFromOrd[Double]
+
+  private def anyCauseContains(throwable: Throwable, expectedOneOf: Seq[String]): Boolean =
+    Iterator
+      .iterate(throwable)(_.getCause)
+      .takeWhile(_ != null)
+      .exists(t => expectedOneOf.exists(t.getMessage.contains))
 }
 
 trait DatasetReadWriteSuite extends DatasetSuite {
@@ -228,9 +234,10 @@ trait DatasetReadWriteSuite extends DatasetSuite {
         val exception = intercept[Exception](implementation.execute(write))
         val expectedOneOf = List("already exists", "destination is not empty")
         assert(
-          expectedOneOf.exists(snippet => exception.getMessage.contains(snippet)),
-          s"Exception message '${exception
-              .getMessage}' did not contain any of expected snippets: ${expectedOneOf.mkString(", ")}"
+          anyCauseContains(exception, expectedOneOf),
+          s"Exception '${exception}' did not contain any of expected snippets: ${expectedOneOf.mkString(
+              ", "
+            )}"
         )
       }: Unit
     }
@@ -265,7 +272,7 @@ trait DatasetReadWriteSuite extends DatasetSuite {
   testReadWrite[Decimal[3, 0]]
   testReadWrite[Decimal[15, 5]]
   testReadWrite[Decimal[38, 9]]
-  testReadWrite[BigInt]
+  testReadWrite[Binary]
   testReadWrite[Date]
   testReadWrite[Timestamp]
   testReadWrite[Duration]

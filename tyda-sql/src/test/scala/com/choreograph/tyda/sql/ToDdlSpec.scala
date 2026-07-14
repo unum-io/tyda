@@ -5,12 +5,14 @@ import scala.reflect.ClassTag
 import org.scalatest.compatible.Assertion
 import org.scalatest.funsuite.AnyFunSuite
 
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
-import com.choreograph.tyda.EnumStableHashCode
+import com.choreograph.tyda.SimpleTypeName
 import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.sql.DdlDialect.MapSupport
+import com.choreograph.tyda.sql.ast.DdlWriter
 
 object ToDdlSpec {
   final case class Person(name: String, age: Int) derives Codec
@@ -25,14 +27,14 @@ object ToDdlSpec {
       boolean: Boolean,
       string: String
   ) derives Codec
-  enum Enum extends EnumStableHashCode derives Codec {
+  enum Enum derives Codec {
     case Singleton
     case Product1(a: Int, b: String)
     case Product2(c: Int, d: Option[Long])
     case Product3(c: Int, d: Product1)
   }
 
-  enum EnumString extends EnumStableHashCode derives Codec.EnumAsString {
+  enum EnumString derives Codec.EnumAsString {
     case A
     case B
   }
@@ -69,6 +71,13 @@ class ToDdlSpec extends AnyFunSuite {
 
   private def toSparkDdl(codec: Codec[?], pretty: Boolean = true): String =
     ToDdl.toDdl(codec, DdlDialect.Spark, pretty)
+
+  private def toSparkDdlType(codec: Codec[?], pretty: Boolean = false): String = {
+    val ddl = ToDdl.toDdlType(codec, DdlDialect.Spark)
+    val writer = new java.io.StringWriter()
+    DdlWriter(writer, pretty = pretty).write(ddl, 0)
+    writer.toString
+  }
 
   test("toDdl Person") {
     val ddl = toSparkDdl(Codec[Person])
@@ -164,8 +173,8 @@ class ToDdlSpec extends AnyFunSuite {
                     |""".stripMargin)
   }
 
-  test("toDdl BigInt") {
-    val ddl = toSparkDdl(Codec[BigInt])
+  test("toDdl Binary") {
+    val ddl = toSparkDdl(Codec[Binary])
     assert(ddl == """
                     |value BINARY NOT NULL
                     |""".stripMargin)
@@ -370,4 +379,17 @@ class ToDdlSpec extends AnyFunSuite {
     )
     assert(toBigQueryDecimal(Codec[Decimal[38, 0]], parameterized = false) == "value BIGDECIMAL NOT NULL")
   }
+
+  def testSparkDdlType[T: Codec: SimpleTypeName](expected: String) =
+    test(s"toDdlType ${SimpleTypeName[T]}") {
+      val ddl = toSparkDdlType(Codec[T])
+      assert(ddl == expected)
+    }
+
+  testSparkDdlType[Int]("INT")
+  testSparkDdlType[Option[Int]]("INT")
+  testSparkDdlType[Option[Option[Int]]]("STRUCT<value INT>")
+  testSparkDdlType[Seq[Int]]("ARRAY<INT>")
+  testSparkDdlType[Seq[Option[Int]]]("ARRAY<INT>")
+  testSparkDdlType[(value: Int)]("STRUCT<value INT NOT NULL>")
 }

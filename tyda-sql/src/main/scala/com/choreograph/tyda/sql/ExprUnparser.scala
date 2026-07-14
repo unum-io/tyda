@@ -40,6 +40,7 @@ import com.choreograph.tyda.sql.SqlDialect.TrimFunction
 import com.choreograph.tyda.sql.ast.DdlType
 import com.choreograph.tyda.sql.ast.DdlWriter
 import com.choreograph.tyda.sql.ast.From
+import com.choreograph.tyda.sql.ast.JoinType
 import com.choreograph.tyda.sql.ast.Query
 import com.choreograph.tyda.sql.ast.SqlExpr
 import com.choreograph.tyda.unreachable
@@ -114,7 +115,7 @@ private def exprToSqlExpr(expr: ExplodeExpr[?] | ExprNode[?], args: UnparserArgs
   expr match {
     case e: ExplodeExpr[?] => exprToSqlExpr(e.expr, args).map(arg =>
         args.dialect.explode match {
-          case SqlDialect.ExplodeSupport.Function(name, _) => SqlExpr.Function(name, Seq(arg))
+          case SqlDialect.ExplodeSupport.Function(name) => SqlExpr.Function(name, Seq(arg))
           case SqlDialect.ExplodeSupport.InnerJoin =>
             unreachable("Explodes using inner join should be handled in the SelectBuilder")
         }
@@ -326,7 +327,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
                   case SqlDialect.MapSupport.Array => sqlExpr
                 }
               )
-              .map(SqlExpr.Cast(_, ToDdl.toDdlType(expr.codec, dialect.ddl, false, true).tpe))
+              .map(cast(_, expr.codec, dialect))
           case ArrayCodec(_) => inner(operand)
           case codec => unreachable(s"UpcastToIterable only get codecs of Map and Iterable not $codec")
         }
@@ -396,6 +397,23 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
           case SqlDialect.ArrayHigherOrderFunctions.Lambda(map = mapFunction) =>
             SqlExpr.Function(mapFunction, Seq(arr, SqlExpr.LambdaFunction(arg, fExpr)))
         }
+      case ExprNode.FlattenSeq(operand) => inner(operand).map(arr =>
+          dialect.arrayHigherOrderFunctions match {
+            case SqlDialect.ArrayHigherOrderFunctions.Subquery(makeArray, unnest) =>
+              val outerName = args.aliasGen.column()
+              val innerName = args.aliasGen.column()
+              val outerFrom = From.Expr(SqlExpr.Function(unnest, Seq(arr)), outerName)
+              val unwrappedOuter =
+                unwrapArrayElement(SqlExpr.Ident(outerName), operand.codec.element, dialect)
+              val innerFrom = From.Expr(SqlExpr.Function(unnest, Seq(unwrappedOuter)), innerName)
+              val joinFrom = From.Join(outerFrom, innerFrom, JoinType.Inner, None)
+              val elem = unwrapArrayElement(SqlExpr.Ident(innerName), operand.codec.element.element, dialect)
+              val query = Query.Select(NonEmpty(elem), joinFrom)
+              SqlExpr.Function(makeArray, Seq(SqlExpr.Subquery(query)))
+            case SqlDialect.ArrayHigherOrderFunctions.Lambda(flatten = flatten) =>
+              SqlExpr.Function(flatten, Seq(arr))
+          }
+        )
       case ExprNode.FilterSeq(operand, predicate) => for {
           arr <- inner(operand)
           argName = args.aliasGen.column()
@@ -436,7 +454,8 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
               finish <- lambda(asFold.finish, args)
             } yield SqlExpr.Function(aggregate, Seq(arr, initial, merge, finish))
         }
-      case ExprNode.RaiseError(msg, _) => inner(msg).map(m => SqlExpr.Function(dialect.errorFunction, Seq(m)))
+      case ExprNode.RaiseError(msg, codec) =>
+        inner(msg).map(m => SqlExpr.Function(dialect.errorFunction, Seq(m))).map(cast(_, codec, dialect))
       case ExprNode.Cases(whenThenExpr, whenThenExprs, elseExpr) => for {
           whensSql <- (whenThenExpr +: whenThenExprs)
             .map { branch =>
@@ -500,6 +519,10 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
               elseExpr = Some(split)
             )
         }
+      case ExprNode.ArrayJoin(operand, separator) => for {
+          arr <- inner(operand)
+          sep <- inner(separator)
+        } yield SqlExpr.Function(dialect.arrayJoin, Seq(arr, sep))
       case ExprNode.SizeSeq(operand) =>
         inner(operand).map(arr => SqlExpr.Function(dialect.arraySize, Seq(arr)))
       case ExprNode.DistinctSeq(operand) => inner(operand).map(arr =>
@@ -508,7 +531,6 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
             case SqlDialect.ArrayDistinct.Subquery(makeArray, unnest) =>
               val element = args.aliasGen.column()
               val elementIdent = SqlExpr.Ident(element)
-
               val unnestFrom = From.Expr(SqlExpr.Function(unnest, Seq(arr)), element)
               val selectQuery = Query.Select(
                 select = NonEmpty(elementIdent),
@@ -519,8 +541,23 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
                 distinct = true
               )
               SqlExpr.Function(makeArray, Seq(SqlExpr.Subquery(selectQuery)))
-
           }
+        )
+      case ExprNode.FromBase64(string) => inner(string).map(str =>
+          dialect.fromBase64 match {
+            case SqlDialect.FromBase64Support.TryFunction(name, format) =>
+              SqlExpr.Function(name, Seq(str, SqlExpr.LiteralString(format)))
+            case SqlDialect.FromBase64Support.Function(name) => SqlExpr.Function(name, Seq(str))
+          }
+        )
+      case ExprNode.ToBase64(binary) => inner(binary).map(bin =>
+          val encoded = SqlExpr.Function(dialect.toBase64.name, Seq(bin))
+          if dialect.toBase64.isChunked then
+            SqlExpr.Function(
+              "replace",
+              Seq(encoded, SqlExpr.LiteralString("\r\n"), SqlExpr.LiteralString(""))
+            )
+          else encoded
         )
       case ExprNode.ElementSeq(array, index) =>
         val adjusted =
@@ -558,10 +595,11 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
       case ExprNode.Quotient(_: Num.Integral[?], lhs, rhs) => for {
           lhs <- inner(lhs)
           rhs <- inner(rhs)
-        } yield SqlExpr.Cast(
-          SqlExpr.Function("div", Seq(lhs, rhs)),
-          ToDdl.toDdlType(expr.codec, dialect.ddl, true, true).tpe
-        )
+        } yield cast(SqlExpr.Function("div", Seq(lhs, rhs)), expr.codec, dialect)
+      // } yield SqlExpr.Cast(
+      //   SqlExpr.Function("div", Seq(lhs, rhs)),
+      //   ToDdl.toDdlType(expr.codec, dialect.ddl, true, true).tpe
+      // )
       case ExprNode.Quotient(_, lhs, rhs) => for {
           lhs <- inner(lhs)
           rhs <- inner(rhs)
@@ -583,19 +621,17 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
           case SqlDialect.MakeDuration.DiffBigInt => inner(value)
           case SqlDialect.MakeDuration.Cast => for {
               sqlExpr <- inner(value)
-              asDecimal =
-                SqlExpr.Cast(sqlExpr, ToDdl.toDdlType(Codec[Decimal[38, 6]], dialect.ddl, false, true).tpe)
+              asDecimal = cast(sqlExpr, Codec[Decimal[38, 6]], dialect)
               micros = SqlExpr.BinaryOp("*", asDecimal, literalToSqlExpr(1000000, Codec.Int, dialect))
-            } yield SqlExpr.Cast(micros, ToDdl.toDdlType(Codec.Long, dialect.ddl, false, true).tpe)
+            } yield cast(micros, Codec.Long, dialect)
         }
       case ExprNode.MicrosToDuration(value) => dialect.makeDuration match {
           case SqlDialect.MakeDuration.DiffBigInt => inner(value)
           case SqlDialect.MakeDuration.Cast => for {
               sqlExpr <- inner(value)
-              asDecimal =
-                SqlExpr.Cast(sqlExpr, ToDdl.toDdlType(Codec[Decimal[38, 6]], dialect.ddl, false, true).tpe)
+              asDecimal = cast(sqlExpr, Codec[Decimal[38, 6]], dialect)
               duration = SqlExpr.BinaryOp("/", asDecimal, literalToSqlExpr(1000000, Codec.Int, dialect))
-            } yield SqlExpr.Cast(duration, ToDdl.toDdlType(Codec[Duration], dialect.ddl, false, true).tpe)
+            } yield cast(duration, Codec[Duration], dialect)
         }
       case ExprNode.DateToDays(value) =>
         inner(value).map(v => SqlExpr.Function(dialect.extractDateDays, Seq(v)))
@@ -656,9 +692,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
                 )
             }
         }
-      case ExprNode.None(codec) =>
-        val ddlType = ToDdl.toDdlType(codec, dialect.ddl, notNull = false, supportsNotNull = true).tpe
-        Right(SqlExpr.Cast(SqlExpr.LiteralNull, ddlType))
+      case ExprNode.None(_) => Right(typedNull(ToDdl.toDdlType(expr.codec, dialect.ddl)))
       case ExprNode.ToJson(value) =>
         val hasNestedArray = Codec
           .iterate(value.codec)
@@ -677,7 +711,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
       case ExprNode.FromJson(json, codec) => dialect.fromJson match {
           case SqlDialect.FromJsonSupport.Parser(fromJson, options) => for {
               jsonExpr <- inner(json)
-              ddlType = ToDdl.toDdlType(codec, dialect.ddl, notNull = false, supportsNotNull = true).tpe
+              ddlType = ToDdl.toDdlType(codec, dialect.ddl)
               optionsExpr = optionsToSqlExpr(options)
             } yield SqlExpr.Function(fromJson, Seq(jsonExpr, ddlAsSqlString(ddlType), optionsExpr))
           case extractors @ SqlDialect.FromJsonSupport.Extractors(_, _, _) =>
@@ -729,11 +763,11 @@ private def aggregateSeq[T, R](
   }
 
 private def cast(expr: SqlExpr, to: Codec[?], dialect: SqlDialect): SqlExpr =
-  SqlExpr.Cast(expr, ToDdl.toDdlType(to, dialect.ddl, false, true).tpe)
+  SqlExpr.Cast(expr, ToDdl.toDdlType(to, dialect.ddl))
 
 private def tryCast(expr: SqlExpr, from: Codec[?], to: Codec[?], dialect: SqlDialect): SqlExpr =
   SqlExpr
-    .Cast(dialect.tryCast, expr, ToDdl.toDdlType(to, dialect.ddl, false, true).tpe)
+    .Cast(dialect.tryCast, expr, ToDdl.toDdlType(to, dialect.ddl))
     .pipe(addControlCharCheckIfNeeded(expr, _, from, dialect))
     .pipe(addIntRangeCheckIfNeeded(_, to, dialect))
     .pipe(addDecimalRangeAndRoundingIfNeeded(_, to, dialect))
@@ -904,7 +938,7 @@ private def makeStruct(names: Seq[String], fields: Seq[SqlExpr], dialect: SqlDia
       if names.length == 0 then {
         // Empty structs are generally poorly supported, so we create a dummy fields instead
         // In the long run we should probably disallow codec for empty structs.
-        SqlExpr.Function(name, Seq(SqlExpr.LiteralString(Forbidden.column), SqlExpr.LiteralNull))
+        SqlExpr.Function(name, Seq(SqlExpr.LiteralString(Forbidden.column), emptyProductFieldNull(dialect)))
       } else {
         val nameExprs = names.map(n => SqlExpr.LiteralString(n))
         val args = nameExprs.zip(fields).flatMap { case (n, e) => Seq(n, e) }
@@ -914,7 +948,7 @@ private def makeStruct(names: Seq[String], fields: Seq[SqlExpr], dialect: SqlDia
       if names.length == 0 then {
         // Empty structs are generally poorly supported, so we create a dummy fields instead
         // In the long run we should probably disallow codec for empty structs.
-        SqlExpr.Function(name, Seq(SqlExpr.As(SqlExpr.LiteralNull, Forbidden.column)))
+        SqlExpr.Function(name, Seq(SqlExpr.As(emptyProductFieldNull(dialect), Forbidden.column)))
       } else {
         val args = fields.zip(names).map { case (e, n) => SqlExpr.As(e, n) }
         SqlExpr.Function(name, args)
@@ -934,10 +968,7 @@ private def makeArray[T](values: Seq[SqlExpr], element: Codec[T], dialect: SqlDi
   }
   if values.isEmpty then
     given Codec[T] = element
-    SqlExpr.Cast(
-      array,
-      ToDdl.toDdlType(Codec[Seq[T]], dialect.ddl, notNull = true, supportsNotNull = false).tpe
-    )
+    cast(array, Codec[Seq[T]], dialect)
   else array
 }
 
@@ -947,8 +978,7 @@ private def makeMap[K, V](pairs: SqlExpr, key: Codec[K], value: Codec[V], dialec
     case SqlDialect.MapSupport.Array =>
       given Codec[K] = key
       given Codec[V] = value
-      val ddl = ToDdl.toDdlType(Codec[Map[K, V]], dialect.ddl, notNull = true, supportsNotNull = false).tpe
-      SqlExpr.Cast(pairs, ddl)
+      cast(pairs, Codec[Map[K, V]], dialect)
   }
 
 object CompatibleSum {
@@ -1027,6 +1057,11 @@ private def primitiveAggregate[T: Codec](
       if shouldWrapArrayElement(Codec[T], dialect.ddl) then
         simpleAggregate(dialect.collectFunction, wrapArrayElement(arg, dialect))
       else simple(dialect.collectFunction)
+    case PrimitiveAggregate.SeqConcat() => dialect.arrayConcatAgg match {
+        case SqlDialect.ArrayConcatAgg.Function(name) => simpleAggregate(name, arg)
+        case SqlDialect.ArrayConcatAgg.FlattenCollect(flatten) =>
+          Right(SqlExpr.Function(flatten, Seq(SqlExpr.Function(dialect.collectFunction, Seq(arg)))))
+      }
     case PrimitiveAggregate.Reduce(_) =>
       Left(DatasetToSqlError.RequiresUdfCapability("Reduce is not supported on SQL"))
   }
@@ -1043,7 +1078,7 @@ private def literalProductToFields[T](
       (acc, f, elem) => acc :+ exprToSqlExpr(ExprNode.Literal.create(elem, f.codec), args)
     )
     .sequence
-    .map(NonEmpty.from(_).getOrElse(NonEmpty(SqlExpr.LiteralNull)))
+    .map(NonEmpty.from(_).getOrElse(NonEmpty(emptyProductFieldNull(args.dialect))))
 
 private def literalToSqlExpr[T](value: T, codec: Codec.Primitive[T], dialect: SqlDialect): SqlExpr = {
   def floatingPoint(value: Double, sqlType: DdlType, isFinite: Boolean): SqlExpr =
@@ -1066,8 +1101,8 @@ private def literalToSqlExpr[T](value: T, codec: Codec.Primitive[T], dialect: Sq
       SqlExpr.Cast(sqlValue, ToDdl.toNullableDdlType(codec, dialect.ddl))
     case Codec.String => SqlExpr.LiteralString(value.toString)
     case Codec.Bytes => dialect.binaryLiteral match {
-        case SqlDialect.BinaryLiteral.HexString => SqlExpr.LiteralHexString(value)
-        case SqlDialect.BinaryLiteral.ByteEscapeString => SqlExpr.LiteralByteEscapeString(value)
+        case SqlDialect.BinaryLiteral.HexString => SqlExpr.LiteralHexString(value.to(Array))
+        case SqlDialect.BinaryLiteral.ByteEscapeString => SqlExpr.LiteralByteEscapeString(value.to(Array))
       }
     case Codec.Boolean => SqlExpr.LiteralBool(value)
     case Codec.TimestampMicros => dialect.makeTimestamp match {
@@ -1094,6 +1129,13 @@ private def literalToSqlExpr[T](value: T, codec: Codec.Primitive[T], dialect: Sq
   }
 }
 
+private def typedNull(tpe: DdlType): SqlExpr =
+  // We use scalafix to force use of this helper when creating nulls.
+  SqlExpr.Cast(SqlExpr.LiteralNull, tpe) // scalafix:ok Disallowed.Method
+
+private def emptyProductFieldNull(dialect: SqlDialect): SqlExpr =
+  typedNull(DdlType.Primitive(dialect.ddl.emptyStructFieldType))
+
 /** Generate a dummy value for the given codec. This is used to create a empty
   * relation with the correct schema.
   *
@@ -1105,7 +1147,8 @@ private def dummyValue[T](
     args: UnparserArgs
 ): Result[(NonEmpty[Seq[SqlExpr]], NonEmpty[Seq[String]])] =
   codec match {
-    case Codec.Product(_, _, Some(_)) => Right((NonEmpty(SqlExpr.LiteralNull), NonEmpty(Forbidden.column)))
+    case Codec.Product(_, _, Some(_)) =>
+      Right((NonEmpty(emptyProductFieldNull(args.dialect)), NonEmpty(Forbidden.column)))
     case Codec.Product(_, fields, _) =>
       val names = NonEmpty.from(fields.mapConst[String]([t] => _.name))
       fields

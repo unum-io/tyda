@@ -43,6 +43,7 @@ object ArgsParserSpec {
   final case class ArgsWithOption(arg1: Int, arg2: Option[Int])
   final case class ArgsWithOptionAndNoneDefault(arg1: Int, arg2: Option[Int] = None)
   final case class ArgsWithOptionAndDefault(arg1: Int, arg2: Option[String] = Some("default"))
+  final case class ArgsWithOptionProduct(arg1: Int, arg2: Option[Args1] = None)
   final case class ArgsWithLongNames(nameWithMultipleWords: String)
   final case class ArgsWithSeq(arg1: Seq[Int])
   final case class ArgsWithSeqDefault(arg1: Seq[Int] = Seq(1, 2, 3))
@@ -191,6 +192,17 @@ class ArgsParserSuite extends AnyFunSuite {
 
   test("not serialize Option with default") {
     assert(ArgsParser.serialize(ArgsWithOptionAndDefault(1)) == List("--arg1", "1"))
+  }
+
+  test("support Option of products as tagged sum type out of the box") {
+    val someArgs = ArgsWithOptionProduct(1, Some(Args1(42, "hello")))
+    val someFlags =
+      Seq("--arg1", "1", "--arg2", "some", "--arg2-value-arg1", "42", "--arg2-value-arg2", "hello")
+    checkParseAndSerialize(someFlags, someArgs)
+
+    val noneArgs = ArgsWithOptionProduct(1, None)
+    val noneFlags = Seq("--arg1", "1")
+    checkParseAndSerialize(noneFlags, noneArgs)
   }
 
   test("not serialize default values") {
@@ -406,6 +418,7 @@ class ArgsParserSuite extends AnyFunSuite {
   roundTrip[CaseOptions]()
   roundTrip[ArgsWithDefault]()
   roundTrip[ArgsWithLongNames]()
+  roundTrip[ArgsWithOptionProduct]()
   roundTrip[DuplicatedArgs]()
   roundTrip[DuplicatedArgsReversed]()
   roundTrip[ArgsWithSeqEmptyDefault]()
@@ -600,6 +613,16 @@ class ArgsParserSuite extends AnyFunSuite {
     val help = ArgsParser.help[ArgsWithOption]
     val expected = """|--arg1 <int> [required]
                       |--arg2 <int> [required]""".stripMargin
+    assert(help == expected)
+  }
+
+  test("help for args with option product") {
+    val help = ArgsParser.help[ArgsWithOptionProduct]
+    val expected = """|--arg1 <int> [required]
+                      |--arg2 <none|some> (default: none)
+                      |When --arg2=some:
+                      |  --arg2-value-arg1 <int> [required]
+                      |  --arg2-value-arg2 <string> [required]""".stripMargin
     assert(help == expected)
   }
 

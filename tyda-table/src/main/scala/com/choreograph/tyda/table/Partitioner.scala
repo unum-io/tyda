@@ -174,6 +174,7 @@ object Partitioner {
       def predicate(p: Hive[T]): Expr[T] => Expr[Boolean] = { e =>
         val exprs = tupleInstances(Expr.unapply(e))
         val seqValues = tupleInstances(p match {
+          // TYPE SAFETY: MirroredElemTypes is uniquely determined by T
           case p: HiveImpl[T, m.MirroredElemTypes @unchecked] => p.values
         })
         exprs

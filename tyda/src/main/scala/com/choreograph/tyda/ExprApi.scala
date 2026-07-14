@@ -12,7 +12,7 @@ import scala.reflect.ClassTag
 
 import shapeless3.deriving.K0
 
-import com.choreograph.tyda.TupleOperations.`-`
+import com.choreograph.tyda.TupleOperations.-
 import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.shapeless3extras.toTuple
 import com.choreograph.tyda.shapeless3extras.tupleInstances
@@ -25,6 +25,8 @@ import com.choreograph.tyda.shapeless3extras.tupleInstances
   * the code.
   */
 trait ExprApi[Expr[T]] {
+  private[tyda] type SeqCC[X, CC[_]] = Seq[X] & SeqOps[X, CC, CC[X]]
+
   private[tyda] def lift[T](e: ExprNode[T]): Expr[T]
   private[tyda] def unlift[T](e: Expr[T]): ExprNode[T]
 
@@ -648,13 +650,15 @@ trait ExprApi[Expr[T]] {
       val node = unlift(seq)
       node.codec match {
         case Codec.Seq(_) => node
+        /* TYPE SAFETY: Because of Seq being covariant the compiler can not prove this is correct. So maybe
+         * there are edge cases where this do not hold? */
         case it: Codec.Iterable[T @unchecked, C] => ExprNode.ToRepr(node, it)
         case unsupported => unreachable(s"Expected Iterable codec but got $unsupported")
       }
     }
   }
 
-  extension [T, CC[X] <: Seq[X], C <: Seq[T] & SeqOps[T, CC, CC[T]]](seq: Expr[C]) {
+  extension [T, CC[X] <: SeqCC[X, CC], C <: SeqCC[T, CC]](seq: Expr[C]) {
     private def valueCodec: Codec[T] = unlift(seq).codec.element
 
     private def factory: IterableFactory[CC] =
@@ -682,6 +686,12 @@ trait ExprApi[Expr[T]] {
       val compiled = CompiledExpr(arg, unlift(fExpr(lift(arg))))
       fromRepr(ExprNode.MapSeq(unlift(seq.toSeq), compiled))(using compiled.codec)
     }
+
+    /** FlatMaps each element of the sequence using the given function, then
+      * concatenates the resulting sequences into one.
+      */
+    def flatMap[U, I: AsExpr.Of[Iterable[U]]](f: Expr[T] => I)(using ClassTag[CC[U]]): Expr[CC[U]] =
+      seq.map(f).flatten
 
     /** Filters the sequence to only include elements satisfying the predicate.
       */
@@ -726,6 +736,35 @@ trait ExprApi[Expr[T]] {
       */
     def contains[I: AsExpr.Of[T]](value: I): Expr[Boolean] =
       exists(e => lift(ExprNode.Equals(unlift(e), unlift(AsExpr(value)))))
+  }
+
+  extension [U, CC[X] <: SeqCC[X, CC], C <: SeqCC[Iterable[U], CC]](seq: Expr[C]) {
+
+    /** Flattens a sequence of iterables into a single sequence.
+      */
+    def flatten(using tag: ClassTag[CC[U]]): Expr[CC[U]] = {
+      val node = unlift(seq.toSeq)
+      given Codec[U] = node.codec.element.element
+      lift(ExprNode.FromRepr(
+        ExprNode.FlattenSeq(node),
+        Codec.Iterable[U, CC[U]](tag, Codec[U])(using seq.factory)
+      ))
+    }
+  }
+
+  extension (strings: Expr[Seq[String]]) {
+
+    /** Joins the elements of the string sequence into a single string using the
+      * given separator.
+      */
+    def mkString(separator: Expr[String]): Expr[String] =
+      lift(ExprNode.ArrayJoin(unlift(strings.toSeq), unlift(separator)))
+
+    /** Joins the elements of the string sequence into a single string using the
+      * given separator.
+      */
+    def mkString(separator: String): Expr[String] =
+      lift(ExprNode.ArrayJoin(unlift(strings.toSeq), ExprNode.Literal(separator)))
   }
 
   extension [K, V](entries: Expr[Seq[(K, V)]]) {
@@ -916,6 +955,22 @@ trait ExprApi[Expr[T]] {
       }
   }
 
+  object cases {
+    final class CasesBuilder[R] private[tyda] (
+        private val head: ExprNode.WhenThen[R],
+        private val tail: Seq[ExprNode.WhenThen[R]]
+    ) {
+      def when[I: AsExpr.Of[R]](cond: Expr[Boolean], thenExpr: I): CasesBuilder[R] =
+        new CasesBuilder(head, tail :+ ExprNode.WhenThen(unlift(cond), unlift(AsExpr(thenExpr))))
+
+      def otherwise[I: AsExpr.Of[R]](default: I): Expr[R] =
+        lift(ExprNode.Cases(head, tail, unlift(AsExpr(default))))
+    }
+
+    def when[R, I: AsExpr.Of[R]](cond: Expr[Boolean], thenExpr: I): CasesBuilder[R] =
+      new CasesBuilder(head = ExprNode.WhenThen(unlift(cond), unlift(AsExpr(thenExpr))), tail = Seq.empty)
+  }
+
   /** Construct an Expr[To] where To is a product with named fields or a named
     * tuple. Example:
     *
@@ -1067,4 +1122,14 @@ trait ExprApi[Expr[T]] {
     */
   def fromJson[T: Codec: JsonArrayOrObject](expr: Expr[String]): Expr[Option[T]] =
     lift(ExprNode.FromJson(unlift(expr), Codec[T]))
+
+  /** Decode a Base64 string expression into binary data.
+    *
+    * Returns `None` if the input string is not valid Base64.
+    */
+  def fromBase64(expr: Expr[String]): Expr[Option[Binary]] = lift(ExprNode.FromBase64(unlift(expr)))
+
+  /** Encode binary data as a Base64 string.
+    */
+  def toBase64(expr: Expr[Binary]): Expr[String] = lift(ExprNode.ToBase64(unlift(expr)))
 }

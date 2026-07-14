@@ -21,6 +21,8 @@ final class Expr[T] private (private[tyda] val node: ExprNode[T]) extends Select
       "Expr was compared using universal equals. " + "This is unlikely to be what was intended. " +
         "Please check the types being compared and make sure they match either Expr[T] == Expr[T] or Expr[T] == T"
     )
+
+  final override def toString: String = node.simpleShow
 }
 
 object Expr extends ExprApi[Expr] {

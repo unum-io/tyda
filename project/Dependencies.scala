@@ -5,7 +5,7 @@ import Keys.*
 
 object Dependencies {
   val scala3Version = "3.7.4"
-  val spark3Version = "3.5.1"
+  val spark3Version = "3.5.3"
   val spark4Version = "4.0.2"
   val jsoniterVersion = "2.38.6"
   val bigQueryConnectorVersion = "0.44.1"
@@ -61,7 +61,8 @@ object Dependencies {
 
   val tydaCollection = libraryDependencies ++= Seq(TestDeps.scalatest)
 
-  val tydaDocs = libraryDependencies ++= Seq(CompileDeps.spark3Sql)
+  val tydaDocs = libraryDependencies ++=
+    Seq(CompileDeps.spark3Sql.exclude("org.scala-lang.modules", "scala-xml_2.13"))
 
   val tydaTestSuites = libraryDependencies ++= Seq(CompileDeps.scalatest, CompileDeps.commonsIo)
 
@@ -82,7 +83,7 @@ object Dependencies {
   val tydaMetadata = libraryDependencies ++=
     Seq(CompileDeps.jsoniterCore, CompileDeps.scalameta, ProvidedDeps.jsoniterMacros, TestDeps.scalatest)
 
-  val tydaSql = libraryDependencies ++= Seq()
+  val tydaSql = libraryDependencies ++= Seq(CompileDeps.slf4j)
 
   val tydaSparkSql = libraryDependencies ++= Seq(TestDeps.spark3Sql)
 
@@ -116,6 +117,5 @@ object Dependencies {
   val tydaJob = libraryDependencies ++=
     Seq(CompileDeps.slf4j, TestDeps.scalatest.exclude("org.scala-lang.modules", "scala-xml_3"))
 
-  val tydaJobTest = libraryDependencies ++=
-    Seq(CompileDeps.scalatest.exclude("org.scala-lang.modules", "scala-xml_3"), CompileDeps.spark3Sql)
+  val tydaJobTest = libraryDependencies ++= Seq(CompileDeps.scalatest)
 }

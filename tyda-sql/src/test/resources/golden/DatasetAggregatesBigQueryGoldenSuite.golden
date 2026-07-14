@@ -90,6 +90,22 @@ SELECT array_agg(t1._2) AS value FROM t1 GROUP BY t1._1
 SELECT array_agg(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
 ------ end
 
+------ Test: concat and map
+SELECT array((SELECT (CAST(c0 AS INT) + CAST(1 AS INT)) FROM unnest(t0.value) AS c0)) AS value FROM (SELECT array_concat_agg(t1._2) AS value FROM t1 GROUP BY t1._1) AS t0
+------ end
+
+------ Test: concat column
+SELECT array_concat_agg(t1._2) AS value FROM t1 GROUP BY t1._1
+------ end
+
+------ Test: concat seq
+SELECT array_concat_agg(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: concat seq by group
+SELECT t1._1 AS _1, array_concat_agg(t1._2) AS _2 FROM t1 GROUP BY t1._1
+------ end
+
 ------ Test: count group by
 SELECT t1._1 AS _1, count(CAST(1 AS INT)) AS _2 FROM t1 GROUP BY t1._1
 ------ end

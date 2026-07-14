@@ -260,33 +260,14 @@ object DatasetOnSpark {
         case Dataset.FromSeq(values, _) => IntermediateDataset(spark.createDataset(values))
         case Dataset.Filter(input, p) =>
           val dsInput = toIntermediate(input).toDataset
-          val filtered = p match {
-            case CompiledExpr(arg, ExprNode.Udf[T @unchecked, Boolean](ref, f, _)) if arg == ref =>
-              dsInput.filter(f)
+          val arg = p.arg
+          val filtered = p.expr match {
+            case ExprNode.Udf(`arg`, f, _) => dsInput.filter(f)
             case _ => dsInput.filter(ExprOnSpark.resolved(dsInput, p))
           }
           IntermediateDataset(filtered)
         case ExplodeOptionToFilter(ds) => toIntermediate(ds)
         case select: Dataset.Select1[?, T] => IntermediateDataset(select1(select))
-        // Workaround for https://issues.apache.org/jira/browse/SPARK-47241 that is present in Spark 3.5.1
-        // The bug means that multiple explodes in the same select lead to planning issues, but planning them
-        // as concecutive selects works.
-        case selectN: Dataset.SelectN[?, ?] if multipleExplodes(selectN) =>
-          val input = toIntermediate(selectN.input).toDataset
-          val exprs = tupleInstances(selectN.exprs)
-          val rowColumnName = "row"
-          val (df, _) =
-            exprs.foldLeft0((input.select(struct("*").as(rowColumnName)), 0)) { [t] => (dsAndCount, expr) =>
-              val (ds, resultExprCount) = dsAndCount
-              val cf = ColumnFactory(ds(rowColumnName))(using selectN.input.codec)
-              val select = convertExplodeExpr(cf, expr)
-              val existingResultColumns = (1 to resultExprCount).map(i => ds(s"_$i"))
-              val columns = existingResultColumns ++
-                Seq(select.as(s"_${resultExprCount + 1}"), ds(rowColumnName))
-              (ds.select(columns*), resultExprCount + 1)
-            }
-          val columns = (1 to exprs.arity).map(i => df(s"_$i"))
-          IntermediateDataset(df.select(columns*).as[T])
         case selectN: Dataset.SelectN[?, ?] =>
           val (input, cf) = toIntermediate(selectN.input).toDataFrameAndColumnFactory
           val columns = tupleInstances(selectN.exprs)
@@ -365,6 +346,9 @@ object DatasetOnSpark {
             """.stripMargin)
           }
           IntermediateDataset(toIntermediate(input).toDataset.limit(n))
+        case Dataset.OrderBy(input, key) =>
+          val (df, cf) = toIntermediate(input).toDataFrameAndColumnFactory
+          IntermediateDataset(df.sort(ExprOnSpark.resolved(cf, key)), cf)
       }
     // TYPE SAFETY: The type parameter of the key is the same as the value
     existingConversions.computeIfAbsent(ds, _ => compute).asInstanceOf[IntermediateDataset[T]]
@@ -372,28 +356,20 @@ object DatasetOnSpark {
 
   private def select1[T, U: Codec](select1: Dataset.Select1[T, U])(using SparkSession): SparkDataset[U] = {
     val input = toIntermediate(select1.input)
+    val arg = select1.expr match {
+      case CompiledExpr(arg, _) => arg
+      case CompiledExplodeExpr(arg, _) => arg
+    }
     select1.expr match {
       /* Use map/flatMap for row level operations instead of UDFs as this allows Spark to potentially optimize
        * away serialization between operations. */
-      case CompiledExpr(arg, ExprNode.Udf[T @unchecked, U](ref, f, _)) if arg == ref => input.toDataset.map(f)
-      case CompiledExplodeExpr(arg, ExprNode.Udf[T @unchecked, Iterable[U]](ref, f, _)) if arg == ref =>
-        input.toDataset.flatMap(f)
+      case CompiledExpr(_, ExprNode.Udf(`arg`, f, _)) => input.toDataset.map(f)
+      case CompiledExplodeExpr(_, ExprNode.Udf(`arg`, f, _)) => input.toDataset.flatMap(f)
       case other =>
         val (df, cf) = input.toDataFrameAndColumnFactory
         val column = convertExplodeExpr(cf, other)
         selectAndUnpack(df, column)
     }
-  }
-
-  private def multipleExplodes(select: Dataset.SelectN[?, ?]): Boolean = {
-    val explodes = tupleInstances(select.exprs).foldLeft0(0)([t] =>
-      (count, expr) =>
-        expr match {
-          case CompiledExplodeExpr(_, _) => count + 1
-          case _ => count
-        }
-    )
-    explodes > 1
   }
 
   private def isSelfJoin(left: Dataset[?], right: Dataset[?]): Boolean = {

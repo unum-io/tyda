@@ -74,4 +74,5 @@ object Timestamp {
   given Arbitrary[Timestamp] = Arbitrary.between(MinValue, MaxValue + 1)
   given Ordering[Timestamp] = Ordering.Long
   given Groupable[Timestamp] = Groupable[Long]
+  given Orderable[Timestamp] = Orderable[Long]
 }

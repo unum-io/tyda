@@ -43,6 +43,10 @@ private[tyda] object UnionMirror {
 
     val alts: List[TypeRepr] = unionTypes(TypeRepr.of[U]).distinct.sortBy(_.show)
     val labels = alts.map(_.show(using Printer.TypeReprShortCode))
+    // Fold with value on the left so that show renders the union in the same
+    // left-to-right order as the sorted alts list (e.g. "Int | String" for
+    // alts = [Int, String]). Swapping the arguments would reverse the label.
+    val normalizedUnion = alts.reduce((acc, value) => OrType(value, acc))
 
     val elemsType = mkTupleTpe(alts).asType
     val labelsType = mkTupleTpe(labels.map(l => ConstantType(StringConstant(l)))).asType
@@ -62,14 +66,20 @@ private[tyda] object UnionMirror {
       }
     )
 
+    val mirroredLabelType =
+      ConstantType(StringConstant(normalizedUnion.show(using Printer.TypeReprShortCode))).asType
+
     elemsType match {
       case '[elems] => labelsType match {
-          case '[labels] => '{
-              new UnionMirror[U] {
-                type MirroredElemTypes = elems & Tuple
-                type MirroredElemLabels = labels & Tuple
-                def ordinal(x: U): Int = ${ ordinalLambda.asExprOf[U => Int] }(x)
-              }
+          case '[labels] => mirroredLabelType match {
+              case '[label] => '{
+                  new UnionMirror[U] {
+                    type MirroredLabel = label & String
+                    type MirroredElemTypes = elems & Tuple
+                    type MirroredElemLabels = labels & Tuple
+                    def ordinal(x: U): Int = ${ ordinalLambda.asExprOf[U => Int] }(x)
+                  }
+                }
             }
         }
     }

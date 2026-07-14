@@ -65,6 +65,7 @@ private def children[T](ds: Dataset[T] | Dataset.Action): Seq[Dataset[?]] =
     case Dataset.Union(left, right) => Seq(left, right)
     case Dataset.Action.Write(input, _, _) => Seq(input)
     case Dataset.Limit(input, _) => Seq(input)
+    case Dataset.OrderBy(input, _) => Seq(input)
   }
 
 private type AnyCompiledExpr = CompiledExpr[?, ?] | CompiledExpr2[?, ?, ?] | CompiledExplodeExpr[?, ?] |
@@ -94,6 +95,7 @@ private def exprs[T](ds: Dataset[T] | Dataset.Action): Seq[AnyCompiledExpr] =
     case Dataset.Union(_, _) => Seq.empty
     case Dataset.Action.Write(_, _, _) => Seq.empty
     case Dataset.Limit(_, _) => Seq.empty
+    case Dataset.OrderBy(_, key) => Seq(key)
   }
 
 private[tyda] def explain(anyCompiled: AnyCompiledExpr): String =
@@ -109,11 +111,12 @@ private[tyda] def explain(anyCompiled: AnyCompiledExpr): String =
 
 private def explainPrimitiveAggregate(primitive: PrimitiveAggregate[?, ?], arg: String): String =
   primitive match {
-    case PrimitiveAggregate.Collect() => "collect($arg)"
-    case PrimitiveAggregate.Count() => "count($arg)"
-    case PrimitiveAggregate.CountSome() => "countSome($arg)"
-    case PrimitiveAggregate.BoolAnd() => "boolAnd($arg)"
-    case PrimitiveAggregate.BoolOr() => "boolOr($arg)"
+    case PrimitiveAggregate.SeqConcat() => s"concat($arg)"
+    case PrimitiveAggregate.Collect() => s"collect($arg)"
+    case PrimitiveAggregate.Count() => s"count($arg)"
+    case PrimitiveAggregate.CountSome() => s"countSome($arg)"
+    case PrimitiveAggregate.BoolAnd() => s"boolAnd($arg)"
+    case PrimitiveAggregate.BoolOr() => s"boolOr($arg)"
     case PrimitiveAggregate.Min(ord) => s"min($arg)(using $ord)"
     case PrimitiveAggregate.Max(ord) => s"max($arg)(using $ord)"
     case PrimitiveAggregate.MinBy(ord) => s"minBy($arg)(using ${ord})"
@@ -139,6 +142,7 @@ private def explainLambdaBody[T](expr: ExprNode[T], args: Map[ExprNode.Reference
         val argName = s"x${args.size}"
         val argsWithOuter = args + (f.arg -> argName)
         s"${body(seq)}.map($argName => ${explainLambdaBody(f.expr, argsWithOuter)})"
+      case ExprNode.FlattenSeq(seq) => s"${body(seq)}.flatten"
       case ExprNode.FilterSeq(seq, predicate) =>
         val argName = s"x${args.size}"
         val argsWithOuter = args + (predicate.arg -> argName)
@@ -199,7 +203,10 @@ private def explainLambdaBody[T](expr: ExprNode[T], args: Map[ExprNode.Reference
       case ExprNode.MakeMap(pairs) => s"makeMap(${body(pairs)})"
       case ExprNode.MapEntries(map) => s"${body(map)}.entries"
       case ExprNode.MapGet(map, key) => s"${body(map)}.get(${body(key)})"
+      case ExprNode.ArrayJoin(operand, sep) => s"${body(operand)}.mkString(${body(sep)})"
       case ExprNode.DistinctSeq(operand) => s"${body(operand)}.distinct"
+      case ExprNode.FromBase64(string) => s"fromBase64(${body(string)})"
+      case ExprNode.ToBase64(binary) => s"toBase64(${body(binary)})"
       case ExprNode.None(_) => "None"
       case ExprNode.Rand() => "rand()"
       case ExprNode.IsNaN(operand) => s"${body(operand)}.isNaN"

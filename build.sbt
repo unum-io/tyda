@@ -1,3 +1,6 @@
+import org.typelevel.sbt.gha.JobEnvironment
+import org.typelevel.sbt.gha.PermissionValue
+import org.typelevel.sbt.gha.Permissions
 import java.nio.file.StandardCopyOption
 
 import scala.sys.process.*
@@ -7,7 +10,7 @@ import scala.util.Failure
 
 import com.github.sbt.git.SbtGit.GitKeys.useConsoleForROGit
 
-ThisBuild / tlBaseVersion := "0.5"
+ThisBuild / tlBaseVersion := "0.10"
 ThisBuild / organization := "com.wppresolve.tyda"
 ThisBuild / organizationName := "WPP"
 ThisBuild / licenses := Seq(License.MIT)
@@ -70,6 +73,34 @@ ThisBuild / githubWorkflowAddedJobs ++= {
       scalas = List("3"),
       javas = javaVersions,
       steps = setupSteps :+ WorkflowStep.Sbt(List("scalafixAll --check"), name = Some("Check scalafix"))
+    ),
+    WorkflowJob(
+      id = "site",
+      name = "Publish Docs",
+      scalas = List("3"),
+      javas = javaVersions,
+      cond = Some("github.event_name != 'pull_request' && github.ref == 'refs/heads/main'"),
+      permissions = Some(
+        Permissions
+          .Specify
+          .defaultRestrictive
+          .withPages(PermissionValue.Write)
+          .withIdToken(PermissionValue.Write)
+      ),
+      environment = Some(JobEnvironment(name = "github-pages")),
+      steps = setupSteps ++ List(
+        WorkflowStep.Sbt(List("doc"), name = Some("Generate docs")),
+        WorkflowStep.Use(
+          UseRef.Public("actions", "upload-pages-artifact", "v5"),
+          name = Some("Upload pages artifact"),
+          params =
+            Map("path" -> s"target/scala-${scalaVersion.value}/unidoc") // adjust to your actual output path
+        ),
+        WorkflowStep.Use(
+          UseRef.Public("actions", "deploy-pages", "v5"),
+          name = Some("Deploy to GitHub Pages")
+        )
+      )
     )
   )
 }
@@ -160,6 +191,9 @@ lazy val root = (project in file("."))
   // Run mdoc as part of unidoc generation
   .settings(Compile / unidoc := (Compile / unidoc).dependsOn((tydaDocs / mdoc).toTask("")).value)
   .settings(
+    // Make unidoc be the default doc command
+    Compile / doc := (Compile / unidoc).map(_.head).value,
+    Compile / doc / aggregate := false,
     // tydaTestSuites depends on scalatest which generates a lots of documentation warnings.
     // Since it a internal test project, we just exclude it from docs like other Test projects.
     ScalaUnidoc / unidoc / unidocProjectFilter :=
@@ -174,7 +208,10 @@ lazy val tydaDocs = (project in file("tyda-docs"))
     // examples commonly have unused values for showing api usage and there also some mdoc internal warnings
     scalacOptions ++= Seq("-Wconf:id=E176&msg=value:s"),
     mdocIn := baseDirectory.value / "docs",
-    mdocOut := mdocOut.value / "_docs"
+    mdocOut := mdocOut.value / "_docs",
+    // We are getting collection-compat both from Spark and mdoc, so we need to exlude one of them to avoid a
+    // conflict.
+    excludeDependencies += "org.scala-lang.modules" % "scala-collection-compat_2.13"
   )
   .settings(Dependencies.tydaDocs)
   .settings(sparkRunSettings)
@@ -398,7 +435,7 @@ lazy val tydaJobTest = (project in file("tyda-job-test"))
   .settings(tydaJobSettings)
   .settings(Dependencies.tydaJobTest)
   .dependsOn(scalafixRules % ScalafixConfig)
-  .dependsOn(tydaJob, tydaSpark3, tydaIterator)
+  .dependsOn(tydaJob, tydaIterator)
 
 lazy val tydaParquet = (project in file("tyda-parquet"))
   .settings(name := "tyda-parquet")

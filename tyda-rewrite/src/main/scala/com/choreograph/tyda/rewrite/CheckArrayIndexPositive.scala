@@ -11,7 +11,7 @@ import com.choreograph.tyda.ExprNode.ternary
   * consistent behavior across all backends.
   */
 object CheckArrayIndexPositive extends ExprRule {
-  def unapply[T](node: ExprNode.ElementSeq[T]): Some[ExprNode[T]] = {
+  def unapply[T](node: ExprNode.ElementSeq[T]): Some[ExprNode.ElementSeq[T]] = {
     val checkedIndex = ternary(node.index < 0, raiseError[Int]("Array index is negative"), node.index)
     Some(node.copy(index = checkedIndex))
   }

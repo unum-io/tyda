@@ -1,5 +1,6 @@
 package com.choreograph.tyda.rewrite
 
+import com.choreograph.tyda.Binary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
@@ -26,7 +27,7 @@ object NotNullNonEmptyDummyLiteral {
       case Codec.Double => ExprNode.Literal(0.0, Codec.Double)
       case Codec.String => ExprNode.Literal("", Codec.String)
       case Codec.Boolean => ExprNode.Literal(false, Codec.Boolean)
-      case Codec.Bytes => ExprNode.Literal(Array.emptyByteArray, Codec.Bytes)
+      case Codec.Bytes => ExprNode.Literal(Binary.empty, Codec.Bytes)
       case Codec.TimestampMicros => ExprNode.Literal(Timestamp.fromMicros(0), Codec.TimestampMicros)
       case Codec.DurationMicros => ExprNode.Literal(Duration.fromMicros(0), Codec.DurationMicros)
       case Codec.Date => ExprNode.Literal(Date.fromDays(0), Codec.Date)

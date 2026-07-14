@@ -13,7 +13,7 @@ private[sql] enum SqlExpr {
   case LiteralByteEscapeString(value: Array[Byte])
   case LiteralNumeric(value: String)
   case LiteralBool(value: Boolean)
-  case LiteralNull
+  case LiteralNull // scalafix:ok Disallowed.Method
   case UnaryOp(op: String, expr: SqlExpr, isPrefix: Boolean)
   case Case(whens: Seq[(condition: SqlExpr, result: SqlExpr)], elseExpr: Option[SqlExpr] = None)
   case Cast(variant: String, expr: SqlExpr, to: DdlType)

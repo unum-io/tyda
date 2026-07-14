@@ -132,6 +132,9 @@ object ExprEvaluation {
           // TYPE SAFETY: We know that when there are multiple arguments they will be wrapped in a Tuple.
           if args.size == 1 then from => seqEval(from).map(v => fEval((from, v)))
           else from => seqEval(from).map(v => fEval(from.asInstanceOf[Tuple] :* v))
+        case ExprNode.FlattenSeq(seq) =>
+          val seqEval = impl(seq)
+          from => seqEval(from).flatten
         case ExprNode.FilterSeq(seq, predicate) =>
           val seqEval = impl(seq)
           val predEval = lambdaN(args :+ predicate.arg, predicate.expr)
@@ -196,11 +199,11 @@ object ExprEvaluation {
           binaryOp(string, delimiter, (str, del) => str.split(Pattern.quote(del), -1).toSeq)
         case ExprNode.ToJson(inner) =>
           val innerEval = impl(inner)
-          val jsonCodec = CodecToJsoniter.create(using inner.codec)
+          val jsonCodec = CodecToJsoniter.unwrapped(using inner.codec)
           from => writeToString(innerEval(from))(using jsonCodec)
         case ExprNode.FromJson(inner, codec) =>
           val innerEval = impl(inner)
-          val jsonCodec = CodecToJsoniter.create(using codec)
+          val jsonCodec = CodecToJsoniter.unwrapped(using codec)
           val config = ReaderConfig.withCheckForEndOfInput(false)
           from =>
             val encoded = innerEval(from)
@@ -260,6 +263,16 @@ object ExprEvaluation {
           val mapEval = impl(map)
           val keyEval = impl(key)
           from => mapEval(from).get(keyEval(from))
+        case ExprNode.ArrayJoin(operand, separator) =>
+          val seqEval = impl(operand)
+          val sepEval = impl(separator)
+          from => seqEval(from).mkString(sepEval(from))
+        case ExprNode.FromBase64(string) =>
+          val stringEval = impl(string)
+          from => Binary.fromBase64(stringEval(from))
+        case ExprNode.ToBase64(binary) =>
+          val binaryEval = impl(binary)
+          from => binaryEval(from).toBase64
         case ExprNode.DistinctSeq(operand) => (impl(operand).andThen(_.distinct))
         case ExprNode.None(_) => _ => None
         case ExprNode.Rand() => _ => scala.util.Random.nextDouble()

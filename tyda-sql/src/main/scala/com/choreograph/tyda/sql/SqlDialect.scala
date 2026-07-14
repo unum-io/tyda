@@ -23,13 +23,17 @@ import com.choreograph.tyda.sql.DdlDialect.DurationSupport
 final case class SqlDialect(
     arrayDistinct: SqlDialect.ArrayDistinct,
     arrayConcat: String,
+    arrayConcatAgg: SqlDialect.ArrayConcatAgg,
     arrayElement: SqlDialect.ArrayElement,
+    arrayJoin: String,
     arraySize: String,
     arrayHigherOrderFunctions: SqlDialect.ArrayHigherOrderFunctions,
     binaryLiteral: SqlDialect.BinaryLiteral,
     boolAndFunction: String,
     boolOrFunction: String,
     bytesLength: String,
+    fromBase64: SqlDialect.FromBase64Support,
+    toBase64: SqlDialect.ToBase64Support.Function,
     collectFunction: String,
     countIfFunction: String,
     ddl: DdlDialect,
@@ -41,6 +45,7 @@ final case class SqlDialect(
     floatingCompare: SqlDialect.FloatingCompare,
     floatingOverflowChecks: SqlDialect.FloatingOverflowChecks,
     fromJson: SqlDialect.FromJsonSupport,
+    floatingOrder: SqlDialect.FloatingOrder,
     intergerSupport: SqlDialect.IntegerSupport,
     isNanFunction: String,
     makeArray: SqlDialect.MakeArray,
@@ -64,6 +69,9 @@ final case class SqlDialect(
     // BigQuery does not support EXCEPT DISTINCT when any SELECT column is of STRUCT type.
     // When false, the Distinct(LeftAntiJoin(_ == _)) pattern uses NOT EXISTS + DISTINCT instead.
     supportsExceptDistinctOnStructColumns: Boolean = true,
+    // BigQuery does not support struct types in ORDER BY at all, requiring individual fields to be
+    // listed explicitly.
+    flattenStructInOrderBy: Boolean = false,
     values: SqlDialect.Values,
     writeSupport: SqlDialect.WriteSupport,
     rand: String,
@@ -77,6 +85,50 @@ final case class SqlDialect(
 )
 
 object SqlDialect {
+
+  /** How to decode a Base64 string to binary, returning null on invalid input.
+    */
+  enum FromBase64Support {
+
+    /** A function call with a format argument, e.g.
+      * `try_to_binary(str, 'base64')` in Spark SQL.
+      */
+    case TryFunction(name: String, format: String)
+
+    /** A simple function call where `null` is returned on invalid input, e.g.
+      * `SAFE.FROM_BASE64(str)`.
+      */
+    case Function(name: String)
+  }
+
+  /** How to encode binary to a Base64 string. */
+  enum ToBase64Support {
+
+    /** A simple function taking the binary and encodes it.
+      *
+      * If isChunked is true it produces a values chunked by newlines with needs
+      * to be filtered out to have correct behavior.
+      */
+    case Function(name: String, isChunked: Boolean)
+  }
+
+  enum ArrayConcatAgg {
+
+    /** Aggregate directly using a native function. e.g.
+      * ```
+      * array_concat_agg(array_column)
+      * ```
+      */
+    case Function(name: String)
+
+    /** Aggregate by collecting into a nested array and then flattening it. e.g.
+      * ```
+      * flatten(collect_list(array_column))
+      * ```
+      */
+    case FlattenCollect(flatten: String)
+  }
+
   enum Values {
 
     /** Supports the SQL standard `VALUES` clause in the FROM clause. e.g.
@@ -208,7 +260,7 @@ object SqlDialect {
       * explode(array_column)
       * ```
       */
-    case Function(name: String, supportMultipleExplodes: Boolean)
+    case Function(name: String)
 
     /** Explode is supported by doing a inner join with the array column. e.g.
       * ```
@@ -231,6 +283,20 @@ object SqlDialect {
     case NaNIsLargest
   }
 
+  enum FloatingOrder {
+
+    /** ORDER BY follows IEEE semantics: any comparison with NaN is false, so
+      * NaN can appear anywhere. An explicit IS_NAN() discriminator is added to
+      * ensure NaN sorts last.
+      */
+    case NaNFirst
+
+    /** ORDER BY follows the more common SQL semantics where NaN is considered
+      * larger than all other values.
+      */
+    case NaNLast
+  }
+
   enum FloatingAggregate {
     case NaNIsSmallestAndLargest
     case NaNIsLargest
@@ -249,7 +315,7 @@ object SqlDialect {
       * array_transform(array_column, x -> x + 1)
       * ```
       */
-    case Lambda(map: String, aggregate: String, filter: String)
+    case Lambda(map: String, aggregate: String, filter: String, flatten: String)
 
     /** Higher order functions can be implemented using a subquery e.g.
       * ```
@@ -358,13 +424,17 @@ object SqlDialect {
     startsWithFunction = "STARTS_WITH",
     arrayDistinct = ArrayDistinct.Subquery("array", "unnest"),
     arrayConcat = "array_concat",
+    arrayConcatAgg = ArrayConcatAgg.Function("array_concat_agg"),
     arrayElement = ArrayElement.Braces,
+    arrayJoin = "array_to_string",
     arraySize = "array_length",
     arrayHigherOrderFunctions = ArrayHigherOrderFunctions.Subquery("array", "unnest"),
     binaryLiteral = BinaryLiteral.ByteEscapeString,
     boolAndFunction = "logical_and",
     boolOrFunction = "logical_or",
     bytesLength = "byte_length",
+    fromBase64 = FromBase64Support.Function("SAFE.FROM_BASE64"),
+    toBase64 = ToBase64Support.Function("TO_BASE64", false),
     collectFunction = "array_agg",
     countIfFunction = "countif",
     ddl = DdlDialect(
@@ -391,6 +461,7 @@ object SqlDialect {
       extractArray = "json_query_array",
       extractObject = "json_query"
     ),
+    floatingOrder = FloatingOrder.NaNFirst,
     intergerSupport = IntegerSupport.OnlyBigInt,
     isNanFunction = "is_nan",
     makeArray = MakeArray.Brackets,
@@ -408,6 +479,7 @@ object SqlDialect {
     tryCast = "SAFE_CAST",
     useSubqueryToAvoidStructInGroupBy = true,
     supportsExceptDistinctOnStructColumns = false,
+    flattenStructInOrderBy = true,
     values = Values.SelectUnionAll,
     rand = "RAND",
     writeSupport = WriteSupport.ExportData,
@@ -426,24 +498,30 @@ object SqlDialect {
     startsWithFunction = "startswith",
     arrayDistinct = ArrayDistinct.Function("array_distinct"),
     arrayConcat = "concat",
+    arrayConcatAgg = ArrayConcatAgg.FlattenCollect("flatten"),
     arrayElement = ArrayElement.Function("element_at"),
+    arrayJoin = "array_join",
     arraySize = "size",
-    arrayHigherOrderFunctions = ArrayHigherOrderFunctions.Lambda("transform", "aggregate", "filter"),
+    arrayHigherOrderFunctions =
+      ArrayHigherOrderFunctions.Lambda("transform", "aggregate", "filter", "flatten"),
     binaryLiteral = BinaryLiteral.HexString,
     boolAndFunction = "bool_and",
     boolOrFunction = "bool_or",
     bytesLength = "length",
+    fromBase64 = FromBase64Support.TryFunction("try_to_binary", "base64"),
+    toBase64 = ToBase64Support.Function("base64", true),
     collectFunction = "collect_list",
     countIfFunction = "count_if",
     ddl = DdlDialect.Spark,
     errorFunction = "raise_error",
-    explode = ExplodeSupport.Function("explode", supportMultipleExplodes = false),
+    explode = ExplodeSupport.Function("explode"),
     extractDateDays = "unix_date",
     extractTimestampMicros = "unix_micros",
     floatingAggregate = FloatingAggregate.NaNIsLargest,
     floatingCompare = FloatingCompare.NaNIsLargest,
     floatingOverflowChecks = FloatingOverflowChecks.FloatAndDouble,
     fromJson = FromJsonSupport.Parser("from_json", Map("mode" -> "PERMISSIVE") ++ sparkJsonOptions),
+    floatingOrder = FloatingOrder.NaNLast,
     intergerSupport = IntegerSupport.AllSizes,
     isNanFunction = "isnan",
     makeArray = MakeArray.Function("array"),

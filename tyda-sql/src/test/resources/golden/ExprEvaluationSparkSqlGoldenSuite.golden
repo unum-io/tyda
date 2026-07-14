@@ -123,11 +123,11 @@ SELECT t1.a AS a, t1.b AS b, t1.c AS c FROM t1
 ------ end
 
 ------ Test: apply to empty named tuple inside struct
-SELECT named_struct('the cake is a lie 🎂', NULL) AS empty FROM t1
+SELECT named_struct('the cake is a lie 🎂', CAST(NULL AS void)) AS empty FROM t1
 ------ end
 
 ------ Test: apply to empty tuple inside struct
-SELECT named_struct('the cake is a lie 🎂', NULL) AS empty FROM t1
+SELECT named_struct('the cake is a lie 🎂', CAST(NULL AS void)) AS empty FROM t1
 ------ end
 
 ------ Test: apply to named tuple
@@ -135,23 +135,23 @@ SELECT t1.a AS a, t1.b AS b, t1.c AS c FROM t1
 ------ end
 
 ------ Test: array element access fails on index too large
-SELECT element_at(array(CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)), (CASE WHEN (CAST(100 AS INT) < CAST(0 AS INT)) THEN raise_error('Array index is negative') ELSE CAST(100 AS INT) END + CAST(1 AS INT))) AS value FROM t1
+SELECT element_at(array(CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)), (CASE WHEN (CAST(100 AS INT) < CAST(0 AS INT)) THEN CAST(raise_error('Array index is negative') AS INT) ELSE CAST(100 AS INT) END + CAST(1 AS INT))) AS value FROM t1
 ------ end
 
 ------ Test: array element access fails on negative index
-SELECT element_at(array(CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)), (CASE WHEN (CAST(-1 AS INT) < CAST(0 AS INT)) THEN raise_error('Array index is negative') ELSE CAST(-1 AS INT) END + CAST(1 AS INT))) AS value FROM t1
+SELECT element_at(array(CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)), (CASE WHEN (CAST(-1 AS INT) < CAST(0 AS INT)) THEN CAST(raise_error('Array index is negative') AS INT) ELSE CAST(-1 AS INT) END + CAST(1 AS INT))) AS value FROM t1
 ------ end
 
 ------ Test: array element access with Expr index
-SELECT element_at(t1._1, (CASE WHEN (t1._2 < CAST(0 AS INT)) THEN raise_error('Array index is negative') ELSE t1._2 END + CAST(1 AS INT))) AS value FROM t1
+SELECT element_at(t1._1, (CASE WHEN (t1._2 < CAST(0 AS INT)) THEN CAST(raise_error('Array index is negative') AS INT) ELSE t1._2 END + CAST(1 AS INT))) AS value FROM t1
 ------ end
 
 ------ Test: array element access with literal index
-SELECT element_at(t1.value, (CASE WHEN (CAST(0 AS INT) < CAST(0 AS INT)) THEN raise_error('Array index is negative') ELSE CAST(0 AS INT) END + CAST(1 AS INT))) AS value FROM t1
+SELECT element_at(t1.value, (CASE WHEN (CAST(0 AS INT) < CAST(0 AS INT)) THEN CAST(raise_error('Array index is negative') AS INT) ELSE CAST(0 AS INT) END + CAST(1 AS INT))) AS value FROM t1
 ------ end
 
 ------ Test: array element access with literal index and array element
-SELECT element_at(t1.value, (CASE WHEN (CAST(0 AS INT) < CAST(0 AS INT)) THEN raise_error('Array index is negative') ELSE CAST(0 AS INT) END + CAST(1 AS INT))) AS value FROM t1
+SELECT element_at(t1.value, (CASE WHEN (CAST(0 AS INT) < CAST(0 AS INT)) THEN CAST(raise_error('Array index is negative') AS INT) ELSE CAST(0 AS INT) END + CAST(1 AS INT))) AS value FROM t1
 ------ end
 
 ------ Test: asBase complex
@@ -187,23 +187,23 @@ SELECT 'a' AS value FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for enum product case
-SELECT coalesce(named_struct('i', t1.i), raise_error('Failed to invert asBase')).i AS i FROM t1
+SELECT coalesce(named_struct('i', t1.i), CAST(raise_error('Failed to invert asBase') AS STRUCT<i INT NOT NULL>)).i AS i FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for enum singleton case
-SELECT NULL FROM t1
+SELECT CAST(NULL AS void) FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for sealed trait product case
-SELECT coalesce(named_struct('i', t1.i), raise_error('Failed to invert asBase')).i AS i FROM t1
+SELECT coalesce(named_struct('i', t1.i), CAST(raise_error('Failed to invert asBase') AS STRUCT<i INT NOT NULL>)).i AS i FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for sealed trait singleton case
-SELECT NULL FROM t1
+SELECT CAST(NULL AS void) FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for string enum singleton case
-SELECT NULL FROM t1
+SELECT CAST(NULL AS void) FROM t1
 ------ end
 
 ------ Test: asCase from enum to product case
@@ -211,7 +211,7 @@ SELECT t1.c AS value FROM t1
 ------ end
 
 ------ Test: asCase from enum to singleton case
-SELECT CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END AS value FROM t1
+SELECT CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', CAST(NULL AS void)) END AS value FROM t1
 ------ end
 
 ------ Test: asCase from sealed trait to product case
@@ -219,11 +219,11 @@ SELECT t1.b AS value FROM t1
 ------ end
 
 ------ Test: asCase from sealed trait to singleton case
-SELECT CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END AS value FROM t1
+SELECT CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', CAST(NULL AS void)) END AS value FROM t1
 ------ end
 
 ------ Test: asCase from string enum to singleton case
-SELECT CASE WHEN (t1.value = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END AS value FROM t1
+SELECT CASE WHEN (t1.value = 'a') THEN named_struct('the cake is a lie 🎂', CAST(NULL AS void)) END AS value FROM t1
 ------ end
 
 ------ Test: asCase inverts asBase for enum product case
@@ -231,7 +231,7 @@ SELECT CASE WHEN (t1.c IS NOT NULL) THEN named_struct('discriminant', 'c', 'c', 
 ------ end
 
 ------ Test: asCase inverts asBase for enum singleton case
-SELECT CASE WHEN (CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN named_struct('discriminant', 'a', 'c', CAST(NULL AS STRUCT<i INT NOT NULL>), 'd', CAST(NULL AS STRUCT<i INT NOT NULL>)) END AS value FROM t1
+SELECT CASE WHEN (CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', CAST(NULL AS void)) END IS NOT NULL) THEN named_struct('discriminant', 'a', 'c', CAST(NULL AS STRUCT<i INT NOT NULL>), 'd', CAST(NULL AS STRUCT<i INT NOT NULL>)) END AS value FROM t1
 ------ end
 
 ------ Test: asCase inverts asBase for sealed trait product case
@@ -239,15 +239,15 @@ SELECT CASE WHEN (t1.b IS NOT NULL) THEN named_struct('discriminant', 'b', 'b', 
 ------ end
 
 ------ Test: asCase inverts asBase for sealed trait singleton case
-SELECT CASE WHEN (CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN named_struct('discriminant', 'a', 'b', CAST(NULL AS STRUCT<i INT NOT NULL>)) END AS value FROM t1
+SELECT CASE WHEN (CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', CAST(NULL AS void)) END IS NOT NULL) THEN named_struct('discriminant', 'a', 'b', CAST(NULL AS STRUCT<i INT NOT NULL>)) END AS value FROM t1
 ------ end
 
 ------ Test: asCase inverts asBase for string enum singleton case
-SELECT CASE WHEN (CASE WHEN (t1.value = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN 'a' END AS value FROM t1
+SELECT CASE WHEN (CASE WHEN (t1.value = 'a') THEN named_struct('the cake is a lie 🎂', CAST(NULL AS void)) END IS NOT NULL) THEN 'a' END AS value FROM t1
 ------ end
 
 ------ Test: asCase: in option map
-SELECT CASE WHEN (t1.value IS NOT NULL) THEN named_struct('value', CASE WHEN (t1.value.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END) END AS value FROM t1
+SELECT CASE WHEN (t1.value IS NOT NULL) THEN named_struct('value', CASE WHEN (t1.value.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', CAST(NULL AS void)) END) END AS value FROM t1
 ------ end
 
 ------ Test: asCase: select from product case
@@ -268,6 +268,30 @@ SELECT (t1._1 OR t1._2) AS value FROM t1
 
 ------ Test: bytes length
 SELECT length(t1.value) AS value FROM t1
+------ end
+
+------ Test: cases.when first matching branch is used
+SELECT CASE WHEN (NOT (t1.value <= CAST(0 AS INT))) THEN CAST(1 AS INT) WHEN (NOT (t1.value <= CAST(-5 AS INT))) THEN CAST(2 AS INT) ELSE CAST(3 AS INT) END AS value FROM t1
+------ end
+
+------ Test: cases.when with Option result and otherwise
+SELECT CASE WHEN (NOT (t1.value <= CAST(0 AS INT))) THEN t1.value END AS value FROM t1
+------ end
+
+------ Test: cases.when with literal then-expressions
+SELECT CASE WHEN t1._1 THEN t1._2 ELSE t1._3 END AS value FROM t1
+------ end
+
+------ Test: cases.when with many branches and literal otherwise
+SELECT CASE WHEN (t1.value < CAST(0 AS INT)) THEN 'negative' WHEN (t1.value = CAST(0 AS INT)) THEN 'zero' ELSE 'positive' END AS value FROM t1
+------ end
+
+------ Test: cases.when with multiple branches and otherwise
+SELECT CASE WHEN (NOT (t1._1 <= CAST(0 AS INT))) THEN t1._1 WHEN (NOT (t1._2 <= CAST(0 AS INT))) THEN t1._2 ELSE CAST(0 AS INT) END AS value FROM t1
+------ end
+
+------ Test: cases.when with single branch and otherwise
+SELECT CASE WHEN t1._1 THEN t1._2 ELSE t1._3 END AS value FROM t1
 ------ end
 
 ------ Test: cast com.choreograph.tyda.Decimal$package.Decimal[10, 0] to com.choreograph.tyda.Decimal$package.Decimal[20, 5]
@@ -463,7 +487,7 @@ SELECT '' AS value FROM t1
 ------ end
 
 ------ Test: create literal () scala.Tuple$package.EmptyTuple.type
-SELECT NULL FROM t1
+SELECT CAST(NULL AS void) FROM t1
 ------ end
 
 ------ Test: create literal (a,1) scala.NamedTuple.NamedTuple[scala.Tuple2["a", "b"], scala.Tuple2[scala.Predef.String, scala.Int]]
@@ -570,12 +594,20 @@ SELECT CAST(NULL AS BIGINT) AS value FROM t1
 SELECT CAST(NULL AS STRUCT<a INT NOT NULL,b STRING NOT NULL,c BOOLEAN NOT NULL>) AS value FROM t1
 ------ end
 
+------ Test: create literal None scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum.A]
+SELECT CAST(NULL AS STRUCT<`the cake is a lie 🎂` void>) AS value FROM t1
+------ end
+
 ------ Test: create literal None scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum]
 SELECT CAST(NULL AS STRUCT<discriminant STRING NOT NULL,c STRUCT<i INT NOT NULL>,d STRUCT<i INT NOT NULL>>) AS value FROM t1
 ------ end
 
 ------ Test: create literal None scala.Option[scala.Int]
 SELECT CAST(NULL AS INT) AS value FROM t1
+------ end
+
+------ Test: create literal None scala.Option[scala.Option[scala.Int]]
+SELECT CAST(NULL AS STRUCT<value INT>) AS value FROM t1
 ------ end
 
 ------ Test: create literal None scala.Option[scala.Option[scala.Option[scala.Int]]]
@@ -598,8 +630,16 @@ SELECT named_struct('discriminant', 'c', 'c', named_struct('i', CAST(1 AS INT)),
 SELECT array(array(CAST(1 AS INT), CAST(2 AS INT)), CAST(NULL AS ARRAY<INT>), CAST(array() AS ARRAY<INT>)) AS value FROM t1
 ------ end
 
+------ Test: create literal Some(None) scala.Option[scala.Option[scala.Int]]
+SELECT named_struct('value', CAST(NULL AS INT)) AS value FROM t1
+------ end
+
 ------ Test: create literal Some(None) scala.Option[scala.Option[scala.Option[scala.Int]]]
 SELECT named_struct('value', CAST(NULL AS STRUCT<value INT>)) AS value FROM t1
+------ end
+
+------ Test: create literal Some(Some(0)) scala.Option[scala.Option[scala.Int]]
+SELECT named_struct('value', CAST(0 AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: create literal Some(Some(List(1, 2))) scala.Option[scala.Option[scala.collection.immutable.Seq[scala.Int]]]
@@ -623,11 +663,11 @@ SELECT CAST(1 AS INT) AS a, 'a' AS b, FALSE AS c FROM t1
 ------ end
 
 ------ Test: create literal WithEmptyTuple(()) com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithEmptyTuple
-SELECT named_struct('the cake is a lie 🎂', NULL) AS empty FROM t1
+SELECT named_struct('the cake is a lie 🎂', CAST(NULL AS void)) AS empty FROM t1
 ------ end
 
 ------ Test: create literal WithNamedTupleEmpty(()) com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithNamedTupleEmpty
-SELECT named_struct('the cake is a lie 🎂', NULL) AS empty FROM t1
+SELECT named_struct('the cake is a lie 🎂', CAST(NULL AS void)) AS empty FROM t1
 ------ end
 
 ------ Test: create literal false scala.Boolean
@@ -683,7 +723,7 @@ SELECT (t1.value IS NULL) AS value FROM t1
 ------ end
 
 ------ Test: expect does not raise error when Some
-SELECT coalesce(t1.value, raise_error('should not happen')) AS value FROM t1
+SELECT coalesce(t1.value, CAST(raise_error('should not happen') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: extra stuff after json object is ignored
@@ -814,6 +854,10 @@ SELECT (t1.value - CAST(32767 AS SMALLINT)) AS value FROM t1
 SELECT CASE WHEN (t1.value IS NULL) THEN CAST(NULL AS INT) ELSE t1.value.value END AS value FROM t1
 ------ end
 
+------ Test: fromBase64
+SELECT try_to_binary(t1.value, 'base64') AS value FROM t1
+------ end
+
 ------ Test: gt for com.choreograph.tyda.Date$package.Date
 SELECT (NOT (t1._1 <= t1._2)) AS value FROM t1
 ------ end
@@ -899,7 +943,7 @@ SELECT array('\b', '', '\n', '\r', '\t', '', '\'', '\\', '"', '`', '${var}') A
 ------ end
 
 ------ Test: identity enum singleton
-SELECT NULL FROM t1
+SELECT CAST(NULL AS void) FROM t1
 ------ end
 
 ------ Test: identity primitive
@@ -907,11 +951,11 @@ SELECT t1.value AS value FROM t1
 ------ end
 
 ------ Test: identity sealed trait singleton
-SELECT NULL FROM t1
+SELECT CAST(NULL AS void) FROM t1
 ------ end
 
 ------ Test: identity string enum singleton
-SELECT NULL FROM t1
+SELECT CAST(NULL AS void) FROM t1
 ------ end
 
 ------ Test: identity tuple
@@ -1019,7 +1063,7 @@ SELECT map_from_entries(CAST(array() AS ARRAY<STRUCT<_1 INT NOT NULL,_2 STRING N
 ------ end
 
 ------ Test: make empty namedTuple
-SELECT NULL FROM t1
+SELECT CAST(NULL AS void) FROM t1
 ------ end
 
 ------ Test: make empty seq
@@ -1027,7 +1071,7 @@ SELECT CAST(array() AS ARRAY<INT>) AS value FROM t1
 ------ end
 
 ------ Test: make empty tuple
-SELECT NULL FROM t1
+SELECT CAST(NULL AS void) FROM t1
 ------ end
 
 ------ Test: make map
@@ -1139,11 +1183,11 @@ SELECT element_at(map_from_entries(array(named_struct('_1', t1._1, '_2', t1._2))
 ------ end
 
 ------ Test: match-case all cases sealed trait
-SELECT CASE WHEN (t1.b IS NOT NULL) THEN t1.b.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN CAST(1 AS INT) ELSE raise_error('Unknown case') END AS value FROM t1
+SELECT CASE WHEN (t1.b IS NOT NULL) THEN t1.b.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', CAST(NULL AS void)) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(raise_error('Unknown case') AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: match-case all cases string enum
-SELECT CASE WHEN (CASE WHEN (t1.value = 'b') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN 'B' WHEN (CASE WHEN (t1.value = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN 'A' ELSE raise_error('Unknown case') END AS value FROM t1
+SELECT CASE WHEN (CASE WHEN (t1.value = 'b') THEN named_struct('the cake is a lie 🎂', CAST(NULL AS void)) END IS NOT NULL) THEN 'B' WHEN (CASE WHEN (t1.value = 'a') THEN named_struct('the cake is a lie 🎂', CAST(NULL AS void)) END IS NOT NULL) THEN 'A' ELSE CAST(raise_error('Unknown case') AS STRING) END AS value FROM t1
 ------ end
 
 ------ Test: match-case only otherwise
@@ -1151,11 +1195,11 @@ SELECT CAST(99 AS INT) AS value FROM t1
 ------ end
 
 ------ Test: match-case only when cases
-SELECT CASE WHEN (t1.d IS NOT NULL) THEN t1.d.i WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'b') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN CAST(2 AS INT) WHEN (CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN CAST(1 AS INT) ELSE raise_error('Unknown case') END AS value FROM t1
+SELECT CASE WHEN (t1.d IS NOT NULL) THEN t1.d.i WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'b') THEN named_struct('the cake is a lie 🎂', CAST(NULL AS void)) END IS NOT NULL) THEN CAST(2 AS INT) WHEN (CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', CAST(NULL AS void)) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(raise_error('Unknown case') AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: match-case when cases + otherwise
-SELECT CASE WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', NULL) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(99 AS INT) END AS value FROM t1
+SELECT CASE WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN named_struct('the cake is a lie 🎂', CAST(NULL AS void)) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(99 AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: max
@@ -1164,6 +1208,14 @@ SELECT CASE WHEN (t1._1 < t1._2) THEN t1._2 ELSE t1._1 END AS value FROM t1
 
 ------ Test: min
 SELECT CASE WHEN (t1._1 < t1._2) THEN t1._1 ELSE t1._2 END AS value FROM t1
+------ end
+
+------ Test: mkString with Expr separator
+SELECT array_join(t1._1, t1._2) AS value FROM t1
+------ end
+
+------ Test: mkString with literal separator
+SELECT array_join(t1.value, ',') AS value FROM t1
 ------ end
 
 ------ Test: multiply two byte numbers
@@ -1246,6 +1298,10 @@ SELECT CASE WHEN (t1.value IS NOT NULL) THEN (t1.value.value IS NULL) END AS val
 SELECT coalesce(CASE WHEN (t1.value IS NOT NULL) THEN array(t1.value) END, CAST(array() AS ARRAY<ARRAY<INT>>)) AS value FROM t1
 ------ end
 
+------ Test: non ascii fields
+SELECT (CAST(t1.`瑞` AS INT) + CAST(t1.`典` AS INT)) AS value FROM t1
+------ end
+
 ------ Test: not equals on primitive
 SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
 ------ end
@@ -1255,51 +1311,55 @@ SELECT t1.a AS a FROM t1
 ------ end
 
 ------ Test: raise error in expect when None
-SELECT coalesce(CAST(NULL AS INT), raise_error('oh no!')) AS value FROM t1
+SELECT coalesce(CAST(NULL AS INT), CAST(raise_error('oh no!') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in &&
-SELECT (FALSE AND raise_error('error')) AS value FROM t1
+SELECT (FALSE AND CAST(raise_error('error') AS BOOLEAN)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in coalesce
-SELECT coalesce(t1.value, raise_error('error')) AS value FROM t1
+SELECT coalesce(t1.value, CAST(raise_error('error') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in getOrElse
-SELECT coalesce(t1.value, raise_error('error')) AS value FROM t1
+SELECT coalesce(t1.value, CAST(raise_error('error') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in orElse
-SELECT coalesce(t1.value, raise_error('error')) AS value FROM t1
+SELECT coalesce(t1.value, CAST(raise_error('error') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in ternary ifFalse
-SELECT CASE WHEN TRUE THEN t1.value ELSE raise_error('error') END AS value FROM t1
+SELECT CASE WHEN TRUE THEN t1.value ELSE CAST(raise_error('error') AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in ternary ifTrue
-SELECT CASE WHEN FALSE THEN raise_error('error') ELSE t1.value END AS value FROM t1
+SELECT CASE WHEN FALSE THEN CAST(raise_error('error') AS INT) ELSE t1.value END AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in when
-SELECT CASE WHEN FALSE THEN raise_error('error') END AS value FROM t1
+SELECT CASE WHEN FALSE THEN CAST(raise_error('error') AS INT) END AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in ||
-SELECT (TRUE OR raise_error('error')) AS value FROM t1
+SELECT (TRUE OR CAST(raise_error('error') AS BOOLEAN)) AS value FROM t1
 ------ end
 
 ------ Test: raise error raises in coalesce after None
-SELECT coalesce(CAST(NULL AS STRING), raise_error('My error message')) AS value FROM t1
+SELECT coalesce(CAST(NULL AS STRING), CAST(raise_error('My error message') AS STRING)) AS value FROM t1
 ------ end
 
 ------ Test: raise error raises in coalesce before some
-SELECT coalesce(raise_error('My error message'), t1.value) AS value FROM t1
+SELECT coalesce(CAST(raise_error('My error message') AS STRING), t1.value) AS value FROM t1
+------ end
+
+------ Test: raiseError is strongly typed
+SELECT transform(CAST(raise_error('My error message') AS ARRAY<INT>), c0 -> (c0 + CAST(1 AS INT))) AS value FROM t1
 ------ end
 
 ------ Test: raiseError throws static error message
-SELECT raise_error('My error message') AS value FROM t1
+SELECT CAST(raise_error('My error message') AS INT) AS value FROM t1
 ------ end
 
 ------ Test: remove
@@ -1340,6 +1400,22 @@ SELECT filter(t1.value, c0 -> (NOT (c0 <= CAST(0 AS INT)))) AS value FROM t1
 
 ------ Test: seq filter outer
 SELECT filter(t1._1, c0 -> (NOT (c0 <= t1._2))) AS value FROM t1
+------ end
+
+------ Test: seq flatMap
+SELECT flatten(transform(t1.value, c0 -> array(CAST(div(c0, CAST(2 AS INT)) AS INT), (CAST(div(c0, CAST(2 AS INT)) AS INT) + CAST(1 AS INT))))) AS value FROM t1
+------ end
+
+------ Test: seq flatMap list
+SELECT flatten(transform(t1.value, c0 -> array(CAST(div(c0, CAST(2 AS INT)) AS INT), (CAST(div(c0, CAST(2 AS INT)) AS INT) + CAST(1 AS INT))))) AS value FROM t1
+------ end
+
+------ Test: seq flatMap list with Option keeps Some, drops None
+SELECT flatten(transform(t1.value, c0 -> CASE WHEN (CASE WHEN (NOT (c0 <= CAST(0 AS INT))) THEN c0 END IS NOT NULL) THEN array(CASE WHEN (NOT (c0 <= CAST(0 AS INT))) THEN c0 END) ELSE CAST(array() AS ARRAY<INT>) END)) AS value FROM t1
+------ end
+
+------ Test: seq flatMap with Option keeps Some, drops None
+SELECT flatten(transform(t1.value, c0 -> CASE WHEN (CASE WHEN (NOT (c0 <= CAST(0 AS INT))) THEN c0 END IS NOT NULL) THEN array(CASE WHEN (NOT (c0 <= CAST(0 AS INT))) THEN c0 END) ELSE CAST(array() AS ARRAY<INT>) END)) AS value FROM t1
 ------ end
 
 ------ Test: seq forall
@@ -1399,7 +1475,7 @@ SELECT t1.value AS value FROM t1
 ------ end
 
 ------ Test: seq zip
-SELECT transform(CASE WHEN (CASE WHEN (size(t1._1) < size(t1._2)) THEN size(t1._1) ELSE size(t1._2) END > CAST(0 AS INT)) THEN sequence(CAST(0 AS INT), (CASE WHEN (size(t1._1) < size(t1._2)) THEN size(t1._1) ELSE size(t1._2) END - CAST(1 AS INT))) ELSE CAST(array() AS ARRAY<INT>) END, c0 -> named_struct('_1', element_at(t1._1, (CASE WHEN (c0 < CAST(0 AS INT)) THEN raise_error('Array index is negative') ELSE c0 END + CAST(1 AS INT))), '_2', element_at(t1._2, (CASE WHEN (c0 < CAST(0 AS INT)) THEN raise_error('Array index is negative') ELSE c0 END + CAST(1 AS INT))))) AS value FROM t1
+SELECT transform(CASE WHEN (CASE WHEN (size(t1._1) < size(t1._2)) THEN size(t1._1) ELSE size(t1._2) END > CAST(0 AS INT)) THEN sequence(CAST(0 AS INT), (CASE WHEN (size(t1._1) < size(t1._2)) THEN size(t1._1) ELSE size(t1._2) END - CAST(1 AS INT))) ELSE CAST(array() AS ARRAY<INT>) END, c0 -> named_struct('_1', element_at(t1._1, (CASE WHEN (c0 < CAST(0 AS INT)) THEN CAST(raise_error('Array index is negative') AS INT) ELSE c0 END + CAST(1 AS INT))), '_2', element_at(t1._2, (CASE WHEN (c0 < CAST(0 AS INT)) THEN CAST(raise_error('Array index is negative') AS INT) ELSE c0 END + CAST(1 AS INT))))) AS value FROM t1
 ------ end
 
 ------ Test: size on List[String]
@@ -1462,6 +1538,18 @@ SELECT CASE WHEN t1._1 THEN t1._2 ELSE t1._3 END AS value FROM t1
 SELECT CASE WHEN t1._1 THEN t1._2 ELSE t1._3 END AS value FROM t1
 ------ end
 
+------ Test: toBase64
+SELECT replace(base64(t1.value), '\r\n', '') AS value FROM t1
+------ end
+
+------ Test: toBase64 and fromBase64 should roundtrip
+SELECT try_to_binary(replace(base64(t1.value), '\r\n', ''), 'base64') AS value FROM t1
+------ end
+
+------ Test: toJson Seq[Int]
+SELECT to_json(t1.value, map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) AS value FROM t1
+------ end
+
 ------ Test: toJson/fromJson roundtrip for com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct
 SELECT CASE WHEN (CASE WHEN ((from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR ((((from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).a IS NOT NULL) AND (from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).b IS NOT NULL)) AND (from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).c IS NOT NULL)) AND (CASE WHEN (NOT regexp(from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).a, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).a AS INT) END IS NOT NULL))) THEN from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END IS NOT NULL) THEN named_struct('a', CASE WHEN (NOT regexp(CASE WHEN ((from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR ((((from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).a IS NOT NULL) AND (from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).b IS NOT NULL)) AND (from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).c IS NOT NULL)) AND (CASE WHEN (NOT regexp(from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).a, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).a AS INT) END IS NOT NULL))) THEN from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END.a, '\\p{Cc}')) THEN TRY_CAST(CASE WHEN ((from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR ((((from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).a IS NOT NULL) AND (from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).b IS NOT NULL)) AND (from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).c IS NOT NULL)) AND (CASE WHEN (NOT regexp(from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).a, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).a AS INT) END IS NOT NULL))) THEN from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END.a AS INT) END, 'b', CASE WHEN ((from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR ((((from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).a IS NOT NULL) AND (from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).b IS NOT NULL)) AND (from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).c IS NOT NULL)) AND (CASE WHEN (NOT regexp(from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).a, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).a AS INT) END IS NOT NULL))) THEN from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END.b, 'c', CASE WHEN ((from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR ((((from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).a IS NOT NULL) AND (from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).b IS NOT NULL)) AND (from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).c IS NOT NULL)) AND (CASE WHEN (NOT regexp(from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).a, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')).a AS INT) END IS NOT NULL))) THEN from_json(to_json(named_struct('a', t1.a, 'b', t1.b, 'c', t1.c), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<a STRING,b STRING,c BOOLEAN>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END.c) END AS value FROM t1
 ------ end
@@ -1490,8 +1578,16 @@ SELECT CASE WHEN (CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('
 SELECT CASE WHEN (CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 TIMESTAMP>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 TIMESTAMP>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NOT NULL)) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 TIMESTAMP>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END IS NOT NULL) THEN named_struct('_1', CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 TIMESTAMP>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 TIMESTAMP>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NOT NULL)) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 TIMESTAMP>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1) END AS value FROM t1
 ------ end
 
+------ Test: toJson/fromJson roundtrip for scala.Tuple1[scala.Option[scala.Int]]
+SELECT CASE WHEN (CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NULL) THEN TRUE ELSE (CASE WHEN (NOT regexp(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 AS INT) END IS NOT NULL) END) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END IS NOT NULL) THEN named_struct('_1', CASE WHEN (CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NULL) THEN TRUE ELSE (CASE WHEN (NOT regexp(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 AS INT) END IS NOT NULL) END) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1 IS NOT NULL) THEN CASE WHEN (NOT regexp(CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NULL) THEN TRUE ELSE (CASE WHEN (NOT regexp(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 AS INT) END IS NOT NULL) END) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1, '\\p{Cc}')) THEN TRY_CAST(CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NULL) THEN TRUE ELSE (CASE WHEN (NOT regexp(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 AS INT) END IS NOT NULL) END) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRING>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1 AS INT) END END) END AS value FROM t1
+------ end
+
 ------ Test: toJson/fromJson roundtrip for scala.Tuple1[scala.Option[scala.Option[scala.Int]]]
 SELECT CASE WHEN (CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value IS NULL) THEN TRUE ELSE (CASE WHEN (NOT regexp(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value AS INT) END IS NOT NULL) END END) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END IS NOT NULL) THEN named_struct('_1', CASE WHEN (CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value IS NULL) THEN TRUE ELSE (CASE WHEN (NOT regexp(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value AS INT) END IS NOT NULL) END END) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1 IS NOT NULL) THEN named_struct('value', CASE WHEN (CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value IS NULL) THEN TRUE ELSE (CASE WHEN (NOT regexp(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value AS INT) END IS NOT NULL) END END) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1.value IS NOT NULL) THEN CASE WHEN (NOT regexp(CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value IS NULL) THEN TRUE ELSE (CASE WHEN (NOT regexp(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value AS INT) END IS NOT NULL) END END) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1.value, '\\p{Cc}')) THEN TRY_CAST(CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value IS NULL) THEN TRUE ELSE (CASE WHEN (NOT regexp(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value AS INT) END IS NOT NULL) END END) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRING>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1.value AS INT) END END) END) END AS value FROM t1
+------ end
+
+------ Test: toJson/fromJson roundtrip for scala.Tuple1[scala.Option[scala.Option[scala.Option[scala.Int]]]]
+SELECT CASE WHEN (CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value IS NULL) THEN TRUE ELSE (CASE WHEN (NOT regexp(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value AS INT) END IS NOT NULL) END END END) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END IS NOT NULL) THEN named_struct('_1', CASE WHEN (CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value IS NULL) THEN TRUE ELSE (CASE WHEN (NOT regexp(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value AS INT) END IS NOT NULL) END END END) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1 IS NOT NULL) THEN named_struct('value', CASE WHEN (CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value IS NULL) THEN TRUE ELSE (CASE WHEN (NOT regexp(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value AS INT) END IS NOT NULL) END END END) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1.value IS NOT NULL) THEN named_struct('value', CASE WHEN (CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value IS NULL) THEN TRUE ELSE (CASE WHEN (NOT regexp(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value AS INT) END IS NOT NULL) END END END) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1.value.value IS NOT NULL) THEN CASE WHEN (NOT regexp(CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value IS NULL) THEN TRUE ELSE (CASE WHEN (NOT regexp(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value AS INT) END IS NOT NULL) END END END) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1.value.value, '\\p{Cc}')) THEN TRY_CAST(CASE WHEN ((from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) IS NULL) OR CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1 IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value IS NULL) THEN TRUE ELSE CASE WHEN (from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value IS NULL) THEN TRUE ELSE (CASE WHEN (NOT regexp(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value, '\\p{Cc}')) THEN TRY_CAST(from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]'))._1.value.value AS INT) END IS NOT NULL) END END END) THEN from_json(to_json(named_struct('_1', t1._1), map('timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')), 'STRUCT<_1 STRUCT<value STRUCT<value STRING>>>', map('mode', 'PERMISSIVE', 'timeZone', 'UTC', 'timestampFormat', 'yyyy-MM-dd\'T\'HH:mm[:ss][.SSSSSS][XXX]')) END._1.value.value AS INT) END END) END) END) END AS value FROM t1
 ------ end
 
 ------ Test: toJson/fromJson roundtrip for scala.collection.immutable.Map[scala.Predef.String, scala.Int]

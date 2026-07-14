@@ -80,6 +80,14 @@ private sealed trait ExprNode[T] extends Selectable {
             case other => Continue(other)
           }
       )
+
+  final def simpleShow: String = {
+    val children = ExprNode
+      .api
+      .foldChildren(this)(Vector.empty[String])([t] => (acc, child) => Continue(acc :+ child.simpleShow))
+    val name = getClass.getSimpleName
+    if children.isEmpty then name else children.mkString(s"$name(", ", ", ")")
+  }
 }
 
 private object ExprNode extends ExprApi[ExprNode] {
@@ -152,6 +160,13 @@ private object ExprNode extends ExprApi[ExprNode] {
   final case class MapSeq[T, U](operand: ExprNode[Seq[T]], f: CompiledExpr[T, U]) extends ExprNode[Seq[U]] {
     override def codec: Codec[Seq[U]] = {
       given Codec[U] = f.codec
+      Codec[Seq[U]]
+    }
+  }
+
+  final case class FlattenSeq[U](operand: ExprNode[Seq[Iterable[U]]]) extends ExprNode[Seq[U]] {
+    override def codec: Codec[Seq[U]] = {
+      given Codec[U] = operand.codec.element.element
       Codec[Seq[U]]
     }
   }
@@ -388,6 +403,11 @@ private object ExprNode extends ExprApi[ExprNode] {
     override def codec: Codec[Seq[T]] = operand.codec
   }
 
+  final case class ArrayJoin(operand: ExprNode[Seq[String]], separator: ExprNode[String])
+      extends ExprNode[String] {
+    override def codec: Codec[String] = Codec[String]
+  }
+
   final case class SizeSeq[C <: Seq[?]](operand: ExprNode[C]) extends ExprNode[Int] {
     override def codec: Codec[Int] = Codec[Int]
   }
@@ -453,6 +473,14 @@ private object ExprNode extends ExprApi[ExprNode] {
 
   final case class BytesLength(bytes: ExprNode[Binary]) extends ExprNode[Int] {
     override def codec: Codec[Int] = Codec[Int]
+  }
+
+  final case class FromBase64(string: ExprNode[String]) extends ExprNode[Option[Binary]] {
+    override def codec: Codec[Option[Binary]] = Codec[Option[Binary]]
+  }
+
+  final case class ToBase64(binary: ExprNode[Binary]) extends ExprNode[String] {
+    override def codec: Codec[String] = Codec[String]
   }
 
   final case class ToRepr[P, Repr](expr: ExprNode[P], injectionCodec: Codec.FromInjection[P, Repr])

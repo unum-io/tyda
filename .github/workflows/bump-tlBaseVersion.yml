@@ -1,0 +1,38 @@
+name: Update tlBaseVersion (PR)
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-version:
+    if: github.event.release.target_commitish == 'main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Configure Git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update tlBaseVersion and create PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python .github/scripts/bump-tlBaseVersion.py \
+            "${{ github.event.release.tag_name }}" \
+            --no-switch-back

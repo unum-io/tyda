@@ -6,6 +6,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.aggregate
 import org.apache.spark.sql.functions.array
 import org.apache.spark.sql.functions.array_distinct
+import org.apache.spark.sql.functions.base64
 import org.apache.spark.sql.functions.call_function
 import org.apache.spark.sql.functions.coalesce
 import org.apache.spark.sql.functions.concat
@@ -13,6 +14,7 @@ import org.apache.spark.sql.functions.date_from_unix_date
 import org.apache.spark.sql.functions.element_at
 import org.apache.spark.sql.functions.endswith
 import org.apache.spark.sql.functions.filter
+import org.apache.spark.sql.functions.flatten
 import org.apache.spark.sql.functions.from_json
 import org.apache.spark.sql.functions.isnan
 import org.apache.spark.sql.functions.length
@@ -44,6 +46,7 @@ import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.Num
 import com.choreograph.tyda.rewrite.ArrayCodec
+import com.choreograph.tyda.rewrite.CheckArrayIndexPositive
 import com.choreograph.tyda.rewrite.IsNone
 import com.choreograph.tyda.rewrite.Nullable
 import com.choreograph.tyda.rewrite.PrimitiveAggregateAsFold
@@ -104,7 +107,8 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
   private def literal[T](value: T, codec: Codec.Primitive[T])(using SparkSession): Column =
     codec match {
       case Codec.Boolean | Codec.Byte | Codec.Short | Codec.Int | Codec.Long | Codec.Float | Codec.Double |
-          Codec.String | Codec.Bytes => lit(value)
+          Codec.String => lit(value)
+      case Codec.Bytes => lit(value.to(Array))
       case Codec.TimestampMicros =>
         convert(ExprNode.MicrosToTimestamp(ExprNode.Literal(value.toMicros, Codec.Long)))
       case Codec.Date => convert(ExprNode.DaysToDate(ExprNode.Literal(value.daysSinceEpoch, Codec.Int)))
@@ -144,6 +148,15 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
 
       case _ => returnedResult
     }
+  private def buildHigherOrderArgs[T](seq: ExprNode[Seq[T]], compiled: CompiledExpr[T, ?])(using
+      spark: SparkSession
+  ) = (
+    convert(seq),
+    (elem: Column) => {
+      val elemCf = ColumnFactory(elem)(using compiled.arg.codec)
+      new ExprOnSpark[T](cfs + (compiled.arg -> elemCf)).convert(compiled.expr)
+    }
+  )
 
   def convert(expr: ExprNode[?])(using spark: SparkSession): Column =
     expr match {
@@ -172,24 +185,9 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
         val arr = array(fieldExprs*)
         if values.isEmpty then arr.cast(catalystType(expr.codec)) else arr
       case ExprNode.ConcatSeq(lhs, rhs) => concat(convert(lhs), (convert(rhs)))
-      case ExprNode.MapSeq(seq, f) =>
-        val seqCol = convert(seq)
-        transform(
-          seqCol,
-          elem => {
-            val elemCf = ColumnFactory(elem)(using f.arg.codec)
-            new ExprOnSpark[T](cfs + (f.arg -> elemCf)).convert(f.expr)
-          }
-        )
-      case ExprNode.FilterSeq(seq, predicate) =>
-        val seqCol = convert(seq)
-        filter(
-          seqCol,
-          elem => {
-            val elemCf = ColumnFactory(elem)(using predicate.arg.codec)
-            new ExprOnSpark[T](cfs + (predicate.arg -> elemCf)).convert(predicate.expr)
-          }
-        )
+      case ExprNode.MapSeq(seq, f) => transform.tupled(buildHigherOrderArgs(seq, f))
+      case ExprNode.FlattenSeq(seq) => flatten(convert(seq))
+      case ExprNode.FilterSeq(seq, predicate) => filter.tupled(buildHigherOrderArgs(seq, predicate))
       case ExprNode.AggregateSeq(seq, onEmpty, agg) =>
         val asFold = PrimitiveAggregateAsFold(onEmpty, agg)(using seq.codec.element)
         aggregate(
@@ -279,11 +277,9 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
       case ExprNode.ToJson(inner) => to_json(convert(inner), jsonOptions)
       case ExprNode.FromJson(inner, codec) => from_json(convert(inner), catalystType(codec), jsonOptions)
       case ExprNode.SizeSeq(operand) => size(convert(operand))
-      case ExprNode.ElementSeq(array, index) =>
+      case CheckArrayIndexPositive(array, index) =>
         val idx = convert(index)
-        val adjustedIdx =
-          when(idx >= lit(0), idx + lit(1)).otherwise(raise_error(lit("Negative array index not supported")))
-        call_function("element_at", convert(array), adjustedIdx)
+        call_function("element_at", convert(array), idx + 1)
       case ExprNode.Add(_, lhs, rhs) =>
         val lhsCol = convert(lhs)
         val rhsCol = convert(rhs)
@@ -336,7 +332,14 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
           case Codec.Map(_, Codec.Option(_)) => when(map_contains_key(mapCol, keyCol), wrapNestedSome(value))
           case _ => value
         }
+      case ExprNode.ArrayJoin(operand, sep) => call_function("array_join", convert(operand), convert(sep))
       case ExprNode.DistinctSeq(operand) => array_distinct(convert(operand))
+      case ExprNode.FromBase64(string) => call_function("try_to_binary", convert(string), lit("base64"))
+      case ExprNode.ToBase64(binary) =>
+        // Spark accdentially started chunking their base64: https://issues.apache.org/jira/browse/SPARK-47307
+        // And did not dare to revert back to the sane default. If we had a good mechanism for controlling the
+        // spark config we could replace this with a config.
+        replace(base64(convert(binary)), lit("\r\n"), lit(""))
       case ExprNode.Rand() => rand()
       case ExprNode.IsNaN(operand) => isnan(convert(operand))
     }

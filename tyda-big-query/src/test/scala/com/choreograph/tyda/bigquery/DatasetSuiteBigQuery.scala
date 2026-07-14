@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory
 
 import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Codec
-import com.choreograph.tyda.Codec.bigInt
 import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.Expr
 import com.choreograph.tyda.Format
@@ -22,12 +21,14 @@ import com.choreograph.tyda.TypeName
 import com.choreograph.tyda.iterator.IteratorRunner
 import com.choreograph.tyda.rewrite.ArrayCodec
 import com.choreograph.tyda.sql.DatasetToSqlError
+import com.choreograph.tyda.sql.RenderedMultiStatement
 import com.choreograph.tyda.sql.SqlDialect
 import com.choreograph.tyda.sql.toSql
 import com.choreograph.tyda.testsuites.BigQueryIntegrationTestEnvVariables
 import com.choreograph.tyda.testsuites.DatasetAggregatesSuite
 import com.choreograph.tyda.testsuites.DatasetBasicSuite
 import com.choreograph.tyda.testsuites.DatasetJoinSuite
+import com.choreograph.tyda.testsuites.DatasetOrderBySuite
 import com.choreograph.tyda.testsuites.DatasetReadBigQueryTableSuite
 import com.choreograph.tyda.testsuites.DatasetReadWriteSuite
 import com.choreograph.tyda.testsuites.DatasetSubquerySuite
@@ -36,7 +37,7 @@ import com.choreograph.tyda.testsuites.ExprEvaluationSuite
 import com.choreograph.tyda.unreachable
 
 class BigQueryTestRunner(args: RunnerArgs.BigQuery) extends BigQueryRunner(args) {
-  override def sql(ds: Dataset[?] | Dataset.Action): String = {
+  override def sql(ds: Dataset[?] | Dataset.Action): RenderedMultiStatement = {
     toSql(ds, SqlDialect.BigQuery) match {
       case Left(DatasetToSqlError.RequiresUdfCapability(msg)) =>
         pending
@@ -66,6 +67,7 @@ class DatasetBasicSuiteBigQuery extends DatasetBasicSuite, BigQuerySuiteRunner
 class DatasetJoinSuiteBigQuery extends DatasetJoinSuite, BigQuerySuiteRunner
 class DatasetAggregatesSuiteBigQuery extends DatasetAggregatesSuite, BigQuerySuiteRunner
 class DatasetSubquerySuiteBigQuery extends DatasetSubquerySuite, BigQuerySuiteRunner
+class DatasetOrderBySuiteBigQuery extends DatasetOrderBySuite, BigQuerySuiteRunner
 abstract class DatasetReadWriteSuiteBigQuery extends DatasetReadWriteSuite, BigQuerySuiteRunner {
   override def includeReadTests: Boolean = false
 
@@ -91,9 +93,6 @@ abstract class DatasetReadWriteSuiteBigQuery extends DatasetReadWriteSuite, BigQ
         case ArrayCodec(Codec.Option(_)) => false
         // Nested arrays are not supported
         case ArrayCodec(ArrayCodec(_)) => false
-        // We should consider dropping this and just use Decimal(38, 0)
-        // But currently fails due to incorrect bytes handling in the bigquery dialect
-        case `bigInt` => false
         case _ => true
       }
   override def numericsReadModeForWriteTests: NumericsReadMode = NumericsReadMode.WidenBigQuery
@@ -121,5 +120,5 @@ class ExprEvaluationSuiteBigQuery
   override def evaluate[From: Codec, To](expr: Expr[From] => Expr[To], values: Seq[From]): Seq[To] =
     runner.collect(Dataset.from(values).select(expr))
   override def explain[From: Codec, To](expr: Expr[From] => Expr[To], values: Seq[From]): String =
-    runner.sql(Dataset.from(values).select(expr))
+    runner.sql(Dataset.from(values).select(expr)).single
 }

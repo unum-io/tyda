@@ -12,7 +12,7 @@ import com.choreograph.tyda.rewrite.CollectionCodec
   * intermediate expressions.
   *
   * This object has helper methods to rewrite the final result such that it can
-  * be collected with loss of information. This is done by
+  * be collected without loss of information. This is done by
   *
   *   1. Rewriting all nullable arrays into a struct with an isEmpty field and a
   *      value field. This allows us to distinguish between null and empty

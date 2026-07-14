@@ -10,6 +10,7 @@ private[sql] enum Query {
       groupBy: Seq[SqlExpr],
       having: Option[SqlExpr],
       distinct: Boolean,
+      orderBy: Seq[SqlExpr] = Seq.empty,
       limit: Option[Int] = None
   )
   case Union(left: Query, right: Query, all: Boolean)
