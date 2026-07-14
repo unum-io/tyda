@@ -4,6 +4,7 @@ import scala.util.chaining.scalaUtilChainingOps
 
 import dotty.tools.repl.ReplDriver
 
+import com.choreograph.tyda.BuildInfo
 import com.choreograph.tyda.Runner
 import com.choreograph.tyda.RunnerArgs
 import com.choreograph.tyda.table.ArgsParser
@@ -69,11 +70,11 @@ object TydaRepl {
         System.err.println(error.formatted)
         sys.exit(1)
 
-  private val Banner = """
+  private val Banner = raw"""
       |   ______        __
       |  /_  __/_ _____/ /__ _
       |   / / / // / _  / _ `/
       |  /_/  \_, /\_,_/\_,_/
-      |      /___/
+      |      /___/  ${BuildInfo.gitDescribe}
       |""".stripMargin
 }
