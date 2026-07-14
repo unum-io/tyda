@@ -259,7 +259,7 @@ object SqlDialect {
       * explode(array_column)
       * ```
       */
-    case Function(name: String, supportMultipleExplodes: Boolean)
+    case Function(name: String)
 
     /** Explode is supported by doing a inner join with the array column. e.g.
       * ```
@@ -506,7 +506,7 @@ object SqlDialect {
     countIfFunction = "count_if",
     ddl = DdlDialect.Spark,
     errorFunction = "raise_error",
-    explode = ExplodeSupport.Function("explode", supportMultipleExplodes = false),
+    explode = ExplodeSupport.Function("explode"),
     extractDateDays = "unix_date",
     extractTimestampMicros = "unix_micros",
     floatingAggregate = FloatingAggregate.NaNIsLargest,

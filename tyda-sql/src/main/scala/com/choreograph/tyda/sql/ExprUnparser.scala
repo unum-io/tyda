@@ -114,7 +114,7 @@ private def exprToSqlExpr(expr: ExplodeExpr[?] | ExprNode[?], args: UnparserArgs
   expr match {
     case e: ExplodeExpr[?] => exprToSqlExpr(e.expr, args).map(arg =>
         args.dialect.explode match {
-          case SqlDialect.ExplodeSupport.Function(name, _) => SqlExpr.Function(name, Seq(arg))
+          case SqlDialect.ExplodeSupport.Function(name) => SqlExpr.Function(name, Seq(arg))
           case SqlDialect.ExplodeSupport.InnerJoin =>
             unreachable("Explodes using inner join should be handled in the SelectBuilder")
         }
