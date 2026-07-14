@@ -596,10 +596,6 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
           lhs <- inner(lhs)
           rhs <- inner(rhs)
         } yield cast(SqlExpr.Function("div", Seq(lhs, rhs)), expr.codec, dialect)
-      // } yield SqlExpr.Cast(
-      //   SqlExpr.Function("div", Seq(lhs, rhs)),
-      //   ToDdl.toDdlType(expr.codec, dialect.ddl, true, true).tpe
-      // )
       case ExprNode.Quotient(_, lhs, rhs) => for {
           lhs <- inner(lhs)
           rhs <- inner(rhs)
