@@ -155,37 +155,63 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
     def binaryOp(op: String, lhs: ExprNode[?], rhs: ExprNode[?]): Result[SqlExpr] =
       inner(lhs).flatMap(l => inner(rhs).map(r => SqlExpr.BinaryOp(op, l, r)))
 
+    def isInfinite(expr: SqlExpr, codec: Codec[?]): SqlExpr =
+      codec match {
+        case Codec.Float => SqlExpr.BinaryOp(
+            "OR",
+            SqlExpr.BinaryOp("=", expr, literalToSqlExpr(Float.PositiveInfinity, Codec.Float, dialect)),
+            SqlExpr.BinaryOp("=", expr, literalToSqlExpr(Float.NegativeInfinity, Codec.Float, dialect))
+          )
+        case Codec.Double => SqlExpr.BinaryOp(
+            "OR",
+            SqlExpr.BinaryOp("=", expr, literalToSqlExpr(Double.PositiveInfinity, Codec.Double, dialect)),
+            SqlExpr.BinaryOp("=", expr, literalToSqlExpr(Double.NegativeInfinity, Codec.Double, dialect))
+          )
+        case _ => SqlExpr.LiteralBool(false)
+      }
+
     def overflowCheckedFloatingResult(
+        lhs: SqlExpr,
+        rhs: SqlExpr,
         checkedResult: SqlExpr,
         returnedResult: SqlExpr,
         codec: Codec[?]
     ): SqlExpr =
       codec match {
         case Codec.Float => _overflowCheckedFloatingResult(
+            lhs,
+            rhs,
             checkedResult,
             returnedResult,
             literalToSqlExpr(-Float.MaxValue, Codec.Float, dialect),
             literalToSqlExpr(Float.MaxValue, Codec.Float, dialect),
-            "Float overflow"
+            "Float overflow",
+            codec
           )
 
         case Codec.Double => _overflowCheckedFloatingResult(
+            lhs,
+            rhs,
             checkedResult,
             returnedResult,
             literalToSqlExpr(-Double.MaxValue, Codec.Double, dialect),
             literalToSqlExpr(Double.MaxValue, Codec.Double, dialect),
-            "Double overflow"
+            "Double overflow",
+            codec
           )
 
         case _ => returnedResult
       }
 
     def _overflowCheckedFloatingResult(
+        lhs: SqlExpr,
+        rhs: SqlExpr,
         checkedResult: SqlExpr,
         returnedResult: SqlExpr,
         min: SqlExpr,
         max: SqlExpr,
-        errorMessage: String
+        errorMessage: String,
+        codec: Codec[?]
     ): SqlExpr = {
       val overflow = SqlExpr.BinaryOp(
         "AND",
@@ -196,10 +222,12 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
           SqlExpr.BinaryOp(">", checkedResult, max)
         )
       )
+      val operandsWereFinite =
+        SqlExpr.BinaryOp("AND", SqlExpr.not(isInfinite(lhs, codec)), SqlExpr.not(isInfinite(rhs, codec)))
 
       SqlExpr.Case(
         Seq((
-          condition = overflow,
+          condition = SqlExpr.BinaryOp("AND", operandsWereFinite, overflow),
           result = SqlExpr.Function(dialect.errorFunction, Seq(SqlExpr.LiteralString(errorMessage)))
         )),
         elseExpr = Some(returnedResult)
@@ -495,12 +523,27 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
           case SqlDialect.ArrayElement.Function(name) => SqlExpr.Function(name, Seq(arr, idx))
         }
         element.map(unwrapArrayElement(_, array.codec.element, dialect))
-      case ExprNode.Add(_, lhs, rhs) =>
-        binaryOp("+", lhs, rhs).map(sum => overflowCheckedFloatingResult(sum, sum, expr.codec))
-      case ExprNode.Subtract(_, lhs, rhs) =>
-        binaryOp("-", lhs, rhs).map(diff => overflowCheckedFloatingResult(diff, diff, expr.codec))
-      case ExprNode.Multiply(_, lhs, rhs) =>
-        binaryOp("*", lhs, rhs).map(product => overflowCheckedFloatingResult(product, product, expr.codec))
+      case ExprNode.Add(_, lhs, rhs) => for {
+          lhs <- inner(lhs)
+          rhs <- inner(rhs)
+        } yield {
+          val sum = SqlExpr.BinaryOp("+", lhs, rhs)
+          overflowCheckedFloatingResult(lhs, rhs, sum, sum, expr.codec)
+        }
+      case ExprNode.Subtract(_, lhs, rhs) => for {
+          lhs <- inner(lhs)
+          rhs <- inner(rhs)
+        } yield {
+          val diff = SqlExpr.BinaryOp("-", lhs, rhs)
+          overflowCheckedFloatingResult(lhs, rhs, diff, diff, expr.codec)
+        }
+      case ExprNode.Multiply(_, lhs, rhs) => for {
+          lhs <- inner(lhs)
+          rhs <- inner(rhs)
+        } yield {
+          val product = SqlExpr.BinaryOp("*", lhs, rhs)
+          overflowCheckedFloatingResult(lhs, rhs, product, product, expr.codec)
+        }
       case ExprNode.Quotient(_: Num.Integral[?], lhs, rhs) => for {
           lhs <- inner(lhs)
           rhs <- inner(rhs)
@@ -508,9 +551,13 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
           SqlExpr.Function("div", Seq(lhs, rhs)),
           ToDdl.toDdlType(expr.codec, dialect.ddl, true, true).tpe
         )
-      case ExprNode.Quotient(_, lhs, rhs) => binaryOp("/", lhs, rhs).map(quotient =>
-          overflowCheckedFloatingResult(quotient, cast(quotient, expr.codec, dialect), expr.codec)
-        )
+      case ExprNode.Quotient(_, lhs, rhs) => for {
+          lhs <- inner(lhs)
+          rhs <- inner(rhs)
+        } yield {
+          val quotient = SqlExpr.BinaryOp("/", lhs, rhs)
+          overflowCheckedFloatingResult(lhs, rhs, quotient, cast(quotient, expr.codec, dialect), expr.codec)
+        }
       case ExprNode.Negate(_, operand) => inner(operand).map(e => SqlExpr.UnaryOp("-", e, isPrefix = true))
       case ExprNode.Cast(value, _) => inner(value).map(cast(_, expr.codec, dialect))
       case ExprNode.TryCast(value, canTryCast) =>

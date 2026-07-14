@@ -1073,7 +1073,8 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   )
 
   {
-    given Arbitrary[Double] = Arbitrary.double.filter(Math.abs(_) <= Double.MaxValue / 2.0)
+    given Arbitrary[Double] =
+      Arbitrary.double.filter(d => Math.abs(d) <= Double.MaxValue / 2.0 || d.isInfinite)
     testHasSameBehavior[(Double, Double), Double](
       "add two double numbers",
       t => t._1 + t._2,
@@ -1091,7 +1092,8 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Double] = Arbitrary.double.filter(Math.abs(_) <= Double.MaxValue / 2.0)
+    given Arbitrary[Double] =
+      Arbitrary.double.filter(d => Math.abs(d) <= Double.MaxValue / 2.0 || d.isInfinite)
     testHasSameBehavior[(Double, Double), Double](
       "subtract two double numbers",
       t => t._1 - t._2,
@@ -1109,7 +1111,8 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Double] = Arbitrary.double.filter(Math.abs(_) < Math.sqrt(Double.MaxValue))
+    given Arbitrary[Double] =
+      Arbitrary.double.filter(d => Math.abs(d) < Math.sqrt(Double.MaxValue) || d.isInfinite)
     testHasSameBehavior[(Double, Double), Double](
       "multiply two double numbers",
       t => t._1 * t._2,
@@ -1127,7 +1130,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isInfinite && Math.abs(d) > 1.0)
+    given Arbitrary[Double] = Arbitrary.double.filter(d => Math.abs(d) > 1.0)
     testHasSameBehavior[(Double, Double), Double](
       "divide two double numbers",
       t => t._1 / t._2,
@@ -1145,7 +1148,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testHasSameBehavior[Double, Double]("negate a double", e => -e, n => -n)
 
   {
-    given Arbitrary[Float] = Arbitrary.float.filter(Math.abs(_) <= Float.MaxValue / 2.0f)
+    given Arbitrary[Float] = Arbitrary.float.filter(f => Math.abs(f) <= Float.MaxValue / 2.0f || f.isInfinite)
     testHasSameBehavior[(Float, Float), Float](
       "add two float numbers",
       t => t._1 + t._2,
@@ -1163,7 +1166,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Float] = Arbitrary.float.filter(Math.abs(_) <= Float.MaxValue / 2.0f)
+    given Arbitrary[Float] = Arbitrary.float.filter(f => Math.abs(f) <= Float.MaxValue / 2.0f || f.isInfinite)
     testHasSameBehavior[(Float, Float), Float](
       "subtract two float numbers",
       t => t._1 - t._2,
@@ -1181,7 +1184,8 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Float] = Arbitrary.float.filter(Math.abs(_) < Math.sqrt(Float.MaxValue))
+    given Arbitrary[Float] =
+      Arbitrary.float.filter(f => Math.abs(f) < Math.sqrt(Float.MaxValue) || f.isInfinite)
     testHasSameBehavior[(Float, Float), Float](
       "multiply two float numbers",
       t => t._1 * t._2,
@@ -1199,7 +1203,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
-    given Arbitrary[Float] = Arbitrary.float.filter(f => !f.isInfinite && Math.abs(f) > 1.0f)
+    given Arbitrary[Float] = Arbitrary.float.filter(f => Math.abs(f) > 1.0f)
     testHasSameBehavior[(Float, Float), Float](
       "divide two float numbers",
       t => t._1 / t._2,
