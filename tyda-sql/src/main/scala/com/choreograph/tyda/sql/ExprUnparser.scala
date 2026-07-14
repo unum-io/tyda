@@ -170,6 +170,16 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
         case _ => SqlExpr.LiteralBool(false)
       }
 
+    def shouldCheckFloatingOverflow(codec: Codec[?]): Boolean =
+      (codec, dialect.floatingOverflowChecks) match {
+        case (
+              Codec.Float,
+              SqlDialect.FloatingOverflowChecks.FloatAndDouble | SqlDialect.FloatingOverflowChecks.FloatOnly
+            ) => true
+        case (Codec.Double, SqlDialect.FloatingOverflowChecks.FloatAndDouble) => true
+        case _ => false
+      }
+
     def overflowCheckedFloatingResult(
         lhs: SqlExpr,
         rhs: SqlExpr,
@@ -177,6 +187,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
         returnedResult: SqlExpr,
         codec: Codec[?]
     ): SqlExpr =
+      if !shouldCheckFloatingOverflow(codec) then return returnedResult
       codec match {
         case Codec.Float => _overflowCheckedFloatingResult(
             lhs,

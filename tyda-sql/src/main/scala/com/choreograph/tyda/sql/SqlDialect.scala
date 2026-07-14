@@ -39,6 +39,7 @@ final case class SqlDialect(
     extractTimestampMicros: String,
     floatingAggregate: SqlDialect.FloatingAggregate,
     floatingCompare: SqlDialect.FloatingCompare,
+    floatingOverflowChecks: SqlDialect.FloatingOverflowChecks,
     fromJson: SqlDialect.FromJsonSupport,
     intergerSupport: SqlDialect.IntegerSupport,
     isNanFunction: String,
@@ -235,6 +236,12 @@ object SqlDialect {
     case NaNIsLargest
   }
 
+  enum FloatingOverflowChecks {
+    case FloatAndDouble
+    case FloatOnly
+    case NoChecks
+  }
+
   enum ArrayHigherOrderFunctions {
 
     /** Supports higher order functions using lambda syntax. e.g.
@@ -378,6 +385,7 @@ object SqlDialect {
     extractTimestampMicros = "unix_micros",
     floatingAggregate = FloatingAggregate.NaNIsSmallestAndLargest,
     floatingCompare = FloatingCompare.Ieee,
+    floatingOverflowChecks = FloatingOverflowChecks.FloatOnly,
     fromJson = FromJsonSupport.Extractors(
       extractScalar = "json_value",
       extractArray = "json_query_array",
@@ -434,6 +442,7 @@ object SqlDialect {
     extractTimestampMicros = "unix_micros",
     floatingAggregate = FloatingAggregate.NaNIsLargest,
     floatingCompare = FloatingCompare.NaNIsLargest,
+    floatingOverflowChecks = FloatingOverflowChecks.FloatAndDouble,
     fromJson = FromJsonSupport.Parser("from_json", Map("mode" -> "PERMISSIVE") ++ sparkJsonOptions),
     intergerSupport = IntegerSupport.AllSizes,
     isNanFunction = "isnan",
