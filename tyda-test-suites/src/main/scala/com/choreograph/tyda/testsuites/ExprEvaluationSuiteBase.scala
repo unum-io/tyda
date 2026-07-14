@@ -15,7 +15,6 @@ import scala.reflect.ClassTag
 import scala.reflect.Typeable
 import scala.util.matching.Regex
 
-import org.scalactic.Equality
 import org.scalatest.funsuite.AnyFunSuite
 
 import com.choreograph.tyda.Arbitrary
@@ -55,7 +54,6 @@ import com.choreograph.tyda.functions.startsWith
 import com.choreograph.tyda.functions.toBase64
 import com.choreograph.tyda.functions.toJson
 import com.choreograph.tyda.functions.tuple
-import com.choreograph.tyda.testsuites.FloatingPointEquality.given
 
 object ExprEvaluationSuiteBase {
   private final case class Full(a: Int, b: String, c: Boolean)
@@ -147,7 +145,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
 
   def explain[From: Codec, To](expr: Expr[From] => Expr[To], values: Seq[From]): String
 
-  def testHasSameBehavior[From: ClassTag: Codec: Arbitrary, To: Equality](
+  def testHasSameBehavior[From: ClassTag: Codec: Arbitrary, To](
       name: String,
       expr: Expr[From] => Expr[To],
       expected: From => To
@@ -1050,10 +1048,9 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     _ => specialStrings
   )
 
-  private def testCast[
-      From: ClassTag: Codec: Arbitrary: TypeName,
-      To: CanCast.From[From]: TypeName: Equality
-  ](expected: From => To) =
+  private def testCast[From: ClassTag: Codec: Arbitrary: TypeName, To: CanCast.From[From]: TypeName](
+      expected: From => To
+  ) =
     testHasSameBehavior[From, To](
       s"cast ${TypeName.name[From]} to ${TypeName.name[To]}",
       _.cast[To],
