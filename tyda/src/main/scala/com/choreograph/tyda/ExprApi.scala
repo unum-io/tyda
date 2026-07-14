@@ -511,24 +511,21 @@ trait ExprApi[Expr[T]] {
 
     /** Returns the sum of two expressions.
       *
-      * Throws an exception if the operation leads to overflow for integral
-      * types.
+      * Throws an exception if the operation leads to overflow.
       */
     infix def +[I: AsExpr.Of[T]](rhs: I): Expr[T] =
       lift(ExprNode.Add(Num[T], unlift(lhs), unlift(AsExpr(rhs))))
 
     /** Returns the difference of two expressions.
       *
-      * Throws an exception if the operation leads to overflow for integral
-      * types.
+      * Throws an exception if the operation leads to overflow.
       */
     infix def -[I: AsExpr.Of[T]](rhs: I): Expr[T] =
       lift(ExprNode.Subtract(Num[T], unlift(lhs), unlift(AsExpr(rhs))))
 
     /** Returns the product of two expressions.
       *
-      * Throws an exception if the operation leads to overflow for integral
-      * types.
+      * Throws an exception if the operation leads to overflow
       */
     infix def *[I: AsExpr.Of[T]](rhs: I): Expr[T] =
       lift(ExprNode.Multiply(Num[T], unlift(lhs), unlift(AsExpr(rhs))))
