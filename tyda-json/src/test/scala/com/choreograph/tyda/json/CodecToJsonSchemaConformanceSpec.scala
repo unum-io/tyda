@@ -16,7 +16,6 @@ import com.choreograph.tyda.Codec.EnumAsString
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
-import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.TypeName
 
@@ -24,11 +23,11 @@ object CodecToJsonSchemaConformanceSpec {
   final case class SimpleProduct(a: Int, b: Option[String]) derives Arbitrary, Codec
   final case class AllOptionalProduct(a: Option[Int], b: Option[String]) derives Arbitrary, Codec
 
-  enum Color extends EnumStableHashCode derives EnumAsString, Arbitrary {
+  enum Color derives EnumAsString, Arbitrary {
     case Red, Green, Blue
   }
 
-  enum Animal extends EnumStableHashCode derives Codec, Arbitrary {
+  enum Animal derives Codec, Arbitrary {
     case Dog(name: String)
     case Cat
   }

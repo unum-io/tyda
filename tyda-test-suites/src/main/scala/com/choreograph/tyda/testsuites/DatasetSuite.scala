@@ -16,7 +16,6 @@ import com.choreograph.tyda.CanCast
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Comparable
 import com.choreograph.tyda.Dataset
-import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Groupable
 import com.choreograph.tyda.Runner
 import com.choreograph.tyda.SumMagnet
@@ -42,7 +41,7 @@ object DatasetSuite {
     given [T] => (canCast: CanCast[Byte, T]) => CanCast[TinyByte, T] = canCast
   }
   type Pair = (TinyByte, TinyByte)
-  enum MyEnum extends EnumStableHashCode derives Codec {
+  enum MyEnum derives Codec {
     case A(value: Int)
     case B(value: String)
     case C

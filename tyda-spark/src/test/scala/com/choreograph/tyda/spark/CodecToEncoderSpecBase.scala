@@ -27,7 +27,6 @@ import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
-import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Ord
 import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.TypeName
@@ -38,7 +37,7 @@ object CodecToEncoderSpecBase {
   final case class Person(name: String, age: Int, alias: Option[String] = None) derives Codec, Ord
   final case class Employee(person: Person, salary: Double) derives Codec, Ord
 
-  enum Location extends EnumStableHashCode derives Codec, Ord {
+  enum Location derives Codec, Ord {
     case Null extends Location
     case City(name: String) extends Location
     case Country(name: String) extends Location
@@ -46,12 +45,12 @@ object CodecToEncoderSpecBase {
     case Missing extends Location
     case Region(name: Int) extends Location
   }
-  enum OnlySingletons extends EnumStableHashCode derives Codec, Ord {
+  enum OnlySingletons derives Codec, Ord {
     case A
     case B
   }
 
-  enum MyOption[+T] extends EnumStableHashCode derives Codec, Ord {
+  enum MyOption[+T] derives Codec, Ord {
     case Some(x: T)
     case None
   }
@@ -74,11 +73,11 @@ object CodecToEncoderSpecBase {
     case Enum(location: Location)
   }
 
-  enum Generic extends EnumStableHashCode derives Codec, Ord {
+  enum Generic derives Codec, Ord {
     case A
   }
 
-  enum GenericEmptyVariants[+T <: Generic] extends EnumStableHashCode {
+  enum GenericEmptyVariants[+T <: Generic] {
     case Empty1, Empty2
   }
   object GenericEmptyVariants {
@@ -86,7 +85,7 @@ object CodecToEncoderSpecBase {
     given Ordering[GenericEmptyVariants[Nothing]] = Ord.sum[GenericEmptyVariants[Nothing]]
   }
 
-  enum EnumString extends EnumStableHashCode derives Codec.EnumAsString, Ord {
+  enum EnumString derives Codec.EnumAsString, Ord {
     case A
     case B
   }

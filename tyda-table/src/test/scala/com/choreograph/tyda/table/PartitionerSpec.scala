@@ -4,10 +4,9 @@ import org.scalatest.funsuite.AnyFunSuite
 
 import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Codec
-import com.choreograph.tyda.EnumStableHashCode
 
 object PartitionerSpec {
-  enum EnumPartitionValue extends EnumStableHashCode derives Codec.EnumAsString {
+  enum EnumPartitionValue derives Codec.EnumAsString {
     case A
     case B
   }

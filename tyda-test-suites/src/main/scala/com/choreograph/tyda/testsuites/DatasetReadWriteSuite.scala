@@ -18,7 +18,6 @@ import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
-import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Format
 import com.choreograph.tyda.NumericsReadMode
 import com.choreograph.tyda.Ord
@@ -39,7 +38,7 @@ object DatasetReadWriteSuite {
   }
   private final case class MyProduct(a: Option[Long], b: String, c: (Long, Option[Long]))
       derives Arbitrary, Codec
-  private enum MyEnum extends EnumStableHashCode derives Arbitrary, Codec {
+  private enum MyEnum derives Arbitrary, Codec {
     case A, B
     case C(a: Long, b: Option[Long])
     case D(a: Long, b: Option[Long])
@@ -47,20 +46,20 @@ object DatasetReadWriteSuite {
     case F(prod: MyProduct)
   }
 
-  private enum SimpleEnum extends EnumStableHashCode derives Arbitrary, Codec.EnumAsString {
+  private enum SimpleEnum derives Arbitrary, Codec.EnumAsString {
     case X, Y, Z
   }
 
   private final case class Model(column: String, value: String) derives Arbitrary, Codec
   private final case class ModelExtended(column: String, value: String, extra: Option[Int]) derives Codec
 
-  private enum Type extends EnumStableHashCode derives Arbitrary, Codec {
+  private enum Type derives Arbitrary, Codec {
     case FixedString(n: Int)
     case Int
     case Decimal
   }
 
-  private enum TypeExtended extends EnumStableHashCode derives Codec {
+  private enum TypeExtended derives Codec {
     case FixedByteArray(n: Int)
     case FixedString(n: Int)
     case Int

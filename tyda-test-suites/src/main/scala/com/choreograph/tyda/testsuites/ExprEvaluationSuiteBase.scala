@@ -27,7 +27,6 @@ import com.choreograph.tyda.Comparable
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
-import com.choreograph.tyda.EnumStableHashCode
 import com.choreograph.tyda.Expr
 import com.choreograph.tyda.JsonArrayOrObject
 import com.choreograph.tyda.Ord
@@ -65,7 +64,7 @@ object ExprEvaluationSuiteBase {
   private type NamedTupleAlias = (a: Int, b: String, c: Boolean)
   private type NamedTupleAliasWithUnused = (a: Int, b: String, c: Boolean, unused: String)
 
-  private enum TestEnum extends EnumStableHashCode {
+  private enum TestEnum {
     case A, B
     case C(i: Int)
     case D(i: Int)
@@ -77,7 +76,7 @@ object ExprEvaluationSuiteBase {
     final case class B(i: Int) extends TestSealedTrait
   }
 
-  private enum TestEnumString extends EnumStableHashCode derives Codec.EnumAsString {
+  private enum TestEnumString derives Codec.EnumAsString {
     case A, B
   }
 

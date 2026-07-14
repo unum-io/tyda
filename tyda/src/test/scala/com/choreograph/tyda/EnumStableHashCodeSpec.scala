@@ -1,7 +1,10 @@
 package com.choreograph.tyda
 
+import scala.annotation.nowarn
+
 import org.scalatest.funsuite.AnyFunSuite
 
+@nowarn("cat=deprecation")
 object EnumStableHashCodeSpec {
   enum Color extends EnumStableHashCode {
     case Red, Green, Blue
