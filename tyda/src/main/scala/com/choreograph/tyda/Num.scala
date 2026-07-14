@@ -37,14 +37,12 @@ object Num {
   sealed trait Primitive[T] extends Num[T]
   sealed trait Integral[T] extends Primitive[T]
 
-  private def exactByte(value: Int): scala.Byte =
-    if value < scala.Byte.MinValue || value > scala.Byte.MaxValue then
-      throw new ArithmeticException("Byte overflow")
+  private def exactByte(value: Int): Byte =
+    if value < Byte.MinValue || value > Byte.MaxValue then throw new ArithmeticException("Byte overflow")
     else value.toByte
 
-  private def exactShort(value: Int): scala.Short =
-    if value < scala.Short.MinValue || value > scala.Short.MaxValue then
-      throw new ArithmeticException("Short overflow")
+  private def exactShort(value: Int): Short =
+    if value < Short.MinValue || value > Short.MaxValue then throw new ArithmeticException("Short overflow")
     else value.toShort
 
   private def checkedFloat(lhs: Float, rhs: Float)(operation: => Float): Float =
@@ -57,60 +55,59 @@ object Num {
       throw new ArithmeticException(s"Double overflow: $operation")
     operation
 
-  private[tyda] case object Byte extends Integral[scala.Byte] {
-    def plus(lhs: scala.Byte, rhs: scala.Byte): scala.Byte = exactByte(lhs.toInt + rhs.toInt)
-    def minus(lhs: scala.Byte, rhs: scala.Byte): scala.Byte = exactByte(lhs.toInt - rhs.toInt)
-    def times(lhs: scala.Byte, rhs: scala.Byte): scala.Byte = exactByte(lhs.toInt * rhs.toInt)
-    def quot(lhs: scala.Byte, rhs: scala.Byte): scala.Byte = exactByte(lhs.toInt / rhs.toInt)
-    def negate(t: scala.Byte): scala.Byte = exactByte(-t.toInt)
-  }
+  given Num[Byte] =
+    new Integral[Byte] {
+      def plus(lhs: Byte, rhs: Byte): Byte = exactByte(lhs.toInt + rhs.toInt)
+      def minus(lhs: Byte, rhs: Byte): Byte = exactByte(lhs.toInt - rhs.toInt)
+      def times(lhs: Byte, rhs: Byte): Byte = exactByte(lhs.toInt * rhs.toInt)
+      def quot(lhs: Byte, rhs: Byte): Byte = exactByte(lhs.toInt / rhs.toInt)
+      def negate(t: Byte): Byte = exactByte(-t.toInt)
+    }
 
-  private[tyda] case object Short extends Integral[scala.Short] {
-    def plus(lhs: scala.Short, rhs: scala.Short): scala.Short = exactShort(lhs.toInt + rhs.toInt)
-    def minus(lhs: scala.Short, rhs: scala.Short): scala.Short = exactShort(lhs.toInt - rhs.toInt)
-    def times(lhs: scala.Short, rhs: scala.Short): scala.Short = exactShort(lhs.toInt * rhs.toInt)
-    def quot(lhs: scala.Short, rhs: scala.Short): scala.Short = exactShort(lhs.toInt / rhs.toInt)
-    def negate(t: scala.Short): scala.Short = exactShort(-t.toInt)
-  }
+  given Num[Short] =
+    new Integral[Short] {
+      def plus(lhs: Short, rhs: Short): Short = exactShort(lhs.toInt + rhs.toInt)
+      def minus(lhs: Short, rhs: Short): Short = exactShort(lhs.toInt - rhs.toInt)
+      def times(lhs: Short, rhs: Short): Short = exactShort(lhs.toInt * rhs.toInt)
+      def quot(lhs: Short, rhs: Short): Short = exactShort(lhs.toInt / rhs.toInt)
+      def negate(t: Short): Short = exactShort(-t.toInt)
+    }
 
-  private[tyda] case object Int extends Integral[scala.Int] {
-    def plus(lhs: scala.Int, rhs: scala.Int): scala.Int = Math.addExact(lhs, rhs)
-    def minus(lhs: scala.Int, rhs: scala.Int): scala.Int = Math.subtractExact(lhs, rhs)
-    def times(lhs: scala.Int, rhs: scala.Int): scala.Int = Math.multiplyExact(lhs, rhs)
-    def quot(lhs: scala.Int, rhs: scala.Int): scala.Int = lhs / rhs
-    def negate(t: scala.Int): scala.Int = Math.negateExact(t)
-  }
+  given Num[Int] =
+    new Integral[Int] {
+      def plus(lhs: Int, rhs: Int): Int = Math.addExact(lhs, rhs)
+      def minus(lhs: Int, rhs: Int): Int = Math.subtractExact(lhs, rhs)
+      def times(lhs: Int, rhs: Int): Int = Math.multiplyExact(lhs, rhs)
+      def quot(lhs: Int, rhs: Int): Int = lhs / rhs
+      def negate(t: Int): Int = Math.negateExact(t)
+    }
 
-  private[tyda] case object Long extends Integral[scala.Long] {
-    def plus(lhs: scala.Long, rhs: scala.Long): scala.Long = Math.addExact(lhs, rhs)
-    def minus(lhs: scala.Long, rhs: scala.Long): scala.Long = Math.subtractExact(lhs, rhs)
-    def times(lhs: scala.Long, rhs: scala.Long): scala.Long = Math.multiplyExact(lhs, rhs)
-    def quot(lhs: scala.Long, rhs: scala.Long): scala.Long = lhs / rhs
-    def negate(t: scala.Long): scala.Long = Math.negateExact(t)
-  }
+  given Num[Long] =
+    new Integral[Long] {
+      def plus(lhs: Long, rhs: Long): Long = Math.addExact(lhs, rhs)
+      def minus(lhs: Long, rhs: Long): Long = Math.subtractExact(lhs, rhs)
+      def times(lhs: Long, rhs: Long): Long = Math.multiplyExact(lhs, rhs)
+      def quot(lhs: Long, rhs: Long): Long = lhs / rhs
+      def negate(t: Long): Long = Math.negateExact(t)
+    }
 
-  private[tyda] case object Float extends Primitive[scala.Float] {
-    def plus(lhs: scala.Float, rhs: scala.Float): scala.Float = checkedFloat(lhs, rhs)(lhs + rhs)
-    def minus(lhs: scala.Float, rhs: scala.Float): scala.Float = checkedFloat(lhs, rhs)(lhs - rhs)
-    def times(lhs: scala.Float, rhs: scala.Float): scala.Float = checkedFloat(lhs, rhs)(lhs * rhs)
-    def quot(lhs: scala.Float, rhs: scala.Float): scala.Float =
-      if rhs == 0 then throw new ArithmeticException("/ by zero") else checkedFloat(lhs, rhs)(lhs / rhs)
-    def negate(t: scala.Float): scala.Float = -t
-  }
+  given Num[Float] =
+    new Primitive[Float] {
+      def plus(lhs: Float, rhs: Float): Float = checkedFloat(lhs, rhs)(lhs + rhs)
+      def minus(lhs: Float, rhs: Float): Float = checkedFloat(lhs, rhs)(lhs - rhs)
+      def times(lhs: Float, rhs: Float): Float = checkedFloat(lhs, rhs)(lhs * rhs)
+      def quot(lhs: Float, rhs: Float): Float =
+        if rhs == 0 then throw new ArithmeticException("/ by zero") else checkedFloat(lhs, rhs)(lhs / rhs)
+      def negate(t: Float): Float = -t
+    }
 
-  private[tyda] case object Double extends Primitive[scala.Double] {
-    def plus(lhs: scala.Double, rhs: scala.Double): scala.Double = checkedDouble(lhs, rhs)(lhs + rhs)
-    def minus(lhs: scala.Double, rhs: scala.Double): scala.Double = checkedDouble(lhs, rhs)(lhs - rhs)
-    def times(lhs: scala.Double, rhs: scala.Double): scala.Double = checkedDouble(lhs, rhs)(lhs * rhs)
-    def quot(lhs: scala.Double, rhs: scala.Double): scala.Double =
-      if rhs == 0 then throw new ArithmeticException("/ by zero") else checkedDouble(lhs, rhs)(lhs / rhs)
-    def negate(t: scala.Double): scala.Double = -t
-  }
-
-  given byte: Num[scala.Byte] = Byte
-  given short: Num[scala.Short] = Short
-  given int: Num[scala.Int] = Int
-  given long: Num[scala.Long] = Long
-  given float: Num[scala.Float] = Float
-  given double: Num[scala.Double] = Double
+  given Num[Double] =
+    new Primitive[Double] {
+      def plus(lhs: Double, rhs: Double): Double = checkedDouble(lhs, rhs)(lhs + rhs)
+      def minus(lhs: Double, rhs: Double): Double = checkedDouble(lhs, rhs)(lhs - rhs)
+      def times(lhs: Double, rhs: Double): Double = checkedDouble(lhs, rhs)(lhs * rhs)
+      def quot(lhs: Double, rhs: Double): Double =
+        if rhs == 0 then throw new ArithmeticException("/ by zero") else checkedDouble(lhs, rhs)(lhs / rhs)
+      def negate(t: Double): Double = -t
+    }
 }
