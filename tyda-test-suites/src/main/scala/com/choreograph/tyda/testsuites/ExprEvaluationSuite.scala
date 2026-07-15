@@ -47,6 +47,17 @@ abstract class ExprEvaluationSuite extends AnyFunSuite, ExprEvaluationSuiteBase 
       expr: Expr[From] => Expr[To],
       expected: From => To
   ) =
+    if !Codec[From].isInstanceOf[Codec.Option[?]] then {
+      given Equality[Option[To]] with
+        def areEqual(a: Option[To], b: Any): Boolean =
+          b match {
+            case Some(value) => a.exists(_ === value)
+            case None => a.isEmpty
+            case _ => false
+          }
+      testHasSameBehavior[Option[From], Option[To]](name + " MapOption", _.map(expr), _.map(expected))
+    }
+
     test(s"Same behavior test: $name") {
       val shrinkableValues = ArraySeq.fill(100)(Arbitrary[From].shrinkable(Random))
       val values = shrinkableValues.map(_.value)

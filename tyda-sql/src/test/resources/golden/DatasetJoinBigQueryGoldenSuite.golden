@@ -87,7 +87,7 @@ SELECT t1.value AS _1, t0.value AS _2 FROM t1 LEFT JOIN (SELECT struct(CAST(NULL
 ------ end
 
 ------ Test: pair fullOuterJoin
-SELECT CASE WHEN (t0.value IS NOT NULL) THEN t0.value._2 END AS _1, CASE WHEN (t1.value IS NOT NULL) THEN t1.value._2 END AS _2 FROM (SELECT struct(t1.value AS _1, t1.value AS _2) AS value FROM t1) AS t0 FULL JOIN (SELECT struct(t2.value AS _1, t2.value AS _2) AS value FROM t2) AS t1 ON (t0.value._1 = t1.value._1)
+SELECT t0.value._2 AS _1, t1.value._2 AS _2 FROM (SELECT struct(t1.value AS _1, t1.value AS _2) AS value FROM t1) AS t0 FULL JOIN (SELECT struct(t2.value AS _1, t2.value AS _2) AS value FROM t2) AS t1 ON (t0.value._1 = t1.value._1)
 ------ end
 
 ------ Test: pair join
@@ -95,11 +95,11 @@ SELECT t1.value AS _1, t2.value AS _2 FROM t1 JOIN t2 ON (t1.value = t2.value)
 ------ end
 
 ------ Test: pair leftOuterJoin
-SELECT t1.value AS _1, CASE WHEN (t0.value IS NOT NULL) THEN t0.value._2 END AS _2 FROM t1 LEFT JOIN (SELECT struct(t2.value AS _1, t2.value AS _2) AS value FROM t2) AS t0 ON (t1.value = t0.value._1)
+SELECT t1.value AS _1, t0.value._2 AS _2 FROM t1 LEFT JOIN (SELECT struct(t2.value AS _1, t2.value AS _2) AS value FROM t2) AS t0 ON (t1.value = t0.value._1)
 ------ end
 
 ------ Test: pair rightOuterJoin
-SELECT CASE WHEN (t0.value IS NOT NULL) THEN t0.value._2 END AS _1, t2.value AS _2 FROM t2 LEFT JOIN (SELECT struct(t1.value AS _1, t1.value AS _2) AS value FROM t1) AS t0 ON (t0.value._1 = t2.value)
+SELECT t0.value._2 AS _1, t2.value AS _2 FROM t2 LEFT JOIN (SELECT struct(t1.value AS _1, t1.value AS _2) AS value FROM t1) AS t0 ON (t0.value._1 = t2.value)
 ------ end
 
 ------ Test: rightJoinFlat

@@ -47,11 +47,11 @@ SELECT ((t1.value IS NOT NULL) AND (t1.value = CAST(0 AS TINYINT))) AS value FRO
 ------ end
 
 ------ Test: Option.exists
-SELECT CASE WHEN (t1.value IS NULL) THEN FALSE ELSE (t1.value = CAST(0 AS TINYINT)) END AS value FROM t1
+SELECT ((t1.value IS NOT NULL) AND (t1.value = CAST(0 AS TINYINT))) AS value FROM t1
 ------ end
 
 ------ Test: Option.forall
-SELECT CASE WHEN (t1.value IS NULL) THEN TRUE ELSE (t1.value = CAST(0 AS TINYINT)) END AS value FROM t1
+SELECT ((t1.value IS NULL) OR (t1.value = CAST(0 AS TINYINT))) AS value FROM t1
 ------ end
 
 ------ Test: Option.getOrElse
@@ -63,7 +63,7 @@ SELECT (t1.value IS NULL) AS value FROM t1
 ------ end
 
 ------ Test: Option.map
-SELECT CASE WHEN (t1.value IS NOT NULL) THEN (t1.value = CAST(0 AS INT)) END AS value FROM t1
+SELECT (t1.value = CAST(0 AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: Option.orElse
@@ -235,11 +235,19 @@ SELECT CASE WHEN (t1.value IS NOT NULL) THEN struct(CASE WHEN (t1.value.discrimi
 ------ end
 
 ------ Test: asCase: select from product case
-SELECT CASE WHEN (t1.c IS NOT NULL) THEN t1.c.i END AS value FROM t1
+SELECT t1.c.i AS value FROM t1
 ------ end
 
 ------ Test: boolean and
 SELECT (t1._1 AND t1._2) AS value FROM t1
+------ end
+
+------ Test: boolean and opt
+SELECT ((t1.value IS NOT NULL) AND (t1.value._1 AND t1.value._2)) AS value FROM t1
+------ end
+
+------ Test: boolean nested exists
+SELECT ((t1._1 IS NOT NULL) AND ((t1._2 IS NOT NULL) AND (t1._2 AND t1._1))) AS value FROM t1
 ------ end
 
 ------ Test: boolean not and equals
@@ -248,6 +256,10 @@ SELECT ((NOT t1._1) = (NOT t1._2)) AS value FROM t1
 
 ------ Test: boolean or
 SELECT (t1._1 OR t1._2) AS value FROM t1
+------ end
+
+------ Test: boolean or opt
+SELECT ((t1.value IS NOT NULL) AND (t1.value._1 OR t1.value._2)) AS value FROM t1
 ------ end
 
 ------ Test: bytes length
@@ -335,15 +347,15 @@ SELECT CAST(t1.value AS SMALLINT) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Double to com.choreograph.tyda.Decimal$package.Decimal[3, 1] and back
-SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(1 AS INT)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(1 AS INT)) AS FLOAT64) END AS value FROM t1
+SELECT CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(1 AS INT)) AS FLOAT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Double to com.choreograph.tyda.Decimal$package.Decimal[38, 18] and back
-SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS BIGDECIMAL) >= CAST('-99999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS BIGDECIMAL) <= CAST('99999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS BIGDECIMAL) END, CAST(18 AS INT)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS BIGDECIMAL) >= CAST('-99999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS BIGDECIMAL) <= CAST('99999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS BIGDECIMAL) END, CAST(18 AS INT)) AS FLOAT64) END AS value FROM t1
+SELECT CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS BIGDECIMAL) >= CAST('-99999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS BIGDECIMAL) <= CAST('99999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS BIGDECIMAL) END, CAST(18 AS INT)) AS FLOAT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Double to com.choreograph.tyda.Decimal$package.Decimal[38, 9] and back
-SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT)) AS FLOAT64) END AS value FROM t1
+SELECT CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT)) AS FLOAT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Double to scala.Float
@@ -351,15 +363,15 @@ SELECT CAST(t1.value AS FLOAT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Float to com.choreograph.tyda.Decimal$package.Decimal[2, 0] and back
-SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT)) AS FLOAT64) END AS value FROM t1
+SELECT CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT)) AS FLOAT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Float to com.choreograph.tyda.Decimal$package.Decimal[38, 18] and back
-SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS BIGDECIMAL) >= CAST('-99999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS BIGDECIMAL) <= CAST('99999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS BIGDECIMAL) END, CAST(18 AS INT)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS BIGDECIMAL) >= CAST('-99999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS BIGDECIMAL) <= CAST('99999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS BIGDECIMAL) END, CAST(18 AS INT)) AS FLOAT64) END AS value FROM t1
+SELECT CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS BIGDECIMAL) >= CAST('-99999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS BIGDECIMAL) <= CAST('99999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS BIGDECIMAL) END, CAST(18 AS INT)) AS FLOAT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Float to com.choreograph.tyda.Decimal$package.Decimal[38, 9] and back
-SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT)) AS FLOAT64) END AS value FROM t1
+SELECT CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT)) AS FLOAT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Float to scala.Double
@@ -715,7 +727,7 @@ SELECT (t1.value + CAST(2147483647 AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: flatMap Option
-SELECT CASE WHEN (t1.value IS NULL) THEN CAST(NULL AS INT) ELSE t1.value.value END AS value FROM t1
+SELECT t1.value.value AS value FROM t1
 ------ end
 
 ------ Test: fromBase64
@@ -835,11 +847,11 @@ SELECT is_nan(t1.value) AS value FROM t1
 ------ end
 
 ------ Test: json date as YYYY-MM-DD
-SELECT CASE WHEN (CASE WHEN ((json_query(t1._2, '$') != 'null') AND (SAFE_CAST(json_value(t1._2, '$._1') AS DATE) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(t1._2, '$._1') AS DATE) AS _1) END IS NOT NULL) THEN CASE WHEN ((json_query(t1._2, '$') != 'null') AND (SAFE_CAST(json_value(t1._2, '$._1') AS DATE) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(t1._2, '$._1') AS DATE) AS _1) END._1 END AS value FROM t1
+SELECT CASE WHEN ((json_query(t1._2, '$') != 'null') AND (SAFE_CAST(json_value(t1._2, '$._1') AS DATE) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(t1._2, '$._1') AS DATE) AS _1) END._1 AS value FROM t1
 ------ end
 
 ------ Test: json duration as long of microseconds
-SELECT CASE WHEN (CASE WHEN ((json_query(t1._2, '$') != 'null') AND (SAFE_CAST(json_value(t1._2, '$._1') AS BIGINT) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(t1._2, '$._1') AS BIGINT) AS _1) END IS NOT NULL) THEN CASE WHEN ((json_query(t1._2, '$') != 'null') AND (SAFE_CAST(json_value(t1._2, '$._1') AS BIGINT) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(t1._2, '$._1') AS BIGINT) AS _1) END._1 END AS value FROM t1
+SELECT CASE WHEN ((json_query(t1._2, '$') != 'null') AND (SAFE_CAST(json_value(t1._2, '$._1') AS BIGINT) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(t1._2, '$._1') AS BIGINT) AS _1) END._1 AS value FROM t1
 ------ end
 
 ------ Test: lt for com.choreograph.tyda.Date$package.Date
@@ -1011,15 +1023,15 @@ SELECT CASE WHEN ((json_query(t1.value, '$') != 'null') AND (CASE WHEN ((SAFE_CA
 ------ end
 
 ------ Test: map Option
-SELECT CASE WHEN (t1.value IS NOT NULL) THEN (t1.value = CAST(0 AS INT)) END AS value FROM t1
+SELECT (t1.value = CAST(0 AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: map Option using nested outer
-SELECT CASE WHEN (t1._1 IS NOT NULL) THEN ((CASE WHEN (t1._2 IS NOT NULL) THEN (t1._2 = t1._1) END IS NOT NULL) AND (CASE WHEN (t1._2 IS NOT NULL) THEN (t1._2 = t1._1) END = TRUE)) END AS value FROM t1
+SELECT CASE WHEN (t1._1 IS NOT NULL) THEN (((t1._2 = t1._1) IS NOT NULL) AND ((t1._2 = t1._1) = TRUE)) END AS value FROM t1
 ------ end
 
 ------ Test: map Option using outer
-SELECT CASE WHEN (t1._1 IS NOT NULL) THEN (t1._1 = t1._2) END AS value FROM t1
+SELECT (t1._1 = t1._2) AS value FROM t1
 ------ end
 
 ------ Test: mapEntries
