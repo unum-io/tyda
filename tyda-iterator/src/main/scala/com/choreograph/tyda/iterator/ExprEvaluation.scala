@@ -53,7 +53,8 @@ object ExprEvaluation {
     lambdaN(NonEmpty[Seq](compiled.arg), compiled.expr)
 
   private[tyda] def lambda2[T1, T2, R](compiled: CompiledExpr2[T1, T2, R]): (T1, T2) => R =
-    (t1, t2) => lambdaN[(T1, T2), R](NonEmpty[Seq](compiled.arg1, compiled.arg2), compiled.expr)((t1, t2))
+    val tupled = lambdaN[(T1, T2), R](NonEmpty[Seq](compiled.arg1, compiled.arg2), compiled.expr)
+    tupled(_, _)
 
   private def trimSpaces(str: String): String = {
     val first = str.indexWhere(_ != ' ')
