@@ -826,6 +826,18 @@ SELECT CAST(NULL AS void) FROM t1
 SELECT t1._1 AS _1, t1._2 AS _2 FROM t1
 ------ end
 
+------ Test: in exprs
+SELECT t1._1 IN (t1._2, CASE WHEN t1._4 THEN t1._1 ELSE t1._3 END) AS value FROM t1
+------ end
+
+------ Test: in literals
+SELECT t1.value IN (CAST(0 AS INT), CAST(1 AS INT), CAST(2 AS INT)) AS value FROM t1
+------ end
+
+------ Test: in match struct
+SELECT t1._1 IN (t1._2, t1._3) AS value FROM t1
+------ end
+
 ------ Test: isNaN for Double
 SELECT isnan(t1.value) AS value FROM t1
 ------ end
@@ -1195,7 +1207,7 @@ SELECT (t1.value = TRUE) AS value FROM t1
 ------ end
 
 ------ Test: seq contains
-SELECT aggregate(transform(t1.value, c0 -> (c0 = TRUE)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1.value, TRUE) AS value FROM t1
 ------ end
 
 ------ Test: seq exists

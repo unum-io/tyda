@@ -24,6 +24,7 @@ final case class SqlDialect(
     arrayDistinct: SqlDialect.ArrayDistinct,
     arrayConcat: String,
     arrayConcatAgg: SqlDialect.ArrayConcatAgg,
+    arrayContains: SqlDialect.ArrayContains,
     arrayElement: SqlDialect.ArrayElement,
     arrayJoin: String,
     arraySize: String,
@@ -301,6 +302,11 @@ object SqlDialect {
     case NaNIsLargest
   }
 
+  enum ArrayContains {
+    case Function(name: String)
+    case InUnnest
+  }
+
   enum ArrayHigherOrderFunctions {
 
     /** Supports higher order functions using lambda syntax. e.g.
@@ -418,6 +424,7 @@ object SqlDialect {
     arrayDistinct = ArrayDistinct.Subquery("array", "unnest"),
     arrayConcat = "array_concat",
     arrayConcatAgg = ArrayConcatAgg.Function("array_concat_agg"),
+    arrayContains = ArrayContains.InUnnest,
     arrayElement = ArrayElement.Braces,
     arrayJoin = "array_to_string",
     arraySize = "array_length",
@@ -491,6 +498,7 @@ object SqlDialect {
     arrayDistinct = ArrayDistinct.Function("array_distinct"),
     arrayConcat = "concat",
     arrayConcatAgg = ArrayConcatAgg.FlattenCollect("flatten"),
+    arrayContains = ArrayContains.Function("array_contains"),
     arrayElement = ArrayElement.Function("element_at"),
     arrayJoin = "array_join",
     arraySize = "size",

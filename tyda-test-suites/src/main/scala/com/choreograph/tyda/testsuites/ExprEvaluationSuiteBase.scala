@@ -51,6 +51,7 @@ import com.choreograph.tyda.functions.range
 import com.choreograph.tyda.functions.seq
 import com.choreograph.tyda.functions.some
 import com.choreograph.tyda.functions.startsWith
+import com.choreograph.tyda.functions.ternary
 import com.choreograph.tyda.functions.toBase64
 import com.choreograph.tyda.functions.toJson
 import com.choreograph.tyda.functions.tuple
@@ -430,6 +431,17 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   )
   testHasSameBehavior[Seq[Int], Boolean]("seq exists", _.exists(_ < 0), _.exists(_ < 0))
   testHasSameBehavior[Seq[Boolean], Boolean]("seq contains", _.contains(true), _.contains(elem = true))
+  testHasSameBehavior[Int, Boolean]("in literals", _.in(0, 1, 2), v => Seq(0, 1, 2).contains(v))
+  testHasSameBehavior[(Int, Int, Int, Boolean), Boolean](
+    "in exprs",
+    { case Expr(i1, i2, i3, b) => i1.in(i2, ternary(b, i1, i3)) },
+    (i1, i2, i3, b) => i1 == i2 || i1 == (if b then i1 else i3)
+  )
+  testHasSameBehavior[(Struct, Struct, Struct), Boolean](
+    "in match struct",
+    { case Expr(a, b, c) => a.in(b, c) },
+    { case (a, b, c) => Seq(b, c).contains(a) }
+  )
   testHasSameBehavior[Seq[Int], Boolean]("seq forall", _.forall(_ < 0), _.forall(_ < 0))
   testHasSameBehavior[Seq[Seq[Int]], Seq[Boolean]](
     "seq forall nested",

@@ -1,5 +1,5 @@
 ------ Test: collect subquery
-SELECT t1.value AS value FROM t1 WHERE aggregate(transform(coalesce((SELECT CASE WHEN (count(1) <> 0) THEN collect_list(t2.value) END AS value FROM t2), CAST(array() AS ARRAY<TINYINT>)), c0 -> (c0 = t1.value)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3)
+SELECT t1.value AS value FROM t1 WHERE array_contains(coalesce((SELECT CASE WHEN (count(1) <> 0) THEN collect_list(t2.value) END AS value FROM t2), CAST(array() AS ARRAY<TINYINT>)), t1.value)
 ------ end
 
 ------ Test: count subquery
