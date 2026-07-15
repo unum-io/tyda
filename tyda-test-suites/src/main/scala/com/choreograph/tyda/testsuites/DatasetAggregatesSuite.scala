@@ -266,7 +266,7 @@ trait DatasetAggregatesSuite extends DatasetSuite {
   )
   test[(Int, Int), (k: Int, v: Int)](
     "reduce single column named tuple",
-    ds => ds.groupBy(_ => (k = lit(1))).aggregate(pair => (v = reduce[Int](pair._2, _ + _)))
+    ds => ds.groupBy(_ => (k = lit(1))).aggregate(pair => (v = reduce(pair._2, _ + _)))
   )
 
   test[Int, (EnumWithOrdering, Long)](
