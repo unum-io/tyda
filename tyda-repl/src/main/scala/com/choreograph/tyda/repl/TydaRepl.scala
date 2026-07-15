@@ -60,6 +60,9 @@ object TydaRepl {
   }
 
   def main(args: Array[String]): Unit =
+    if args.contains("--help") then
+      Console.println(s"TydaRepl options:\n${ArgsParser.help[Args]}")
+      System.exit(0)
     ArgsParser.parse[Args](args.toSeq) match
       case Right(parsed) => run(parsed)
       case Left(error) =>
