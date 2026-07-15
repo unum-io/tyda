@@ -77,7 +77,7 @@ sealed trait GroupedDataset[N <: Tuple, KV <: Tuple, V: Codec](using Codec[Named
 
   /** Reduce all the values in each group using the provided binary function.
     *
-    * This is concise shorthand for performing `aggregate(reduce(f))`.
+    * This is convenience shorthand for performing `aggregate(reduce(f))`.
     */
   def reduce(f: (V, V) => V)(using CanMerge[K, (value: V)]): Dataset[Concat[K, (value: V)]] =
     aggregateValue(com.choreograph.tyda.aggregates.reduce(f))
