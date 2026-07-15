@@ -51,6 +51,9 @@ class AggregatesExprEvaluationSuite extends AnyFunSuite {
   test(Seq(Some(1), None, Some(10)), 2L)(countSome)
   test(Seq(Some(1), None, Some(10)).map(Tuple1(_)), 2L)(countSome(_._1))
   test((0 to 10).toSeq, 55)(reduce(_ + _))
+  test((0 to 10).toSeq, (v = 55))(e =>
+    AggregateExpr.AsExpr[(v: AggregateExpr[Int]), (v: Int)]((v = reduce(e, _ + _)))
+  )
   test((0 to 10).toSeq, 65)(reduce((a, b) => a + b + 1))
 
   test((0 to 10).map(_.toByte), 55L)(sum)

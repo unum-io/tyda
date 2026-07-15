@@ -153,7 +153,12 @@ object aggregates {
 
   /** Aggregate from a binary function.
     */
-  def reduce[T](f: (T, T) => T): Expr[T] => AggregateExpr[T] = e => aggregate(e, Reduce(f)(using e.codec))
+  def reduce[T](f: (T, T) => T): Expr[T] => AggregateExpr[T] = reduce(_, f)
+
+  /** Aggregate from a binary function and a corresponding expression.
+    */
+  def reduce[T](expr: Expr[T], f: (T, T) => T): AggregateExpr[T] =
+    aggregate(expr, Reduce(f)(using expr.codec))
 
   /** AggregateExpr returning the sum of the values.
     *
