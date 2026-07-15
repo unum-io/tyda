@@ -85,10 +85,7 @@ trait DatasetOrderBySuite extends DatasetSuite {
     "join then orderBy",
     (ds1, ds2) => ds1.join(ds2, _ == _).select(_._1).orderBy(identity)
   )
-  testOrdered[Int, Int, Int](
-    "orderBy then join",
-    (ds1, ds2) => ds1.orderBy(identity).join(ds2, _ == _).select(_._1)
-  )
+  test[Int, Int, Int]("orderBy then join", (ds1, ds2) => ds1.orderBy(identity).join(ds2, _ == _).select(_._1))
 
   testOrdered[Int, Int]("distinct then orderBy", _.distinct.orderBy(identity))
   test[Int, Int]("orderBy then distinct", _.orderBy(identity).distinct)
