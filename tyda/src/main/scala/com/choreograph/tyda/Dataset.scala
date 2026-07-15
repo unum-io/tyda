@@ -31,7 +31,7 @@ sealed trait Dataset[T: Codec] {
   def filter(p: T => Boolean): Dataset[T] = where(_.udf(p))
 
   /** Filter the Dataset based on a expression predicate. */
-  def where[R: AsExpr.Of[Boolean]](p: Expr[T] => R): Dataset[T] = Dataset.Filter(this, CompiledExpr(p))
+  def where[R](p: Expr[T] => Expr[Boolean]): Dataset[T] = Dataset.Filter(this, CompiledExpr(p))
 
   /** Select a single expression from the Dataset.
     *
@@ -488,10 +488,7 @@ sealed trait Dataset[T: Codec] {
   /** Perform a inner join with another [[Dataset]] using the given join
     * condition.
     */
-  def join[U, R: AsExpr.Of[Boolean]](
-      other: Dataset[U],
-      condition: (Expr[T], Expr[U]) => R
-  ): Dataset[(T, U)] = {
+  def join[U](other: Dataset[U], condition: (Expr[T], Expr[U]) => Expr[Boolean]): Dataset[(T, U)] = {
     given Codec[U] = other.codec
     Dataset.Join(this, other, CompiledExpr2(condition))
   }
@@ -499,10 +496,7 @@ sealed trait Dataset[T: Codec] {
   /** Perform a left outer join with another [[Dataset]] using the given join
     * condition.
     */
-  def leftOuterJoin[U, R: AsExpr.Of[Boolean]](
-      other: Dataset[U],
-      p: (Expr[T], Expr[U]) => R
-  ): Dataset[(T, Option[U])] = {
+  def leftOuterJoin[U](other: Dataset[U], p: (Expr[T], Expr[U]) => Expr[Boolean]): Dataset[(T, Option[U])] = {
     given Codec[U] = other.codec
     Dataset.LeftOuterJoin(this, other, CompiledExpr2(p))
   }
@@ -510,17 +504,15 @@ sealed trait Dataset[T: Codec] {
   /** Perform a right outer join with another [[Dataset]] using the given join
     * condition.
     */
-  def rightOuterJoin[U, R: AsExpr.Of[Boolean]](
-      other: Dataset[U],
-      p: (Expr[T], Expr[U]) => R
-  ): Dataset[(Option[T], U)] = other.leftOuterJoin(this, (l, r) => p(r, l)).select(_._2, _._1)
+  def rightOuterJoin[U](other: Dataset[U], p: (Expr[T], Expr[U]) => Expr[Boolean]): Dataset[(Option[T], U)] =
+    other.leftOuterJoin(this, (l, r) => p(r, l)).select(_._2, _._1)
 
   /** Perform a full outer join with another [[Dataset]] using the given join
     * condition.
     */
-  def fullOuterJoin[U, R: AsExpr.Of[Boolean]](
+  def fullOuterJoin[U](
       other: Dataset[U],
-      p: (Expr[T], Expr[U]) => R
+      p: (Expr[T], Expr[U]) => Expr[Boolean]
   ): Dataset[(Option[T], Option[U])] = {
     given Codec[U] = other.codec
     Dataset.FullOuterJoin(this, other, CompiledExpr2(p))
@@ -533,7 +525,7 @@ sealed trait Dataset[T: Codec] {
     * in the right side that match the join condition. In SQL left anti join are
     * usually created using a WHERE NOT EXISTS with a correlated subquery.
     */
-  def leftAntiJoin[U, R: AsExpr.Of[Boolean]](other: Dataset[U], p: (Expr[T], Expr[U]) => R): Dataset[T] = {
+  def leftAntiJoin[U](other: Dataset[U], p: (Expr[T], Expr[U]) => Expr[Boolean]): Dataset[T] = {
     given Codec[U] = other.codec
     Dataset.LeftAntiJoin(this, other, CompiledExpr2(p))
   }

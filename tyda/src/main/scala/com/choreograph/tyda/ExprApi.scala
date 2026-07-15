@@ -111,15 +111,13 @@ trait ExprApi[Expr[T]] {
       * applied to the value.
       */
     @targetName("optionExists")
-    def exists[I: AsExpr.Of[Boolean]](p: Expr[T] => I): Expr[Boolean] =
-      ternary(isEmpty, ifTrue = false, p(get))
+    def exists(p: Expr[T] => Expr[Boolean]): Expr[Boolean] = ternary(isEmpty, ifTrue = false, p(get))
 
     /** Returns true if the option is None or the predicate returns true when
       * applied to the value.
       */
     @targetName("optionForall")
-    def forall[I: AsExpr.Of[Boolean]](p: Expr[T] => I): Expr[Boolean] =
-      ternary(isEmpty, ifTrue = true, p(get))
+    def forall(p: Expr[T] => Expr[Boolean]): Expr[Boolean] = ternary(isEmpty, ifTrue = true, p(get))
 
     /** Returns true if the option is Some and contains the value.
       */
@@ -707,12 +705,12 @@ trait ExprApi[Expr[T]] {
 
     /** Check if all elements in the sequence satisfy the given predicate.
       */
-    def forall[I: AsExpr.Of[Boolean]](p: Expr[T] => I): Expr[Boolean] =
+    def forall(p: Expr[T] => Expr[Boolean]): Expr[Boolean] =
       map(p).fold(PrimitiveAggregate.BoolAnd(), onEmpty = true)
 
     /** Check if any element in the sequence satisfy the given predicate.
       */
-    def exists[I: AsExpr.Of[Boolean]](p: Expr[T] => I): Expr[Boolean] =
+    def exists(p: Expr[T] => Expr[Boolean]): Expr[Boolean] =
       map(p).fold(PrimitiveAggregate.BoolOr(), onEmpty = false)
 
     /** Check if the sequence contains the given element.
