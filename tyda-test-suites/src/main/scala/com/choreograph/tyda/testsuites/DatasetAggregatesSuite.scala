@@ -264,6 +264,10 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     "reduce single column",
     ds => ds.groupByKey(_ => lit(1)).aggregateValue(pair => reduce[Int](_ + _)(pair._2)).pairs
   )
+  test[(Int, Int), (k: Int, v: Int)](
+    "reduce single column named tuple",
+    ds => ds.groupBy(_ => (k = lit(1))).aggregate(pair => (v = reduce[Int](pair._2, _ + _)))
+  )
 
   test[Int, (EnumWithOrdering, Long)](
     "support group by with enum",
