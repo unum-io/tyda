@@ -31,11 +31,11 @@ SELECT CAST(1 AS INT) AS `from`, CAST(2 AS BIGINT) AS `has space`
 ------ end
 
 ------ Test: explode after aggregate
-SELECT t1 AS _1, t0._2 AS _2 FROM (SELECT table1.d AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.d) AS t0, t0._1 AS t1
+SELECT t1 AS _1, t0._2 AS _2 FROM (SELECT table1.d AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.d) AS t0, unnest(t0._1) AS t1
 ------ end
 
 ------ Test: explode multiple expression
-SELECT table1.a AS _1, t0 AS _2 FROM table1, table1.d AS t0
+SELECT table1.a AS _1, t0 AS _2 FROM table1, unnest(table1.d) AS t0
 ------ end
 
 ------ Test: fromSeq
@@ -67,7 +67,7 @@ SELECT table1.a AS _1, table2.a AS _2 FROM table1 JOIN table2 ON (table1.a = tab
 ------ end
 
 ------ Test: join and then explode
-SELECT t0 AS _1, t1 AS _2 FROM table1 JOIN table2 ON (table1.a = table2.a), table1.d AS t0, table2.d AS t1
+SELECT t0 AS _1, t1 AS _2 FROM table1 JOIN table2 ON (table1.a = table2.a), unnest(table1.d) AS t0, unnest(table2.d) AS t1
 ------ end
 
 ------ Test: join+aggregate on lhs
@@ -111,7 +111,7 @@ SELECT struct(table1.a AS _1, table1.b AS _2, table1.c AS _3) AS value FROM tabl
 ------ end
 
 ------ Test: multiple explodes in separate selects
-SELECT t0 AS _1, t1 AS _2 FROM table1, table1.d AS t0, table1.d AS t1
+SELECT t0 AS _1, t1 AS _2 FROM table1, unnest(table1.d) AS t0, unnest(table1.d) AS t1
 ------ end
 
 ------ Test: multiple joins

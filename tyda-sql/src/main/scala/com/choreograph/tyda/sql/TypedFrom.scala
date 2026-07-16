@@ -2,8 +2,8 @@ package com.choreograph.tyda.sql
 
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.CompiledExplodeExpr
-import com.choreograph.tyda.CompiledExpr
 import com.choreograph.tyda.CompiledExpr2
+import com.choreograph.tyda.ExplodeExpr
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.NonEmpty
@@ -45,11 +45,11 @@ private object TypedFrom {
   }
 
   private def joinExplodeReferenceAndOutput[U](
-      codec: Codec[Iterable[U]],
+      codec: Codec[U],
       dialect: SqlDialect
   ): (reference: ExprNode.Reference[?], output: ExprNode[U]) = {
-    given elementCodec: Codec[U] = codec.element
-    if shouldWrapArrayElement(elementCodec, dialect.ddl) then {
+    given Codec[U] = codec
+    if shouldWrapArrayElement(codec, dialect.ddl) then {
       val ref = ExprNode.Reference[(value: U)]()
       (ref, ExprNode.Select(ref, "value"))
     } else {
@@ -61,10 +61,10 @@ private object TypedFrom {
   /** Explode right column using INNER JOIN syntax */
   def join[T, U](
       left: TypedFrom[T],
-      right: CompiledExpr[T, Iterable[U]],
+      right: CompiledExplodeExpr[T, U],
       args: UnparserArgs
   ): Result[TypedFrom[(T, U)]] = {
-    val exprReplaced = right.expr.replace(right.arg, left.output)
+    val exprReplaced = ExplodeExpr(right.expr.replace(right.arg, left.output))
     val alias = args.aliasGen.table()
     val (ref, output) = joinExplodeReferenceAndOutput(right.codec, args.dialect)
     simplifyAndToSqlExpr(exprReplaced, left.ids, args).map(rightSql =>
@@ -90,10 +90,10 @@ private object TypedFrom {
     assert(codec.fields.arity == rights.length + 1, "Codec arity does not match number of right expressions")
     rights
       .map(f =>
-        val expr = f.expr.replace(f.arg, left.output)
+        val expr = ExplodeExpr(f.expr.replace(f.arg, left.output))
         for {
           sqlExpr <- simplifyAndToSqlExpr(expr, left.ids, args)
-          (ref, output) = joinExplodeReferenceAndOutput(f.expr.codec, args.dialect)
+          (ref, output) = joinExplodeReferenceAndOutput(f.codec, args.dialect)
         } yield (ref, output, sqlExpr)
       )
       .sequence
