@@ -1,7 +1,6 @@
 package com.choreograph.tyda.sql
 
 import scala.NamedTuple.AnyNamedTuple
-import scala.collection.mutable
 import scala.deriving.Mirror
 import scala.reflect.ClassTag
 
@@ -371,7 +370,7 @@ private final case class SelectBuilder[T, R](
   }
 
   private def selectNExplodeJoin[R2 <: Tuple](
-      exprs: Tuple.Map[R2, [X] =>> CompiledExprOrExplode[R, X]]
+      exprs: Tuple.Map[R2, [x] =>> CompiledExprOrExplode[R, x]]
   ): Result[SelectBuilder[?, R2]] = {
     val instances = tupleInstances(exprs)
     select match {
@@ -385,26 +384,35 @@ private final case class SelectBuilder[T, R](
             }
         )
         // TYPE SAFETY: Each value in (from.output.codec +: explodeCodecs) is a Codec
-        val newFromCodec: Codec.Product[Tuple] = Codec.tuple(tupleInstances(
-          Tuple.fromArray((from.output.codec +: explodeCodecs).toArray).asInstanceOf[Tuple.Map[Tuple, Codec]]
+        val newFromCodec: Codec.Product[T *: Tuple] = Codec.tuple(tupleInstances(
+          Tuple
+            .fromArray((from.output.codec +: explodeCodecs).toArray)
+            .asInstanceOf[Tuple.Map[T *: Tuple, Codec]]
         ))
         val newArg = ExprNode.Reference()(using newFromCodec)
-        val joinExprs = mutable.ArrayBuffer[CompiledExplodeExpr[T, ?]]()
+        var idx = 1
         val selectExprs = instances.mapK([t] =>
           _ match {
             case noExplode @ CompiledExpr(_, _) =>
               val composed = compiled.andThen(noExplode)
               composed.expr.replace(composed.arg, ExprNode.Select(newArg, "_1"))
-            case explode @ CompiledExplodeExpr(_, _) =>
-              joinExprs.addOne(explode.compose(compiled))
-              ExprNode.Select(newArg, s"_${joinExprs.size + 1}")
+            case _ @CompiledExplodeExpr(_, _) =>
+              idx += 1
+              (ExprNode.Select(newArg, s"_$idx"))
           }
         )
-        val newSelect = CompiledExpr(newArg, ExprNode.makeTuple[R2](selectExprs.toTuple))
+        val joinExprs = instances.mapConst([t] =>
+          _ match {
+            case _ @CompiledExpr(_, _) => None
+            case explode @ CompiledExplodeExpr(_, _) => Some(explode.compose(compiled))
+          }
+        )
+        val newSelect = CompiledExpr[T *: Tuple, R2](newArg, ExprNode.makeTuple(selectExprs.toTuple))
         val newWhere =
           where.map(cond => CompiledExpr(newArg, cond.expr.replace(cond.arg, ExprNode.Select(newArg, "_1"))))
+        // TYPE SAFETY: Each value in joinExprs.flatten is a CompiledExplodeExpr[T, ?]
         TypedFrom
-          .joinExplode(from, joinExprs.toSeq, newFromCodec, args)
+          .joinExplode[T, Tuple](from, Tuple.fromArray(joinExprs.flatten.toArray).asInstanceOf, args)
           .map(newFrom => SelectBuilder(args, from = newFrom, select = newSelect, where = newWhere))
       case _ => toSubquery.flatMap(_.selectN(exprs))
     }

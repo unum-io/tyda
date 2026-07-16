@@ -9,6 +9,7 @@ import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.NonEmpty
 import com.choreograph.tyda.rewrite.reduceBalanced
 import com.choreograph.tyda.shapeless3extras.mapConst
+import com.choreograph.tyda.shapeless3extras.tupleInstances
 import com.choreograph.tyda.sql.Result.sequence
 import com.choreograph.tyda.sql.ast.From
 import com.choreograph.tyda.sql.ast.JoinType
@@ -76,34 +77,29 @@ private object TypedFrom {
     )
   }
 
-  /** Explode multiple right column using INNER JOIN syntax
-    *
-    * The codec for R should be a flat tuple containing `T` as the first element
-    * and then all of the elements of right after that.
+  /** Explode multiple columns using INNER JOIN syntax
     */
   def joinExplode[T, R <: Tuple](
       left: TypedFrom[T],
-      rights: Seq[CompiledExplodeExpr[T, ?]],
-      codec: Codec.Product[R],
+      rights: Tuple.Map[R, [r] =>> CompiledExplodeExpr[T, r]],
       args: UnparserArgs
-  ): Result[TypedFrom[R]] = {
-    assert(codec.fields.arity == rights.length + 1, "Codec arity does not match number of right expressions")
-    rights
-      .map(f =>
-        val expr = ExplodeExpr(f.expr.replace(f.arg, left.output))
-        for {
-          sqlExpr <- simplifyAndToSqlExpr(expr, left.ids, args)
-          (ref, output) = joinExplodeReferenceAndOutput(f.codec, args.dialect)
-        } yield (ref, output, sqlExpr)
+  ): Result[TypedFrom[T *: R]] =
+    tupleInstances(rights)
+      .mapConst([t] =>
+        f =>
+          val expr = ExplodeExpr(f.expr.replace(f.arg, left.output))
+          for {
+            sqlExpr <- simplifyAndToSqlExpr(expr, left.ids, args)
+            (ref, output) = joinExplodeReferenceAndOutput(f.codec, args.dialect)
+          } yield (ref, output, sqlExpr)
       )
       .sequence
       .map { refsAndSqlExprs =>
         val (refs, outputs, exprs) = refsAndSqlExprs.unzip3
-        /* TYPE SAFETY: Each element of refs and output are of type ExprNode and that the types match the
-         * codec R is a precondition of this function */
-        val output = ExprNode.makeTuple(
-          Tuple.fromArray((left.output +: outputs).toArray).asInstanceOf[Tuple.Map[R, ExprNode]]
-        )
+        /* TYPE SAFETY: outputs has type Seq[ExprNode[?]] with components corresponding to the components of
+         * right */
+        val output =
+          ExprNode.makeTuple[T *: R](Tuple.fromArray((left.output +: outputs).toArray).asInstanceOf)
         val aliases = refs.map(_ => args.aliasGen.table())
         val combinedIds = left.ids ++ refs.zip(aliases).map((r, a) => r -> IdentifierOrSqlExpr.Expr(a))
         val from = exprs
@@ -113,7 +109,6 @@ private object TypedFrom {
           }
         TypedFrom(from, output, combinedIds)
       }
-  }
 
   /** The U being an Option is to make sure the right side output is nullable.
     * It up to the caller to ensure that the `Option` value is never `None`
