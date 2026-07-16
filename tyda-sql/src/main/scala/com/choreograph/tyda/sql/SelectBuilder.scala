@@ -412,7 +412,7 @@ private final case class SelectBuilder[T, R](
           where.map(cond => CompiledExpr(newArg, cond.expr.replace(cond.arg, ExprNode.Select(newArg, "_1"))))
         // TYPE SAFETY: Each value in joinExprs.flatten is a CompiledExplodeExpr[T, ?]
         TypedFrom
-          .joinExplode[T, Tuple](from, Tuple.fromArray(joinExprs.flatten.toArray).asInstanceOf, args)
+          .joinExplode(from, Tuple.fromArray(joinExprs.flatten.toArray).asInstanceOf, args)
           .map(newFrom => SelectBuilder(args, from = newFrom, select = newSelect, where = newWhere))
       case _ => toSubquery.flatMap(_.selectN(exprs))
     }
