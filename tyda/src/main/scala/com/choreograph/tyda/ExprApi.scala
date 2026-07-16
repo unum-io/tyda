@@ -515,30 +515,30 @@ trait ExprApi[Expr[T]] {
       *
       * Throws an exception if the operation leads to overflow.
       */
-    infix def +[I: AsExpr.Of[T]](rhs: I): Expr[T] =
-      lift(ExprNode.Add(Num[T], unlift(lhs), unlift(AsExpr(rhs))))
+    infix def +(rhs: Expr[T]): Expr[T] = lift(ExprNode.Add(Num[T], unlift(lhs), unlift(rhs)))
+    infix def +(rhs: T)(using Codec[T]): Expr[T] = lhs + lit(rhs)
 
     /** Returns the difference of two expressions.
       *
       * Throws an exception if the operation leads to overflow.
       */
-    infix def -[I: AsExpr.Of[T]](rhs: I): Expr[T] =
-      lift(ExprNode.Subtract(Num[T], unlift(lhs), unlift(AsExpr(rhs))))
+    infix def -(rhs: Expr[T]): Expr[T] = lift(ExprNode.Subtract(Num[T], unlift(lhs), unlift(rhs)))
+    infix def -(rhs: T)(using Codec[T]): Expr[T] = lhs - lit(rhs)
 
     /** Returns the product of two expressions.
       *
       * Throws an exception if the operation leads to overflow
       */
-    infix def *[I: AsExpr.Of[T]](rhs: I): Expr[T] =
-      lift(ExprNode.Multiply(Num[T], unlift(lhs), unlift(AsExpr(rhs))))
+    infix def *(rhs: Expr[T]): Expr[T] = lift(ExprNode.Multiply(Num[T], unlift(lhs), unlift(rhs)))
+    infix def *(rhs: T)(using Codec[T]): Expr[T] = lhs * lit(rhs)
 
     /** Returns the result of division of the left operand by the right operand.
       * Uses truncating division for Integral types.
       *
       * Throws an exception if the divisor is zero.
       */
-    infix def /[I: AsExpr.Of[T]](rhs: I): Expr[T] =
-      lift(ExprNode.Quotient(Num[T], unlift(lhs), unlift(AsExpr(rhs))))
+    infix def /(rhs: Expr[T]): Expr[T] = lift(ExprNode.Quotient(Num[T], unlift(lhs), unlift(rhs)))
+    infix def /(rhs: T)(using Codec[T]): Expr[T] = lhs / lit(rhs)
 
   }
 
