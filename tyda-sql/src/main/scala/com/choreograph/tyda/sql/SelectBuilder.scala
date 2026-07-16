@@ -27,7 +27,6 @@ import com.choreograph.tyda.NonEmpty
 import com.choreograph.tyda.TreeApi.Continue
 import com.choreograph.tyda.TreeApi.Skip
 import com.choreograph.tyda.functions.lit
-import com.choreograph.tyda.rewrite.ArrayCodec
 import com.choreograph.tyda.rewrite.IsNone
 import com.choreograph.tyda.rewrite.Nullable
 import com.choreograph.tyda.rewrite.StructFields
@@ -311,7 +310,7 @@ private final case class SelectBuilder[T, R](
     given Codec[R2] = explode.codec
     args.dialect.explode match {
       case SqlDialect.ExplodeSupport.Function(_) => selectExplodeFunction(explode)
-      case SqlDialect.ExplodeSupport.InnerJoin => selectExplodeJoin(explode)
+      case SqlDialect.ExplodeSupport.InnerJoin(_) => selectExplodeJoin(explode)
     }
   }
 
@@ -333,13 +332,12 @@ private final case class SelectBuilder[T, R](
       explode: CompiledExplodeExpr[R, R2]
   ): Result[SelectBuilder[?, R2]] =
     select match {
-      case compiled: CompiledExpr[T, R]
-          if !distinct && onlySelects(compiled.andThen(explode.asCompiledExpr).expr) =>
+      case compiled: CompiledExpr[T, R] if !distinct =>
         given Codec[T] = from.output.codec
         val newSelect = CompiledExpr[(T, R2), R2](_._2)
         val newWhere = where.map(_.compose(CompiledExpr[(T, R2), T](_._1)))
         TypedFrom
-          .join(from, compiled.andThen(explode.asCompiledExpr), args)
+          .join(from, explode.compose(compiled), args)
           .map(newFrom => SelectBuilder(args, from = newFrom, select = newSelect, where = newWhere))
       case _ =>
         given Codec[Iterable[R2]] = explode.expr.codec
@@ -353,7 +351,7 @@ private final case class SelectBuilder[T, R](
   ): Result[SelectBuilder[?, R2]] =
     args.dialect.explode match {
       case SqlDialect.ExplodeSupport.Function(_) => selectNExplodeFunction(exprs)
-      case SqlDialect.ExplodeSupport.InnerJoin => selectNExplodeJoin(exprs)
+      case SqlDialect.ExplodeSupport.InnerJoin(_) => selectNExplodeJoin(exprs)
     }
 
   private def selectNExplodeFunction[R2 <: Tuple](
@@ -376,17 +374,8 @@ private final case class SelectBuilder[T, R](
       exprs: Tuple.Map[R2, [X] =>> CompiledExprOrExplode[R, X]]
   ): Result[SelectBuilder[?, R2]] = {
     val instances = tupleInstances(exprs)
-    def allOnlySelects(compiled: CompiledExpr[T, R]): Boolean =
-      instances.foldLeft0(true)([t] =>
-        (acc, select) =>
-          select match {
-            case CompiledExpr(_, _) => acc
-            case explode: CompiledExplodeExpr[?, ?] => acc &&
-              onlySelects(compiled.andThen(explode.asCompiledExpr).expr)
-          }
-      )
     select match {
-      case compiled: CompiledExpr[T, R] if !distinct && allOnlySelects(compiled) =>
+      case compiled: CompiledExpr[T, R] if !distinct =>
         // The explodes can be added as joins in the existing from without a subquery.
         val explodeCodecs = instances.foldLeft0(Vector.empty[Codec[?]])([t] =>
           (acc, select) =>
@@ -417,39 +406,7 @@ private final case class SelectBuilder[T, R](
         TypedFrom
           .joinExplode(from, joinExprs.toSeq, newFromCodec, args)
           .map(newFrom => SelectBuilder(args, from = newFrom, select = newSelect, where = newWhere))
-      case _ =>
-        /* The select can not be done as part of the current select, instead we apply the select without
-         * explodes create a subquery and then do the select with only the explode part */
-        val wasExplodeAndExpr = instances.mapConst[(Boolean, CompiledExpr[R, ?])]([t] =>
-          _ match {
-            case explode: CompiledExplodeExpr[R, ?] => (true, explode.asCompiledExpr)
-            case compiled: CompiledExpr[R, ?] => (false, compiled)
-          }
-        )
-        // TYPE SAFETY: Each value in wasExplodeAndExpr.map(_._2) is a CompiledExpr[R, ?]
-        val exprsWithoutExplodes = Tuple
-          .fromArray(wasExplodeAndExpr.map(_._2).toArray)
-          .asInstanceOf[Tuple.Map[Tuple, [X] =>> CompiledExprOrExplode[R, X]]]
-        selectN(exprsWithoutExplodes).flatMap(afterSelect =>
-          val codec = afterSelect.select.expr.codec
-          val arg = ExprNode.Reference()(using codec)
-          val explodesArray = wasExplodeAndExpr
-            .map(_._1)
-            .zipWithIndex
-            .map { (wasExplode, i) =>
-              val body = ExprNode.Select(arg, s"_${i + 1}")
-              // TYPE SAFETY: If wasExplode the body came from a CompiledExplodeExpr and must be Iterable
-              if wasExplode then CompiledExplodeExpr(arg, body.asInstanceOf[ExprNode[Iterable[?]]])
-              else CompiledExpr(arg, body)
-            }
-            .toArray
-          /* TYPE SAFETY: Each element is a CompiledExprOrExplode[Tuple, ?] where Tuple matches afterSelect
-           * output by contruction. */
-          val onlyExplodes = Tuple
-            .fromArray(explodesArray)
-            .asInstanceOf[Tuple.Map[R2, [X] =>> CompiledExprOrExplode[Tuple, X]]]
-          afterSelect.toSubquery.flatMap(_.selectN(onlyExplodes))
-        )
+      case _ => toSubquery.flatMap(_.selectN(exprs))
     }
   }
 
@@ -685,17 +642,6 @@ private object SelectBuilder {
   private def isJoin(from: TypedFrom[?]): Boolean =
     from match {
       case TypedFrom(From.Join(_, _, _, _), _, _) => true
-      case _ => false
-    }
-
-  private def onlySelects(expr: ExprNode[?]): Boolean =
-    simplifySelects(expr).forall {
-      case ExprNode.Reference(_, _) | ExprNode.Select(_, _) => true
-      // Upcasts of Map will need a CAST to the correct type
-      case ExprNode.UpcastToIterable(col) => col.codec match {
-          case ArrayCodec(_) => true
-          case _ => false
-        }
       case _ => false
     }
 

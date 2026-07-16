@@ -266,7 +266,7 @@ object SqlDialect {
       * FROM table JOIN table.array_column AS exploded_column
       * ```
       */
-    case InnerJoin
+    case InnerJoin(unnest: String)
   }
 
   enum FloatingCompare {
@@ -443,7 +443,7 @@ object SqlDialect {
       supportsArrayAsArrayElement = false
     ),
     errorFunction = "error",
-    explode = ExplodeSupport.InnerJoin,
+    explode = ExplodeSupport.InnerJoin("unnest"),
     extractDateDays = "unix_date",
     extractTimestampMicros = "unix_micros",
     floatingAggregate = FloatingAggregate.NaNIsSmallestAndLargest,

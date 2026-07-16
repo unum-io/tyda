@@ -27,7 +27,7 @@ SELECT DISTINCT t1.value AS value FROM t1
 ------ end
 
 ------ Test: explode Map
-SELECT t2._1 AS _1, t2._2 AS _2 FROM (SELECT CAST(t0.value AS ARRAY<STRUCT<_1 INT,_2 INT>>) AS value FROM (SELECT t1.value AS value FROM t1) AS t0) AS t1, t1.value AS t2
+SELECT t0._1 AS _1, t0._2 AS _2 FROM t1, unnest(CAST(t1.value AS ARRAY<STRUCT<_1 INT,_2 INT>>)) AS t0
 ------ end
 
 ------ Test: explode Option
@@ -35,19 +35,19 @@ SELECT t1.value AS value FROM t1 WHERE (t1.value IS NOT NULL)
 ------ end
 
 ------ Test: explode Seq
-SELECT t0 AS value FROM t1, t1.value AS t0
+SELECT t0 AS value FROM t1, unnest(t1.value) AS t0
 ------ end
 
 ------ Test: explode Seq Option Seq
-SELECT t2 AS value FROM (SELECT t0.value AS value FROM t1, t1.value AS t0 WHERE (t0.value IS NOT NULL)) AS t1, t1.value AS t2
+SELECT t1 AS value FROM t1, unnest(t1.value) AS t0, unnest(t0.value) AS t1 WHERE (t0.value IS NOT NULL)
 ------ end
 
 ------ Test: explode multiple nested Seq
-SELECT t0.value AS _1, t1.value AS _2 FROM t1, t1._1 AS t0, t1._2 AS t1
+SELECT t0.value AS _1, t1.value AS _2 FROM t1, unnest(t1._1) AS t0, unnest(t1._2) AS t1
 ------ end
 
 ------ Test: explode nested Seq
-SELECT t1 AS value FROM t1, t1.value AS t0, t0.value AS t1
+SELECT t1 AS value FROM t1, unnest(t1.value) AS t0, unnest(t0.value) AS t1
 ------ end
 
 ------ Test: limit after aggregate
@@ -55,7 +55,7 @@ SELECT t1._1 AS key, sum(t1._2) AS value FROM t1 GROUP BY t1._1 LIMIT 5
 ------ end
 
 ------ Test: limit after explode
-SELECT t0 AS value FROM t1, t1._2 AS t0 LIMIT 5
+SELECT t0 AS value FROM t1, unnest(t1._2) AS t0 LIMIT 5
 ------ end
 
 ------ Test: limit after filter
@@ -79,7 +79,7 @@ SELECT t0._1 AS key, sum(t0._2) AS value FROM (SELECT t1._1 AS _1, t1._2 AS _2 F
 ------ end
 
 ------ Test: limit before explode
-SELECT t1 AS value FROM (SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 LIMIT 5) AS t0, t0._2 AS t1
+SELECT t1 AS value FROM (SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 LIMIT 5) AS t0, unnest(t0._2) AS t1
 ------ end
 
 ------ Test: limit before filter
@@ -123,7 +123,7 @@ SELECT t1._1 AS _1, t1._2 AS _2, t1._3 AS _3, t1._4 AS _4, t1._5 AS _5, t1._6 AS
 ------ end
 
 ------ Test: select 7 explode
-SELECT t0 AS _1, t1 AS _2, t2 AS _3, t3 AS _4, t4 AS _5, t5 AS _6, t6 AS _7 FROM t1, t1._1 AS t0, t1._2 AS t1, t1._3 AS t2, t1._4 AS t3, t1._5 AS t4, t1._6 AS t5, t1._7 AS t6
+SELECT t0 AS _1, t1 AS _2, t2 AS _3, t3 AS _4, t4 AS _5, t5 AS _6, t6 AS _7 FROM t1, unnest(t1._1) AS t0, unnest(t1._2) AS t1, unnest(t1._3) AS t2, unnest(t1._4) AS t3, unnest(t1._5) AS t4, unnest(t1._6) AS t5, unnest(t1._7) AS t6
 ------ end
 
 ------ Test: select Product
@@ -143,7 +143,7 @@ SELECT t1._1 AS _1, t1._2 AS _2 FROM t1 WHERE ((t1._1 IS NOT NULL) AND (t1._2 IS
 ------ end
 
 ------ Test: select multiple explode seq
-SELECT t0 AS _1, t1 AS _2 FROM t1, t1._1 AS t0, t1._2 AS t1
+SELECT t0 AS _1, t1 AS _2 FROM t1, unnest(t1._1) AS t0, unnest(t1._2) AS t1
 ------ end
 
 ------ Test: select nested access
