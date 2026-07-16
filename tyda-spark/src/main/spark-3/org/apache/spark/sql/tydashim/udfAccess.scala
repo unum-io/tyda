@@ -1,10 +1,11 @@
 package org.apache.spark.sql.tydashim
-import org.apache.spark.sql.expressions.SparkUserDefinedFunction
-import com.choreograph.tyda.Codec
-import com.choreograph.tyda.spark.CodecToEncoder
-import com.choreograph.tyda.spark.CodecToCatalystType.catalystType
-import org.apache.spark.sql.catalyst.expressions.ScalaUDF
 import org.apache.spark.sql.Column
+import org.apache.spark.sql.catalyst.expressions.ScalaUDF
+import org.apache.spark.sql.expressions.SparkUserDefinedFunction
+
+import com.choreograph.tyda.Codec
+import com.choreograph.tyda.spark.CodecToCatalystType.catalystType
+import com.choreograph.tyda.spark.CodecToEncoder
 
 def createScalaUDF(udf: SparkUserDefinedFunction, exprs: Seq[Column]): ScalaUDF =
   udf.createScalaUDF(exprs.map(_.expr))
