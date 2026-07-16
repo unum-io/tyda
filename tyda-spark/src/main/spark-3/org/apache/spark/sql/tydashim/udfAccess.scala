@@ -6,7 +6,7 @@ import org.apache.spark.sql.expressions.SparkUserDefinedFunction
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.types.DataType
 
-def createScalaUDF(udf: SparkUserDefinedFunction, exprs: Seq[Column]): ScalaUDF =
+def createScalaUDF(udf: SparkUserDefinedFunction, exprs: Column*): ScalaUDF =
   udf.createScalaUDF(exprs.map(_.expr))
 
 def udf[T1, T2, U](
