@@ -30,6 +30,10 @@ SELECT DISTINCT t1.value AS value FROM t1
 SELECT t0._1._1 AS _1, t0._1._2 AS _2 FROM (SELECT explode(CAST(map_entries(t1.value) AS ARRAY<STRUCT<_1 INT NOT NULL,_2 INT NOT NULL>>)) AS _1 FROM t1) AS t0
 ------ end
 
+------ Test: explode Map and select Int
+SELECT explode(CAST(map_entries(t1._1) AS ARRAY<STRUCT<_1 INT NOT NULL,_2 INT NOT NULL>>)) AS _1, t1._2 AS _2 FROM t1
+------ end
+
 ------ Test: explode Option
 SELECT t1.value AS value FROM t1 WHERE (t1.value IS NOT NULL)
 ------ end

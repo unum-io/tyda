@@ -134,6 +134,10 @@ SELECT count(t1._2) AS value FROM t1 GROUP BY t1._1
 SELECT count(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
 ------ end
 
+------ Test: explode after aggregate
+SELECT t1 AS _1, t0._2 AS _2 FROM (SELECT t1.d AS _1, min(t1.a) AS _2 FROM t1 GROUP BY t1.d) AS t0, unnest(t0._1) AS t1
+------ end
+
 ------ Test: group by whole enum row
 SELECT t1.discriminant AS discriminant, t1.a AS a, t1.b AS b, t1.c AS c FROM t1 GROUP BY t1.discriminant, t1.a, t1.b, t1.c
 ------ end

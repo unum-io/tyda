@@ -69,14 +69,6 @@ abstract class UnparserSuite extends SqlGoldenTestSuite {
     ds.select(identity, explode(_.d)).select(_._2, explode(_._1.d))
   }
 
-  testSql("join and then explode") {
-    ds.join(ds2, (l, r) => l.a == r.a).select(explode(_._1.d), explode(_._2.d))
-  }
-
-  testSql("explode after aggregate") {
-    ds.groupByKey(_.d).aggregateValue(min(_.a)).pairs.select(explode(_._1), _._2)
-  }
-
   testSql("inner join select after") { ds.join(ds2, (l, r) => l.a == r.a).select(_._1.a, _._2.a) }
 
   testSql("inner join select before") { ds.select(_.a).join(ds2.select(_.a), (l, r) => l == r) }

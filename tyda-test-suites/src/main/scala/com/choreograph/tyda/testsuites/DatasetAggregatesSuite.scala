@@ -12,6 +12,7 @@ import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Decimal.MaxPrecision
 import com.choreograph.tyda.Expr
+import com.choreograph.tyda.Expr.explode
 import com.choreograph.tyda.NumericLimits
 import com.choreograph.tyda.SumMagnet
 import com.choreograph.tyda.aggregates.boolAnd
@@ -55,11 +56,13 @@ object DatasetAggregatesSuite {
   given smallDouble: Arbitrary[Double] = Arbitrary.between(0, 1)
 
   type PairSeq = (TinyByte, Seq[TinyByte])
+
+  final case class M1(a: Int, b: String, c: Boolean, d: Seq[Long])
 }
 
 // Testsuite focusing on aggregates that will compare a Dataset backend to a reference implementation.
 trait DatasetAggregatesSuite extends DatasetSuite {
-  import DatasetAggregatesSuite.{EnumWithOrdering, Inner, Outer, PairSeq}
+  import DatasetAggregatesSuite.{EnumWithOrdering, Inner, Outer, PairSeq, M1}
   import DatasetSuite.Pair
 
   given Ordering[Pair] = Ordering.by(_._1)
@@ -320,5 +323,10 @@ trait DatasetAggregatesSuite extends DatasetSuite {
   test[Int, Int](
     "udf on AggregateExpr",
     ds => ds.groupByKey(_ => 1).aggregateValue(r => min(r).udf(_ + 1)).values
+  )
+
+  test[M1, (Long, Int)](
+    "explode after aggregate",
+    ds => ds.groupByKey(_.d).aggregateValue(min(_.a)).pairs.select(explode(_._1), _._2)
   )
 }
