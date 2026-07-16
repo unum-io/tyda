@@ -1213,7 +1213,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     )
   }
 
-  testFailure[Double, Double]("fail on double division by zero", _ / lit(0.toDouble), "by zero")
+  testFailure[Double, Double]("fail on double division by zero", _ / lit(0.0), "by zero")
 
   {
     given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isInfinite && d > Double.MaxValue * 0.5)
