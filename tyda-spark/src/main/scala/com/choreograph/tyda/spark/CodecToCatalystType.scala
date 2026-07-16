@@ -7,7 +7,7 @@ import com.choreograph.tyda.Field
 import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.shapeless3extras.mapConst
 
-object CodecToCatalystType {
+private object CodecToCatalystType {
   def catalystType[T](codec: Codec[T]): DataType =
     codec match {
       case Codec.Byte => ByteType

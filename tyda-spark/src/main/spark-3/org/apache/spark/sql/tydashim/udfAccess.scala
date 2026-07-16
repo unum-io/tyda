@@ -3,44 +3,51 @@ import org.apache.spark.sql.Column
 import org.apache.spark.sql.catalyst.expressions.ScalaUDF
 import org.apache.spark.sql.expressions.SparkUserDefinedFunction
 
-import com.choreograph.tyda.Codec
-import com.choreograph.tyda.spark.CodecToCatalystType.catalystType
-import com.choreograph.tyda.spark.CodecToEncoder
+import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
+import org.apache.spark.sql.types.DataType
 
 def createScalaUDF(udf: SparkUserDefinedFunction, exprs: Seq[Column]): ScalaUDF =
   udf.createScalaUDF(exprs.map(_.expr))
 
-def udf[T1: Codec, T2: Codec, U: Codec](f: (T1, T2) => U, name: String): SparkUserDefinedFunction = {
-  val inputEncoder1 = CodecToEncoder.convertInternal(using Codec[T1])
-  val inputEncoder2 = CodecToEncoder.convertInternal(using Codec[T2])
-  val outputEncoder = CodecToEncoder.convertInternal(using Codec[U])
+def udf[T1, T2, U](
+    f: (T1, T2) => U,
+    name: String,
+    inputEncoder1: ExpressionEncoder[T1],
+    inputEncoder2: ExpressionEncoder[T2],
+    outputEncoder: ExpressionEncoder[U],
+    dataType: DataType
+): SparkUserDefinedFunction =
   SparkUserDefinedFunction(
     f = f,
-    dataType = catalystType(Codec[U]),
+    dataType = dataType,
     inputEncoders = Seq(Some(inputEncoder1), Some(inputEncoder2)),
     outputEncoder = Some(outputEncoder),
     name = Some(name)
   )
-}
 
-def udf[T: Codec, U: Codec](f: T => U): SparkUserDefinedFunction = {
-  val inputEncoder = CodecToEncoder.convertInternal(using Codec[T])
-  val outputEncoder = CodecToEncoder.convertInternal(using Codec[U])
+def udf[T, U](
+    f: T => U,
+    inputEncoder: ExpressionEncoder[T],
+    outputEncoder: ExpressionEncoder[U],
+    dataType: DataType
+): SparkUserDefinedFunction =
   SparkUserDefinedFunction(
     f = f,
-    dataType = catalystType(Codec[U]),
+    dataType = dataType,
     inputEncoders = Seq(Some(inputEncoder)),
     outputEncoder = Some(outputEncoder)
   )
-}
 
-def udf[U: Codec](f: () => U, name: Option[String]): SparkUserDefinedFunction = {
-  val outputEncoder = CodecToEncoder.convertInternal(using Codec[U])
+def udf[U](
+    f: () => U,
+    name: Option[String],
+    outputEncoder: ExpressionEncoder[U],
+    dataType: DataType
+): SparkUserDefinedFunction =
   SparkUserDefinedFunction(
     f = f,
-    dataType = catalystType(Codec[U]),
+    dataType = dataType,
     inputEncoders = Seq.empty,
     outputEncoder = Some(outputEncoder),
     name = name
   )
-}

@@ -10,6 +10,6 @@ import com.choreograph.tyda.spark.CodecToExpressionEncoder.createSerializer
 object CodecToEncoder {
   given convert[T: Codec]: Encoder[T] = convertInternal[T]
 
-  def convertInternal[T: Codec]: ExpressionEncoder[T] =
+  private[spark] def convertInternal[T: Codec]: ExpressionEncoder[T] =
     new ExpressionEncoder[T](createSerializer(Codec[T]), createDeserializer(Codec[T]), Codec[T].classTag)
 }
