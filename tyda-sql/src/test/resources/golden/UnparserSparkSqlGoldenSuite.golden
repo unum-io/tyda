@@ -30,10 +30,6 @@ SELECT t0.value AS value FROM VALUES ('O\'R'), ('Line1\nLine2'), ('Tab\tCharacte
 SELECT t0.`from` AS `from`, t0.`has space` AS `has space` FROM VALUES (CAST(1 AS INT), CAST(2 AS BIGINT)) AS t0(`from`, `has space`)
 ------ end
 
------- Test: explode after aggregate
-SELECT explode(table1.d) AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.d
------- end
-
 ------ Test: explode multiple expression
 SELECT table1.a AS _1, explode(table1.d) AS _2 FROM table1
 ------ end
@@ -64,10 +60,6 @@ SELECT table1.a AS _1, table2.a AS _2 FROM table1 JOIN table2 ON (table1.a = tab
 
 ------ Test: inner join select before
 SELECT table1.a AS _1, table2.a AS _2 FROM table1 JOIN table2 ON (table1.a = table2.a)
------- end
-
------- Test: join and then explode
-SELECT explode(table1.d) AS _1, explode(table2.d) AS _2 FROM table1 JOIN table2 ON (table1.a = table2.a)
 ------ end
 
 ------ Test: join+aggregate on lhs

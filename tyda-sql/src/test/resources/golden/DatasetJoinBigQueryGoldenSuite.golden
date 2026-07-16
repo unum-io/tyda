@@ -26,6 +26,10 @@ SELECT t1.value AS value FROM t1 WHERE (NOT EXISTS (SELECT t2.value AS value FRO
 SELECT t1.value AS _1, t2.value AS _2 FROM t1 JOIN t2 ON (t1.value = t2.value)
 ------ end
 
+------ Test: join and then explode
+SELECT t0 AS _1, t1 AS _2 FROM t1 JOIN t2 ON (t1.a = t2.a), unnest(t1.d) AS t0, unnest(t2.d) AS t1
+------ end
+
 ------ Test: join complex condition
 SELECT struct(t1._1 AS _1, t1._2 AS _2) AS _1, struct(t2._1 AS _1, t2._2 AS _2) AS _2 FROM t1 JOIN t2 ON ((t1._1 = t2._1) AND ((t2._2 = t1._2) OR (t1._2 = CAST(0 AS TINYINT))))
 ------ end

@@ -4,11 +4,13 @@ import com.choreograph.tyda.AggregateExpr
 import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Dataset
+import com.choreograph.tyda.Expr.explode
 import com.choreograph.tyda.testsuites.DatasetSuite.TinyByte
 
 object DatasetJoinSuite {
   final case class M1(key: TinyByte, b: Int)
   final case class M2(m1Key: TinyByte, c: Int)
+  final case class M3(a: Int, b: String, c: Boolean, d: Seq[Long])
 
   type NullableM1 = NamedTuple.Map[NamedTuple.From[M1], Option]
   type NullableM2 = NamedTuple.Map[NamedTuple.From[M2], Option]
@@ -197,4 +199,10 @@ trait DatasetJoinSuite extends DatasetSuite {
     "fullJoinFlat",
     (ds1, ds2) => ds1.fullJoinFlat(ds2, _.key == _.m1Key)
   )
+
+  test[M3, M3, (Long, Long)](
+    "join and then explode",
+    (ds1, ds2) => ds1.join(ds2, (l, r) => l.a == r.a).select(explode(_._1.d), explode(_._2.d))
+  )
+
 }
