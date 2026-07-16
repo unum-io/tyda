@@ -26,7 +26,7 @@ object Dependencies {
   object CompileDeps {
     val shapeless3 = "org.typelevel" %% "shapeless3-deriving" % "3.6.0"
     val jsoniterCore = "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % jsoniterVersion
-    val scalatest = "org.scalatest" %% "scalatest" % "3.2.19"
+    val scalatest = "org.scalatest" %% "scalatest" % "3.2.20"
     val commonsIo = "commons-io" % "commons-io" % "2.21.0"
     val slf4j = "org.slf4j" % "slf4j-api" % "2.0.17"
     val bigQuery = "com.google.cloud" % "google-cloud-bigquery" % "2.61.0"
