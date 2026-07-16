@@ -6,6 +6,8 @@ updates:
     interval: "daily"
   cooldown:
     default-days: 7
+  exclude-paths:
+    - "project/SparkDependencies.scala"
   ignore:
-  - dependency-name: "org.apache.spark:*"
-  - dependency-name: "org.scala-lang:*"
+    - dependency-name: "org.apache.spark:*"
+    - dependency-name: "org.scala-lang:*"
