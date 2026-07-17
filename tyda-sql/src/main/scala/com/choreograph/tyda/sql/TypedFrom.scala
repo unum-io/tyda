@@ -15,6 +15,7 @@ import com.choreograph.tyda.sql.ast.From
 import com.choreograph.tyda.sql.ast.JoinType
 import com.choreograph.tyda.sql.ast.Query
 import com.choreograph.tyda.sql.ast.SqlExpr
+import com.choreograph.tyda.shapeless3extras.toTuple
 
 /** Typed version of [[ast.From]].
   *
@@ -45,10 +46,9 @@ private object TypedFrom {
     )
   }
 
-  private def joinExplodeReferenceAndOutput[U](
-      codec: Codec[U],
-      dialect: SqlDialect
-  ): (reference: ExprNode.Reference[?], output: ExprNode[U]) = {
+  type RefAndOutput[T] = (reference: ExprNode.Reference[?], output: ExprNode[T])
+
+  private def joinExplodeReferenceAndOutput[U](codec: Codec[U], dialect: SqlDialect): RefAndOutput[U] = {
     given Codec[U] = codec
     if shouldWrapArrayElement(codec, dialect.ddl) then {
       val ref = ExprNode.Reference[(value: U)]()
@@ -84,22 +84,17 @@ private object TypedFrom {
       rights: Tuple.Map[R, [r] =>> CompiledExplodeExpr[T, r]],
       args: UnparserArgs
   ): Result[TypedFrom[T *: R]] =
-    tupleInstances(rights)
+    val instances = tupleInstances(rights)
+    instances
       .mapConst([t] =>
-        f =>
-          val expr = ExplodeExpr(f.expr.replace(f.arg, left.output))
-          for {
-            sqlExpr <- simplifyAndToSqlExpr(expr, left.ids, args)
-            (ref, output) = joinExplodeReferenceAndOutput(f.codec, args.dialect)
-          } yield (ref, output, sqlExpr)
+        f => simplifyAndToSqlExpr(ExplodeExpr(f.expr.replace(f.arg, left.output)), left.ids, args)
       )
       .sequence
-      .map { refsAndSqlExprs =>
-        val (refs, outputs, exprs) = refsAndSqlExprs.unzip3
-        /* TYPE SAFETY: outputs has type Seq[ExprNode[?]] with components corresponding to the components of
-         * right */
-        val output =
-          ExprNode.makeTuple[T *: R](Tuple.fromArray((left.output +: outputs).toArray).asInstanceOf)
+      .map { exprs =>
+        val (refsAndOutputs) =
+          instances.mapK[RefAndOutput]([t] => f => joinExplodeReferenceAndOutput(f.codec, args.dialect))
+        val refs = refsAndOutputs.mapConst[ExprNode.Reference[?]]([t] => _.reference)
+        val output = ExprNode.makeTuple[T *: R](left.output *: refsAndOutputs.mapK([t] => _.output).toTuple)
         val aliases = refs.map(_ => args.aliasGen.table())
         val combinedIds = left.ids ++ refs.zip(aliases).map((r, a) => r -> IdentifierOrSqlExpr.Expr(a))
         val from = exprs
