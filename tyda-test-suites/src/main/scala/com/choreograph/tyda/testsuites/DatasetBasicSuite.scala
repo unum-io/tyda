@@ -34,7 +34,7 @@ trait DatasetBasicSuite extends DatasetSuite {
     "select multiple explode options",
     _.select(explode(_._1), explode(_._2))
   )
-  test[Seq[Int], Int]("explode Seq", _.select(explode(identity)))
+  test[Seq[Int], Int]("explode Seq", _.explode(identity))
   test[Seq[Seq[Int]], Int]("explode nested Seq", _.select(explode(identity)).select(explode(identity)))
   test[Seq[Option[Seq[Int]]], Int](
     "explode Seq Option Seq",
