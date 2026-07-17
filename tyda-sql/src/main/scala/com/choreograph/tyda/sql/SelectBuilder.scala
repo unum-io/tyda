@@ -396,14 +396,14 @@ private final case class SelectBuilder[T, R](
             case noExplode @ CompiledExpr(_, _) =>
               val composed = compiled.andThen(noExplode)
               composed.expr.replace(composed.arg, ExprNode.Select(newArg, "_1"))
-            case _ @CompiledExplodeExpr(_, _) =>
+            case CompiledExplodeExpr(_, _) =>
               idx += 1
               (ExprNode.Select(newArg, s"_$idx"))
           }
         )
         val joinExprs = instances.mapConst([t] =>
           _ match {
-            case _ @CompiledExpr(_, _) => None
+            case CompiledExpr(_, _) => None
             case explode @ CompiledExplodeExpr(_, _) => Some(explode.compose(compiled))
           }
         )
