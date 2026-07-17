@@ -9,13 +9,13 @@ import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.NonEmpty
 import com.choreograph.tyda.rewrite.reduceBalanced
 import com.choreograph.tyda.shapeless3extras.mapConst
+import com.choreograph.tyda.shapeless3extras.toTuple
 import com.choreograph.tyda.shapeless3extras.tupleInstances
 import com.choreograph.tyda.sql.Result.sequence
 import com.choreograph.tyda.sql.ast.From
 import com.choreograph.tyda.sql.ast.JoinType
 import com.choreograph.tyda.sql.ast.Query
 import com.choreograph.tyda.sql.ast.SqlExpr
-import com.choreograph.tyda.shapeless3extras.toTuple
 
 /** Typed version of [[ast.From]].
   *
