@@ -91,7 +91,7 @@ private object TypedFrom {
       )
       .sequence
       .map { exprs =>
-        val (refsAndOutputs) =
+        val refsAndOutputs =
           instances.mapK[RefAndOutput]([t] => f => joinExplodeReferenceAndOutput(f.codec, args.dialect))
         val refs = refsAndOutputs.mapConst[ExprNode.Reference[?]]([t] => _.reference)
         val output = ExprNode.makeTuple[T *: R](left.output *: refsAndOutputs.mapK([t] => _.output).toTuple)
