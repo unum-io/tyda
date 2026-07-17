@@ -64,6 +64,7 @@ val tydaNamedSelection: Dataset[(userId: UserId, userName: String)] =
 There's also a matcher syntax
 
 ```scala mdoc:silent
+import com.choreograph.tyda.Expr
 val tydaNamedSelection: Dataset[(userId: UserId, userName: String)] =
     tydaUsers.select({ case Expr(id = id, name = name) => (userId = id, userName = name)})
 ```
