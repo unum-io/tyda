@@ -3,6 +3,7 @@ package com.choreograph.tyda.spark
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.abs
 import org.apache.spark.sql.functions.aggregate
 import org.apache.spark.sql.functions.array
 import org.apache.spark.sql.functions.array_distinct
@@ -121,8 +122,8 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
 
   private def isInfinite(column: Column, codec: Codec[?]): Column =
     codec match {
-      case Codec.Float => column === lit(Float.PositiveInfinity) || column === lit(Float.NegativeInfinity)
-      case Codec.Double => column === lit(Double.PositiveInfinity) || column === lit(Double.NegativeInfinity)
+      case Codec.Float => abs(column) > lit(Float.MaxValue)
+      case Codec.Double => abs(column) > lit(Double.MaxValue)
       case _ => lit(literal = false)
     }
 
@@ -136,13 +137,13 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
     codec match {
       case Codec.Float => when(
           !isnan(checkedResult) && !isInfinite(lhs, codec) && !isInfinite(rhs, codec) &&
-            (checkedResult < lit(-Float.MaxValue) || checkedResult > lit(Float.MaxValue)),
+            (abs(checkedResult) > lit(Float.MaxValue)),
           raise_error(lit("Float overflow")).cast(catalystType(codec))
         ).otherwise(returnedResult)
 
       case Codec.Double => when(
           !isnan(checkedResult) && !isInfinite(lhs, codec) && !isInfinite(rhs, codec) &&
-            (checkedResult < lit(-Double.MaxValue) || checkedResult > lit(Double.MaxValue)),
+            (abs(checkedResult) > lit(Double.MaxValue)),
           raise_error(lit("Double overflow")).cast(catalystType(codec))
         ).otherwise(returnedResult)
 
