@@ -5,6 +5,7 @@ import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.aggregates.sum
 import com.choreograph.tyda.functions.explode
+import com.choreograph.tyda.functions.lit
 
 object DatasetBasicSuite {
   type WideTuple = (Int, Int, Int, Int, Int, Int, Int)
@@ -19,7 +20,7 @@ trait DatasetBasicSuite extends DatasetSuite {
   test[Boolean, Boolean]("filter", _.filter(identity))
   test[Boolean, Boolean]("where", _.where(identity))
   test[Boolean, Boolean]("where not", _.where(!_))
-  test[Boolean, Boolean]("where literal", _.where(_ => true))
+  test[Boolean, Boolean]("where literal", _.where(_ => lit(true)))
   test[((Int, Int), Int), Int]("select nested access", _.select(_._1._1))
   test[Boolean, (Boolean, Int)]("select Product", _.select(v => (v, 1)))
   test[Boolean, Int]("select primitive", _.select(_ => 1))

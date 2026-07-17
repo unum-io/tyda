@@ -5,6 +5,7 @@ import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.Expr.explode
+import com.choreograph.tyda.functions.lit
 import com.choreograph.tyda.testsuites.DatasetSuite.TinyByte
 
 object DatasetJoinSuite {
@@ -60,7 +61,7 @@ trait DatasetJoinSuite extends DatasetSuite {
   )
   test[TinyByte, EmptyTuple.type, (TinyByte, Option[EmptyTuple.type])](
     "leftOuterJoin singleton",
-    (ds1, ds2) => ds1.leftOuterJoin(ds2, (_, _) => true)
+    (ds1, ds2) => ds1.leftOuterJoin(ds2, (_, _) => lit(true))
   )
   test[Pair, Pair, (Pair, Option[Pair])](
     "leftOuterJoin product",
