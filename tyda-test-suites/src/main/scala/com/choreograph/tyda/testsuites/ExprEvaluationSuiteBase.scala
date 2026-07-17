@@ -587,6 +587,14 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     t => Seq((t._1, t._2))
   )
 
+  testHasSameBehavior[(Int, Boolean, String), Int]("tuple head", _.head, _.head)
+  testHasSameBehavior[(Int, Boolean, String), (Boolean, String)]("tuple tail", _.tail, _.tail)
+  testHasSameBehavior[(Int, Boolean, String), (Int, Int, Boolean, String)](
+    "tuple *: construct",
+    t => lit(1) *: t.head *: t.tail,
+    t => 1 *: t.head *: t.tail
+  )
+
   testHasSameBehavior[(Int, Boolean), NamedTuple.Empty](
     "make empty namedTuple",
     _ => namedTuple(NamedTuple.Empty),
