@@ -480,24 +480,45 @@ trait ExprApi[Expr[T]] {
   // Compasion operators for Expr[T] where T has a given Ord[T] instance.
   extension [T: Comparable](lhs: Expr[T]) {
 
-    /** Returns true if lhs is equal to rhs using the given Ord[T].
-      */
-    infix def >[I: AsExpr.Of[T]](rhs: I): Expr[Boolean] = !(lhs <= rhs)
+    private def operandCodec: Codec[T] = unlift(lhs).codec
 
-    /** Returns true if lhs is greater than or equal to rhs using the given
-      * Ord[T].
+    /** Returns true if lhs is greater to rhs.
       */
-    infix def >=[I: AsExpr.Of[T]](rhs: I): Expr[Boolean] = !(lhs < rhs)
+    infix def >(rhs: Expr[T]): Expr[Boolean] = !(lhs <= rhs)
 
-    /** Returns true if lhs is less than rhs using the given Ord[T].
+    /** Returns true if lhs is greater to the literal rhs.
       */
-    infix def <[I: AsExpr.Of[T]](rhs: I): Expr[Boolean] =
-      lift(ExprNode.LessThan(Comparable[T], unlift(lhs), unlift(AsExpr(rhs))))
+    @targetName("gtLit")
+    infix def >(rhs: T): Expr[Boolean] = lhs > lit(rhs)(using operandCodec)
 
-    /** Returns true if lhs is less than or equal to rhs using the given Ord[T].
+    /** Returns true if lhs is greater than or equal to rhs.
       */
-    infix def <=[I: AsExpr.Of[T]](rhs: I): Expr[Boolean] =
-      lift(ExprNode.LessThanOrEqual(Comparable[T], unlift(lhs), unlift(AsExpr(rhs))))
+    infix def >=(rhs: Expr[T]): Expr[Boolean] = !(lhs < rhs)
+
+    /** Returns true if lhs is greater than or equal to the literal rhs.
+      */
+    @targetName("gteLit")
+    infix def >=(rhs: T): Expr[Boolean] = lhs >= lit(rhs)(using operandCodec)
+
+    /** Returns true if lhs is less than rhs.
+      */
+    infix def <(rhs: Expr[T]): Expr[Boolean] =
+      lift(ExprNode.LessThan(Comparable[T], unlift(lhs), unlift(rhs)))
+
+    /** Returns true if lhs is less than the literal rhs.
+      */
+    @targetName("ltLit")
+    infix def <(rhs: T): Expr[Boolean] = lhs < lit(rhs)(using operandCodec)
+
+    /** Returns true if lhs is less than or equal to rhs.
+      */
+    infix def <=(rhs: Expr[T]): Expr[Boolean] =
+      lift(ExprNode.LessThanOrEqual(Comparable[T], unlift(lhs), unlift(rhs)))
+
+    /** Returns true if lhs is less than or equal to the literal rhs.
+      */
+    @targetName("lteLit")
+    infix def <=(rhs: T): Expr[Boolean] = lhs <= lit(rhs)(using operandCodec)
   }
 
   extension [T: AdditiveExpr](lhs: Expr[T]) {
