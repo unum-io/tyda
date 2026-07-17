@@ -32,6 +32,7 @@ import com.choreograph.tyda.functions.lit
 import com.choreograph.tyda.functions.some
 import com.choreograph.tyda.functions.tuple
 import com.choreograph.tyda.functions.when
+import com.choreograph.tyda.testsuites.CodecToEquality.given
 import com.choreograph.tyda.testsuites.DatasetSuite.TinyByte
 
 object DatasetAggregatesSuite {
@@ -163,16 +164,13 @@ trait DatasetAggregatesSuite extends DatasetSuite {
   test[Short, Short]("min Short", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
   test[Int, Int]("min Int", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
   test[String, String]("min String", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-  {
-    import FloatingPointEquality.given
-    test[Float, Float]("min Float", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-    test[Double, Double]("min Double", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-    test[Double, Double](
-      "max Double",
-      ds => ds.groupByKey(_ => lit(1)).aggregateValue(max).values,
-      Seq(1, Double.NaN)
-    )
-  }
+  test[Float, Float]("min Float", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
+  test[Double, Double]("min Double", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
+  test[Double, Double](
+    "max Double",
+    ds => ds.groupByKey(_ => lit(1)).aggregateValue(max).values,
+    Seq(1, Double.NaN)
+  )
   test[Pair, (TinyByte, Long)]("count group by", ds => ds.groupByKey(_._1).aggregateValue(count).pairs)
   test[(Int, Int), (Boolean, Int)](
     "groupBy transform",
