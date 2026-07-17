@@ -1,275 +1,275 @@
 ------ Test: aggregate 2 whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(t1.value) AS _2) END AS value FROM t1
+SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(table1.value) AS _2) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate 3 whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(t1.value) AS _2, min(t1.value) AS _3) END AS value FROM t1
+SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(table1.value) AS _2, min(table1.value) AS _3) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate 4 whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(t1.value) AS _2, min(t1.value) AS _3, max(t1.value) AS _4) END AS value FROM t1
+SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(table1.value) AS _2, min(table1.value) AS _3, max(table1.value) AS _4) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate 5 whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(struct(t1._1 AS _1, t1._2 AS _2)) AS _2, min(t1._1) AS _3, max(t1._1) AS _4, min(t1._2) AS _5) END AS value FROM t1
+SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(struct(table1._1 AS _1, table1._2 AS _2)) AS _2, min(table1._1) AS _3, max(table1._1) AS _4, min(table1._2) AS _5) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate 6 whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(struct(t1._1 AS _1, t1._2 AS _2)) AS _2, min(t1._1) AS _3, max(t1._1) AS _4, min(t1._2) AS _5, max(t1._2) AS _6) END AS value FROM t1
+SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(struct(table1._1 AS _1, table1._2 AS _2)) AS _2, min(table1._1) AS _3, max(table1._1) AS _4, min(table1._2) AS _5, max(table1._2) AS _6) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate 7 whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(struct(t1._1 AS _1, t1._2 AS _2)) AS _2, min(t1._1) AS _3, max(t1._1) AS _4, min(t1._2) AS _5, max(t1._2) AS _6, array_agg(t1._2) AS _7) END AS value FROM t1
+SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(struct(table1._1 AS _1, table1._2 AS _2)) AS _2, min(table1._1) AS _3, max(table1._1) AS _4, min(table1._2) AS _5, max(table1._2) AS _6, array_agg(table1._2) AS _7) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate 8 whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(struct(t1._1 AS _1, t1._2 AS _2)) AS _2, min(t1._1) AS _3, max(t1._1) AS _4, min(t1._2) AS _5, max(t1._2) AS _6, array_agg(t1._2) AS _7, sum(t1._1) AS _8) END AS value FROM t1
+SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(struct(table1._1 AS _1, table1._2 AS _2)) AS _2, min(table1._1) AS _3, max(table1._1) AS _4, min(table1._2) AS _5, max(table1._2) AS _6, array_agg(table1._2) AS _7, sum(table1._1) AS _8) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate collect whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN array_agg(t1.value) END AS value FROM t1
+SELECT CASE WHEN (count(1) <> 0) THEN array_agg(table1.value) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate count whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM t1
+SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate max whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN max(t1.value) END AS value FROM t1
+SELECT CASE WHEN (count(1) <> 0) THEN max(table1.value) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate minBy and maxBy
-SELECT t1._1 AS key, min_by(struct(t1._1 AS _1, t1._2 AS _2)._1, struct(t1._1 AS _1, t1._2 AS _2)._2) AS min, max_by(struct(t1._1 AS _1, t1._2 AS _2)._1, struct(t1._1 AS _1, t1._2 AS _2)._2) AS max FROM t1 GROUP BY t1._1
+SELECT table1._1 AS key, min_by(struct(table1._1 AS _1, table1._2 AS _2)._1, struct(table1._1 AS _1, table1._2 AS _2)._2) AS min, max_by(struct(table1._1 AS _1, table1._2 AS _2)._1, struct(table1._1 AS _1, table1._2 AS _2)._2) AS max FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: aggregate nested Option
-SELECT CASE WHEN (count(1) <> 0) THEN struct(sum(t1.value) AS value) END AS value FROM t1
+SELECT CASE WHEN (count(1) <> 0) THEN struct(sum(table1.value) AS value) END AS value FROM table1
 ------ end
 
 ------ Test: boolAnd expr
-SELECT logical_and((NOT (t1._2 <= CAST(0 AS INT)))) AS value FROM t1 GROUP BY t1._1
+SELECT logical_and((NOT (table1._2 <= CAST(0 AS INT)))) AS value FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: boolAnd whole row
-SELECT CASE WHEN (count(1) <> 0) THEN logical_and(t1.value) END AS value FROM t1
+SELECT CASE WHEN (count(1) <> 0) THEN logical_and(table1.value) END AS value FROM table1
 ------ end
 
 ------ Test: boolOr expr
-SELECT logical_or((NOT (t1._2 <= CAST(0 AS INT)))) AS value FROM t1 GROUP BY t1._1
+SELECT logical_or((NOT (table1._2 <= CAST(0 AS INT)))) AS value FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: boolOr whole row
-SELECT CASE WHEN (count(1) <> 0) THEN logical_or(t1.value) END AS value FROM t1
+SELECT CASE WHEN (count(1) <> 0) THEN logical_or(table1.value) END AS value FROM table1
 ------ end
 
 ------ Test: collect Option
-SELECT array_agg(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT array_agg(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: collect Option Seq
-SELECT array_agg(struct(t1.value AS value)) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT array_agg(struct(table1.value AS value)) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: collect Seq
-SELECT array_agg(struct(t1.value AS value)) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT array_agg(struct(table1.value AS value)) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: collect and map
-SELECT array((SELECT (CAST(c0 AS INT) + CAST(1 AS INT)) FROM unnest(t0.value) AS c0)) AS value FROM (SELECT array_agg(t1._2) AS value FROM t1 GROUP BY t1._1) AS t0
+SELECT array((SELECT (CAST(c0 AS INT) + CAST(1 AS INT)) FROM unnest(t0.value) AS c0)) AS value FROM (SELECT array_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
 ------ end
 
 ------ Test: collect and map pairs
-SELECT t0._1 AS _1, array((SELECT (CAST(c0 AS INT) + CAST(1 AS INT)) FROM unnest(t0._2) AS c0)) AS _2 FROM (SELECT t1._1 AS _1, array_agg(t1._2) AS _2 FROM t1 GROUP BY t1._1) AS t0
+SELECT t0._1 AS _1, array((SELECT (CAST(c0 AS INT) + CAST(1 AS INT)) FROM unnest(t0._2) AS c0)) AS _2 FROM (SELECT table1._1 AS _1, array_agg(table1._2) AS _2 FROM table1 GROUP BY table1._1) AS t0
 ------ end
 
 ------ Test: collect column
-SELECT array_agg(t1._2) AS value FROM t1 GROUP BY t1._1
+SELECT array_agg(table1._2) AS value FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: collect whole row
-SELECT array_agg(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT array_agg(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: concat and map
-SELECT array((SELECT (CAST(c0 AS INT) + CAST(1 AS INT)) FROM unnest(t0.value) AS c0)) AS value FROM (SELECT array_concat_agg(t1._2) AS value FROM t1 GROUP BY t1._1) AS t0
+SELECT array((SELECT (CAST(c0 AS INT) + CAST(1 AS INT)) FROM unnest(t0.value) AS c0)) AS value FROM (SELECT array_concat_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
 ------ end
 
 ------ Test: concat column
-SELECT array_concat_agg(t1._2) AS value FROM t1 GROUP BY t1._1
+SELECT array_concat_agg(table1._2) AS value FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: concat seq
-SELECT array_concat_agg(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT array_concat_agg(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: concat seq by group
-SELECT t1._1 AS _1, array_concat_agg(t1._2) AS _2 FROM t1 GROUP BY t1._1
+SELECT table1._1 AS _1, array_concat_agg(table1._2) AS _2 FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: count group by
-SELECT t1._1 AS _1, count(CAST(1 AS INT)) AS _2 FROM t1 GROUP BY t1._1
+SELECT table1._1 AS _1, count(CAST(1 AS INT)) AS _2 FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: count whole row
-SELECT count(CAST(1 AS INT)) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT count(CAST(1 AS INT)) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: countIf expr
-SELECT count(CASE WHEN (NOT (t1.value <= CAST(0 AS INT))) THEN CAST(1 AS INT) END) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT count(CASE WHEN (NOT (table1.value <= CAST(0 AS INT))) THEN CAST(1 AS INT) END) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: countIf group by
-SELECT t1._1 AS _1, count(CASE WHEN (NOT (t1._2 <= CAST(0 AS INT))) THEN CAST(1 AS INT) END) AS _2 FROM t1 GROUP BY t1._1
+SELECT table1._1 AS _1, count(CASE WHEN (NOT (table1._2 <= CAST(0 AS INT))) THEN CAST(1 AS INT) END) AS _2 FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: countIf whole row
-SELECT count(CASE WHEN t1.value THEN CAST(1 AS INT) END) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT count(CASE WHEN table1.value THEN CAST(1 AS INT) END) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: countSome expr
-SELECT count(t1._2) AS value FROM t1 GROUP BY t1._1
+SELECT count(table1._2) AS value FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: countSome whole row
-SELECT count(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT count(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: explode after aggregate
-SELECT t1 AS _1, t0._2 AS _2 FROM (SELECT t1.d AS _1, min(t1.a) AS _2 FROM t1 GROUP BY t1.d) AS t0, unnest(t0._1) AS t1
+SELECT t1 AS _1, t0._2 AS _2 FROM (SELECT table1.d AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.d) AS t0, unnest(t0._1) AS t1
 ------ end
 
 ------ Test: group by whole enum row
-SELECT t1.discriminant AS discriminant, t1.a AS a, t1.b AS b, t1.c AS c FROM t1 GROUP BY t1.discriminant, t1.a, t1.b, t1.c
+SELECT table1.discriminant AS discriminant, table1.a AS a, table1.b AS b, table1.c AS c FROM table1 GROUP BY table1.discriminant, table1.a, table1.b, table1.c
 ------ end
 
 ------ Test: group by whole nested Option row
-SELECT t1.value AS value FROM t1 GROUP BY t1.value
+SELECT table1.value AS value FROM table1 GROUP BY table1.value
 ------ end
 
 ------ Test: group by whole struct row
-SELECT struct(t1._1 AS _1, t1._2 AS _2) AS _1, min(t1._1) AS _2 FROM t1 GROUP BY t1._1, t1._2
+SELECT struct(table1._1 AS _1, table1._2 AS _2) AS _1, min(table1._1) AS _2 FROM table1 GROUP BY table1._1, table1._2
 ------ end
 
 ------ Test: groupBy transform
-SELECT (NOT (t1._1 <= CAST(2 AS INT))) AS _1, min(t1._2) AS _2 FROM t1 GROUP BY (NOT (t1._1 <= CAST(2 AS INT)))
+SELECT (NOT (table1._1 <= CAST(2 AS INT))) AS _1, min(table1._2) AS _2 FROM table1 GROUP BY (NOT (table1._1 <= CAST(2 AS INT)))
 ------ end
 
 ------ Test: max Double
-SELECT max(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: maxBy
-SELECT t1._1 AS _1, max_by(struct(t1._1 AS _1, t1._2 AS _2)._1, struct(t1._1 AS _1, t1._2 AS _2)._2) AS _2 FROM t1 GROUP BY t1._1
+SELECT table1._1 AS _1, max_by(struct(table1._1 AS _1, table1._2 AS _2)._1, struct(table1._1 AS _1, table1._2 AS _2)._2) AS _2 FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: min Boolean
-SELECT min(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Byte
-SELECT min(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Double
-SELECT coalesce(min(CASE WHEN (NOT is_nan(t1.value)) THEN t1.value END), CAST('NaN' AS FLOAT64)) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT coalesce(min(CASE WHEN (NOT is_nan(table1.value)) THEN table1.value END), CAST('NaN' AS FLOAT64)) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Float
-SELECT coalesce(min(CASE WHEN (NOT is_nan(t1.value)) THEN t1.value END), CAST('NaN' AS FLOAT64)) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT coalesce(min(CASE WHEN (NOT is_nan(table1.value)) THEN table1.value END), CAST('NaN' AS FLOAT64)) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Int
-SELECT min(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Short
-SELECT min(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min String
-SELECT min(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min expr
-SELECT t1._1 AS _1, min(t1._2) AS _2 FROM t1 GROUP BY t1._1
+SELECT table1._1 AS _1, min(table1._2) AS _2 FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: min whole row
-SELECT min(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: minBy
-SELECT t1._1 AS _1, min_by(struct(t1._1 AS _1, t1._2 AS _2)._1, struct(t1._1 AS _1, t1._2 AS _2)._2) AS _2 FROM t1 GROUP BY t1._1
+SELECT table1._1 AS _1, min_by(struct(table1._1 AS _1, table1._2 AS _2)._1, struct(table1._1 AS _1, table1._2 AS _2)._2) AS _2 FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: reduce group by nested option
-SELECT count(CAST(1 AS INT)) AS value FROM (SELECT t1.value AS _1, struct(CASE WHEN CASE WHEN (t1.value IS NULL) THEN TRUE ELSE (NOT (t1.value <= CAST(0 AS INT))) END THEN struct(t1.value AS value) END AS key) AS _2 FROM t1) AS t0 GROUP BY t0._2
+SELECT count(CAST(1 AS INT)) AS value FROM (SELECT table1.value AS _1, struct(CASE WHEN CASE WHEN (table1.value IS NULL) THEN TRUE ELSE (NOT (table1.value <= CAST(0 AS INT))) END THEN struct(table1.value AS value) END AS key) AS _2 FROM table1) AS t0 GROUP BY t0._2
 ------ end
 
 ------ Test: reduce group by option.map with struct
-SELECT count(CAST(1 AS INT)) AS value FROM (SELECT t1.value AS _1, struct(CASE WHEN (t1.value IS NOT NULL) THEN struct(t1.value._1 AS _1, CAST(1 AS INT) AS _2) END AS key) AS _2 FROM t1) AS t0 GROUP BY t0._2
+SELECT count(CAST(1 AS INT)) AS value FROM (SELECT table1.value AS _1, struct(CASE WHEN (table1.value IS NOT NULL) THEN struct(table1.value._1 AS _1, CAST(1 AS INT) AS _2) END AS key) AS _2 FROM table1) AS t0 GROUP BY t0._2
 ------ end
 
 ------ Test: reduce group by option.orElse with struct
-SELECT count(CAST(1 AS INT)) AS value FROM (SELECT t1.value AS _1, struct(coalesce(t1.value, struct(CAST(0 AS INT) AS _1, CAST(0 AS INT) AS _2)) AS key) AS _2 FROM t1) AS t0 GROUP BY t0._2
+SELECT count(CAST(1 AS INT)) AS value FROM (SELECT table1.value AS _1, struct(coalesce(table1.value, struct(CAST(0 AS INT) AS _1, CAST(0 AS INT) AS _2)) AS key) AS _2 FROM table1) AS t0 GROUP BY t0._2
 ------ end
 
 ------ Test: sum Byte
-SELECT sum(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Decimal overflow should error
-SELECT CASE WHEN (count(1) <> 0) THEN sum(t1.value) END AS value FROM t1
+SELECT CASE WHEN (count(1) <> 0) THEN sum(table1.value) END AS value FROM table1
 ------ end
 
 ------ Test: sum Decimal(MaxPrecision, 2)
-SELECT sum(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Decimal(MaxPrecision, 9)
-SELECT sum(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Double
-SELECT sum(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Float
-SELECT sum(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Int
-SELECT sum(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Long
-SELECT sum(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Long overflow should error
-SELECT CASE WHEN (count(1) <> 0) THEN sum(t1.value) END AS value FROM t1
+SELECT CASE WHEN (count(1) <> 0) THEN sum(table1.value) END AS value FROM table1
 ------ end
 
 ------ Test: sum Option[Int]
-SELECT sum(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Short
-SELECT sum(t1.value) AS value FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: support group by with enum
-SELECT struct('a' AS discriminant, struct(t1.value AS a) AS a, CAST(NULL AS STRUCT<b INT>) AS b, CAST(NULL AS STRUCT<c INT>) AS c) AS _1, count(CAST(1 AS INT)) AS _2 FROM t1 GROUP BY t1.value
+SELECT struct('a' AS discriminant, struct(table1.value AS a) AS a, CAST(NULL AS STRUCT<b INT>) AS b, CAST(NULL AS STRUCT<c INT>) AS c) AS _1, count(CAST(1 AS INT)) AS _2 FROM table1 GROUP BY table1.value
 ------ end
 
 ------ Test: support group by with nested option
-SELECT struct(t1.value AS value) AS _1, count(CAST(1 AS INT)) AS _2 FROM t1 GROUP BY t1.value
+SELECT struct(table1.value AS value) AS _1, count(CAST(1 AS INT)) AS _2 FROM table1 GROUP BY table1.value
 ------ end
 
 ------ Test: support group by with select from literal
-SELECT CAST(1 AS INT) AS _1, count(CAST(1 AS INT)) AS _2 FROM t1 GROUP BY CAST(NULL AS INT)
+SELECT CAST(1 AS INT) AS _1, count(CAST(1 AS INT)) AS _2 FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: support group with complex literals
-SELECT struct(struct(t1.value AS i, CAST(NULL AS STRING) AS a) AS i, CAST(NULL AS STRUCT<i INT,a STRING>) AS a) AS _1, count(CAST(1 AS INT)) AS _2 FROM t1 GROUP BY t1.value
+SELECT struct(struct(table1.value AS i, CAST(NULL AS STRING) AS a) AS i, CAST(NULL AS STRUCT<i INT,a STRING>) AS a) AS _1, count(CAST(1 AS INT)) AS _2 FROM table1 GROUP BY table1.value
 ------ end

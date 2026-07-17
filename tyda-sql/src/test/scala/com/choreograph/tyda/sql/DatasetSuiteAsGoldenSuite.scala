@@ -10,6 +10,8 @@ import com.choreograph.tyda.unreachable
 
 trait DatasetSuiteAsGoldenSuite extends DatasetSuite, SqlGoldenTestSuite {
 
+  private val tablePrefix = "table"
+
   override def reference: Runner = unreachable("Should only generate SQL, not run datasets")
   override def implementation: Runner = unreachable("Should only generate SQL, not run datasets")
 
@@ -17,7 +19,9 @@ trait DatasetSuiteAsGoldenSuite extends DatasetSuite, SqlGoldenTestSuite {
       name: String,
       computation: Dataset[T] => Dataset[R],
       inputs: Seq[T]*
-  ): Unit = { testSqlOrSkip(name) { computation(Dataset.readTable[T, EmptyTuple]("t1").select(_._1)) } }
+  ): Unit = {
+    testSqlOrSkip(name) { computation(Dataset.readTable[T, EmptyTuple](s"${tablePrefix}1").select(_._1)) }
+  }
 
   override def test[T1: Arbitrary: Codec, T2: Arbitrary: Codec, R](
       name: String,
@@ -25,8 +29,8 @@ trait DatasetSuiteAsGoldenSuite extends DatasetSuite, SqlGoldenTestSuite {
   ): Unit =
     testSqlOrSkip(name) {
       computation(
-        Dataset.readTable[T1, EmptyTuple]("t1").select(_._1),
-        Dataset.readTable[T2, EmptyTuple]("t2").select(_._1)
+        Dataset.readTable[T1, EmptyTuple](s"${tablePrefix}1").select(_._1),
+        Dataset.readTable[T2, EmptyTuple](s"${tablePrefix}2").select(_._1)
       )
     }
 
@@ -36,9 +40,9 @@ trait DatasetSuiteAsGoldenSuite extends DatasetSuite, SqlGoldenTestSuite {
   ): Unit =
     testSqlOrSkip(name) {
       computation(
-        Dataset.readTable[T1, EmptyTuple]("t1").select(_._1),
-        Dataset.readTable[T2, EmptyTuple]("t2").select(_._1),
-        Dataset.readTable[T3, EmptyTuple]("t3").select(_._1)
+        Dataset.readTable[T1, EmptyTuple](s"${tablePrefix}1").select(_._1),
+        Dataset.readTable[T2, EmptyTuple](s"${tablePrefix}2").select(_._1),
+        Dataset.readTable[T3, EmptyTuple](s"${tablePrefix}3").select(_._1)
       )
     }
 
@@ -47,13 +51,16 @@ trait DatasetSuiteAsGoldenSuite extends DatasetSuite, SqlGoldenTestSuite {
       input: Seq[T],
       computation: Dataset[T] => Dataset[R],
       expectedError: String
-  ): Unit = { testSqlOrSkip(name) { computation(Dataset.readTable[T, EmptyTuple]("t1").select(_._1)) } }
+  ): Unit = {
+    testSqlOrSkip(name) { computation(Dataset.readTable[T, EmptyTuple](s"${tablePrefix}1").select(_._1)) }
+  }
 
   override def testOrdered[T: Arbitrary: Codec, R: Equality](
       name: String,
       computation: Dataset[T] => Dataset[R],
       inputs: Seq[T]*
-  ): Unit = testSqlOrSkip(name) { computation(Dataset.readTable[T, EmptyTuple]("t1").select(_._1)) }
+  ): Unit =
+    testSqlOrSkip(name) { computation(Dataset.readTable[T, EmptyTuple](s"${tablePrefix}1").select(_._1)) }
 
   override def testOrdered[T1: Arbitrary: Codec, T2: Arbitrary: Codec, R: Equality](
       name: String,
