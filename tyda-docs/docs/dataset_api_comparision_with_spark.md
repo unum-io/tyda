@@ -61,6 +61,15 @@ val tydaNamedSelection: Dataset[(userId: UserId, userName: String)] =
     tydaUsers.select(user => (userId = user.id, userName = user.name))
 ```
 
+There's also a matcher syntax
+
+```scala mdoc:silent
+import com.choreograph.tyda.Expr
+val tydaNamedSelection: Dataset[(userId: UserId, userName: String)] =
+    tydaUsers.select({ case Expr(id = id, name = name) => (userId = id, userName = name)})
+```
+
+
 ## Optional/Nullable values
 
 In Tyda we assume all values are non-nullable by default and one should use `Option` to represent nullable values.
