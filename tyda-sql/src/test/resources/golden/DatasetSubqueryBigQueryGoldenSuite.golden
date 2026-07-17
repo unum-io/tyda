@@ -1,19 +1,19 @@
 ------ Test: collect subquery
-SELECT t1.value AS value FROM t1 WHERE (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = t1.value) FROM unnest(coalesce((SELECT CASE WHEN (count(1) <> 0) THEN array_agg(t2.value) END AS value FROM t2), CAST([] AS ARRAY<TINYINT>))) AS c0))) AS c1)
+SELECT table1.value AS value FROM table1 WHERE (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = table1.value) FROM unnest(coalesce((SELECT CASE WHEN (count(1) <> 0) THEN array_agg(table2.value) END AS value FROM table2), CAST([] AS ARRAY<TINYINT>))) AS c0))) AS c1)
 ------ end
 
 ------ Test: count subquery
-SELECT t1.value AS value FROM t1 WHERE (NOT (t1.value <= coalesce((SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM t2), CAST(0 AS BIGINT))))
+SELECT table1.value AS value FROM table1 WHERE (NOT (table1.value <= coalesce((SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM table2), CAST(0 AS BIGINT))))
 ------ end
 
 ------ Test: exists subquery
-SELECT EXISTS (SELECT CAST(1 AS INT) AS value FROM t1 WHERE (NOT (t1.value <= CAST(0 AS BIGINT)))) AS value FROM t1
+SELECT EXISTS (SELECT CAST(1 AS INT) AS value FROM table1 WHERE (NOT (table1.value <= CAST(0 AS BIGINT)))) AS value FROM table1
 ------ end
 
 ------ Test: exists subquery in where
-SELECT t1.value AS value FROM t1 WHERE EXISTS (SELECT CAST(1 AS INT) AS value FROM t1 WHERE (NOT (t1.value <= CAST(0 AS BIGINT))))
+SELECT table1.value AS value FROM table1 WHERE EXISTS (SELECT CAST(1 AS INT) AS value FROM table1 WHERE (NOT (table1.value <= CAST(0 AS BIGINT))))
 ------ end
 
 ------ Test: scalar subquery
-SELECT t1.value AS value FROM t1 WHERE (((SELECT CASE WHEN (count(1) <> 0) THEN max(t1.value) END AS value FROM t1) IS NOT NULL) AND ((SELECT CASE WHEN (count(1) <> 0) THEN max(t1.value) END AS value FROM t1) = t1.value))
+SELECT table1.value AS value FROM table1 WHERE (((SELECT CASE WHEN (count(1) <> 0) THEN max(table1.value) END AS value FROM table1) IS NOT NULL) AND ((SELECT CASE WHEN (count(1) <> 0) THEN max(table1.value) END AS value FROM table1) = table1.value))
 ------ end
