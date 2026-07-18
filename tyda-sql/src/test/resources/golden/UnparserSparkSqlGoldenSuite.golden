@@ -102,10 +102,6 @@ SELECT named_struct('a', table1.a, 'b', table1.b, 'c', table1.c, 'd', table1.d) 
 SELECT named_struct('_1', table1.a, '_2', table1.b, '_3', table1.c) AS value FROM table1
 ------ end
 
------- Test: multiple explodes in separate selects
-SELECT t0._2 AS _1, explode(t0._1.d) AS _2 FROM (SELECT named_struct('a', table1.a, 'b', table1.b, 'c', table1.c, 'd', table1.d) AS _1, explode(table1.d) AS _2 FROM table1) AS t0
------- end
-
 ------ Test: multiple joins
 SELECT table1.a AS _1, table2.a AS _2, table3.a AS _3 FROM table1 JOIN table2 ON (table1.a = table2.a) JOIN table3 ON (table1.a = table3.a)
 ------ end

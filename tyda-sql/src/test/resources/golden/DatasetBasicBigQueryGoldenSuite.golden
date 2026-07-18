@@ -98,6 +98,10 @@ SELECT t0.value AS _1, table2.value AS _2 FROM (SELECT table1.value AS value FRO
 SELECT table1.value AS value FROM table1 LIMIT 0
 ------ end
 
+------ Test: multiple explodes in separate selects
+SELECT t0 AS _1, t1 AS _2 FROM table1, unnest(table1.d) AS t0, unnest(table1.d) AS t1
+------ end
+
 ------ Test: nested option upcast
 SELECT CASE WHEN (table1.value IS NOT NULL) THEN [table1.value.value] ELSE CAST([] AS ARRAY<INT>) END AS value FROM table1
 ------ end
@@ -172,6 +176,14 @@ SELECT CAST(1 AS INT) AS value FROM table1
 
 ------ Test: where
 SELECT table1.value AS value FROM table1 WHERE table1.value
+------ end
+
+------ Test: where after explode
+SELECT t0 AS _1, t1 AS _2, table1._1 AS _3 FROM table1, unnest(table1._2) AS t0, unnest(table1._2) AS t1 WHERE (t0 < CAST(0 AS INT))
+------ end
+
+------ Test: where before explode
+SELECT t0 AS _1, t1 AS _2, table1._1 AS _3 FROM table1, unnest(table1._2) AS t0, unnest(table1._2) AS t1 WHERE (array_length(table1._2) < CAST(2 AS INT))
 ------ end
 
 ------ Test: where literal
