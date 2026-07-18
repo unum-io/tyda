@@ -69,7 +69,7 @@ object DatasetOnIterator {
         )
       case Dataset.FromSeq(values, _) => values.iterator
       case Dataset.Filter(input, p) => apply(input).filter(lambda(p))
-      case Dataset.Select(input, compiled) => selectImpl(apply(input), compiled)
+      case Dataset.Select(input, compiled) => select(apply(input), compiled)
       case Dataset.MapPartitions(input, f, _) => f(apply(input))
       case Dataset.Distinct(input) => apply(input).distinct
       case Dataset.Join(left, right, p) => JoinSelection.join(apply(left), apply(right), p)
@@ -88,7 +88,7 @@ object DatasetOnIterator {
         apply(input).to(Vector).sortBy(lambda(key)).iterator
     }
 
-  private def selectImpl[T, R](input: Iterator[T], compiled: CompiledExplodeExpr[T, R]): Iterator[R] =
+  private def select[T, R](input: Iterator[T], compiled: CompiledExplodeExpr[T, R]): Iterator[R] =
     compiled.extractExplodes match {
       case Extracted.NoExplodes(expr) => input.map(lambda(expr))
       case Extracted.Explodes(explodes, compiled, _) =>
