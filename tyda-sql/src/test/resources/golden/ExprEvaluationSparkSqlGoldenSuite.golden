@@ -1470,6 +1470,18 @@ SELECT TRY_CAST(t1.value AS SMALLINT) AS value FROM t1
 SELECT TRY_CAST(t1.value AS TINYINT) AS value FROM t1
 ------ end
 
+------ Test: tuple *: construct
+SELECT CAST(1 AS INT) AS _1, t1._1 AS _2, t1._2 AS _3, t1._3 AS _4 FROM t1
+------ end
+
+------ Test: tuple head
+SELECT t1._1 AS value FROM t1
+------ end
+
+------ Test: tuple tail
+SELECT t1._2 AS _1, t1._3 AS _2 FROM t1
+------ end
+
 ------ Test: update adding new field
 SELECT t1.a AS a, t1.b AS b, t1.c AS c, TRUE AS d FROM t1
 ------ end
