@@ -10,11 +10,12 @@ import com.choreograph.tyda.functions.lit
 object DatasetBasicSuite {
   type WideTuple = (Int, Int, Int, Int, Int, Int, Int)
   final case class SimpleProduct(a: Int, b: String)
+  final case class M1(a: Int, b: String, c: Boolean, d: Seq[Long])
 }
 
 // Testsuite focusing on select and filter that will compare a Dataset backend to a reference implementation.
 trait DatasetBasicSuite extends DatasetSuite {
-  import DatasetBasicSuite.{WideTuple, SimpleProduct}
+  import DatasetBasicSuite.{WideTuple, SimpleProduct, M1}
   import DatasetSuite.{MyEnum, TinyByte}
 
   test[Boolean, Boolean]("filter", _.filter(identity))
@@ -104,6 +105,14 @@ trait DatasetBasicSuite extends DatasetSuite {
   test[Int, Int]("limit after filter", _.where(_ > 5).limit(3))
   test[(String, Seq[Int]), Int]("limit before explode", _.limit(5).select(explode(_._2)))
   test[(String, Seq[Int]), Int]("limit after explode", _.select(explode(_._2)).limit(5))
+  test[(String, Seq[Int]), (Int, Int, String)](
+    "where before explode",
+    _.where(_._2.size < 2).select(explode(_._2), explode(_._2), _._1)
+  )
+  test[(String, Seq[Int]), (Int, Int, String)](
+    "where after explode",
+    _.select(explode(_._2), explode(_._2), _._1).where(_._1 < 0)
+  )
   test[(String, Int), (key: String, value: Long)](
     "limit before aggregate",
     _.limit(5).groupByKey(_._1).aggregateValue(sum(_._2))
@@ -114,5 +123,8 @@ trait DatasetBasicSuite extends DatasetSuite {
   )
   test[Int, Int, (Int, Int)]("limit before join", (left, right) => left.limit(5).join(right, _ == _))
   test[Int, Int, (Int, Int)]("limit after join", (left, right) => left.join(right, _ == _).limit(5))
-
+  test[M1, (Long, Long)](
+    "multiple explodes in separate selects",
+    ds => ds.select(identity, explode(_.d)).select(_._2, explode(_._1.d))
+  )
 }

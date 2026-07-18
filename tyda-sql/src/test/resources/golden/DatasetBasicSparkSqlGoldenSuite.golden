@@ -98,6 +98,10 @@ SELECT t0.value AS _1, table2.value AS _2 FROM (SELECT table1.value AS value FRO
 SELECT table1.value AS value FROM table1 LIMIT 0
 ------ end
 
+------ Test: multiple explodes in separate selects
+SELECT t0._2 AS _1, explode(t0._1.d) AS _2 FROM (SELECT named_struct('a', table1.a, 'b', table1.b, 'c', table1.c, 'd', table1.d) AS _1, explode(table1.d) AS _2 FROM table1) AS t0
+------ end
+
 ------ Test: nested option upcast
 SELECT CASE WHEN (table1.value IS NOT NULL) THEN array(table1.value.value) ELSE CAST(array() AS ARRAY<INT>) END AS value FROM table1
 ------ end
@@ -172,6 +176,14 @@ SELECT CAST(1 AS INT) AS value FROM table1
 
 ------ Test: where
 SELECT table1.value AS value FROM table1 WHERE table1.value
+------ end
+
+------ Test: where after explode
+SELECT t0._1 AS _1, t0._2 AS _2, t0._3 AS _3 FROM (SELECT explode(table1._2) AS _1, explode(table1._2) AS _2, table1._1 AS _3 FROM table1) AS t0 WHERE (t0._1 < CAST(0 AS INT))
+------ end
+
+------ Test: where before explode
+SELECT explode(table1._2) AS _1, explode(table1._2) AS _2, table1._1 AS _3 FROM table1 WHERE (size(table1._2) < CAST(2 AS INT))
 ------ end
 
 ------ Test: where literal
