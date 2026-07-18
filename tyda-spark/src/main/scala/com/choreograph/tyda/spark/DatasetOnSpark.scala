@@ -267,7 +267,7 @@ object DatasetOnSpark {
           }
           IntermediateDataset(filtered)
         case ExplodeOptionToFilter(ds) => toIntermediate(ds)
-        case select: Dataset.Select[?, T] => IntermediateDataset(select1(select))
+        case dsSelect: Dataset.Select[?, T] => IntermediateDataset(select(dsSelect))
         case Dataset.MapPartitions(input, f, _) =>
           val ds = toIntermediate(input).toDataset
           IntermediateDataset(ds.mapPartitions(f))
@@ -347,10 +347,10 @@ object DatasetOnSpark {
     existingConversions.computeIfAbsent(ds, _ => compute).asInstanceOf[IntermediateDataset[T]]
   }
 
-  private def select1[T, U: Codec](select1: Dataset.Select[T, U])(using SparkSession): SparkDataset[U] = {
-    val input = toIntermediate(select1.input)
-    val arg = select1.expr.arg
-    select1.expr match {
+  private def select[T, U: Codec](select: Dataset.Select[T, U])(using SparkSession): SparkDataset[U] = {
+    val input = toIntermediate(select.input)
+    val arg = select.expr.arg
+    select.expr match {
       /* Use map/flatMap for row level operations instead of UDFs as this allows Spark to potentially optimize
        * away serialization between operations. */
       case CompiledExplodeExpr(_, ExprNode.Udf(`arg`, f, _)) => input.toDataset.map(f)
