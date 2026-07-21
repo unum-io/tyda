@@ -7,7 +7,7 @@ object Dependencies {
   val scala3Version = "3.7.4" // scala-steward:off
   val spark3Version = "3.5.3" // scala-steward:off
   val spark4Version = "4.0.2" // scala-steward:off
-  val jsoniterVersion = "2.38.6"
+  val jsoniterVersion = "2.38.17"
   val bigQueryConnectorVersion = "0.44.1"
 
   object TestDeps {
