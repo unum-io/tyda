@@ -31,7 +31,7 @@ object Dependencies {
     val slf4j = "org.slf4j" % "slf4j-api" % "2.0.18"
     val bigQuery = "com.google.cloud" % "google-cloud-bigquery" % "2.68.0"
     val parquet = "org.apache.parquet" % "parquet-hadoop" % "1.13.1"
-    val hadoop = "org.apache.hadoop" % "hadoop-client-runtime" % "3.3.4"
+    val hadoop = "org.apache.hadoop" % "hadoop-client-runtime" % "3.3.6"
     val spark3Sql = ("org.apache.spark" %% "spark-sql" % spark3Version).cross(CrossVersion.for3Use2_13)
     val spark4Sql = ("org.apache.spark" %% "spark-sql" % spark4Version).cross(CrossVersion.for3Use2_13)
     val scalameta = "org.scalameta" %% "scalameta" % "4.17.1"
