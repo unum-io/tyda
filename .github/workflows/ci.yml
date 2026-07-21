@@ -256,7 +256,7 @@ jobs:
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: target/scala-3.8.4/unidoc
+          path: target/scala-3.7.4/unidoc
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v5
