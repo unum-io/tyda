@@ -44,7 +44,7 @@ ThisBuild / scalacOptions ++= Seq(
 
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
-ThisBuild / scalafixDependencies += "com.github.xuwei-k" %% "scalafix-rules" % "0.6.24"
+ThisBuild / scalafixDependencies += "com.github.xuwei-k" %% "scalafix-rules" % "0.6.29"
 
 // This is needed for using git worktrees, without having jgit crash.
 // When https://github.com/sbt/sbt-git/issues/264 is solved we can remove this.
