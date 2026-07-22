@@ -158,6 +158,10 @@ SELECT t0 AS _1, t1 AS _2 FROM table1, unnest(table1._1) AS t0, unnest(table1._2
 SELECT t0 AS first, t1 AS second FROM table1, unnest(table1._1) AS t0, unnest(table1._2) AS t1
 ------ end
 
+------ Test: select multiple explode seq tuple syntax
+SELECT t0 AS _1, t1 AS _2 FROM table1, unnest(table1._1) AS t0, unnest(table1._2) AS t1
+------ end
+
 ------ Test: select nested access
 SELECT table1._1._1 AS value FROM table1
 ------ end

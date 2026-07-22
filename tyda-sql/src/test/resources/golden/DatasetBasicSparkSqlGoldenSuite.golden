@@ -158,6 +158,10 @@ SELECT t0._1 AS _1, t0._2 AS _2 FROM (SELECT explode(table1._1) AS _1, explode(t
 SELECT t0._1 AS first, t0._2 AS second FROM (SELECT explode(table1._1) AS _1, explode(table1._2) AS _2 FROM table1) AS t0
 ------ end
 
+------ Test: select multiple explode seq tuple syntax
+SELECT t0._1 AS _1, t0._2 AS _2 FROM (SELECT explode(table1._1) AS _1, explode(table1._2) AS _2 FROM table1) AS t0
+------ end
+
 ------ Test: select nested access
 SELECT table1._1._1 AS value FROM table1
 ------ end

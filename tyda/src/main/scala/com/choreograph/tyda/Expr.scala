@@ -41,4 +41,15 @@ object Expr extends ExprApi[Expr] {
     */
   def explode[E, I: AsExpr.Of[Iterable[E]]](expr: I): ExplodeExpr[E] =
     ExplodeExpr(ExprNode.Explode(unlift(AsExpr((expr)))))
+
+  /** Provided for backwards compatibility with the syntax
+    *
+    * ```scala
+    * import com.choreograph.tyda.functions.explode
+    * val ds: Dataset[(Seq[Int], Long)] = ???
+    * ds.select(explode(_._1), _._2)
+    * ```
+    */
+  def explode[T, E, I: AsExpr.Of[Iterable[E]]](f: Expr[T] => I): Expr[T] => ExplodeExpr[E] =
+    f.andThen(explode)
 }

@@ -29,6 +29,10 @@ trait DatasetBasicSuite extends DatasetSuite {
   test[Boolean, Map[Int, Int]]("select complex", _.select(_ => Map.empty[Int, Int]))
   test[(seq: Seq[Int]), (int: Int)]("select one explode seq", _.select(x => (int = explode(x.seq))))
   test[(Seq[Int], Seq[Int]), (Int, Int)](
+    "select multiple explode seq tuple syntax",
+    _.select(explode(_._1), explode(_._2))
+  )
+  test[(Seq[Int], Seq[Int]), (Int, Int)](
     "select multiple explode seq",
     _.select(x => (explode(x._1), explode(x._2)))
   )
