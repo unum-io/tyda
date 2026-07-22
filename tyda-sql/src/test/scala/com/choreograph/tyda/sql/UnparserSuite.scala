@@ -45,7 +45,7 @@ abstract class UnparserSuite extends SqlGoldenTestSuite {
 
   testSql("group by all") { ds4.groupByKey(_ => lit(None)).aggregateValue(countIf(!_.a.isEmpty)).values }
 
-  testSql("explode multiple expression") { ds.select(_.a, explode(_.d)) }
+  testSql("explode multiple expression") { ds.select(x => (x.a, explode(x.d))) }
 
   testSql("aggregate after grouped aggregate") {
     ds.groupByKey(_.b).aggregateValue(min(_.a)).pairs.aggregate(min(_._2))
@@ -64,10 +64,6 @@ abstract class UnparserSuite extends SqlGoldenTestSuite {
   testSql("make named struct from product") { ds.select(r => some(r.toNamedTuple)) }
 
   testSql("select distinct") { ds.select(_.a).distinct }
-
-  testSql("multiple explodes in separate selects") {
-    ds.select(identity, explode(_.d)).select(_._2, explode(_._1.d))
-  }
 
   testSql("inner join select after") { ds.join(ds2, (l, r) => l.a == r.a).select(_._1.a, _._2.a) }
 

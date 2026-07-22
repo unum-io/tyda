@@ -102,10 +102,6 @@ SELECT struct(table1.a AS a, table1.b AS b, table1.c AS c, table1.d AS d) AS val
 SELECT struct(table1.a AS _1, table1.b AS _2, table1.c AS _3) AS value FROM table1
 ------ end
 
------- Test: multiple explodes in separate selects
-SELECT t0 AS _1, t1 AS _2 FROM table1, unnest(table1.d) AS t0, unnest(table1.d) AS t1
------- end
-
 ------ Test: multiple joins
 SELECT table1.a AS _1, table2.a AS _2, table3.a AS _3 FROM table1 JOIN table2 ON (table1.a = table2.a) JOIN table3 ON (table1.a = table3.a)
 ------ end

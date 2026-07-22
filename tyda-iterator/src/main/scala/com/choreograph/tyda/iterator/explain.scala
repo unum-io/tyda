@@ -60,8 +60,7 @@ private def children[T](ds: Dataset[T] | Dataset.Action): Seq[Dataset[?]] =
     case Dataset.ReadPathWithHivePartitions(basePath = _) => Seq.empty
     case Dataset.ReadPartitionsPaths(path = _) => Seq.empty
     case Dataset.ReadTablePartitionsPaths(identifier = _) => Seq.empty
-    case Dataset.Select1(input, _) => Seq(input)
-    case Dataset.SelectN(input, _) => Seq(input)
+    case Dataset.Select(input, _) => Seq(input)
     case Dataset.Union(left, right) => Seq(left, right)
     case Dataset.Action.Write(input, _, _) => Seq(input)
     case Dataset.Limit(input, _) => Seq(input)
@@ -90,8 +89,7 @@ private def exprs[T](ds: Dataset[T] | Dataset.Action): Seq[AnyCompiledExpr] =
     case Dataset.ReadPathWithHivePartitions(basePath = _) => Seq.empty
     case Dataset.ReadPartitionsPaths(path = _) => Seq.empty
     case Dataset.ReadTablePartitionsPaths(identifier = _) => Seq.empty
-    case Dataset.Select1(_, compiled) => Seq(compiled)
-    case Dataset.SelectN(_, exprs) => tupleInstances(exprs).mapConst([t] => identity(_))
+    case Dataset.Select(_, compiled) => Seq(compiled)
     case Dataset.Union(_, _) => Seq.empty
     case Dataset.Action.Write(_, _, _) => Seq.empty
     case Dataset.Limit(_, _) => Seq.empty
@@ -103,9 +101,7 @@ private[tyda] def explain(anyCompiled: AnyCompiledExpr): String =
     case compiled: CompiledExpr[?, ?] => explainLambda(compiled.expr, Map(compiled.arg -> "x"))
     case compiled: CompiledExpr2[?, ?, ?] =>
       explainLambda(compiled.expr, Map(compiled.arg1 -> "l", compiled.arg2 -> "r"))
-    case compiled: CompiledExplodeExpr[?, ?] =>
-      val inner = explain(compiled.asCompiledExpr)
-      s"explode($inner)"
+    case compiled: CompiledExplodeExpr[?, ?] => explainLambda(compiled.expr, Map(compiled.arg -> "x"))
     case compiled: CompiledAggregateExpr[?, ?] => explainLambda(compiled.expr, Map(compiled.arg -> "x"))
   }
 
@@ -128,6 +124,7 @@ private def explainPrimitiveAggregate(primitive: PrimitiveAggregate[?, ?], arg: 
 private def explainLambdaBody[T](expr: ExprNode[T], args: Map[ExprNode.Reference[?], String]): String = {
   def body[T](expr: ExprNode[T]): String =
     expr match {
+      case ExprNode.Explode(expr) => s"explode(${body(expr)})"
       case ExprNode.And(lhs, rhs) => s"(${body(lhs)} && ${body(rhs)})"
       case ExprNode.Coalesce(values) => values.map(body).mkString("coalesce(", ", ", ")")
       case ExprNode.Equals(lhs, rhs) => s"(${body(lhs)} == ${body(rhs)})"

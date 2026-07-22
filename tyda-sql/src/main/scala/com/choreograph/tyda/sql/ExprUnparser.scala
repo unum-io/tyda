@@ -11,7 +11,6 @@ import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Decimal.MaxPrecision
 import com.choreograph.tyda.Duration
 import com.choreograph.tyda.Errors
-import com.choreograph.tyda.ExplodeExpr
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.ExprNode.KnownNotNull
 import com.choreograph.tyda.ExprNode.Or
@@ -45,18 +44,13 @@ import com.choreograph.tyda.sql.ast.SqlExpr
 import com.choreograph.tyda.unreachable
 
 private def simplifyAndToSqlExpr(
-    expr: ExprNode[?] | ExplodeExpr[?],
+    expr: ExprNode[?],
     extraReferences: Map[ExprNode.Reference[?], IdentifierOrSqlExpr],
     args: UnparserArgs
 ): Result[SqlExpr] = simplifyAndToSqlExpr(expr, args.withReferences(extraReferences.toSeq*))
 
-private def simplifyAndToSqlExpr(expr: ExprNode[?] | ExplodeExpr[?], args: UnparserArgs): Result[SqlExpr] = {
-  val simplified = expr match {
-    case e: ExplodeExpr[?] => ExplodeExpr(simplifySelects(e.expr))
-    case e: ExprNode[?] => simplifySelects(e)
-  }
-  exprToSqlExpr(simplified, args)
-}
+private def simplifyAndToSqlExpr(expr: ExprNode[?], args: UnparserArgs): Result[SqlExpr] =
+  exprToSqlExpr(simplifySelects(expr), args)
 
 /* These rules are to generate simpler SQL for outer joins where we do extra handling to make sure we get
  * correct nullability. Hopefully this should be replaced by some more general handling around MapOption and
@@ -110,17 +104,6 @@ private def lambda2[T1, T2, R](compiled: CompiledExpr2[T1, T2, R], args: Unparse
   ).map(body => SqlExpr.LambdaFunction(Seq(SqlExpr.Ident(argName1), SqlExpr.Ident(argName2)), body))
 }
 
-private def exprToSqlExpr(expr: ExplodeExpr[?] | ExprNode[?], args: UnparserArgs): Result[SqlExpr] =
-  expr match {
-    case e: ExplodeExpr[?] => exprToSqlExpr(e.expr, args).map(arg =>
-        args.dialect.explode match {
-          case SqlDialect.ExplodeSupport.Function(name) => SqlExpr.Function(name, Seq(arg))
-          case SqlDialect.ExplodeSupport.InnerJoin(name) => SqlExpr.Function(name, Seq(arg))
-        }
-      )
-    case e: ExprNode[?] => exprToSqlExpr(e, args)
-  }
-
 private object TopLevelSelect {
   def unapply[T](expr: ExprNode.Select[?, T]): Option[(ExprNode.Reference[?], String)] =
     expr match {
@@ -158,6 +141,12 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
       args.references.get(ref).getOrElse(Errors.failUnexpectedReference(ref, args.references.keys))
 
     expr match {
+      case ExprNode.Explode(expr) => dialect.explode match {
+          case SqlDialect.ExplodeSupport.Function(name) =>
+            inner(expr).map(arg => SqlExpr.Function(name, Seq(arg)))
+          case SqlDialect.ExplodeSupport.InnerJoin(name) =>
+            inner(expr).map(arg => SqlExpr.Function(name, Seq(arg)))
+        }
       case TopLevelSelect(ref, field) =>
         val parent = getTableExpr(ref) match {
           case IdentifierOrSqlExpr.Ident(id) => SqlExpr.Ident(id)

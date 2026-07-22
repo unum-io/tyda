@@ -203,7 +203,7 @@ trait DatasetJoinSuite extends DatasetSuite {
 
   test[M3, M3, (Long, Long)](
     "join and then explode",
-    (ds1, ds2) => ds1.join(ds2, (l, r) => l.a == r.a).select(explode(_._1.d), explode(_._2.d))
+    (ds1, ds2) => ds1.join(ds2, (l, r) => l.a == r.a).select(x => (explode(x._1.d), explode(x._2.d)))
   )
 
 }

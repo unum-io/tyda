@@ -4,7 +4,6 @@ import scala.NamedTuple.AnyNamedTuple
 import scala.deriving.Mirror
 import scala.reflect.ClassTag
 
-import shapeless3.deriving.Complete
 import shapeless3.deriving.K0
 import shapeless3.deriving.Labelling
 import shapeless3.deriving.internals.ErasedProductInstances1
@@ -13,12 +12,10 @@ import shapeless3.deriving.internals.ErasedProductInstancesN
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.CompiledAggregateExpr
 import com.choreograph.tyda.CompiledExplodeExpr
+import com.choreograph.tyda.CompiledExplodeExpr.Extracted
 import com.choreograph.tyda.CompiledExpr
 import com.choreograph.tyda.CompiledExpr2
-import com.choreograph.tyda.CompiledExprOrExplode
 import com.choreograph.tyda.Dataset
-import com.choreograph.tyda.Dataset.codec
-import com.choreograph.tyda.ExplodeExpr
 import com.choreograph.tyda.Expr
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.Field
@@ -30,7 +27,6 @@ import com.choreograph.tyda.rewrite.IsNone
 import com.choreograph.tyda.rewrite.Nullable
 import com.choreograph.tyda.rewrite.StructFields
 import com.choreograph.tyda.shapeless3extras.mapConst
-import com.choreograph.tyda.shapeless3extras.toTuple
 import com.choreograph.tyda.shapeless3extras.tupleInstances
 import com.choreograph.tyda.sql.Result.sequence
 import com.choreograph.tyda.sql.ast.From
@@ -86,49 +82,9 @@ private final case class SelectBuilder[T, R](
     ordered.flatMap(_.toSubquery)
   }
 
-  def select[R2](expr: CompiledExprOrExplode[R, R2]): Result[SelectBuilder[?, R2]] =
+  def select[R2](expr: CompiledExplodeExpr[R, R2]): Result[SelectBuilder[?, R2]] =
     if distinct || requiresSubqueryForSeqOps(expr) then toSubquery.flatMap(_.select(expr))
-    else
-      expr match {
-        case compiled @ CompiledExpr(_, _) => Right(copy(select = andThen(select, compiled)))
-        case explode @ CompiledExplodeExpr(_, _) => selectExplode(explode)
-      }
-
-  def selectN[R2 <: Tuple](
-      exprs: Tuple.Map[R2, [X] =>> CompiledExprOrExplode[R, X]]
-  ): Result[SelectBuilder[?, R2]] = {
-    val hasExplode = tupleInstances(exprs).foldLeft0(false)([t] =>
-      (acc, compiled) =>
-        compiled match {
-          case _: CompiledExplodeExpr[?, ?] => Complete(true)
-          case compiled: CompiledExpr[?, ?] => acc
-        }
-    )
-    if (distinct || requiresSubqueryForAnySeqOps(exprs)) toSubquery.flatMap(_.selectN(exprs))
-    else if (hasExplode) selectNExplode(exprs)
-    else {
-      val compiledExprs = tupleInstances(exprs).mapK([t] =>
-        (compiled: CompiledExprOrExplode[R, t]) =>
-          compiled match {
-            case _: CompiledExplodeExpr[?, ?] => unreachable("unreachable due to hasExplode check")
-            case compiled: CompiledExpr[R, ?] => andThen(select, compiled)
-          }
-      )
-      val hasAggregate = compiledExprs.foldLeft0(false)([t] =>
-        (acc, compiled) =>
-          compiled match {
-            case _: CompiledAggregateExpr[?, ?] => Complete(true)
-            case _: CompiledExpr[?, ?] => acc
-          }
-      )
-      val newArg = ExprNode.Reference[T]()(using select.arg.codec)
-      val newExpr =
-        ExprNode.makeTuple[R2](compiledExprs.mapK([t] => c => c.expr.replace(c.arg, newArg)).toTuple)
-      val newSelect =
-        if hasAggregate then { CompiledAggregateExpr(newArg, newExpr) } else { CompiledExpr(newArg, newExpr) }
-      Right(copy(select = newSelect))
-    }
-  }
+    else selectExplode(expr)
 
   def aggregate[A](agg: CompiledAggregateExpr[R, A]): Result[SelectBuilder[?, Option[A]]] = {
     given Codec[A] = agg.expr.codec
@@ -151,7 +107,7 @@ private final case class SelectBuilder[T, R](
         if args.dialect.useSubqueryToAvoidStructInGroupBy && hasMakeProductAfterFlattening(newGroupBy) then
           given Codec[R] = key.arg.codec
           given Codec[K] = key.expr.codec
-          selectN[(R, K)]((CompiledExpr[R, R](identity), key))
+          select[(R, K)](CompiledExplodeExpr[R, R](x => x).combine(key))
             .flatMap(_.toSubquery)
             .flatMap(_.aggregate(CompiledExpr(_._2), aggregate.compose(CompiledExpr(_._1))))
         else Right(copy(select = newSelect, groupBy = Some(newGroupBy)))
@@ -189,7 +145,7 @@ private final case class SelectBuilder[T, R](
   ): Result[SelectBuilder[?, (R, Option[R2])]] = {
     given Codec[R] = select.expr.codec
     given Codec[R2] = rhs.select.expr.codec
-    val wrap = CompiledExpr[R2, Option[R2]](e => Expr.some(e))
+    val wrap = CompiledExplodeExpr[R2, Option[R2]](e => Expr.some(e))
     val unwrap = CompiledExpr[Option[R2], R2](e => Expr.knownNotNull(e))
     rhs
       .select(wrap)
@@ -226,9 +182,9 @@ private final case class SelectBuilder[T, R](
   ): Result[SelectBuilder[?, (Option[R], Option[R2])]] = {
     given Codec[R] = select.expr.codec
     given Codec[R2] = rhs.select.expr.codec
-    val wrapLhs = CompiledExpr[R, Option[R]](e => Expr.some(e))
+    val wrapLhs = CompiledExplodeExpr[R, Option[R]](e => Expr.some(e))
     val unwrapLhs = CompiledExpr[Option[R], R](e => Expr.knownNotNull(e))
-    val wrapRhs = CompiledExpr[R2, Option[R2]](e => Expr.some(e))
+    val wrapRhs = CompiledExplodeExpr[R2, Option[R2]](e => Expr.some(e))
     val unwrapRhs = CompiledExpr[Option[R2], R2](e => Expr.knownNotNull(e))
     for {
       lhsNullable <- select(wrapLhs).flatMap(_.toSubquery)
@@ -272,11 +228,8 @@ private final case class SelectBuilder[T, R](
 
   private def toSubquery: Result[SelectBuilder[R, R]] = build().map(makeSubquery(_, select.expr.codec))
 
-  private def requiresSubqueryForSeqOps[T, R](compiled: CompiledExprOrExplode[T, R]): Boolean =
-    compiled match {
-      case CompiledExpr(_, expr) => requiresSubqueryForSeqOps(expr)
-      case CompiledExplodeExpr(_, expr) => requiresSubqueryForSeqOps(expr)
-    }
+  private def requiresSubqueryForSeqOps[T, R](compiled: CompiledExplodeExpr[T, R]): Boolean =
+    requiresSubqueryForSeqOps(compiled.expr)
 
   private def isAggregateAndUsesSubqueryForArrayOps: Boolean =
     select.isInstanceOf[CompiledAggregateExpr[?, ?]] &&
@@ -284,17 +237,6 @@ private final case class SelectBuilder[T, R](
 
   private def requiresSubqueryForSeqOps(expr: ExprNode[?]): Boolean =
     isAggregateAndUsesSubqueryForArrayOps && containsSeqHigherOrderOp(expr)
-
-  private def requiresSubqueryForAnySeqOps[R2 <: Tuple](
-      exprs: Tuple.Map[R2, [X] =>> CompiledExprOrExplode[R, X]]
-  ): Boolean =
-    isAggregateAndUsesSubqueryForArrayOps && tupleInstances(exprs).foldLeft0(false)([t] =>
-      (acc, compiled) =>
-        compiled match {
-          case CompiledExpr(_, expr) if containsSeqHigherOrderOp(expr) => Complete(true)
-          case _ => acc
-        }
-    )
 
   private def containsSeqHigherOrderOp(expr: ExprNode[?]): Boolean =
     expr.exists {
@@ -305,118 +247,57 @@ private final case class SelectBuilder[T, R](
   private def makeSubquery[T](query: Query, codec: Codec[T]): SelectBuilder[T, T] =
     SelectBuilder.from(TypedFrom(query, args.aliasGen)(using codec), args)
 
-  private def selectExplode[R2](explode: CompiledExplodeExpr[R, R2]): Result[SelectBuilder[?, R2]] = {
-    given Codec[R2] = explode.codec
+  private def selectExplode[R2](explode: CompiledExplodeExpr[R, R2]): Result[SelectBuilder[?, R2]] =
     args.dialect.explode match {
       case SqlDialect.ExplodeSupport.Function(_) => selectExplodeFunction(explode)
       case SqlDialect.ExplodeSupport.InnerJoin(_) => selectExplodeJoin(explode)
     }
-  }
 
-  private def selectExplodeFunction[R2: Codec](
-      explode: CompiledExplodeExpr[R, R2]
-  ): Result[SelectBuilder[?, R2]] = {
-    val newSelect = andThenRelaxed(select, explode)
-    explode.codec match {
-      case Codec.Product(_, _, _) | Codec.Sum(_, _) =>
-        // When exploding to a structured type we end up with a single column and need to flatten it manually
-        buildWithSelect(
-          NonEmpty[Seq]((newSelect, "_1"))
-        ).flatMap(makeSubquery[Tuple1[R2]](_, summon).select(CompiledExpr(_._1)))
-      case _ => buildWithSelect(NonEmpty[Seq]((newSelect, "value"))).map(makeSubquery(_, explode.codec))
-    }
-  }
+  private def selectWithoutExplode[R2](compiled: CompiledExpr[R, R2]): Result[SelectBuilder[?, R2]] =
+    Right(copy(select = andThen(select, compiled)))
 
-  private def selectExplodeJoin[R2: Codec](
-      explode: CompiledExplodeExpr[R, R2]
-  ): Result[SelectBuilder[?, R2]] =
-    select match {
-      case compiled: CompiledExpr[T, R] if !distinct =>
-        given Codec[T] = from.output.codec
-        val newSelect = CompiledExpr[(T, R2), R2](_._2)
-        val newWhere = where.map(_.compose(CompiledExpr[(T, R2), T](_._1)))
-        TypedFrom
-          .join(from, explode.compose(compiled), args)
-          .map(newFrom => SelectBuilder(args, from = newFrom, select = newSelect, where = newWhere))
-      case _ =>
-        given Codec[Iterable[R2]] = explode.expr.codec
-        toSubquery
-          .flatMap(_.select(explode.asCompiledExpr))
-          .flatMap(_.select(CompiledExprOrExplode[Iterable[R2], R2](Expr.explode(identity))))
-    }
-
-  private def selectNExplode[R2 <: Tuple](
-      exprs: Tuple.Map[R2, [X] =>> CompiledExprOrExplode[R, X]]
-  ): Result[SelectBuilder[?, R2]] =
-    args.dialect.explode match {
-      case SqlDialect.ExplodeSupport.Function(_) => selectNExplodeFunction(exprs)
-      case SqlDialect.ExplodeSupport.InnerJoin(_) => selectNExplodeJoin(exprs)
-    }
-
-  private def selectNExplodeFunction[R2 <: Tuple](
-      exprs: Tuple.Map[R2, [X] =>> CompiledExprOrExplode[R, X]]
-  ): Result[SelectBuilder[?, R2]] = {
-    val codec = Codec.tuple(tupleInstances(exprs).mapK([t] => _.codec))
-    val newSelect = NonEmpty
-      .from(
-        tupleInstances(exprs)
-          .mapConst([t] => compiled => andThenRelaxed(select, compiled))
+  private def selectExplodeFunction[R2](explode: CompiledExplodeExpr[R, R2]): Result[SelectBuilder[?, R2]] =
+    explode.extractExplodes match {
+      case Extracted.NoExplodes(compiled) => selectWithoutExplode(compiled)
+      case Extracted.Explodes(explodes, compiled, onlyExplodesCompiled) =>
+        val instances = tupleInstances(explodes)
+        val initial = (RelaxedCompiledExpr(select), "_1")
+        val selects = instances
+          .mapConst[RelaxedCompiledExpr[T, ?]] { [t] => explode =>
+            val relaxed = RelaxedCompiledExpr(explode).compose(select)
+            RelaxedCompiledExpr(relaxed.arg, ExprNode.Explode(relaxed.expr))
+          }
           .zipWithIndex
-          .map { case (e, i) => (e, s"_${i + 1}") }
-      )
-      .getOrElse(unreachable("Selects contains at least one statement"))
-
-    buildWithSelect(newSelect).map(makeSubquery(_, codec))
-  }
-
-  private def selectNExplodeJoin[R2 <: Tuple](
-      exprs: Tuple.Map[R2, [x] =>> CompiledExprOrExplode[R, x]]
-  ): Result[SelectBuilder[?, R2]] = {
-    val instances = tupleInstances(exprs)
-    select match {
-      case compiled: CompiledExpr[T, R] if !distinct =>
-        // The explodes can be added as joins in the existing from without a subquery.
-        val explodeCodecs = instances.foldLeft0(Vector.empty[Codec[?]])([t] =>
-          (acc, select) =>
-            select match {
-              case CompiledExpr(_, _) => acc
-              case explode: CompiledExplodeExpr[?, ?] => acc :+ explode.expr.codec
-            }
-        )
-        // TYPE SAFETY: Each value in (from.output.codec +: explodeCodecs) is a Codec
-        val newFromCodec: Codec.Product[T *: Tuple] = Codec.tuple(tupleInstances(
-          Tuple
-            .fromArray((from.output.codec +: explodeCodecs).toArray)
-            .asInstanceOf[Tuple.Map[T *: Tuple, Codec]]
-        ))
-        val newArg = ExprNode.Reference()(using newFromCodec)
-        var idx = 1
-        val selectExprs = instances.mapK([t] =>
-          _ match {
-            case noExplode @ CompiledExpr(_, _) =>
-              val composed = compiled.andThen(noExplode)
-              composed.expr.replace(composed.arg, ExprNode.Select(newArg, "_1"))
-            case CompiledExplodeExpr(_, _) =>
-              idx += 1
-              (ExprNode.Select(newArg, s"_$idx"))
-          }
-        )
-        val joinExprs = instances.mapConst([t] =>
-          _ match {
-            case CompiledExpr(_, _) => None
-            case explode @ CompiledExplodeExpr(_, _) => Some(explode.compose(compiled))
-          }
-        )
-        val newSelect = CompiledExpr[T *: Tuple, R2](newArg, ExprNode.makeTuple(selectExprs.toTuple))
-        val newWhere =
-          where.map(cond => CompiledExpr(newArg, cond.expr.replace(cond.arg, ExprNode.Select(newArg, "_1"))))
-        // TYPE SAFETY: Each value in joinExprs.flatten is a CompiledExplodeExpr[T, ?]
-        TypedFrom
-          .joinExplode(from, Tuple.fromArray(joinExprs.flatten.toArray).asInstanceOf, args)
-          .map(newFrom => SelectBuilder(args, from = newFrom, select = newSelect, where = newWhere))
-      case _ => toSubquery.flatMap(_.selectN(exprs))
+        onlyExplodesCompiled match {
+          case None => buildWithSelect(
+              NonEmpty[Seq](initial, selects.map((sql, idx) => (sql, s"_${idx + 2}"))*)
+            ).map(makeSubquery(_, compiled.arg.codec)).flatMap(_.selectWithoutExplode(compiled))
+          case Some(compiled) => buildWithSelect(
+              NonEmpty
+                .from(selects.map((sql, idx) => (sql, s"_${idx + 1}")))
+                .getOrElse(unreachable("There is at least one explode"))
+            ).map(makeSubquery(_, compiled.arg.codec)).flatMap(_.selectWithoutExplode(compiled))
+        }
     }
-  }
+
+  private def selectExplodeJoin[R2](explode: CompiledExplodeExpr[R, R2]): Result[SelectBuilder[?, R2]] =
+    select match {
+      case s: CompiledExpr[T, R] if !distinct =>
+        explode.compose(s).extractExplodes match {
+          case Extracted.NoExplodes(compiled) => Right(copy(select = compiled))
+          case Extracted.Explodes(explodes, compiled, _) =>
+            val newWhere =
+              where.map(_.compose(CompiledExpr(compiled.arg, ExprNode.Select(compiled.arg, "_1"))))
+            TypedFrom
+              .joinExplode(from, explodes, args)
+              .map(newFrom => SelectBuilder(args, from = newFrom, select = compiled, where = newWhere))
+        }
+      case _: CompiledAggregateExpr[T, R] => explode.extractExplodes match {
+          case Extracted.NoExplodes(compiled) => selectWithoutExplode(compiled)
+          case _ => toSubquery.flatMap(_.select(explode))
+        }
+      case _ => toSubquery.flatMap(_.select(explode))
+    }
 
   def build(): Result[Query] = {
     /* For builders that are only select directly from a subquery, we return the subquery to avoid an
@@ -459,10 +340,7 @@ private final case class SelectBuilder[T, R](
     val output = from.output
     val ids = from.ids
     def relaxedToSqlExpr(compiled: RelaxedCompiledExpr[T, ?]): Result[SqlExpr] = {
-      val node = compiled.expr match {
-        case ExplodeExpr(node) => ExplodeExpr(node.replace(compiled.arg, output))
-        case node: ExprNode[?] => node.replace(compiled.arg, output)
-      }
+      val node = compiled.expr.replace(compiled.arg, output)
       simplifyAndToSqlExpr(node, ids, args)
     }
     def groupByToSqlExpr(compiled: CompiledExpr[T, ?]): Result[Seq[SqlExpr]] = {
@@ -717,11 +595,6 @@ private object SelectBuilder {
       }
     inner(node).getOrElse(Seq(node))
   }
-
-  private def andThenRelaxed[T, R, A](
-      select: CompiledExprOrAggregate[T, R],
-      g: CompiledExprOrExplode[R, A]
-  ): RelaxedCompiledExpr[T, A] = RelaxedCompiledExpr(g).compose(select)
 
   private def andThen[T, R, A](
       select: CompiledExprOrAggregate[T, R],
