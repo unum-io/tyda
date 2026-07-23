@@ -24,6 +24,7 @@ import scala.annotation.implicitNotFound
     "If ${T} is an opaque type consider adding a given Num[${T}] = Num.<evidence> to the companion object\n"
 )
 sealed trait Num[T] {
+  def abs(t: T): T
   def plus(lhs: T, rhs: T): T
   def minus(lhs: T, rhs: T): T
   def times(lhs: T, rhs: T): T
@@ -57,6 +58,7 @@ object Num {
 
   given Num[Byte] =
     new Integral[Byte] {
+      def abs(t: Byte): Byte = if t < 0 then exactByte(-t.toInt) else t
       def plus(lhs: Byte, rhs: Byte): Byte = exactByte(lhs.toInt + rhs.toInt)
       def minus(lhs: Byte, rhs: Byte): Byte = exactByte(lhs.toInt - rhs.toInt)
       def times(lhs: Byte, rhs: Byte): Byte = exactByte(lhs.toInt * rhs.toInt)
@@ -66,6 +68,7 @@ object Num {
 
   given Num[Short] =
     new Integral[Short] {
+      def abs(t: Short): Short = if t < 0 then exactShort(-t.toInt) else t
       def plus(lhs: Short, rhs: Short): Short = exactShort(lhs.toInt + rhs.toInt)
       def minus(lhs: Short, rhs: Short): Short = exactShort(lhs.toInt - rhs.toInt)
       def times(lhs: Short, rhs: Short): Short = exactShort(lhs.toInt * rhs.toInt)
@@ -75,6 +78,7 @@ object Num {
 
   given Num[Int] =
     new Integral[Int] {
+      def abs(t: Int): Int = if t < 0 then Math.negateExact(t) else t
       def plus(lhs: Int, rhs: Int): Int = Math.addExact(lhs, rhs)
       def minus(lhs: Int, rhs: Int): Int = Math.subtractExact(lhs, rhs)
       def times(lhs: Int, rhs: Int): Int = Math.multiplyExact(lhs, rhs)
@@ -84,6 +88,7 @@ object Num {
 
   given Num[Long] =
     new Integral[Long] {
+      def abs(t: Long): Long = if t < 0 then Math.negateExact(t) else t
       def plus(lhs: Long, rhs: Long): Long = Math.addExact(lhs, rhs)
       def minus(lhs: Long, rhs: Long): Long = Math.subtractExact(lhs, rhs)
       def times(lhs: Long, rhs: Long): Long = Math.multiplyExact(lhs, rhs)
@@ -93,6 +98,7 @@ object Num {
 
   given Num[Float] =
     new Primitive[Float] {
+      def abs(t: Float): Float = Math.abs(t)
       def plus(lhs: Float, rhs: Float): Float = checkedFloat(lhs, rhs)(lhs + rhs)
       def minus(lhs: Float, rhs: Float): Float = checkedFloat(lhs, rhs)(lhs - rhs)
       def times(lhs: Float, rhs: Float): Float = checkedFloat(lhs, rhs)(lhs * rhs)
@@ -103,6 +109,7 @@ object Num {
 
   given Num[Double] =
     new Primitive[Double] {
+      def abs(t: Double): Double = Math.abs(t)
       def plus(lhs: Double, rhs: Double): Double = checkedDouble(lhs, rhs)(lhs + rhs)
       def minus(lhs: Double, rhs: Double): Double = checkedDouble(lhs, rhs)(lhs - rhs)
       def times(lhs: Double, rhs: Double): Double = checkedDouble(lhs, rhs)(lhs * rhs)

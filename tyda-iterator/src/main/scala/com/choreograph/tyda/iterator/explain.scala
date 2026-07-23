@@ -180,6 +180,7 @@ private def explainLambdaBody[T](expr: ExprNode[T], args: Map[ExprNode.Reference
       case ExprNode.FromJson(inner, _) => s"fromJson(${body(inner)})"
       case ExprNode.SizeSeq(operand) => s"${body(operand)}.size"
       case ExprNode.ElementSeq(array, index) => s"${body(array)}.get(${body(index)})"
+      case ExprNode.Abs(_, operand) => s"${body(operand)}.abs"
       case ExprNode.Add(_, lhs, rhs) => s"${body(lhs)} + ${body(rhs)}"
       case ExprNode.Subtract(_, lhs, rhs) => s"${body(lhs)} - ${body(rhs)}"
       case ExprNode.Multiply(_, lhs, rhs) => s"${body(lhs)} * ${body(rhs)}"

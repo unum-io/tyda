@@ -225,6 +225,7 @@ object ExprEvaluation {
             branches
               .collectFirst { case (whenEval, thenEval) if whenEval(from) => thenEval(from) }
               .getOrElse(elseEval(from))
+        case ExprNode.Abs(num, operand) => impl(operand).andThen(num.abs)
         case ExprNode.Add(num, lhs, rhs) => binaryOp(lhs, rhs, num.plus)
         case ExprNode.Subtract(num, lhs, rhs) => binaryOp(lhs, rhs, num.minus)
         case ExprNode.Multiply(num, lhs, rhs) => binaryOp(lhs, rhs, num.times)

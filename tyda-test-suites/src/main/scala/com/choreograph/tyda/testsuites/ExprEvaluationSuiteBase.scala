@@ -1158,6 +1158,11 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
+    given Arbitrary[Double] = Arbitrary.oneOf(Double.NaN, Double.PositiveInfinity, Double.NegativeInfinity)
+    testHasSameBehavior[Double, Double]("add zero to special double values", _ + 0.0, _ + 0.0)
+  }
+
+  {
     given Arbitrary[Double] = Arbitrary.double.filter(d => !d.isInfinite && d > 2e292d)
     testFailure[Double, Double](
       "fail on double addition overflow",
@@ -1232,6 +1237,17 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   {
+    given Arbitrary[Float] = Arbitrary.oneOf(Float.NaN, Float.PositiveInfinity, Float.NegativeInfinity)
+    testHasSameBehavior[Float, Float]("add zero to special float values", _ + 0.0f, _ + 0.0f)
+  }
+
+  testHasSameBehavior[Option[Float], Option[Float]](
+    "add zero to optional float",
+    _.map(_ + 0.0f),
+    _.map(_ + 0.0f)
+  )
+
+  {
     given Arbitrary[Float] = Arbitrary.float.filter(f => !f.isInfinite && f > 2.03e31f)
     testFailure[Float, Float](
       "fail on float addition overflow",
@@ -1294,6 +1310,53 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   }
 
   testHasSameBehavior[Float, Float]("negate a float", e => -e, n => -n)
+
+  {
+    given Arbitrary[Byte] = Arbitrary[Byte].filter(_ != Byte.MinValue)
+    testHasSameBehavior[Byte, Byte]("absolute value of a byte", _.abs, n => Math.abs(n.toInt).toByte)
+  }
+
+  testFailure[Byte, Byte](
+    "fail on byte absolute value overflow",
+    _ => Expr.lit(Byte.MinValue).abs,
+    "(?i)(overflow|out of range)".r
+  )
+
+  {
+    given Arbitrary[Short] = Arbitrary[Short].filter(_ != Short.MinValue)
+    testHasSameBehavior[Short, Short]("absolute value of a short", _.abs, n => Math.abs(n.toInt).toShort)
+  }
+
+  testFailure[Short, Short](
+    "fail on short absolute value overflow",
+    _ => Expr.lit(Short.MinValue).abs,
+    "(?i)(overflow|out of range)".r
+  )
+
+  {
+    given Arbitrary[Int] = Arbitrary[Int].filter(_ != Int.MinValue)
+    testHasSameBehavior[Int, Int]("absolute value of an int", _.abs, Math.abs)
+  }
+
+  testFailure[Int, Int](
+    "fail on int absolute value overflow",
+    _ => Expr.lit(Int.MinValue).abs,
+    "(?i)(overflow|out of range)".r
+  )
+
+  {
+    given Arbitrary[Long] = Arbitrary[Long].filter(_ != Long.MinValue)
+    testHasSameBehavior[Long, Long]("absolute value of a long", _.abs, Math.abs)
+  }
+
+  testFailure[Long, Long](
+    "fail on long absolute value overflow",
+    _ => Expr.lit(Long.MinValue).abs,
+    "(?i)(overflow|out of range)".r
+  )
+
+  testHasSameBehavior[Float, Float]("absolute value of a float", _.abs, Math.abs)
+  testHasSameBehavior[Double, Double]("absolute value of a double", _.abs, Math.abs)
 
   testHasSameBehavior[TestEnum.A.type, TestEnum.A.type]("identity enum singleton", identity, identity)
   testHasSameBehavior[TestSealedTrait.A.type, TestSealedTrait.A.type](

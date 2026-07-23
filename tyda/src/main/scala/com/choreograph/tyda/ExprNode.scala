@@ -416,6 +416,10 @@ private object ExprNode extends ExprApi[ExprNode] {
     override def codec: Codec[T] = array.codec.element
   }
 
+  final case class Abs[T](num: Num[T], operand: ExprNode[T]) extends ExprNode[T] {
+    override def codec: Codec[T] = operand.codec
+  }
+
   final case class Add[T](num: Num[T], lhs: ExprNode[T], rhs: ExprNode[T]) extends ExprNode[T] {
     override def codec: Codec[T] = lhs.codec
   }

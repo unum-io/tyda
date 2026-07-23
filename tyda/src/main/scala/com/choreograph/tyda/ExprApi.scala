@@ -504,6 +504,13 @@ trait ExprApi[Expr[T]] {
 
   extension [T: Num](lhs: Expr[T]) {
 
+    /** Returns the absolute value of this expression.
+      *
+      * Throws an exception if the operation leads to overflow for integral
+      * minimum values.
+      */
+    def abs: Expr[T] = lift(ExprNode.Abs(Num[T], unlift(lhs)))
+
     /** Returns the negation of this expression.
       *
       * Throws an exception if the operation leads to overflow for integral

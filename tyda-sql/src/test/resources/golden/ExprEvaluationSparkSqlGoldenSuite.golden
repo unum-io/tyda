@@ -82,16 +82,40 @@ SELECT unix_micros(t1.value) AS value FROM t1
 SELECT timestamp_micros(unix_micros(t1.value)) AS value FROM t1
 ------ end
 
+------ Test: absolute value of a byte
+SELECT abs(t1.value) AS value FROM t1
+------ end
+
+------ Test: absolute value of a double
+SELECT abs(t1.value) AS value FROM t1
+------ end
+
+------ Test: absolute value of a float
+SELECT abs(t1.value) AS value FROM t1
+------ end
+
+------ Test: absolute value of a long
+SELECT abs(t1.value) AS value FROM t1
+------ end
+
+------ Test: absolute value of a short
+SELECT abs(t1.value) AS value FROM t1
+------ end
+
+------ Test: absolute value of an int
+SELECT abs(t1.value) AS value FROM t1
+------ end
+
 ------ Test: add two byte numbers
 SELECT (t1._1 + t1._2) AS value FROM t1
 ------ end
 
 ------ Test: add two double numbers
-SELECT CASE WHEN (((NOT ((t1._1 = CAST('Infinity' AS DOUBLE)) OR (t1._1 = CAST('-Infinity' AS DOUBLE)))) AND (NOT ((t1._2 = CAST('Infinity' AS DOUBLE)) OR (t1._2 = CAST('-Infinity' AS DOUBLE))))) AND ((NOT isnan((t1._1 + t1._2))) AND (((t1._1 + t1._2) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1._1 + t1._2) > CAST(1.7976931348623157E308 AS DOUBLE))))) THEN raise_error('Double overflow') ELSE (t1._1 + t1._2) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1._1) = CAST('Infinity' AS DOUBLE))) AND (NOT (abs(t1._2) = CAST('Infinity' AS DOUBLE)))) AND (NOT isnan((t1._1 + t1._2)))) AND (NOT (abs((t1._1 + t1._2)) <= CAST(1.7976931348623157E308 AS DOUBLE)))) THEN CAST(raise_error('Double overflow') AS DOUBLE) ELSE (t1._1 + t1._2) END AS value FROM t1
 ------ end
 
 ------ Test: add two float numbers
-SELECT CASE WHEN (((NOT ((t1._1 = CAST('Infinity' AS FLOAT)) OR (t1._1 = CAST('-Infinity' AS FLOAT)))) AND (NOT ((t1._2 = CAST('Infinity' AS FLOAT)) OR (t1._2 = CAST('-Infinity' AS FLOAT))))) AND ((NOT isnan((t1._1 + t1._2))) AND (((t1._1 + t1._2) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1._1 + t1._2) > CAST(3.4028234663852886E38 AS FLOAT))))) THEN raise_error('Float overflow') ELSE (t1._1 + t1._2) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1._1) = CAST('Infinity' AS FLOAT))) AND (NOT (abs(t1._2) = CAST('Infinity' AS FLOAT)))) AND (NOT isnan((t1._1 + t1._2)))) AND (NOT (abs((t1._1 + t1._2)) <= CAST(3.4028234663852886E38 AS FLOAT)))) THEN CAST(raise_error('Float overflow') AS FLOAT) ELSE (t1._1 + t1._2) END AS value FROM t1
 ------ end
 
 ------ Test: add two int numbers
@@ -104,6 +128,18 @@ SELECT (t1._1 + t1._2) AS value FROM t1
 
 ------ Test: add two short numbers
 SELECT (t1._1 + t1._2) AS value FROM t1
+------ end
+
+------ Test: add zero to optional float
+SELECT CASE WHEN (t1.value IS NOT NULL) THEN CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS FLOAT))) AND (NOT (abs(CAST(0.0 AS FLOAT)) = CAST('Infinity' AS FLOAT)))) AND (NOT isnan((t1.value + CAST(0.0 AS FLOAT))))) AND (NOT (abs((t1.value + CAST(0.0 AS FLOAT))) <= CAST(3.4028234663852886E38 AS FLOAT)))) THEN CAST(raise_error('Float overflow') AS FLOAT) ELSE (t1.value + CAST(0.0 AS FLOAT)) END END AS value FROM t1
+------ end
+
+------ Test: add zero to special double values
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS DOUBLE))) AND (NOT (abs(CAST(0.0 AS DOUBLE)) = CAST('Infinity' AS DOUBLE)))) AND (NOT isnan((t1.value + CAST(0.0 AS DOUBLE))))) AND (NOT (abs((t1.value + CAST(0.0 AS DOUBLE))) <= CAST(1.7976931348623157E308 AS DOUBLE)))) THEN CAST(raise_error('Double overflow') AS DOUBLE) ELSE (t1.value + CAST(0.0 AS DOUBLE)) END AS value FROM t1
+------ end
+
+------ Test: add zero to special float values
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS FLOAT))) AND (NOT (abs(CAST(0.0 AS FLOAT)) = CAST('Infinity' AS FLOAT)))) AND (NOT isnan((t1.value + CAST(0.0 AS FLOAT))))) AND (NOT (abs((t1.value + CAST(0.0 AS FLOAT))) <= CAST(3.4028234663852886E38 AS FLOAT)))) THEN CAST(raise_error('Float overflow') AS FLOAT) ELSE (t1.value + CAST(0.0 AS FLOAT)) END AS value FROM t1
 ------ end
 
 ------ Test: apply to case class and auto tupling
@@ -679,11 +715,11 @@ SELECT array_distinct(t1.value) AS value FROM t1
 ------ end
 
 ------ Test: divide two double numbers
-SELECT CASE WHEN (((NOT ((t1._1 = CAST('Infinity' AS DOUBLE)) OR (t1._1 = CAST('-Infinity' AS DOUBLE)))) AND (NOT ((t1._2 = CAST('Infinity' AS DOUBLE)) OR (t1._2 = CAST('-Infinity' AS DOUBLE))))) AND ((NOT isnan((t1._1 / t1._2))) AND (((t1._1 / t1._2) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1._1 / t1._2) > CAST(1.7976931348623157E308 AS DOUBLE))))) THEN raise_error('Double overflow') ELSE CAST((t1._1 / t1._2) AS DOUBLE) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1._1) = CAST('Infinity' AS DOUBLE))) AND (NOT (abs(t1._2) = CAST('Infinity' AS DOUBLE)))) AND (NOT isnan(CAST((t1._1 / t1._2) AS DOUBLE)))) AND (NOT (abs(CAST((t1._1 / t1._2) AS DOUBLE)) <= CAST(1.7976931348623157E308 AS DOUBLE)))) THEN CAST(raise_error('Double overflow') AS DOUBLE) ELSE CAST((t1._1 / t1._2) AS DOUBLE) END AS value FROM t1
 ------ end
 
 ------ Test: divide two float numbers
-SELECT CASE WHEN (((NOT ((t1._1 = CAST('Infinity' AS FLOAT)) OR (t1._1 = CAST('-Infinity' AS FLOAT)))) AND (NOT ((t1._2 = CAST('Infinity' AS FLOAT)) OR (t1._2 = CAST('-Infinity' AS FLOAT))))) AND ((NOT isnan((t1._1 / t1._2))) AND (((t1._1 / t1._2) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1._1 / t1._2) > CAST(3.4028234663852886E38 AS FLOAT))))) THEN raise_error('Float overflow') ELSE CAST((t1._1 / t1._2) AS FLOAT) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1._1) = CAST('Infinity' AS FLOAT))) AND (NOT (abs(t1._2) = CAST('Infinity' AS FLOAT)))) AND (NOT isnan(CAST((t1._1 / t1._2) AS FLOAT)))) AND (NOT (abs(CAST((t1._1 / t1._2) AS FLOAT)) <= CAST(3.4028234663852886E38 AS FLOAT)))) THEN CAST(raise_error('Float overflow') AS FLOAT) ELSE CAST((t1._1 / t1._2) AS FLOAT) END AS value FROM t1
 ------ end
 
 ------ Test: endsWith string
@@ -734,6 +770,10 @@ SELECT CASE WHEN (CASE WHEN ((from_json(t1._2, 'STRUCT<_1 STRING>', map('mode', 
 SELECT (t1.value + CAST(9223372036854775807 AS BIGINT)) AS value FROM t1
 ------ end
 
+------ Test: fail on byte absolute value overflow
+SELECT abs(CAST(-128 AS TINYINT)) AS value FROM t1
+------ end
+
 ------ Test: fail on byte add overflow
 SELECT (t1.value + CAST(127 AS TINYINT)) AS value FROM t1
 ------ end
@@ -755,43 +795,47 @@ SELECT (t1.value - CAST(127 AS TINYINT)) AS value FROM t1
 ------ end
 
 ------ Test: fail on double addition overflow
-SELECT CASE WHEN (((NOT ((t1.value = CAST('Infinity' AS DOUBLE)) OR (t1.value = CAST('-Infinity' AS DOUBLE)))) AND (NOT ((CAST(1.7976931348623157E308 AS DOUBLE) = CAST('Infinity' AS DOUBLE)) OR (CAST(1.7976931348623157E308 AS DOUBLE) = CAST('-Infinity' AS DOUBLE))))) AND ((NOT isnan((t1.value + CAST(1.7976931348623157E308 AS DOUBLE)))) AND (((t1.value + CAST(1.7976931348623157E308 AS DOUBLE)) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1.value + CAST(1.7976931348623157E308 AS DOUBLE)) > CAST(1.7976931348623157E308 AS DOUBLE))))) THEN raise_error('Double overflow') ELSE (t1.value + CAST(1.7976931348623157E308 AS DOUBLE)) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS DOUBLE))) AND (NOT (abs(CAST(1.7976931348623157E308 AS DOUBLE)) = CAST('Infinity' AS DOUBLE)))) AND (NOT isnan((t1.value + CAST(1.7976931348623157E308 AS DOUBLE))))) AND (NOT (abs((t1.value + CAST(1.7976931348623157E308 AS DOUBLE))) <= CAST(1.7976931348623157E308 AS DOUBLE)))) THEN CAST(raise_error('Double overflow') AS DOUBLE) ELSE (t1.value + CAST(1.7976931348623157E308 AS DOUBLE)) END AS value FROM t1
 ------ end
 
 ------ Test: fail on double division by zero
-SELECT CASE WHEN (((NOT ((t1.value = CAST('Infinity' AS DOUBLE)) OR (t1.value = CAST('-Infinity' AS DOUBLE)))) AND (NOT ((CAST(0.0 AS DOUBLE) = CAST('Infinity' AS DOUBLE)) OR (CAST(0.0 AS DOUBLE) = CAST('-Infinity' AS DOUBLE))))) AND ((NOT isnan((t1.value / CAST(0.0 AS DOUBLE)))) AND (((t1.value / CAST(0.0 AS DOUBLE)) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1.value / CAST(0.0 AS DOUBLE)) > CAST(1.7976931348623157E308 AS DOUBLE))))) THEN raise_error('Double overflow') ELSE CAST((t1.value / CAST(0.0 AS DOUBLE)) AS DOUBLE) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS DOUBLE))) AND (NOT (abs(CAST(0.0 AS DOUBLE)) = CAST('Infinity' AS DOUBLE)))) AND (NOT isnan(CAST((t1.value / CAST(0.0 AS DOUBLE)) AS DOUBLE)))) AND (NOT (abs(CAST((t1.value / CAST(0.0 AS DOUBLE)) AS DOUBLE)) <= CAST(1.7976931348623157E308 AS DOUBLE)))) THEN CAST(raise_error('Double overflow') AS DOUBLE) ELSE CAST((t1.value / CAST(0.0 AS DOUBLE)) AS DOUBLE) END AS value FROM t1
 ------ end
 
 ------ Test: fail on double division overflow
-SELECT CASE WHEN (((NOT ((t1.value = CAST('Infinity' AS DOUBLE)) OR (t1.value = CAST('-Infinity' AS DOUBLE)))) AND (NOT ((CAST(0.1 AS DOUBLE) = CAST('Infinity' AS DOUBLE)) OR (CAST(0.1 AS DOUBLE) = CAST('-Infinity' AS DOUBLE))))) AND ((NOT isnan((t1.value / CAST(0.1 AS DOUBLE)))) AND (((t1.value / CAST(0.1 AS DOUBLE)) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1.value / CAST(0.1 AS DOUBLE)) > CAST(1.7976931348623157E308 AS DOUBLE))))) THEN raise_error('Double overflow') ELSE CAST((t1.value / CAST(0.1 AS DOUBLE)) AS DOUBLE) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS DOUBLE))) AND (NOT (abs(CAST(0.1 AS DOUBLE)) = CAST('Infinity' AS DOUBLE)))) AND (NOT isnan(CAST((t1.value / CAST(0.1 AS DOUBLE)) AS DOUBLE)))) AND (NOT (abs(CAST((t1.value / CAST(0.1 AS DOUBLE)) AS DOUBLE)) <= CAST(1.7976931348623157E308 AS DOUBLE)))) THEN CAST(raise_error('Double overflow') AS DOUBLE) ELSE CAST((t1.value / CAST(0.1 AS DOUBLE)) AS DOUBLE) END AS value FROM t1
 ------ end
 
 ------ Test: fail on double multiplication overflow
-SELECT CASE WHEN (((NOT ((t1.value = CAST('Infinity' AS DOUBLE)) OR (t1.value = CAST('-Infinity' AS DOUBLE)))) AND (NOT ((CAST(1.7976931348623157E308 AS DOUBLE) = CAST('Infinity' AS DOUBLE)) OR (CAST(1.7976931348623157E308 AS DOUBLE) = CAST('-Infinity' AS DOUBLE))))) AND ((NOT isnan((t1.value * CAST(1.7976931348623157E308 AS DOUBLE)))) AND (((t1.value * CAST(1.7976931348623157E308 AS DOUBLE)) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1.value * CAST(1.7976931348623157E308 AS DOUBLE)) > CAST(1.7976931348623157E308 AS DOUBLE))))) THEN raise_error('Double overflow') ELSE (t1.value * CAST(1.7976931348623157E308 AS DOUBLE)) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS DOUBLE))) AND (NOT (abs(CAST(1.7976931348623157E308 AS DOUBLE)) = CAST('Infinity' AS DOUBLE)))) AND (NOT isnan((t1.value * CAST(1.7976931348623157E308 AS DOUBLE))))) AND (NOT (abs((t1.value * CAST(1.7976931348623157E308 AS DOUBLE))) <= CAST(1.7976931348623157E308 AS DOUBLE)))) THEN CAST(raise_error('Double overflow') AS DOUBLE) ELSE (t1.value * CAST(1.7976931348623157E308 AS DOUBLE)) END AS value FROM t1
 ------ end
 
 ------ Test: fail on double subtraction overflow
-SELECT CASE WHEN (((NOT ((t1.value = CAST('Infinity' AS DOUBLE)) OR (t1.value = CAST('-Infinity' AS DOUBLE)))) AND (NOT ((CAST(-1.7976931348623157E308 AS DOUBLE) = CAST('Infinity' AS DOUBLE)) OR (CAST(-1.7976931348623157E308 AS DOUBLE) = CAST('-Infinity' AS DOUBLE))))) AND ((NOT isnan((t1.value - CAST(-1.7976931348623157E308 AS DOUBLE)))) AND (((t1.value - CAST(-1.7976931348623157E308 AS DOUBLE)) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1.value - CAST(-1.7976931348623157E308 AS DOUBLE)) > CAST(1.7976931348623157E308 AS DOUBLE))))) THEN raise_error('Double overflow') ELSE (t1.value - CAST(-1.7976931348623157E308 AS DOUBLE)) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS DOUBLE))) AND (NOT (abs(CAST(-1.7976931348623157E308 AS DOUBLE)) = CAST('Infinity' AS DOUBLE)))) AND (NOT isnan((t1.value - CAST(-1.7976931348623157E308 AS DOUBLE))))) AND (NOT (abs((t1.value - CAST(-1.7976931348623157E308 AS DOUBLE))) <= CAST(1.7976931348623157E308 AS DOUBLE)))) THEN CAST(raise_error('Double overflow') AS DOUBLE) ELSE (t1.value - CAST(-1.7976931348623157E308 AS DOUBLE)) END AS value FROM t1
 ------ end
 
 ------ Test: fail on float addition overflow
-SELECT CASE WHEN (((NOT ((t1.value = CAST('Infinity' AS FLOAT)) OR (t1.value = CAST('-Infinity' AS FLOAT)))) AND (NOT ((CAST(3.4028234663852886E38 AS FLOAT) = CAST('Infinity' AS FLOAT)) OR (CAST(3.4028234663852886E38 AS FLOAT) = CAST('-Infinity' AS FLOAT))))) AND ((NOT isnan((t1.value + CAST(3.4028234663852886E38 AS FLOAT)))) AND (((t1.value + CAST(3.4028234663852886E38 AS FLOAT)) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1.value + CAST(3.4028234663852886E38 AS FLOAT)) > CAST(3.4028234663852886E38 AS FLOAT))))) THEN raise_error('Float overflow') ELSE (t1.value + CAST(3.4028234663852886E38 AS FLOAT)) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS FLOAT))) AND (NOT (abs(CAST(3.4028234663852886E38 AS FLOAT)) = CAST('Infinity' AS FLOAT)))) AND (NOT isnan((t1.value + CAST(3.4028234663852886E38 AS FLOAT))))) AND (NOT (abs((t1.value + CAST(3.4028234663852886E38 AS FLOAT))) <= CAST(3.4028234663852886E38 AS FLOAT)))) THEN CAST(raise_error('Float overflow') AS FLOAT) ELSE (t1.value + CAST(3.4028234663852886E38 AS FLOAT)) END AS value FROM t1
 ------ end
 
 ------ Test: fail on float division by zero
-SELECT CASE WHEN (((NOT ((t1.value = CAST('Infinity' AS FLOAT)) OR (t1.value = CAST('-Infinity' AS FLOAT)))) AND (NOT ((CAST(0.0 AS FLOAT) = CAST('Infinity' AS FLOAT)) OR (CAST(0.0 AS FLOAT) = CAST('-Infinity' AS FLOAT))))) AND ((NOT isnan((t1.value / CAST(0.0 AS FLOAT)))) AND (((t1.value / CAST(0.0 AS FLOAT)) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1.value / CAST(0.0 AS FLOAT)) > CAST(3.4028234663852886E38 AS FLOAT))))) THEN raise_error('Float overflow') ELSE CAST((t1.value / CAST(0.0 AS FLOAT)) AS FLOAT) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS FLOAT))) AND (NOT (abs(CAST(0.0 AS FLOAT)) = CAST('Infinity' AS FLOAT)))) AND (NOT isnan(CAST((t1.value / CAST(0.0 AS FLOAT)) AS FLOAT)))) AND (NOT (abs(CAST((t1.value / CAST(0.0 AS FLOAT)) AS FLOAT)) <= CAST(3.4028234663852886E38 AS FLOAT)))) THEN CAST(raise_error('Float overflow') AS FLOAT) ELSE CAST((t1.value / CAST(0.0 AS FLOAT)) AS FLOAT) END AS value FROM t1
 ------ end
 
 ------ Test: fail on float division overflow
-SELECT CASE WHEN (((NOT ((t1.value = CAST('Infinity' AS FLOAT)) OR (t1.value = CAST('-Infinity' AS FLOAT)))) AND (NOT ((CAST(0.10000000149011612 AS FLOAT) = CAST('Infinity' AS FLOAT)) OR (CAST(0.10000000149011612 AS FLOAT) = CAST('-Infinity' AS FLOAT))))) AND ((NOT isnan((t1.value / CAST(0.10000000149011612 AS FLOAT)))) AND (((t1.value / CAST(0.10000000149011612 AS FLOAT)) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1.value / CAST(0.10000000149011612 AS FLOAT)) > CAST(3.4028234663852886E38 AS FLOAT))))) THEN raise_error('Float overflow') ELSE CAST((t1.value / CAST(0.10000000149011612 AS FLOAT)) AS FLOAT) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS FLOAT))) AND (NOT (abs(CAST(0.10000000149011612 AS FLOAT)) = CAST('Infinity' AS FLOAT)))) AND (NOT isnan(CAST((t1.value / CAST(0.10000000149011612 AS FLOAT)) AS FLOAT)))) AND (NOT (abs(CAST((t1.value / CAST(0.10000000149011612 AS FLOAT)) AS FLOAT)) <= CAST(3.4028234663852886E38 AS FLOAT)))) THEN CAST(raise_error('Float overflow') AS FLOAT) ELSE CAST((t1.value / CAST(0.10000000149011612 AS FLOAT)) AS FLOAT) END AS value FROM t1
 ------ end
 
 ------ Test: fail on float multiplication overflow
-SELECT CASE WHEN (((NOT ((t1.value = CAST('Infinity' AS FLOAT)) OR (t1.value = CAST('-Infinity' AS FLOAT)))) AND (NOT ((CAST(3.4028234663852886E38 AS FLOAT) = CAST('Infinity' AS FLOAT)) OR (CAST(3.4028234663852886E38 AS FLOAT) = CAST('-Infinity' AS FLOAT))))) AND ((NOT isnan((t1.value * CAST(3.4028234663852886E38 AS FLOAT)))) AND (((t1.value * CAST(3.4028234663852886E38 AS FLOAT)) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1.value * CAST(3.4028234663852886E38 AS FLOAT)) > CAST(3.4028234663852886E38 AS FLOAT))))) THEN raise_error('Float overflow') ELSE (t1.value * CAST(3.4028234663852886E38 AS FLOAT)) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS FLOAT))) AND (NOT (abs(CAST(3.4028234663852886E38 AS FLOAT)) = CAST('Infinity' AS FLOAT)))) AND (NOT isnan((t1.value * CAST(3.4028234663852886E38 AS FLOAT))))) AND (NOT (abs((t1.value * CAST(3.4028234663852886E38 AS FLOAT))) <= CAST(3.4028234663852886E38 AS FLOAT)))) THEN CAST(raise_error('Float overflow') AS FLOAT) ELSE (t1.value * CAST(3.4028234663852886E38 AS FLOAT)) END AS value FROM t1
 ------ end
 
 ------ Test: fail on float subtraction overflow
-SELECT CASE WHEN (((NOT ((t1.value = CAST('Infinity' AS FLOAT)) OR (t1.value = CAST('-Infinity' AS FLOAT)))) AND (NOT ((CAST(-3.4028234663852886E38 AS FLOAT) = CAST('Infinity' AS FLOAT)) OR (CAST(-3.4028234663852886E38 AS FLOAT) = CAST('-Infinity' AS FLOAT))))) AND ((NOT isnan((t1.value - CAST(-3.4028234663852886E38 AS FLOAT)))) AND (((t1.value - CAST(-3.4028234663852886E38 AS FLOAT)) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1.value - CAST(-3.4028234663852886E38 AS FLOAT)) > CAST(3.4028234663852886E38 AS FLOAT))))) THEN raise_error('Float overflow') ELSE (t1.value - CAST(-3.4028234663852886E38 AS FLOAT)) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS FLOAT))) AND (NOT (abs(CAST(-3.4028234663852886E38 AS FLOAT)) = CAST('Infinity' AS FLOAT)))) AND (NOT isnan((t1.value - CAST(-3.4028234663852886E38 AS FLOAT))))) AND (NOT (abs((t1.value - CAST(-3.4028234663852886E38 AS FLOAT))) <= CAST(3.4028234663852886E38 AS FLOAT)))) THEN CAST(raise_error('Float overflow') AS FLOAT) ELSE (t1.value - CAST(-3.4028234663852886E38 AS FLOAT)) END AS value FROM t1
+------ end
+
+------ Test: fail on int absolute value overflow
+SELECT abs(CAST(-2147483648 AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: fail on int addition overflow
@@ -814,6 +858,10 @@ SELECT (- CAST(-2147483648 AS INT)) AS value FROM t1
 SELECT (t1.value - CAST(2147483647 AS INT)) AS value FROM t1
 ------ end
 
+------ Test: fail on long absolute value overflow
+SELECT abs(CAST(-9223372036854775808 AS BIGINT)) AS value FROM t1
+------ end
+
 ------ Test: fail on long division by zero
 SELECT CAST(div(t1.value, CAST(0 AS BIGINT)) AS BIGINT) AS value FROM t1
 ------ end
@@ -828,6 +876,10 @@ SELECT (- CAST(-9223372036854775808 AS BIGINT)) AS value FROM t1
 
 ------ Test: fail on long subtract overflow
 SELECT (t1.value - CAST(9223372036854775807 AS BIGINT)) AS value FROM t1
+------ end
+
+------ Test: fail on short absolute value overflow
+SELECT abs(CAST(-32768 AS SMALLINT)) AS value FROM t1
 ------ end
 
 ------ Test: fail on short add overflow
@@ -1223,11 +1275,11 @@ SELECT (t1._1 * t1._2) AS value FROM t1
 ------ end
 
 ------ Test: multiply two double numbers
-SELECT CASE WHEN (((NOT ((t1._1 = CAST('Infinity' AS DOUBLE)) OR (t1._1 = CAST('-Infinity' AS DOUBLE)))) AND (NOT ((t1._2 = CAST('Infinity' AS DOUBLE)) OR (t1._2 = CAST('-Infinity' AS DOUBLE))))) AND ((NOT isnan((t1._1 * t1._2))) AND (((t1._1 * t1._2) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1._1 * t1._2) > CAST(1.7976931348623157E308 AS DOUBLE))))) THEN raise_error('Double overflow') ELSE (t1._1 * t1._2) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1._1) = CAST('Infinity' AS DOUBLE))) AND (NOT (abs(t1._2) = CAST('Infinity' AS DOUBLE)))) AND (NOT isnan((t1._1 * t1._2)))) AND (NOT (abs((t1._1 * t1._2)) <= CAST(1.7976931348623157E308 AS DOUBLE)))) THEN CAST(raise_error('Double overflow') AS DOUBLE) ELSE (t1._1 * t1._2) END AS value FROM t1
 ------ end
 
 ------ Test: multiply two float numbers
-SELECT CASE WHEN (((NOT ((t1._1 = CAST('Infinity' AS FLOAT)) OR (t1._1 = CAST('-Infinity' AS FLOAT)))) AND (NOT ((t1._2 = CAST('Infinity' AS FLOAT)) OR (t1._2 = CAST('-Infinity' AS FLOAT))))) AND ((NOT isnan((t1._1 * t1._2))) AND (((t1._1 * t1._2) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1._1 * t1._2) > CAST(3.4028234663852886E38 AS FLOAT))))) THEN raise_error('Float overflow') ELSE (t1._1 * t1._2) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1._1) = CAST('Infinity' AS FLOAT))) AND (NOT (abs(t1._2) = CAST('Infinity' AS FLOAT)))) AND (NOT isnan((t1._1 * t1._2)))) AND (NOT (abs((t1._1 * t1._2)) <= CAST(3.4028234663852886E38 AS FLOAT)))) THEN CAST(raise_error('Float overflow') AS FLOAT) ELSE (t1._1 * t1._2) END AS value FROM t1
 ------ end
 
 ------ Test: multiply two int numbers
@@ -1507,11 +1559,11 @@ SELECT (t1._1 - t1._2) AS value FROM t1
 ------ end
 
 ------ Test: subtract two double numbers
-SELECT CASE WHEN (((NOT ((t1._1 = CAST('Infinity' AS DOUBLE)) OR (t1._1 = CAST('-Infinity' AS DOUBLE)))) AND (NOT ((t1._2 = CAST('Infinity' AS DOUBLE)) OR (t1._2 = CAST('-Infinity' AS DOUBLE))))) AND ((NOT isnan((t1._1 - t1._2))) AND (((t1._1 - t1._2) < CAST(-1.7976931348623157E308 AS DOUBLE)) OR ((t1._1 - t1._2) > CAST(1.7976931348623157E308 AS DOUBLE))))) THEN raise_error('Double overflow') ELSE (t1._1 - t1._2) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1._1) = CAST('Infinity' AS DOUBLE))) AND (NOT (abs(t1._2) = CAST('Infinity' AS DOUBLE)))) AND (NOT isnan((t1._1 - t1._2)))) AND (NOT (abs((t1._1 - t1._2)) <= CAST(1.7976931348623157E308 AS DOUBLE)))) THEN CAST(raise_error('Double overflow') AS DOUBLE) ELSE (t1._1 - t1._2) END AS value FROM t1
 ------ end
 
 ------ Test: subtract two float numbers
-SELECT CASE WHEN (((NOT ((t1._1 = CAST('Infinity' AS FLOAT)) OR (t1._1 = CAST('-Infinity' AS FLOAT)))) AND (NOT ((t1._2 = CAST('Infinity' AS FLOAT)) OR (t1._2 = CAST('-Infinity' AS FLOAT))))) AND ((NOT isnan((t1._1 - t1._2))) AND (((t1._1 - t1._2) < CAST(-3.4028234663852886E38 AS FLOAT)) OR ((t1._1 - t1._2) > CAST(3.4028234663852886E38 AS FLOAT))))) THEN raise_error('Float overflow') ELSE (t1._1 - t1._2) END AS value FROM t1
+SELECT CASE WHEN ((((NOT (abs(t1._1) = CAST('Infinity' AS FLOAT))) AND (NOT (abs(t1._2) = CAST('Infinity' AS FLOAT)))) AND (NOT isnan((t1._1 - t1._2)))) AND (NOT (abs((t1._1 - t1._2)) <= CAST(3.4028234663852886E38 AS FLOAT)))) THEN CAST(raise_error('Float overflow') AS FLOAT) ELSE (t1._1 - t1._2) END AS value FROM t1
 ------ end
 
 ------ Test: subtract two int numbers
