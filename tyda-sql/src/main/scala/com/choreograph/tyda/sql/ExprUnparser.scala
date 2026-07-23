@@ -17,6 +17,7 @@ import com.choreograph.tyda.ExprNode.KnownNotNull
 import com.choreograph.tyda.ExprNode.Or
 import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.NonEmpty
+import com.choreograph.tyda.Num
 import com.choreograph.tyda.PrimitiveAggregate
 import com.choreograph.tyda.SumMagnet
 import com.choreograph.tyda.TreeApi.Continue
@@ -189,6 +190,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
       case ExprNode.LessThan(_, lhs, rhs) if isFloatingPoint(lhs.codec) =>
         dialect.floatingCompare match {
           case SqlDialect.FloatingCompare.NaNIsLargest => binaryOp("<", lhs, rhs)
+          case SqlDialect.FloatingCompare.Ieee if isNonNaNFloatingLiteral(rhs) => binaryOp("<", lhs, rhs)
           case SqlDialect.FloatingCompare.Ieee => for {
               lhsExpr <- inner(lhs)
               rhsExpr <- inner(rhs)
@@ -206,6 +208,7 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
       case ExprNode.LessThanOrEqual(_, lhs, rhs) if isFloatingPoint(lhs.codec) =>
         dialect.floatingCompare match {
           case SqlDialect.FloatingCompare.NaNIsLargest => binaryOp("<=", lhs, rhs)
+          case SqlDialect.FloatingCompare.Ieee if isNonNaNFloatingLiteral(rhs) => binaryOp("<=", lhs, rhs)
           case SqlDialect.FloatingCompare.Ieee => for {
               lhsExpr <- inner(lhs)
               rhsExpr <- inner(rhs)
@@ -479,13 +482,19 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
           case SqlDialect.ArrayElement.Function(name) => SqlExpr.Function(name, Seq(arr, idx))
         }
         element.map(unwrapArrayElement(_, array.codec.element, dialect))
+      case ExprNode.Abs(_, operand) => inner(operand).map(e => SqlExpr.Function("abs", Seq(e)))
       case ExprNode.Add(_, lhs, rhs) => binaryOp("+", lhs, rhs)
-      case ExprNode.Quotient(CompatibleIntegral(), lhs, rhs) => for {
+      case ExprNode.Subtract(_, lhs, rhs) => binaryOp("-", lhs, rhs)
+      case ExprNode.Multiply(_, lhs, rhs) => binaryOp("*", lhs, rhs)
+      case ExprNode.Quotient(_: Num.Integral[?], lhs, rhs) => for {
           lhs <- inner(lhs)
           rhs <- inner(rhs)
         } yield cast(SqlExpr.Function("div", Seq(lhs, rhs)), expr.codec, dialect)
-      case ExprNode.Quotient(integral, _, _) =>
-        Left(DatasetToSqlError.RequiresUdfCapability(s"Quotient uses custom integral instance $integral"))
+      case ExprNode.Quotient(_, lhs, rhs) => for {
+          lhs <- inner(lhs)
+          rhs <- inner(rhs)
+        } yield cast(SqlExpr.BinaryOp("/", lhs, rhs), expr.codec, dialect)
+      case ExprNode.Negate(_, operand) => inner(operand).map(e => SqlExpr.UnaryOp("-", e, isPrefix = true))
       case ExprNode.Cast(value, _) => inner(value).map(cast(_, expr.codec, dialect))
       case ExprNode.TryCast(value, canTryCast) =>
         inner(value).map(tryCast(_, value.codec, canTryCast.codec, dialect))
@@ -836,6 +845,13 @@ private def makeStruct(names: Seq[String], fields: Seq[SqlExpr], dialect: SqlDia
 private def isFloatingPoint(codec: Codec[?]): Boolean =
   codec match {
     case Codec.Float | Codec.Double => true
+    case _ => false
+  }
+
+private def isNonNaNFloatingLiteral(expr: ExprNode[?]): Boolean =
+  expr match {
+    case ExprNode.Literal(value, Codec.Float) => !value.isNaN
+    case ExprNode.Literal(value, Codec.Double) => !value.isNaN
     case _ => false
   }
 

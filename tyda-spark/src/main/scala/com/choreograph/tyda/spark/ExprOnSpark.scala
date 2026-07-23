@@ -3,6 +3,7 @@ package com.choreograph.tyda.spark
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.abs
 import org.apache.spark.sql.functions.aggregate
 import org.apache.spark.sql.functions.array
 import org.apache.spark.sql.functions.array_distinct
@@ -44,8 +45,10 @@ import com.choreograph.tyda.CompiledExpr2
 import com.choreograph.tyda.Errors
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.Forbidden
+import com.choreograph.tyda.Num
 import com.choreograph.tyda.rewrite.ArrayCodec
 import com.choreograph.tyda.rewrite.CheckArrayIndexPositive
+import com.choreograph.tyda.rewrite.CheckFloatingOverflow
 import com.choreograph.tyda.rewrite.IsNone
 import com.choreograph.tyda.rewrite.Nullable
 import com.choreograph.tyda.rewrite.PrimitiveAggregateAsFold
@@ -53,7 +56,6 @@ import com.choreograph.tyda.rewrite.SparkJsonCompatability
 import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.shapeless3extras.tupleInstances
 import com.choreograph.tyda.spark.CodecToCatalystType.catalystType
-import com.choreograph.tyda.spark.PrimitiveAggregateOnSpark.CompatibleIntegral
 import com.choreograph.tyda.unreachable
 
 private[spark] object ExprOnSpark {
@@ -118,6 +120,37 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
 
   private def cfFromRef(ref: ExprNode.Reference[?]): ColumnFactory[?] =
     cfs.get(ref).getOrElse(Errors.failUnexpectedReference(ref, cfs.keys))
+
+  private def convertFloatingOperation[T](
+      floatingOperation: CheckFloatingOverflow.FloatingOperation[T]
+  )(using SparkSession): Column = {
+    val lhs = convert(floatingOperation.lhs)
+    val rhs = convert(floatingOperation.rhs)
+    val (checkedResult, returnedResult) = floatingOperation.operation match {
+      case ExprNode.Add(_, _, _) =>
+        val result = lhs + rhs
+        (result, result)
+      case ExprNode.Subtract(_, _, _) =>
+        val result = lhs - rhs
+        (result, result)
+      case ExprNode.Multiply(_, _, _) =>
+        val result = lhs * rhs.cast(catalystType(floatingOperation.operation.codec))
+        (result, result)
+      case ExprNode.Quotient(_, _, _) =>
+        val result = lhs / rhs
+        (result, result.cast(catalystType(floatingOperation.operation.codec)))
+      case result => unreachable(s"Unexpected floating overflow check for $result")
+    }
+    val lhsCf = ColumnFactory(lhs)(using floatingOperation.operation.codec)
+    val rhsCf = ColumnFactory(rhs)(using floatingOperation.operation.codec)
+    val resultCf = ColumnFactory(checkedResult)(using floatingOperation.operation.codec)
+    val overflowCfs = cfs + (floatingOperation.overflow.lhs -> lhsCf) +
+      (floatingOperation.overflow.rhs -> rhsCf) + (floatingOperation.overflow.result -> resultCf)
+    val overflow = new ExprOnSpark[T](overflowCfs).convert(floatingOperation.overflow.expr)
+    val error =
+      raise_error(lit(floatingOperation.errorMessage)).cast(catalystType(floatingOperation.operation.codec))
+    when(overflow, error).otherwise(returnedResult)
+  }
 
   private def buildHigherOrderArgs[T](seq: ExprNode[Seq[T]], compiled: CompiledExpr[T, ?])(using
       spark: SparkSession
@@ -251,11 +284,16 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
       case CheckArrayIndexPositive(array, index) =>
         val idx = convert(index)
         call_function("element_at", convert(array), idx + 1)
-      case ExprNode.Add(additive, lhs, rhs) => convert(lhs) + convert(rhs)
-      case ExprNode.Quotient(CompatibleIntegral(), lhs, rhs) =>
-        call_function("div", convert(lhs), convert(rhs)).cast(catalystType(expr.codec))
-      case ExprNode.Quotient(integral, lhs, rhs) =>
-        createUdf(integral.quot, convert(lhs), convert(rhs), s"$integral.quot")(using lhs.codec, lhs.codec)
+      case CheckFloatingOverflow.FloatAndDouble(floatingOperation) =>
+        convertFloatingOperation(floatingOperation)
+      case ExprNode.Abs(_, operand) => abs(convert(operand))
+      case ExprNode.Add(_, lhs, rhs) => convert(lhs) + convert(rhs)
+      case ExprNode.Subtract(_, lhs, rhs) => convert(lhs) - convert(rhs)
+      case ExprNode.Multiply(_, lhs, rhs) => convert(lhs) * convert(rhs)
+      case ExprNode.Quotient(_: Num.Integral[?], lhs, rhs) => call_function("div", convert(lhs), convert(rhs))
+          .cast(catalystType(expr.codec))
+      case ExprNode.Quotient(_, lhs, rhs) => (convert(lhs) / convert(rhs)).cast(catalystType(expr.codec))
+      case ExprNode.Negate(_, operand) => -convert(operand)
       case ExprNode.Cast(from, canCast) => convert(from).cast(catalystType(expr.codec))
       case ExprNode.TryCast(from, canTryCast) =>
         val casted = tryCast(convert(from), expr.codec)

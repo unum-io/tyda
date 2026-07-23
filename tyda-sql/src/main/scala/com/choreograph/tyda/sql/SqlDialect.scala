@@ -3,6 +3,7 @@ package com.choreograph.tyda.sql
 import com.choreograph.tyda.Format
 import com.choreograph.tyda.rewrite.ActionRule
 import com.choreograph.tyda.rewrite.CheckArrayIndexPositive
+import com.choreograph.tyda.rewrite.CheckFloatingOverflow
 import com.choreograph.tyda.rewrite.CheckMapKeysDistinct
 import com.choreograph.tyda.rewrite.DatasetRule
 import com.choreograph.tyda.rewrite.DisfavorIsNotDistinctFrom
@@ -476,6 +477,7 @@ object SqlDialect {
     rand = "RAND",
     writeSupport = WriteSupport.ExportData,
     correctnessRules = Seq(
+      CheckFloatingOverflow.FloatOnly,
       CheckMapKeysDistinct,
       DistributeProductAndSeqEquals,
       DisfavorIsNotDistinctFrom,
@@ -539,6 +541,7 @@ object SqlDialect {
     writeSupport =
       WriteSupport.CreateTable(Map(Format.Json -> (Map("mode" -> "FAILFAST") ++ sparkJsonOptions))),
     correctnessRules = Seq(
+      CheckFloatingOverflow.FloatAndDouble,
       CheckArrayIndexPositive,
       WrapOptionInCollect,
       SparkJsonCompatability.AdaptReads,

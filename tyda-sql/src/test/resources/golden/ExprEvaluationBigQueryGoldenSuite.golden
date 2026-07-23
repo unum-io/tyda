@@ -82,12 +82,64 @@ SELECT unix_micros(t1.value) AS value FROM t1
 SELECT timestamp_micros(unix_micros(t1.value)) AS value FROM t1
 ------ end
 
+------ Test: absolute value of a byte
+SELECT abs(t1.value) AS value FROM t1
+------ end
+
+------ Test: absolute value of a double
+SELECT abs(t1.value) AS value FROM t1
+------ end
+
+------ Test: absolute value of a float
+SELECT abs(t1.value) AS value FROM t1
+------ end
+
+------ Test: absolute value of a long
+SELECT abs(t1.value) AS value FROM t1
+------ end
+
+------ Test: absolute value of a short
+SELECT abs(t1.value) AS value FROM t1
+------ end
+
+------ Test: absolute value of an int
+SELECT abs(t1.value) AS value FROM t1
+------ end
+
+------ Test: add two byte numbers
+SELECT (t1._1 + t1._2) AS value FROM t1
+------ end
+
+------ Test: add two double numbers
+SELECT (t1._1 + t1._2) AS value FROM t1
+------ end
+
+------ Test: add two float numbers
+SELECT CASE WHEN ((((NOT (abs(t1._1) = CAST('Infinity' AS FLOAT64))) AND (NOT (abs(t1._2) = CAST('Infinity' AS FLOAT64)))) AND (NOT is_nan((t1._1 + t1._2)))) AND (NOT (abs((t1._1 + t1._2)) <= CAST(3.4028234663852886E38 AS FLOAT64)))) THEN CAST(error('Float overflow') AS FLOAT64) ELSE (t1._1 + t1._2) END AS value FROM t1
+------ end
+
 ------ Test: add two int numbers
 SELECT (t1._1 + t1._2) AS value FROM t1
 ------ end
 
------- Test: add two numbers
+------ Test: add two long numbers
 SELECT (t1._1 + t1._2) AS value FROM t1
+------ end
+
+------ Test: add two short numbers
+SELECT (t1._1 + t1._2) AS value FROM t1
+------ end
+
+------ Test: add zero to optional float
+SELECT CASE WHEN (t1.value IS NOT NULL) THEN CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS FLOAT64))) AND (NOT (abs(CAST(0.0 AS FLOAT64)) = CAST('Infinity' AS FLOAT64)))) AND (NOT is_nan((t1.value + CAST(0.0 AS FLOAT64))))) AND (NOT (abs((t1.value + CAST(0.0 AS FLOAT64))) <= CAST(3.4028234663852886E38 AS FLOAT64)))) THEN CAST(error('Float overflow') AS FLOAT64) ELSE (t1.value + CAST(0.0 AS FLOAT64)) END END AS value FROM t1
+------ end
+
+------ Test: add zero to special double values
+SELECT (t1.value + CAST(0.0 AS FLOAT64)) AS value FROM t1
+------ end
+
+------ Test: add zero to special float values
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS FLOAT64))) AND (NOT (abs(CAST(0.0 AS FLOAT64)) = CAST('Infinity' AS FLOAT64)))) AND (NOT is_nan((t1.value + CAST(0.0 AS FLOAT64))))) AND (NOT (abs((t1.value + CAST(0.0 AS FLOAT64))) <= CAST(3.4028234663852886E38 AS FLOAT64)))) THEN CAST(error('Float overflow') AS FLOAT64) ELSE (t1.value + CAST(0.0 AS FLOAT64)) END AS value FROM t1
 ------ end
 
 ------ Test: apply to case class and auto tupling
@@ -662,6 +714,14 @@ SELECT FALSE AS value FROM t1
 SELECT array((SELECT DISTINCT c0 FROM unnest(t1.value) AS c0)) AS value FROM t1
 ------ end
 
+------ Test: divide two double numbers
+SELECT CAST((t1._1 / t1._2) AS FLOAT64) AS value FROM t1
+------ end
+
+------ Test: divide two float numbers
+SELECT CASE WHEN ((((NOT (abs(t1._1) = CAST('Infinity' AS FLOAT64))) AND (NOT (abs(t1._2) = CAST('Infinity' AS FLOAT64)))) AND (NOT is_nan(CAST((t1._1 / t1._2) AS FLOAT64)))) AND (NOT (abs(CAST((t1._1 / t1._2) AS FLOAT64)) <= CAST(3.4028234663852886E38 AS FLOAT64)))) THEN CAST(error('Float overflow') AS FLOAT64) ELSE CAST((t1._1 / t1._2) AS FLOAT64) END AS value FROM t1
+------ end
+
 ------ Test: endsWith string
 SELECT ends_with(t1._1, t1._2) AS value FROM t1
 ------ end
@@ -706,12 +766,140 @@ SELECT coalesce(t1.value, CAST(error('should not happen') AS INT)) AS value FROM
 SELECT CASE WHEN ((json_query(t1._2, '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(t1._2, '$._1') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(t1._2, '$._1') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(t1._2, '$._1') AS INT) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(t1._2, '$._1') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(t1._2, '$._1') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(t1._2, '$._1') AS INT) END AS _1) END AS value FROM t1
 ------ end
 
------- Test: fail on division by zero
+------ Test: fail on Long addition overflow
+SELECT (t1.value + CAST(9223372036854775807 AS BIGINT)) AS value FROM t1
+------ end
+
+------ Test: fail on byte absolute value overflow
+SELECT abs(CAST(-128 AS TINYINT)) AS value FROM t1
+------ end
+
+------ Test: fail on byte add overflow
+SELECT (t1.value + CAST(127 AS TINYINT)) AS value FROM t1
+------ end
+
+------ Test: fail on byte division by zero
+SELECT CAST(div(t1.value, CAST(0 AS TINYINT)) AS TINYINT) AS value FROM t1
+------ end
+
+------ Test: fail on byte multiply overflow
+SELECT (t1.value * CAST(127 AS TINYINT)) AS value FROM t1
+------ end
+
+------ Test: fail on byte negate overflow
+SELECT (- CAST(-128 AS TINYINT)) AS value FROM t1
+------ end
+
+------ Test: fail on byte subtract overflow
+SELECT (t1.value - CAST(127 AS TINYINT)) AS value FROM t1
+------ end
+
+------ Test: fail on double addition overflow
+SELECT (t1.value + CAST(1.7976931348623157E308 AS FLOAT64)) AS value FROM t1
+------ end
+
+------ Test: fail on double division by zero
+SELECT CAST((t1.value / CAST(0.0 AS FLOAT64)) AS FLOAT64) AS value FROM t1
+------ end
+
+------ Test: fail on double division overflow
+SELECT CAST((t1.value / CAST(0.1 AS FLOAT64)) AS FLOAT64) AS value FROM t1
+------ end
+
+------ Test: fail on double multiplication overflow
+SELECT (t1.value * CAST(1.7976931348623157E308 AS FLOAT64)) AS value FROM t1
+------ end
+
+------ Test: fail on double subtraction overflow
+SELECT (t1.value - CAST(-1.7976931348623157E308 AS FLOAT64)) AS value FROM t1
+------ end
+
+------ Test: fail on float addition overflow
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS FLOAT64))) AND (NOT (abs(CAST(3.4028234663852886E38 AS FLOAT64)) = CAST('Infinity' AS FLOAT64)))) AND (NOT is_nan((t1.value + CAST(3.4028234663852886E38 AS FLOAT64))))) AND (NOT (abs((t1.value + CAST(3.4028234663852886E38 AS FLOAT64))) <= CAST(3.4028234663852886E38 AS FLOAT64)))) THEN CAST(error('Float overflow') AS FLOAT64) ELSE (t1.value + CAST(3.4028234663852886E38 AS FLOAT64)) END AS value FROM t1
+------ end
+
+------ Test: fail on float division by zero
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS FLOAT64))) AND (NOT (abs(CAST(0.0 AS FLOAT64)) = CAST('Infinity' AS FLOAT64)))) AND (NOT is_nan(CAST((t1.value / CAST(0.0 AS FLOAT64)) AS FLOAT64)))) AND (NOT (abs(CAST((t1.value / CAST(0.0 AS FLOAT64)) AS FLOAT64)) <= CAST(3.4028234663852886E38 AS FLOAT64)))) THEN CAST(error('Float overflow') AS FLOAT64) ELSE CAST((t1.value / CAST(0.0 AS FLOAT64)) AS FLOAT64) END AS value FROM t1
+------ end
+
+------ Test: fail on float division overflow
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS FLOAT64))) AND (NOT (abs(CAST(0.10000000149011612 AS FLOAT64)) = CAST('Infinity' AS FLOAT64)))) AND (NOT is_nan(CAST((t1.value / CAST(0.10000000149011612 AS FLOAT64)) AS FLOAT64)))) AND (NOT (abs(CAST((t1.value / CAST(0.10000000149011612 AS FLOAT64)) AS FLOAT64)) <= CAST(3.4028234663852886E38 AS FLOAT64)))) THEN CAST(error('Float overflow') AS FLOAT64) ELSE CAST((t1.value / CAST(0.10000000149011612 AS FLOAT64)) AS FLOAT64) END AS value FROM t1
+------ end
+
+------ Test: fail on float multiplication overflow
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS FLOAT64))) AND (NOT (abs(CAST(3.4028234663852886E38 AS FLOAT64)) = CAST('Infinity' AS FLOAT64)))) AND (NOT is_nan((t1.value * CAST(3.4028234663852886E38 AS FLOAT64))))) AND (NOT (abs((t1.value * CAST(3.4028234663852886E38 AS FLOAT64))) <= CAST(3.4028234663852886E38 AS FLOAT64)))) THEN CAST(error('Float overflow') AS FLOAT64) ELSE (t1.value * CAST(3.4028234663852886E38 AS FLOAT64)) END AS value FROM t1
+------ end
+
+------ Test: fail on float subtraction overflow
+SELECT CASE WHEN ((((NOT (abs(t1.value) = CAST('Infinity' AS FLOAT64))) AND (NOT (abs(CAST(-3.4028234663852886E38 AS FLOAT64)) = CAST('Infinity' AS FLOAT64)))) AND (NOT is_nan((t1.value - CAST(-3.4028234663852886E38 AS FLOAT64))))) AND (NOT (abs((t1.value - CAST(-3.4028234663852886E38 AS FLOAT64))) <= CAST(3.4028234663852886E38 AS FLOAT64)))) THEN CAST(error('Float overflow') AS FLOAT64) ELSE (t1.value - CAST(-3.4028234663852886E38 AS FLOAT64)) END AS value FROM t1
+------ end
+
+------ Test: fail on int absolute value overflow
+SELECT abs(CAST(-2147483648 AS INT)) AS value FROM t1
+------ end
+
+------ Test: fail on int addition overflow
+SELECT (t1.value + CAST(2147483647 AS INT)) AS value FROM t1
+------ end
+
+------ Test: fail on int division by zero
 SELECT CAST(div(t1.value, CAST(0 AS INT)) AS INT) AS value FROM t1
 ------ end
 
------- Test: fail on int overflow
-SELECT (t1.value + CAST(2147483647 AS INT)) AS value FROM t1
+------ Test: fail on int multiply overflow
+SELECT (t1.value * CAST(2147483647 AS INT)) AS value FROM t1
+------ end
+
+------ Test: fail on int negate overflow
+SELECT (- CAST(-2147483648 AS INT)) AS value FROM t1
+------ end
+
+------ Test: fail on int subtract overflow
+SELECT (t1.value - CAST(2147483647 AS INT)) AS value FROM t1
+------ end
+
+------ Test: fail on long absolute value overflow
+SELECT abs(CAST(-9223372036854775808 AS BIGINT)) AS value FROM t1
+------ end
+
+------ Test: fail on long division by zero
+SELECT CAST(div(t1.value, CAST(0 AS BIGINT)) AS BIGINT) AS value FROM t1
+------ end
+
+------ Test: fail on long multiply overflow
+SELECT (t1.value * CAST(9223372036854775807 AS BIGINT)) AS value FROM t1
+------ end
+
+------ Test: fail on long negate overflow
+SELECT (- CAST(-9223372036854775808 AS BIGINT)) AS value FROM t1
+------ end
+
+------ Test: fail on long subtract overflow
+SELECT (t1.value - CAST(9223372036854775807 AS BIGINT)) AS value FROM t1
+------ end
+
+------ Test: fail on short absolute value overflow
+SELECT abs(CAST(-32768 AS SMALLINT)) AS value FROM t1
+------ end
+
+------ Test: fail on short add overflow
+SELECT (t1.value + CAST(32767 AS SMALLINT)) AS value FROM t1
+------ end
+
+------ Test: fail on short division by zero
+SELECT CAST(div(t1.value, CAST(0 AS SMALLINT)) AS SMALLINT) AS value FROM t1
+------ end
+
+------ Test: fail on short multiply overflow
+SELECT (t1.value * CAST(32767 AS SMALLINT)) AS value FROM t1
+------ end
+
+------ Test: fail on short negate overflow
+SELECT (- CAST(-32768 AS SMALLINT)) AS value FROM t1
+------ end
+
+------ Test: fail on short subtract overflow
+SELECT (t1.value - CAST(32767 AS SMALLINT)) AS value FROM t1
 ------ end
 
 ------ Test: flatMap Option
@@ -1082,12 +1270,60 @@ SELECT array_to_string(t1._1, t1._2) AS value FROM t1
 SELECT array_to_string(t1.value, ',') AS value FROM t1
 ------ end
 
+------ Test: multiply two byte numbers
+SELECT (t1._1 * t1._2) AS value FROM t1
+------ end
+
+------ Test: multiply two double numbers
+SELECT (t1._1 * t1._2) AS value FROM t1
+------ end
+
+------ Test: multiply two float numbers
+SELECT CASE WHEN ((((NOT (abs(t1._1) = CAST('Infinity' AS FLOAT64))) AND (NOT (abs(t1._2) = CAST('Infinity' AS FLOAT64)))) AND (NOT is_nan((t1._1 * t1._2)))) AND (NOT (abs((t1._1 * t1._2)) <= CAST(3.4028234663852886E38 AS FLOAT64)))) THEN CAST(error('Float overflow') AS FLOAT64) ELSE (t1._1 * t1._2) END AS value FROM t1
+------ end
+
+------ Test: multiply two int numbers
+SELECT (t1._1 * t1._2) AS value FROM t1
+------ end
+
+------ Test: multiply two long numbers
+SELECT (t1._1 * t1._2) AS value FROM t1
+------ end
+
+------ Test: multiply two short numbers
+SELECT (t1._1 * t1._2) AS value FROM t1
+------ end
+
 ------ Test: named tuple concat
 SELECT t1._1.a AS a, t1._1.b AS b, t1._2.c AS c, t1._2.d AS d FROM t1
 ------ end
 
 ------ Test: named tuple concat literal
 SELECT t1.a AS a, t1.b AS b, 'abc' AS c, CAST(2 AS BIGINT) AS d FROM t1
+------ end
+
+------ Test: negate a byte
+SELECT (- t1.value) AS value FROM t1
+------ end
+
+------ Test: negate a double
+SELECT (- t1.value) AS value FROM t1
+------ end
+
+------ Test: negate a float
+SELECT (- t1.value) AS value FROM t1
+------ end
+
+------ Test: negate a long number
+SELECT (- t1.value) AS value FROM t1
+------ end
+
+------ Test: negate a short
+SELECT (- t1.value) AS value FROM t1
+------ end
+
+------ Test: negate an int
+SELECT (- t1.value) AS value FROM t1
 ------ end
 
 ------ Test: nested Option
@@ -1318,6 +1554,30 @@ SELECT STARTS_WITH(t1._1, t1._2) AS value FROM t1
 SELECT STARTS_WITH(t1._1, 'foo') AS value FROM t1
 ------ end
 
+------ Test: subtract two byte numbers
+SELECT (t1._1 - t1._2) AS value FROM t1
+------ end
+
+------ Test: subtract two double numbers
+SELECT (t1._1 - t1._2) AS value FROM t1
+------ end
+
+------ Test: subtract two float numbers
+SELECT CASE WHEN ((((NOT (abs(t1._1) = CAST('Infinity' AS FLOAT64))) AND (NOT (abs(t1._2) = CAST('Infinity' AS FLOAT64)))) AND (NOT is_nan((t1._1 - t1._2)))) AND (NOT (abs((t1._1 - t1._2)) <= CAST(3.4028234663852886E38 AS FLOAT64)))) THEN CAST(error('Float overflow') AS FLOAT64) ELSE (t1._1 - t1._2) END AS value FROM t1
+------ end
+
+------ Test: subtract two int numbers
+SELECT (t1._1 - t1._2) AS value FROM t1
+------ end
+
+------ Test: subtract two long numbers
+SELECT (t1._1 - t1._2) AS value FROM t1
+------ end
+
+------ Test: subtract two short numbers
+SELECT (t1._1 - t1._2) AS value FROM t1
+------ end
+
 ------ Test: support field names that are SQL keywords
 SELECT CAST(1 AS INT) AS `select`, CAST(2 AS INT) AS `group`, CAST(3 AS INT) AS `by` FROM t1
 ------ end
@@ -1406,12 +1666,20 @@ SELECT CASE WHEN (array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELE
 SELECT trim(t1.value, ' ') AS value FROM t1
 ------ end
 
------- Test: truncating divide first argument by second
+------ Test: truncating divide two byte numbers
+SELECT CAST(div(t1._1, t1._2) AS TINYINT) AS value FROM t1
+------ end
+
+------ Test: truncating divide two int numbers
+SELECT CAST(div(t1._1, t1._2) AS INT) AS value FROM t1
+------ end
+
+------ Test: truncating divide two long numbers
 SELECT CAST(div(t1._1, t1._2) AS BIGINT) AS value FROM t1
 ------ end
 
------- Test: truncating divide first int argument by second
-SELECT CAST(div(t1._1, t1._2) AS INT) AS value FROM t1
+------ Test: truncating divide two short numbers
+SELECT CAST(div(t1._1, t1._2) AS SMALLINT) AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 1] to com.choreograph.tyda.Decimal$package.Decimal[19, 0]
