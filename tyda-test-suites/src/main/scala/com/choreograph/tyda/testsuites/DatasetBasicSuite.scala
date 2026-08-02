@@ -10,12 +10,15 @@ import com.choreograph.tyda.functions.lit
 object DatasetBasicSuite {
   type WideTuple = (Int, Int, Int, Int, Int, Int, Int)
   final case class SimpleProduct(a: Int, b: String)
+  enum SimpleEnum {
+    case A, B
+  }
   final case class M1(a: Int, b: String, c: Boolean, d: Seq[Long])
 }
 
 // Testsuite focusing on select and filter that will compare a Dataset backend to a reference implementation.
 trait DatasetBasicSuite extends DatasetSuite {
-  import DatasetBasicSuite.{WideTuple, SimpleProduct, M1}
+  import DatasetBasicSuite.{WideTuple, SimpleProduct, SimpleEnum, M1}
   import DatasetSuite.{MyEnum, TinyByte}
 
   test[Boolean, Boolean]("filter", _.filter(identity))
@@ -27,6 +30,9 @@ trait DatasetBasicSuite extends DatasetSuite {
   test[Boolean, Int]("select primitive", _.select(_ => 1))
   test[MyEnum, MyEnum]("select enum", _.select(identity))
   test[Boolean, Map[Int, Int]]("select complex", _.select(_ => Map.empty[Int, Int]))
+  test[Seq[SimpleProduct], SimpleProduct]("explode to product", _.select(explode(identity)))
+  test[Seq[SimpleEnum], SimpleEnum]("explode to simple enum", _.select(explode(identity)))
+  test[Seq[MyEnum], MyEnum]("explode to complex enum", _.select(explode(identity)))
   test[(Seq[Int], Seq[Int]), (Int, Int)](
     "select multiple explode seq",
     _.select(explode(_._1), explode(_._2))

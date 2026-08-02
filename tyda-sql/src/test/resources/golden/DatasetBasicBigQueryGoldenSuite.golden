@@ -54,6 +54,18 @@ SELECT t0.value AS _1, t1.value AS _2 FROM table1, unnest(table1._1) AS t0, unne
 SELECT t1 AS value FROM table1, unnest(table1.value) AS t0, unnest(t0.value) AS t1
 ------ end
 
+------ Test: explode to complex enum
+SELECT t0.discriminant AS discriminant, t0.a AS a, t0.b AS b FROM table1, unnest(table1.value) AS t0
+------ end
+
+------ Test: explode to product
+SELECT t0.a AS a, t0.b AS b FROM table1, unnest(table1.value) AS t0
+------ end
+
+------ Test: explode to simple enum
+SELECT t0.discriminant AS discriminant FROM table1, unnest(table1.value) AS t0
+------ end
+
 ------ Test: limit after aggregate
 SELECT table1._1 AS key, sum(table1._2) AS value FROM table1 GROUP BY table1._1 LIMIT 5
 ------ end
