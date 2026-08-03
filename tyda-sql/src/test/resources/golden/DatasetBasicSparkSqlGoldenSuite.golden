@@ -47,7 +47,7 @@ SELECT explode(table1.value) AS value FROM table1
 ------ end
 
 ------ Test: explode Seq Option Seq
-SELECT explode(t0.value) AS value FROM (SELECT explode(table1.value) AS value FROM table1) AS t0 WHERE (t0.value IS NOT NULL)
+SELECT explode(t0._1) AS value FROM (SELECT explode(table1.value) AS _1 FROM table1) AS t0 WHERE (t0._1 IS NOT NULL)
 ------ end
 
 ------ Test: explode multiple nested Seq
@@ -55,7 +55,7 @@ SELECT explode(table1._1) AS _1, explode(table1._2) AS _2 FROM table1
 ------ end
 
 ------ Test: explode nested Seq
-SELECT explode(t0.value) AS value FROM (SELECT explode(table1.value) AS value FROM table1) AS t0
+SELECT explode(t0._1) AS value FROM (SELECT explode(table1.value) AS _1 FROM table1) AS t0
 ------ end
 
 ------ Test: explode to complex enum
@@ -75,7 +75,7 @@ SELECT table1._1 AS key, sum(table1._2) AS value FROM table1 GROUP BY table1._1 
 ------ end
 
 ------ Test: limit after explode
-SELECT t0.value AS value FROM (SELECT explode(table1._2) AS value FROM table1) AS t0 LIMIT 5
+SELECT t0._1 AS value FROM (SELECT explode(table1._2) AS _1 FROM table1) AS t0 LIMIT 5
 ------ end
 
 ------ Test: limit after filter

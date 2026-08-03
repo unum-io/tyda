@@ -318,14 +318,9 @@ private final case class SelectBuilder[T, R](
       explode: CompiledExplodeExpr[R, R2]
   ): Result[SelectBuilder[?, R2]] = {
     val newSelect = andThenRelaxed(select, explode)
-    explode.codec match {
-      case Codec.Product(_, _, _) | Codec.Sum(_, _) =>
-        // When exploding to a structured type we end up with a single column and need to flatten it manually
-        buildWithSelect(
-          NonEmpty[Seq]((newSelect, "_1"))
-        ).flatMap(makeSubquery[Tuple1[R2]](_, summon).select(CompiledExpr(_._1)))
-      case _ => buildWithSelect(NonEmpty[Seq]((newSelect, "value"))).map(makeSubquery(_, explode.codec))
-    }
+    buildWithSelect(
+      NonEmpty[Seq]((newSelect, "_1"))
+    ).flatMap(makeSubquery[Tuple1[R2]](_, summon).select(CompiledExpr(_._1)))
   }
 
   private def selectExplodeJoin[R2: Codec](
@@ -433,23 +428,52 @@ private final case class SelectBuilder[T, R](
             false,
             None,
             None
-          ) => return Right(query)
+          ) =>
+        /* For builders that are only select directly from a subquery, we return the subquery to avoid an
+         * unnecessary select */
+        return Right(query)
+      case SelectBuilder(
+            _,
+            TypedFrom(From.Subquery(query @ Query.Select(distinct = false), _), _, _),
+            CompiledExprIndependentSelects(names),
+            None,
+            None,
+            None,
+            false,
+            None,
+            None
+          ) =>
+        /* For builders that only make independent field accesses from a subquery, we combine the select into
+         * the subquery and return that directly to avoid a superfluous select. Independent in this case means
+         * that no field of the subquery is accessed more than once in the select; in particular this rules
+         * out the case where an explode from the subquery would be inlined into multiple fields of the
+         * combined select, causing us to erroneously produce a cartesian product. */
+
+        extension [T](seq: NonEmpty[Seq[Option[T]]]) {
+          def sequence: Option[NonEmpty[Seq[T]]] =
+            Option.when(seq.forall(_.nonEmpty))(NonEmpty.from(seq.flatten)).flatten
+        }
+
+        names
+          .map { case (fieldName, fieldAccesses) =>
+            query
+              .select
+              .collectFirst { case SqlExpr.As(e, a) if a.value == fieldAccesses.head => e }
+              .map(a =>
+                SqlExpr.As(
+                  fieldAccesses.tail.foldLeft(a)((acc, name) => SqlExpr.FieldAccess(acc, name)),
+                  fieldName
+                )
+              )
+          }
+          .sequence match {
+          case Some(newSelect) => return Right(query.copy(select = newSelect))
+          case None => ()
+        }
       case _ => ()
     }
-    def finalSelect[A](expr: ExprNode[A]): FinalSelect[T] =
-      expr.codec match {
-        case Codec.Product(_, fieldInstances, _) =>
-          val maybeFields = NonEmpty.from(
-            fieldInstances
-              .mapConst[Field[?]]([t] => identity(_))
-              .map(f => (RelaxedCompiledExpr(select.arg, ExprNode.Select(expr, f.name)), f.name))
-          )
-          maybeFields.map(FinalSelect.Multiple(_)).getOrElse(FinalSelect.Empty())
-        case sum @ Codec.Sum(_, _) => finalSelect(ExprNode.ToRepr(expr, sum))
-        case _ => FinalSelect.Multiple(NonEmpty((RelaxedCompiledExpr(select), "value")))
-      }
 
-    buildWithSelect(finalSelect(select.expr))
+    buildWithSelect(finalSelect(select.arg, select.expr))
   }
 
   private def buildWithSelect(
@@ -531,6 +555,19 @@ private object SelectBuilder {
     val select = CompiledExpr[T, T](identity)(using from.output.codec)
     SelectBuilder(args, from, select)
   }
+
+  private[sql] def finalSelect[T, R](arg: ExprNode.Reference[T], expr: ExprNode[R]): FinalSelect[T] =
+    expr.codec match {
+      case Codec.Product(_, fieldInstances, _) =>
+        val maybeFields = NonEmpty.from(
+          fieldInstances
+            .mapConst[Field[?]]([t] => identity(_))
+            .map(f => (RelaxedCompiledExpr(arg, ExprNode.Select(expr, f.name)), f.name))
+        )
+        maybeFields.map(FinalSelect.Multiple(_)).getOrElse(FinalSelect.Empty())
+      case sum @ Codec.Sum(_, _) => finalSelect(arg, ExprNode.ToRepr(expr, sum))
+      case _ => FinalSelect.Multiple(NonEmpty((RelaxedCompiledExpr(arg, expr), "value")))
+    }
 
   extension [R <: Option[?]: Codec](lhs: SelectBuilder[R, R]) {
     private def fullJoinNullable[R2 <: Option[?]: Codec](

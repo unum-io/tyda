@@ -135,7 +135,7 @@ SELECT t0.value AS value FROM (SELECT table1.value AS value FROM table1 ORDER BY
 ------ end
 
 ------ Test: orderBy then select
-SELECT t0._2 AS value FROM (SELECT table1._1 AS _1, table1._2 AS _2 FROM table1 ORDER BY table1._1) AS t0
+SELECT table1._2 AS value FROM table1 ORDER BY table1._1
 ------ end
 
 ------ Test: orderBy tuple with struct
