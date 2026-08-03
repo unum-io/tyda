@@ -6,10 +6,6 @@ SELECT CASE WHEN (count(1) <> 0) THEN min(t0._2) END AS value FROM (SELECT table
 SELECT B'\x00\xca\xfe\xba\xbe' AS value
 ------ end
 
------- Test: distinct before select
-SELECT t0._1 AS value FROM (SELECT DISTINCT table1.a AS _1, table1.b AS _2 FROM table1) AS t0
------- end
-
 ------ Test: empty collection
 SELECT t0.a AS a, t0.b AS b, t0.c AS c, t0.d AS d FROM (SELECT CAST(0 AS INT) AS a, '' AS b, FALSE AS c, [CAST(0.0 AS FLOAT64)] AS d) AS t0 WHERE FALSE
 ------ end

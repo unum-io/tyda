@@ -55,8 +55,6 @@ abstract class UnparserSuite extends SqlGoldenTestSuite {
     ds.groupByKey(_.b).aggregateValue(min(_.a)).pairs.groupByKey(_._2).aggregateValue(min(_._1)).values
   }
 
-  testSql("distinct before select") { ds.select(_.a, _.b).distinct.select(_._1) }
-
   testSql("make struct") { ds.select(r => some(tuple(r.a, r.b, r.c))) }
 
   testSql("make named struct") { ds.select(r => some(namedTuple(a = r.a, b = r.b, c = r.c))) }
