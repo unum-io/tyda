@@ -196,6 +196,9 @@ sealed trait Dataset[T: Codec] {
     Dataset.SelectN[T, Result](this, instances.toTuple)
   }
 
+  /** Apply a function to transform the input into an Iterable, and flatten the
+    * result.
+    */
   def explode[E, I: AsExpr.Of[Iterable[E]]](f: Expr[T] => I): Dataset[E] = select(Expr.explode(f))
 
   /** Projects the Dataset to a subset defined by the target type `To`.
@@ -329,12 +332,12 @@ sealed trait Dataset[T: Codec] {
   /** Return new Dataset by applying a function to each element and flattening
     * the result.
     *
-    * If performance is important consider using [[select]] with
-    * [[Expr.explode]] and the expression api directly instead.
+    * If performance is important consider using [[explode]] and the expression
+    * api directly instead.
     */
   def flatMap[U: Codec](f: T => Iterable[U]): Dataset[U] = {
     given Codec[Iterable[U]] = Codec.iterable
-    select(Expr.explode(_.udf(f)))
+    explode(_.udf(f))
   }
 
   /** Create a tuple Dataset of the key and the original value.
