@@ -29,6 +29,7 @@ import com.choreograph.tyda.aggregates.minBy
 import com.choreograph.tyda.aggregates.reduce
 import com.choreograph.tyda.aggregates.sum
 import com.choreograph.tyda.functions.lit
+import com.choreograph.tyda.functions.seq
 import com.choreograph.tyda.functions.some
 import com.choreograph.tyda.functions.tuple
 import com.choreograph.tyda.functions.when
@@ -129,6 +130,26 @@ trait DatasetAggregatesSuite extends DatasetSuite {
   test[Pair, (TinyByte, Seq[Int])](
     "collect and map pairs",
     ds => ds.groupByKey(_._1).aggregateValue(collect(_._2)).pairs.select(_._1, _._2.map(_.cast[Int] + 1))
+  )
+  test[PairSeq, Seq[TinyByte]](
+    "concat and filter",
+    ds => ds.groupByKey(_._1).aggregateValue(concat(_._2)).values.select(_.filter(_.cast[Int] > 1))
+  )
+  test[PairSeq, Seq[TinyByte]](
+    "concat and flatten",
+    ds => ds.groupByKey(_._1).aggregateValue(concat(_._2)).values.select(_.map(x => seq(x, x)).flatten)
+  )
+  test[PairSeq, Seq[TinyByte]](
+    "concat and distinct",
+    ds => ds.groupByKey(_._1).aggregateValue(concat(_._2)).values.select(_.distinct)
+  )
+  test[PairSeq, Boolean](
+    "concat and forall",
+    ds => ds.groupByKey(_._1).aggregateValue(concat(_._2)).values.select(_.forall(_.cast[Int] > 0))
+  )
+  test[PairSeq, Boolean](
+    "concat and exists",
+    ds => ds.groupByKey(_._1).aggregateValue(concat(_._2)).values.select(_.exists(_.cast[Int] > 0))
   )
 
   test[Int, Int]("min whole row", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)

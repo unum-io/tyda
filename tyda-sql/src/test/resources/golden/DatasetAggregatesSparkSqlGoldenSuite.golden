@@ -90,6 +90,26 @@ SELECT collect_list(table1._2) AS value FROM table1 GROUP BY table1._1
 SELECT collect_list(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
+------ Test: concat and distinct
+SELECT array_distinct(flatten(collect_list(table1._2))) AS value FROM table1 GROUP BY table1._1
+------ end
+
+------ Test: concat and exists
+SELECT aggregate(transform(flatten(collect_list(table1._2)), c0 -> (NOT (CAST(c0 AS INT) <= CAST(0 AS INT)))), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM table1 GROUP BY table1._1
+------ end
+
+------ Test: concat and filter
+SELECT filter(flatten(collect_list(table1._2)), c0 -> (NOT (CAST(c0 AS INT) <= CAST(1 AS INT)))) AS value FROM table1 GROUP BY table1._1
+------ end
+
+------ Test: concat and flatten
+SELECT flatten(transform(flatten(collect_list(table1._2)), c0 -> array(c0, c0))) AS value FROM table1 GROUP BY table1._1
+------ end
+
+------ Test: concat and forall
+SELECT aggregate(transform(flatten(collect_list(table1._2)), c0 -> (NOT (CAST(c0 AS INT) <= CAST(0 AS INT)))), TRUE, (c1, c2) -> (c1 AND c2), c3 -> c3) AS value FROM table1 GROUP BY table1._1
+------ end
+
 ------ Test: concat and map
 SELECT transform(flatten(collect_list(table1._2)), c0 -> (CAST(c0 AS INT) + CAST(1 AS INT))) AS value FROM table1 GROUP BY table1._1
 ------ end

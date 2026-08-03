@@ -90,6 +90,26 @@ SELECT array_agg(table1._2) AS value FROM table1 GROUP BY table1._1
 SELECT array_agg(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
+------ Test: concat and distinct
+SELECT array((SELECT DISTINCT c0 FROM unnest(array_concat_agg(table1._2)) AS c0)) AS value FROM table1 GROUP BY table1._1
+------ end
+
+------ Test: concat and exists
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (NOT (CAST(c0 AS INT) <= CAST(0 AS INT))) FROM unnest(t0.value) AS c0))) AS c1) AS value FROM (SELECT array_concat_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
+------ end
+
+------ Test: concat and filter
+SELECT array((SELECT c0 FROM unnest(array_concat_agg(table1._2)) AS c0 WHERE (NOT (CAST(c0 AS INT) <= CAST(1 AS INT))))) AS value FROM table1 GROUP BY table1._1
+------ end
+
+------ Test: concat and flatten
+SELECT array((SELECT c2 FROM unnest(array((SELECT struct([c0, c0] AS value) FROM unnest(t0.value) AS c0))) AS c1, unnest(c1.value) AS c2)) AS value FROM (SELECT array_concat_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
+------ end
+
+------ Test: concat and forall
+SELECT (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT (NOT (CAST(c0 AS INT) <= CAST(0 AS INT))) FROM unnest(t0.value) AS c0))) AS c1) AS value FROM (SELECT array_concat_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
+------ end
+
 ------ Test: concat and map
 SELECT array((SELECT (CAST(c0 AS INT) + CAST(1 AS INT)) FROM unnest(t0.value) AS c0)) AS value FROM (SELECT array_concat_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
 ------ end
