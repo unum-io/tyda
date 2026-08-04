@@ -154,8 +154,16 @@ SELECT t0 AS _1, t1 AS _2, t2 AS _3, t3 AS _4, t4 AS _5, t5 AS _6, t6 AS _7 FROM
 SELECT table1.value AS _1, CAST(1 AS INT) AS _2 FROM table1
 ------ end
 
+------ Test: select after explode to product
+SELECT t0.a AS value FROM table1, unnest(table1.value) AS t0
+------ end
+
 ------ Test: select complex
 SELECT CAST(CAST([] AS ARRAY<STRUCT<_1 INT,_2 INT>>) AS ARRAY<STRUCT<key INT,value INT>>) AS value FROM table1
+------ end
+
+------ Test: select different after explode to product
+SELECT table1._1._1 AS value FROM table1, unnest(table1._2) AS t0
 ------ end
 
 ------ Test: select enum

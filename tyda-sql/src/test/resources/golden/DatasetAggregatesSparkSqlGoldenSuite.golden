@@ -26,6 +26,14 @@ SELECT CASE WHEN (count(1) <> 0) THEN named_struct('_1', count(CAST(1 AS INT)), 
 SELECT CASE WHEN (count(1) <> 0) THEN named_struct('_1', count(CAST(1 AS INT)), '_2', collect_list(named_struct('_1', table1._1, '_2', table1._2)), '_3', min(table1._1), '_4', max(table1._1), '_5', min(table1._2), '_6', max(table1._2), '_7', collect_list(table1._2), '_8', sum(table1._1)) END AS value FROM table1
 ------ end
 
+------ Test: aggregate after explode
+SELECT t0._1 AS _1, min(t0._2) AS _2 FROM (SELECT table1.a AS _1, explode(table1.d) AS _2 FROM table1) AS t0 GROUP BY t0._1
+------ end
+
+------ Test: aggregate after select
+SELECT table1.a AS _1, flatten(collect_list(table1.d)) AS _2 FROM table1 GROUP BY table1.a
+------ end
+
 ------ Test: aggregate collect whole dataset
 SELECT CASE WHEN (count(1) <> 0) THEN collect_list(table1.value) END AS value FROM table1
 ------ end
@@ -234,6 +242,10 @@ SELECT count(CAST(1 AS INT)) AS value FROM table1 GROUP BY CASE WHEN (table1.val
 SELECT count(CAST(1 AS INT)) AS value FROM table1 GROUP BY coalesce(table1.value, named_struct('_1', CAST(0 AS INT), '_2', CAST(0 AS INT)))
 ------ end
 
+------ Test: select after where after aggregate
+SELECT (min(table1.a) + CAST(1 AS INT)) AS value FROM table1 GROUP BY table1.d HAVING (NOT (min(table1.a) <= CAST(0 AS INT)))
+------ end
+
 ------ Test: sum Byte
 SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
@@ -292,4 +304,8 @@ SELECT CAST(1 AS INT) AS _1, count(CAST(1 AS INT)) AS _2 FROM table1 GROUP BY CA
 
 ------ Test: support group with complex literals
 SELECT named_struct('i', named_struct('i', table1.value, 'a', CAST(NULL AS STRING)), 'a', CAST(NULL AS STRUCT<i INT,a STRING>)) AS _1, count(CAST(1 AS INT)) AS _2 FROM table1 GROUP BY table1.value
+------ end
+
+------ Test: where after aggregate
+SELECT table1.b AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.b HAVING (min(table1.a) < CAST(10 AS INT))
 ------ end

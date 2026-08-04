@@ -350,4 +350,24 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     "explode after aggregate",
     ds => ds.groupByKey(_.d).aggregateValue(min(_.a)).pairs.select(explode(_._1), _._2)
   )
+
+  test[M1, (Int, Long)](
+    "aggregate after explode",
+    ds => ds.select(_.a, explode(_.d)).groupByKey(_._1).aggregateValue(min(_._2)).pairs
+  )
+
+  test[M1, (Int, Seq[Long])](
+    "aggregate after select",
+    ds => ds.select(_.a, _.d).groupByKey(_._1).aggregateValue(concat(_._2)).pairs
+  )
+
+  test[M1, (String, Int)](
+    "where after aggregate",
+    ds => ds.groupByKey(_.b).aggregateValue(min(_.a)).pairs.where(_._2 < 10)
+  )
+
+  test[M1, Int](
+    "select after where after aggregate",
+    ds => ds.groupByKey(_.d).aggregateValue(min(_.a)).values.where(_ > 0).select(_ + 1)
+  )
 }

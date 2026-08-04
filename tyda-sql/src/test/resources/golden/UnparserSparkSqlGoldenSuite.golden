@@ -42,10 +42,6 @@ SELECT t0.value AS _1, t1.value AS _2 FROM (SELECT named_struct('a', table1.a, '
 SELECT count(CASE WHEN (table4.a IS NOT NULL) THEN CAST(1 AS INT) END) AS value FROM table4 GROUP BY CAST(NULL AS INT)
 ------ end
 
------- Test: grouped aggregation + filter
-SELECT table1.b AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.b HAVING (min(table1.a) < CAST(10 AS INT))
------- end
-
 ------ Test: groupped aggregate after grouped aggregate
 SELECT min(t0._1) AS value FROM (SELECT table1.b AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.b) AS t0 GROUP BY t0._2
 ------ end

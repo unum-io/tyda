@@ -39,10 +39,6 @@ abstract class UnparserSuite extends SqlGoldenTestSuite {
   testSql("select and where, with where first") { ds.where(_.a > 10).select(_.a) }
   testSql("select and where, with select first") { ds.select(_.a).where(_ > 10) }
 
-  testSql("grouped aggregation + filter") {
-    ds.groupByKey(_.b).aggregateValue(min(_.a)).pairs.where(_._2 < 10)
-  }
-
   testSql("group by all") { ds4.groupByKey(_ => lit(None)).aggregateValue(countIf(!_.a.isEmpty)).values }
 
   testSql("explode multiple expression") { ds.select(_.a, explode(_.d)) }
