@@ -243,7 +243,7 @@ SELECT count(CAST(1 AS INT)) AS value FROM table1 GROUP BY coalesce(table1.value
 ------ end
 
 ------ Test: select after where after aggregate
-SELECT (min(table1.a) + CAST(1 AS INT)) AS value FROM table1 GROUP BY table1.d HAVING (NOT (min(table1.a) <= CAST(0 AS INT)))
+SELECT (CAST(min(table1.a) AS BIGINT) + CAST(1 AS BIGINT)) AS value FROM table1 GROUP BY table1.d HAVING (NOT (min(table1.a) <= CAST(0 AS INT)))
 ------ end
 
 ------ Test: sum Byte

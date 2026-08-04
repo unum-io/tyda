@@ -366,8 +366,8 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     ds => ds.groupByKey(_.b).aggregateValue(min(_.a)).pairs.where(_._2 < 10)
   )
 
-  test[M1, Int](
+  test[M1, Long](
     "select after where after aggregate",
-    ds => ds.groupByKey(_.d).aggregateValue(min(_.a)).values.where(_ > 0).select(_ + 1)
+    ds => ds.groupByKey(_.d).aggregateValue(min(_.a)).values.where(_ > 0).select(x => x.cast[Long] + 1L)
   )
 }
