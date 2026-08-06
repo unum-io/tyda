@@ -153,17 +153,17 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     ds => ds.groupByKey(_._1).aggregateValue(concat(_._2)).values.select(_.exists(_.cast[Int] > 0))
   )
 
-  test[Option[Int], Long](
-    "countSome whole row",
-    ds => ds.groupByKey(_ => lit(1)).aggregateValue(countSome).values
-  )
-  test[Int, Int]("min whole row", ds => ds.groupByKey(_ => 1).aggregateValue(min).values)
-  test[Int, Long]("count whole row", ds => ds.groupByKey(_ => 1).aggregateValue(count).values)
-  test[Boolean, Long]("countIf whole row", ds => ds.groupByKey(_ => 1).aggregateValue(countIf).values)
-  test[Int, Long]("countIf expr", ds => ds.groupByKey(_ => 1).aggregateValue(countIf(_ > 0)).values)
+  test[Int, Int]("min whole row", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
+  test[Int, Long]("count whole row", ds => ds.groupByKey(_ => lit(1)).aggregateValue(count).values)
+  test[Boolean, Long]("countIf whole row", ds => ds.groupByKey(_ => lit(1)).aggregateValue(countIf).values)
+  test[Int, Long]("countIf expr", ds => ds.groupByKey(_ => lit(1)).aggregateValue(countIf(_ > 0)).values)
   test[(Int, Int), (Int, Long)](
     "countIf group by",
     ds => ds.groupByKey(_._1).aggregateValue(countIf(_._2 > 0)).pairs
+  )
+  test[Option[Int], Long](
+    "countSome whole row",
+    ds => ds.groupByKey(_ => lit(1)).aggregateValue(countSome).values
   )
   test[Int, Long]("countDistinct whole row", ds => ds.groupByKey(_ => 1).aggregateValue(countDistinct).values)
   test[(Int, Int), (Int, Long)](
