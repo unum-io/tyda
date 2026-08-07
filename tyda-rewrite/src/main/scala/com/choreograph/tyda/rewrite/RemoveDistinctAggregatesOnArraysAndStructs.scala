@@ -14,7 +14,7 @@ import com.choreograph.tyda.PrimitiveAggregate
 import com.choreograph.tyda.TreeApi.Continue
 import com.choreograph.tyda.TreeApi.Skip
 import com.choreograph.tyda.TreeApi.Stop
-import com.choreograph.tyda.aggregates.count
+import com.choreograph.tyda.aggregates
 import com.choreograph.tyda.functions.namedTuple
 
 /** Rewrites `COUNT(DISTINCT expr)` where `expr` is a complex type (collection,
@@ -61,10 +61,10 @@ object RemoveDistinctAggregatesOnArraysAndStructs extends DatasetRule {
       }
   }
   private object UnsupportedAggregate {
-    def unapply[T, R](agg: ExprNode.Aggregate[T, R]): Option[CompiledAggregateExpr[T, R]] =
+    def unapply[T, R](agg: ExprNode.Aggregate[T, R]): Option[(ExprNode[T], CompiledAggregateExpr[T, R])] =
       agg match {
         case ExprNode.Aggregate(arg @ UnsupportedDistinctInput(), PrimitiveAggregate.CountDistinct()) =>
-          Some(CompiledAggregateExpr[T, R](count(_))(using arg.codec))
+          Some(arg, CompiledAggregateExpr[T, R](aggregates.count(_))(using arg.codec))
         case _ => None
       }
   }
@@ -134,7 +134,7 @@ object RemoveDistinctAggregatesOnArraysAndStructs extends DatasetRule {
       .expr
       .collect { case node @ ExprNode.Aggregate(_, _) => node }
       .partitionMap {
-        case agg @ UnsupportedAggregate(replacementAgg) =>
+        case agg @ UnsupportedAggregate(_, replacementAgg) =>
           Left(RewriteCandidate(aggregate.arg, agg, replacementAgg))
         case other => Right(other)
       }
@@ -163,10 +163,10 @@ object RemoveDistinctAggregatesOnArraysAndStructs extends DatasetRule {
         case _ => false
       }
 
-    def computeDistinctInput[A, B](unsupported: ExprNode.Aggregate[A, B]): Dataset[A] = {
+    def computeDistinctInput[A](arg: ExprNode[A]): Dataset[A] = {
       val extractArg = {
         val ref = ExprNode.Reference()(using agg.arg.codec)
-        CompiledExpr(ref, unsupported.arg.replace(agg.arg, ref))
+        CompiledExpr(ref, arg.replace(agg.arg, ref))
       }
       Dataset.Distinct(Dataset.Select1(input, extractArg))
     }
@@ -180,12 +180,9 @@ object RemoveDistinctAggregatesOnArraysAndStructs extends DatasetRule {
         .transformAccumulateDown[Option[Acc[?]]](None)([t] =>
           (_, node) =>
             node match {
-              case unsupported @ UnsupportedAggregate(replacement) =>
-                val newRef = ExprNode.Reference()(using unsupported.arg.codec)
-                Stop(
-                  Some(Acc(computeDistinctInput(unsupported), newRef)),
-                  replacement.expr.replace(replacement.arg, newRef)
-                )
+              case UnsupportedAggregate(arg, count) =>
+                val newRef = ExprNode.Reference()(using count.arg.codec)
+                Stop(Some(Acc(computeDistinctInput(arg), newRef)), count.expr.replace(count.arg, newRef))
               case other => Continue((None, other))
             }
         ): @unchecked // Safe since we already checked that there is exactly one unssupported aggregate
@@ -196,8 +193,8 @@ object RemoveDistinctAggregatesOnArraysAndStructs extends DatasetRule {
         .expr
         .transformDown([t] =>
           _ match {
-            case unsupported @ UnsupportedAggregate(replacement) =>
-              val computed = Dataset.Aggregate(computeDistinctInput(unsupported), replacement)
+            case UnsupportedAggregate(arg, count) =>
+              val computed = Dataset.Aggregate(computeDistinctInput(arg), count)
               Skip(ExprNode.ScalarSubquery(computed).get)
             case other => Continue(other)
           }
