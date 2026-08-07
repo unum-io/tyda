@@ -125,11 +125,8 @@ object SparkJsonCompatability {
       case Codec.Short => tryCastAndExpect[Short]
       case Codec.Int => tryCastAndExpect[Int]
       case Codec.Long => tryCastAndExpect[Long]
-      case Codec.Map(given Codec[k], given Codec[v]) => Some(ReadAdapter(
-          Codec[Seq[(key: k, value: v)]],
-          // TODO: Would be nice if this could just be a cast instead of a higher order function
-          seq => seq.map { case Expr(key, value) => (key, value) }.toMap
-        ))
+      case Codec.Map(given Codec[k], given Codec[v]) =>
+        Some(ReadAdapter(Codec[Seq[(key: k, value: v)]], _.cast[Seq[(k, v)]].toMap))
       case Codec.DurationMicros => Some(ReadAdapter(Codec[Long], microsToDuration))
       case _ => None
     }
