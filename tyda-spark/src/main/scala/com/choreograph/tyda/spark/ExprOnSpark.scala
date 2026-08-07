@@ -258,8 +258,13 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
         createUdf(integral.quot, convert(lhs), convert(rhs), s"$integral.quot")(using lhs.codec, lhs.codec)
       case ExprNode.Cast(from, canCast) => convert(from).cast(catalystType(expr.codec))
       case ExprNode.TryCast(from, canTryCast) =>
-        val casted = tryCast(convert(from), expr.codec)
-        if from.codec == Codec.String then when(!convert(from).rlike("\\p{Cc}"), casted) else casted
+        val fromCol = convert(from)
+        val preRounded = (from.codec, canTryCast.codec) match {
+          case (Codec.Decimal(_, _), Codec.Long) => org.apache.spark.sql.functions.round(fromCol, 0)
+          case _ => fromCol
+        }
+        val casted = tryCast(preRounded, expr.codec)
+        if from.codec == Codec.String then when(!fromCol.rlike("\\p{Cc}"), casted) else casted
       case ExprNode.TimestampToMicros(inner) => unix_micros(convert(inner))
       case ExprNode.MicrosToTimestamp(inner) => timestamp_micros(convert(inner))
       case ExprNode.DurationToMicros(inner) => convert(inner)

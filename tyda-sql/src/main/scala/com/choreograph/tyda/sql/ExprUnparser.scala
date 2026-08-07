@@ -644,8 +644,13 @@ private def cast(expr: SqlExpr, to: Codec[?], dialect: SqlDialect): SqlExpr =
   SqlExpr.Cast(expr, ToDdl.toDdlType(to, dialect.ddl))
 
 private def tryCast(expr: SqlExpr, from: Codec[?], to: Codec[?], dialect: SqlDialect): SqlExpr =
+  val preRounded = (from, to) match {
+    case (Codec.Decimal(_, _), Codec.Long) =>
+      SqlExpr.Function("round", Seq(expr, literalToSqlExpr(0, Codec.Int, dialect)))
+    case _ => expr
+  }
   SqlExpr
-    .Cast(dialect.tryCast, expr, ToDdl.toDdlType(to, dialect.ddl))
+    .Cast(dialect.tryCast, preRounded, ToDdl.toDdlType(to, dialect.ddl))
     .pipe(addControlCharCheckIfNeeded(expr, _, from, dialect))
     .pipe(addIntRangeCheckIfNeeded(_, to, dialect))
     .pipe(addDecimalRangeAndRoundingIfNeeded(_, to, dialect))

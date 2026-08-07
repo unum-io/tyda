@@ -28,6 +28,8 @@ object CanTryCast {
       val valid: Decimal.Valid[P2, S2]
   ) extends CanTryCast[Decimal[P1, S1], Decimal[P2, S2]]
 
+  private[tyda] final case class DecimalToLong[P <: Int, S <: Int]() extends CanTryCast[Decimal[P, S], Long]
+
   private[tyda] case object StringToByte extends CanTryCast[String, Byte]
   private[tyda] case object StringToShort extends CanTryCast[String, Short]
   private[tyda] case object StringToInt extends CanTryCast[String, Int]
@@ -54,6 +56,8 @@ object CanTryCast {
   given decimalToDecimal[P1 <: Int, S1 <: Int, P2 <: Int, S2 <: Int](using
       valid: Decimal.Valid[P2, S2]
   ): CanTryCast[Decimal[P1, S1], Decimal[P2, S2]] = DecimalToDecimal()
+
+  given decimalToLong[P <: Int, S <: Int]: CanTryCast[Decimal[P, S], Long] = DecimalToLong()
 
   given stringToByte: CanTryCast[String, Byte] = StringToByte
   given stringToShort: CanTryCast[String, Short] = StringToShort

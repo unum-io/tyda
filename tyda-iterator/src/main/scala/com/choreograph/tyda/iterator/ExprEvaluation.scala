@@ -366,6 +366,7 @@ object ExprEvaluation {
       case cast @ CanTryCast.DecimalToDecimal() =>
         import cast.given
         v => Decimal(v.toBigDecimal)
+      case CanTryCast.DecimalToLong() => _.roundToLong
       case CanTryCast.StringToByte => checkedFromString[Byte]
       case CanTryCast.StringToShort => checkedFromString[Short]
       case CanTryCast.StringToInt => checkedFromString[Int]

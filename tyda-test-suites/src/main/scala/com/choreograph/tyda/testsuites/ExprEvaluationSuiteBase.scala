@@ -1182,6 +1182,19 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testTryCast[Decimal[19, 1], Decimal[19, 0]](v => Decimal[19, 0](v.toBigDecimal))
   testTryCast[Decimal[19, 3], Decimal[10, 3]](v => Decimal[10, 3](v.toBigDecimal))
 
+  testTryCast[Decimal[38, 9], Long](_.roundToLong)
+  testHasSameBehavior[Decimal[19, 3], Option[Long]](
+    "try cast Decimal to Long is consistent with Decimal rounding",
+    _.tryCast[Decimal[19, 0]].flatMap(_.tryCast[Long]),
+    _.roundToLong
+  )
+
+  testHasSameBehavior[Long, Option[Long]](
+    "cast Long to Decimal[38,9] then tryCast to Long roundtrip",
+    _.cast[Decimal[38, 9]].tryCast[Long],
+    Some(_)
+  )
+
   def testLiteralCreation[T: ClassTag: Arbitrary: Codec: TypeName](fixed: T) =
     testHasSameBehavior[T, T](
       s"create literal ${fixed.toString} ${TypeName.name[T]}",
