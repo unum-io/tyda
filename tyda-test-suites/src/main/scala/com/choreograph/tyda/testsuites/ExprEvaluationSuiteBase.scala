@@ -1183,11 +1183,28 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testTryCast[Decimal[19, 3], Decimal[10, 3]](v => Decimal[10, 3](v.toBigDecimal))
 
   testTryCast[Decimal[38, 9], Long](_.roundToLong)
-  testHasSameBehavior[Decimal[19, 3], Option[Long]](
-    "try cast Decimal to Long is consistent with Decimal rounding",
-    _.tryCast[Decimal[19, 0]].flatMap(_.tryCast[Long]),
-    _.roundToLong
-  )
+  testTryCast[Decimal[19, 9], Long](_.roundToLong)
+  testTryCast[Decimal[18, 9], Long](_.roundToLong)
+  testTryCast[Decimal[18, 0], Long](x => Some(x.toLong))
+
+  def testDecimalToLongRounding[P <: Int, S <: Int](using
+      Codec[Decimal[P, S]],
+      Arbitrary[Decimal[P, S]],
+      TypeName[Decimal[P, S]],
+      CanTryCast[Decimal[P, S], Decimal[P, 0]],
+      CanTryCast[Decimal[P, 0], Long]
+  ) =
+    testHasSameBehavior[Decimal[P, S], Option[Long]](
+      s"try cast ${TypeName.name[Decimal[P, S]]} to Long is consistent with Decimal rounding",
+      _.tryCast[Decimal[P, 0]].flatMap(_.tryCast[Long]),
+      _.roundToLong
+    )
+
+  testDecimalToLongRounding[38, 9]
+  testDecimalToLongRounding[19, 3]
+  testDecimalToLongRounding[19, 0]
+  testDecimalToLongRounding[18, 9]
+  testDecimalToLongRounding[18, 0]
 
   testHasSameBehavior[Long, Option[Long]](
     "cast Long to Decimal[38,9] then tryCast to Long roundtrip",
