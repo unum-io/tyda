@@ -69,8 +69,8 @@ object RemoveDistinctAggregatesOnArraysAndStructs extends DatasetRule {
       }
   }
 
-  /* Hold an unsupported aggregate `agg` and `extractor` that captures how to extract the same result from
-   * the output after the rewrite. */
+  /* Hold an unsupported aggregate `agg` and `extractor` that captures how to extract the same result from the
+   * output after the rewrite. */
   private final case class Replacement[V, T, R](
       agg: ExprNode.Aggregate[T, R],
       extractor: CompiledExpr[V, R]
@@ -181,8 +181,7 @@ object RemoveDistinctAggregatesOnArraysAndStructs extends DatasetRule {
           (_, node) =>
             node match {
               case UnsupportedAggregate(arg, count) =>
-                val newRef = ExprNode.Reference()(using count.arg.codec)
-                Stop(Some(Acc(computeDistinctInput(arg), newRef)), count.expr.replace(count.arg, newRef))
+                Stop(Some(Acc(computeDistinctInput(arg), count.arg)), count.expr)
               case other => Continue((None, other))
             }
         ): @unchecked // Safe since we already checked that there is exactly one unssupported aggregate
