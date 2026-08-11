@@ -1183,8 +1183,8 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testTryCast[Decimal[19, 3], Decimal[10, 3]](v => Decimal[10, 3](v.toBigDecimal))
 
   testTryCast[Decimal[38, 9], Long](_.roundToLong)
-  testTryCast[Decimal[19, 9], Long](_.roundToLong)
-  testTryCast[Decimal[18, 9], Long](_.roundToLong)
+  testTryCast[Decimal[19, 1], Long](_.roundToLong)
+  testTryCast[Decimal[18, 1], Long](_.roundToLong)
   testTryCast[Decimal[18, 0], Long](x => Some(x.toLong))
 
   def testDecimalToLongRounding[P <: Int, S <: Int](using
@@ -1201,9 +1201,9 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     )
 
   testDecimalToLongRounding[38, 9]
-  testDecimalToLongRounding[19, 3]
+  testDecimalToLongRounding[19, 1]
   testDecimalToLongRounding[19, 0]
-  testDecimalToLongRounding[18, 9]
+  testDecimalToLongRounding[18, 1]
   testDecimalToLongRounding[18, 0]
 
   testHasSameBehavior[Long, Option[Long]](
