@@ -1426,11 +1426,11 @@ SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-999
 SELECT SAFE_CAST(round(t1.value, CAST(0 AS INT)) AS BIGINT) AS value FROM t1
 ------ end
 
------- Test: try cast com.choreograph.tyda.Decimal$package.Decimal[18, 9] to Long is consistent with Decimal rounding
+------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[18, 1] to Long is consistent with Decimal rounding
 SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT)) IS NULL) THEN CAST(NULL AS BIGINT) ELSE SAFE_CAST(round(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT)), CAST(0 AS INT)) AS BIGINT) END AS value FROM t1
 ------ end
 
------- Test: try cast com.choreograph.tyda.Decimal$package.Decimal[18, 9] to scala.Long
+------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[18, 1] to scala.Long
 SELECT SAFE_CAST(round(t1.value, CAST(0 AS INT)) AS BIGINT) AS value FROM t1
 ------ end
 
@@ -1438,12 +1438,16 @@ SELECT SAFE_CAST(round(t1.value, CAST(0 AS INT)) AS BIGINT) AS value FROM t1
 SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-9999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('9999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT)) IS NULL) THEN CAST(NULL AS BIGINT) ELSE SAFE_CAST(round(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-9999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('9999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT)), CAST(0 AS INT)) AS BIGINT) END AS value FROM t1
 ------ end
 
+------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 1] to Long is consistent with Decimal rounding
+SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-9999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('9999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT)) IS NULL) THEN CAST(NULL AS BIGINT) ELSE SAFE_CAST(round(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-9999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('9999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT)), CAST(0 AS INT)) AS BIGINT) END AS value FROM t1
+------ end
+
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 1] to com.choreograph.tyda.Decimal$package.Decimal[19, 0]
 SELECT round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-9999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('9999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT)) AS value FROM t1
 ------ end
 
------- Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 3] to Long is consistent with Decimal rounding
-SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-9999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('9999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT)) IS NULL) THEN CAST(NULL AS BIGINT) ELSE SAFE_CAST(round(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-9999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('9999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT)), CAST(0 AS INT)) AS BIGINT) END AS value FROM t1
+------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 1] to scala.Long
+SELECT SAFE_CAST(round(t1.value, CAST(0 AS INT)) AS BIGINT) AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 3] to com.choreograph.tyda.Decimal$package.Decimal[10, 3]
@@ -1452,10 +1456,6 @@ SELECT round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-9999999' AS BI
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 3] to com.choreograph.tyda.Decimal$package.Decimal[38, 9]
 SELECT round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT)) AS value FROM t1
------- end
-
------- Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 9] to scala.Long
-SELECT SAFE_CAST(round(t1.value, CAST(0 AS INT)) AS BIGINT) AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[38, 9] to Long is consistent with Decimal rounding
