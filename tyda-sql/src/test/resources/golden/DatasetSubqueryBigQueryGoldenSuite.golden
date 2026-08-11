@@ -1,21 +1,21 @@
 ------ Test: collect subquery
-SELECT table1.value AS value FROM table1 WHERE (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = table1.value) FROM unnest(coalesce((SELECT CASE WHEN (count(1) <> 0) THEN array_agg(table2.value) END AS value FROM table2), CAST([] AS ARRAY<TINYINT>))) AS c0))) AS c1)
+SELECT table1.value AS value FROM table1 WHERE (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = table1.value) FROM unnest(coalesce((SELECT CASE WHEN (count(1) <> 0) THEN array_agg(table2.value) END AS value FROM table2), CAST([] AS ARRAY<INT64>))) AS c0))) AS c1)
 ------ end
 
 ------ Test: count subquery
-SELECT table1.value AS value FROM table1 WHERE (NOT (table1.value <= coalesce((SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM table2), CAST(0 AS BIGINT))))
+SELECT table1.value AS value FROM table1 WHERE (NOT (table1.value <= coalesce((SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT64)) END AS value FROM table2), CAST(0 AS INT64))))
 ------ end
 
 ------ Test: exists subquery
-SELECT EXISTS (SELECT CAST(1 AS INT) AS value FROM table1 WHERE (NOT (table1.value <= CAST(0 AS BIGINT)))) AS value FROM table1
+SELECT EXISTS (SELECT CAST(1 AS INT64) AS value FROM table1 WHERE (NOT (table1.value <= CAST(0 AS INT64)))) AS value FROM table1
 ------ end
 
 ------ Test: exists subquery in where
-SELECT table1.value AS value FROM table1 WHERE EXISTS (SELECT CAST(1 AS INT) AS value FROM table1 WHERE (NOT (table1.value <= CAST(0 AS BIGINT))))
+SELECT table1.value AS value FROM table1 WHERE EXISTS (SELECT CAST(1 AS INT64) AS value FROM table1 WHERE (NOT (table1.value <= CAST(0 AS INT64))))
 ------ end
 
 ------ Test: explode subquery
-SELECT t0 AS _1, coalesce((SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM table2, unnest(table2.value) AS t1), CAST(0 AS BIGINT)) AS _2 FROM table1, unnest(table1.value) AS t0
+SELECT t0 AS _1, coalesce((SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT64)) END AS value FROM table2, unnest(table2.value) AS t1), CAST(0 AS INT64)) AS _2 FROM table1, unnest(table1.value) AS t0
 ------ end
 
 ------ Test: scalar subquery

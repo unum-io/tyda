@@ -220,7 +220,23 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
             }
         }
       case ExprNode.LessThanOrEqual(_, lhs, rhs) => binaryOp("<=", lhs, rhs)
+      case ExprNode.And(lhs, rhs) if dialect.useCaseForShortCircuitBooleanOperators =>
+        for {
+          lhsSql <- inner(lhs)
+          rhsSql <- inner(rhs)
+        } yield SqlExpr.Case(
+          Seq((condition = lhsSql, result = rhsSql)),
+          elseExpr = Some(SqlExpr.LiteralBool(false))
+        )
       case ExprNode.And(lhs, rhs) => binaryOp("AND", lhs, rhs)
+      case ExprNode.Or(lhs, rhs) if dialect.useCaseForShortCircuitBooleanOperators =>
+        for {
+          lhsSql <- inner(lhs)
+          rhsSql <- inner(rhs)
+        } yield SqlExpr.Case(
+          Seq((condition = lhsSql, result = SqlExpr.LiteralBool(true))),
+          elseExpr = Some(rhsSql)
+        )
       case ExprNode.Or(lhs, rhs) => binaryOp("OR", lhs, rhs)
       case ExprNode.Not(operand) => inner(operand).map(SqlExpr.not)
       case ExprNode.MakeProduct(values, codec) =>
@@ -438,15 +454,41 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
             case SqlDialect.ArrayDistinct.Function(name) => SqlExpr.Function(name, Seq(arr))
             case SqlDialect.ArrayDistinct.Subquery(makeArray, unnest) =>
               val element = args.aliasGen.column()
-              val elementIdent = SqlExpr.Ident(element)
-              val unnestFrom = From.Expr(SqlExpr.Function(unnest, Seq(arr)), element)
               val selectQuery = Query.Select(
-                select = NonEmpty(elementIdent),
-                from = Some(unnestFrom),
+                select = NonEmpty(SqlExpr.Ident(element)),
+                from = Some(From.Expr(SqlExpr.Function(unnest, Seq(arr)), element)),
                 where = None,
                 groupBy = Seq.empty,
                 having = None,
                 distinct = true
+              )
+              SqlExpr.Function(makeArray, Seq(SqlExpr.Subquery(selectQuery)))
+            case SqlDialect.ArrayDistinct.OrderedSubquery(makeArray, unnest) =>
+              val element = args.aliasGen.column()
+              val offset = args.aliasGen.column()
+              val firstOffset = args.aliasGen.column()
+              val subqueryAlias = args.aliasGen.column()
+              val elementIdent = SqlExpr.Ident(element)
+              val unnestFrom = From.ExprWithOffset(SqlExpr.Function(unnest, Seq(arr)), element, offset)
+              val distinctQuery = Query.Select(
+                select = NonEmpty[Seq](
+                  SqlExpr.As(elementIdent, "value"),
+                  SqlExpr.As(SqlExpr.Function("min", Seq(SqlExpr.Ident(offset))), firstOffset)
+                ),
+                from = Some(unnestFrom),
+                where = None,
+                groupBy = Seq(elementIdent),
+                having = None,
+                distinct = false
+              )
+              val selectQuery = Query.Select(
+                select = NonEmpty(SqlExpr.FieldAccess(SqlExpr.Ident(subqueryAlias), "value")),
+                from = Some(From.Subquery(distinctQuery, subqueryAlias)),
+                where = None,
+                groupBy = Seq.empty,
+                having = None,
+                distinct = false,
+                orderBy = Seq(SqlExpr.FieldAccess(SqlExpr.Ident(subqueryAlias), firstOffset))
               )
               SqlExpr.Function(makeArray, Seq(SqlExpr.Subquery(selectQuery)))
           }
@@ -456,6 +498,23 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
             case SqlDialect.FromBase64Support.TryFunction(name, format) =>
               SqlExpr.Function(name, Seq(str, SqlExpr.LiteralString(format)))
             case SqlDialect.FromBase64Support.Function(name) => SqlExpr.Function(name, Seq(str))
+            case SqlDialect.FromBase64Support.StrictFunction(name, replace, matches) =>
+              val withoutWhitespace = SqlExpr.Function(
+                replace,
+                Seq(str, SqlExpr.LiteralRawString("[\\x20\\t-\\r]"), SqlExpr.LiteralString(""))
+              )
+              val isValid = SqlExpr.Function(
+                matches,
+                Seq(
+                  withoutWhitespace,
+                  SqlExpr.LiteralRawString(
+                    "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}(?:==)?|[A-Za-z0-9+/]{3}=?)?$"
+                  )
+                )
+              )
+              SqlExpr.Case(Seq(
+                (condition = isValid, result = SqlExpr.Function(name, Seq(withoutWhitespace)))
+              ))
           }
         )
       case ExprNode.ToBase64(binary) => inner(binary).map(bin =>
@@ -913,6 +972,12 @@ private def primitiveAggregate[T: Codec](
   def simple(name: String): Result[SqlExpr] = simpleAggregate(name, arg)
   def binaryAgg(name: String): Result[SqlExpr] =
     Right(SqlExpr.Function(name, Seq(SqlExpr.FieldAccess(arg, "_1"), SqlExpr.FieldAccess(arg, "_2"))))
+  def orderedArrayAgg(descending: Boolean, name: String): Result[SqlExpr] = {
+    val value = SqlExpr.FieldAccess(arg, "_1")
+    val key = SqlExpr.FieldAccess(arg, "_2")
+    val aggregate = SqlExpr.OrderedAggregate(name, value, key, descending, limit = 1)
+    Right(SqlExpr.Index(aggregate, SqlExpr.Function("OFFSET", Seq(SqlExpr.LiteralNumeric("0")))))
+  }
   agg match {
     case PrimitiveAggregate.Count() => simple("count")
     case PrimitiveAggregate.BoolAnd() => simple(dialect.boolAndFunction)
@@ -929,8 +994,14 @@ private def primitiveAggregate[T: Codec](
       }
     case PrimitiveAggregate.Max(_) => simple("max")
     case PrimitiveAggregate.Min(_) => simple("min")
-    case PrimitiveAggregate.MaxBy(_) => binaryAgg("max_by")
-    case PrimitiveAggregate.MinBy(_) => binaryAgg("min_by")
+    case PrimitiveAggregate.MaxBy(_) => dialect.minMaxBy match {
+        case SqlDialect.MinMaxBy.Function(_, max) => binaryAgg(max)
+        case SqlDialect.MinMaxBy.OrderedArrayAgg(name) => orderedArrayAgg(descending = true, name)
+      }
+    case PrimitiveAggregate.MinBy(_) => dialect.minMaxBy match {
+        case SqlDialect.MinMaxBy.Function(min, _) => binaryAgg(min)
+        case SqlDialect.MinMaxBy.OrderedArrayAgg(name) => orderedArrayAgg(descending = false, name)
+      }
     case PrimitiveAggregate.Sum(CompatibleSum()) => simple("sum")
     case PrimitiveAggregate.Sum(magnet) =>
       Left(DatasetToSqlError.RequiresUdfCapability(s"Sum uses custom $magnet"))

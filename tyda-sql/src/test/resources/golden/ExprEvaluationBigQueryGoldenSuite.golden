@@ -43,15 +43,15 @@ SELECT CASE WHEN ((t1._1 IS NOT NULL) AND (t1._2 IS NOT NULL)) THEN struct(t1._1
 ------ end
 
 ------ Test: Option.contains
-SELECT ((t1.value IS NOT NULL) AND (t1.value = CAST(0 AS TINYINT))) AS value FROM t1
+SELECT ((t1.value IS NOT NULL) AND (t1.value = CAST(0 AS INT64))) AS value FROM t1
 ------ end
 
 ------ Test: Option.exists
-SELECT CASE WHEN (t1.value IS NULL) THEN FALSE ELSE (t1.value = CAST(0 AS TINYINT)) END AS value FROM t1
+SELECT CASE WHEN (t1.value IS NULL) THEN FALSE ELSE (t1.value = CAST(0 AS INT64)) END AS value FROM t1
 ------ end
 
 ------ Test: Option.forall
-SELECT CASE WHEN (t1.value IS NULL) THEN TRUE ELSE (t1.value = CAST(0 AS TINYINT)) END AS value FROM t1
+SELECT CASE WHEN (t1.value IS NULL) THEN TRUE ELSE (t1.value = CAST(0 AS INT64)) END AS value FROM t1
 ------ end
 
 ------ Test: Option.getOrElse
@@ -63,7 +63,7 @@ SELECT (t1.value IS NULL) AS value FROM t1
 ------ end
 
 ------ Test: Option.map
-SELECT CASE WHEN (t1.value IS NOT NULL) THEN (t1.value = CAST(0 AS INT)) END AS value FROM t1
+SELECT CASE WHEN (t1.value IS NOT NULL) THEN (t1.value = CAST(0 AS INT64)) END AS value FROM t1
 ------ end
 
 ------ Test: Option.orElse
@@ -119,11 +119,11 @@ SELECT t1.a AS a, t1.b AS b, t1.c AS c FROM t1
 ------ end
 
 ------ Test: array element access fails on index too large
-SELECT [CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)][CAST(100 AS INT)] AS value FROM t1
+SELECT [CAST(1 AS INT64), CAST(2 AS INT64), CAST(3 AS INT64)][CAST(100 AS INT64)] AS value FROM t1
 ------ end
 
 ------ Test: array element access fails on negative index
-SELECT [CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)][CAST(-1 AS INT)] AS value FROM t1
+SELECT [CAST(1 AS INT64), CAST(2 AS INT64), CAST(3 AS INT64)][CAST(-1 AS INT64)] AS value FROM t1
 ------ end
 
 ------ Test: array element access with Expr index
@@ -131,31 +131,31 @@ SELECT t1._1[t1._2] AS value FROM t1
 ------ end
 
 ------ Test: array element access with literal index
-SELECT t1.value[CAST(0 AS INT)] AS value FROM t1
+SELECT t1.value[CAST(0 AS INT64)] AS value FROM t1
 ------ end
 
 ------ Test: array element access with literal index and array element
-SELECT t1.value[CAST(0 AS INT)].value AS value FROM t1
+SELECT t1.value[CAST(0 AS INT64)].value AS value FROM t1
 ------ end
 
 ------ Test: asBase complex
-SELECT 'c' AS discriminant, t1._1 AS c, CAST(NULL AS STRUCT<i INT>) AS d FROM t1
+SELECT 'c' AS discriminant, t1._1 AS c, CAST(NULL AS STRUCT<i INT64>) AS d FROM t1
 ------ end
 
 ------ Test: asBase from enum case class C to enum
-SELECT 'c' AS discriminant, struct(t1.i AS i) AS c, CAST(NULL AS STRUCT<i INT>) AS d FROM t1
+SELECT 'c' AS discriminant, struct(t1.i AS i) AS c, CAST(NULL AS STRUCT<i INT64>) AS d FROM t1
 ------ end
 
 ------ Test: asBase from enum case class D to enum
-SELECT 'd' AS discriminant, CAST(NULL AS STRUCT<i INT>) AS c, struct(t1.i AS i) AS d FROM t1
+SELECT 'd' AS discriminant, CAST(NULL AS STRUCT<i INT64>) AS c, struct(t1.i AS i) AS d FROM t1
 ------ end
 
 ------ Test: asBase from enum case object A to enum
-SELECT 'a' AS discriminant, CAST(NULL AS STRUCT<i INT>) AS c, CAST(NULL AS STRUCT<i INT>) AS d FROM t1
+SELECT 'a' AS discriminant, CAST(NULL AS STRUCT<i INT64>) AS c, CAST(NULL AS STRUCT<i INT64>) AS d FROM t1
 ------ end
 
 ------ Test: asBase from enum case object B to enum
-SELECT 'b' AS discriminant, CAST(NULL AS STRUCT<i INT>) AS c, CAST(NULL AS STRUCT<i INT>) AS d FROM t1
+SELECT 'b' AS discriminant, CAST(NULL AS STRUCT<i INT64>) AS c, CAST(NULL AS STRUCT<i INT64>) AS d FROM t1
 ------ end
 
 ------ Test: asBase from string complex
@@ -171,7 +171,7 @@ SELECT 'a' AS value FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for enum product case
-SELECT coalesce(struct(t1.i AS i), CAST(error('Failed to invert asBase') AS STRUCT<i INT>)).i AS i FROM t1
+SELECT coalesce(struct(t1.i AS i), CAST(error('Failed to invert asBase') AS STRUCT<i INT64>)).i AS i FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for enum singleton case
@@ -179,7 +179,7 @@ SELECT CAST(NULL AS BOOL) FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for sealed trait product case
-SELECT coalesce(struct(t1.i AS i), CAST(error('Failed to invert asBase') AS STRUCT<i INT>)).i AS i FROM t1
+SELECT coalesce(struct(t1.i AS i), CAST(error('Failed to invert asBase') AS STRUCT<i INT64>)).i AS i FROM t1
 ------ end
 
 ------ Test: asBase inverts asCase for sealed trait singleton case
@@ -211,11 +211,11 @@ SELECT CASE WHEN (t1.value = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is
 ------ end
 
 ------ Test: asCase inverts asBase for enum product case
-SELECT CASE WHEN (t1.c IS NOT NULL) THEN struct('c' AS discriminant, t1.c AS c, CAST(NULL AS STRUCT<i INT>) AS d) END AS value FROM t1
+SELECT CASE WHEN (t1.c IS NOT NULL) THEN struct('c' AS discriminant, t1.c AS c, CAST(NULL AS STRUCT<i INT64>) AS d) END AS value FROM t1
 ------ end
 
 ------ Test: asCase inverts asBase for enum singleton case
-SELECT CASE WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN struct('a' AS discriminant, CAST(NULL AS STRUCT<i INT>) AS c, CAST(NULL AS STRUCT<i INT>) AS d) END AS value FROM t1
+SELECT CASE WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN struct('a' AS discriminant, CAST(NULL AS STRUCT<i INT64>) AS c, CAST(NULL AS STRUCT<i INT64>) AS d) END AS value FROM t1
 ------ end
 
 ------ Test: asCase inverts asBase for sealed trait product case
@@ -223,7 +223,7 @@ SELECT CASE WHEN (t1.b IS NOT NULL) THEN struct('b' AS discriminant, t1.b AS b) 
 ------ end
 
 ------ Test: asCase inverts asBase for sealed trait singleton case
-SELECT CASE WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN struct('a' AS discriminant, CAST(NULL AS STRUCT<i INT>) AS b) END AS value FROM t1
+SELECT CASE WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN struct('a' AS discriminant, CAST(NULL AS STRUCT<i INT64>) AS b) END AS value FROM t1
 ------ end
 
 ------ Test: asCase inverts asBase for string enum singleton case
@@ -255,11 +255,11 @@ SELECT byte_length(t1.value) AS value FROM t1
 ------ end
 
 ------ Test: cases.when first matching branch is used
-SELECT CASE WHEN (NOT (t1.value <= CAST(0 AS INT))) THEN CAST(1 AS INT) WHEN (NOT (t1.value <= CAST(-5 AS INT))) THEN CAST(2 AS INT) ELSE CAST(3 AS INT) END AS value FROM t1
+SELECT CASE WHEN (NOT (t1.value <= CAST(0 AS INT64))) THEN CAST(1 AS INT64) WHEN (NOT (t1.value <= CAST(-5 AS INT64))) THEN CAST(2 AS INT64) ELSE CAST(3 AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: cases.when with Option result and otherwise
-SELECT CASE WHEN (NOT (t1.value <= CAST(0 AS INT))) THEN t1.value END AS value FROM t1
+SELECT CASE WHEN (NOT (t1.value <= CAST(0 AS INT64))) THEN t1.value END AS value FROM t1
 ------ end
 
 ------ Test: cases.when with literal then-expressions
@@ -267,11 +267,11 @@ SELECT CASE WHEN t1._1 THEN t1._2 ELSE t1._3 END AS value FROM t1
 ------ end
 
 ------ Test: cases.when with many branches and literal otherwise
-SELECT CASE WHEN (t1.value < CAST(0 AS INT)) THEN 'negative' WHEN (t1.value = CAST(0 AS INT)) THEN 'zero' ELSE 'positive' END AS value FROM t1
+SELECT CASE WHEN (t1.value < CAST(0 AS INT64)) THEN 'negative' WHEN (t1.value = CAST(0 AS INT64)) THEN 'zero' ELSE 'positive' END AS value FROM t1
 ------ end
 
 ------ Test: cases.when with multiple branches and otherwise
-SELECT CASE WHEN (NOT (t1._1 <= CAST(0 AS INT))) THEN t1._1 WHEN (NOT (t1._2 <= CAST(0 AS INT))) THEN t1._2 ELSE CAST(0 AS INT) END AS value FROM t1
+SELECT CASE WHEN (NOT (t1._1 <= CAST(0 AS INT64))) THEN t1._1 WHEN (NOT (t1._2 <= CAST(0 AS INT64))) THEN t1._2 ELSE CAST(0 AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: cases.when with single branch and otherwise
@@ -327,27 +327,27 @@ SELECT CAST(t1.value AS FLOAT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Byte to scala.Int
-SELECT CAST(t1.value AS INT) AS value FROM t1
+SELECT CAST(t1.value AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Byte to scala.Long
-SELECT CAST(t1.value AS BIGINT) AS value FROM t1
+SELECT CAST(t1.value AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Byte to scala.Short
-SELECT CAST(t1.value AS SMALLINT) AS value FROM t1
+SELECT CAST(t1.value AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Double to com.choreograph.tyda.Decimal$package.Decimal[3, 1] and back
-SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(1 AS INT)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(1 AS INT)) AS FLOAT64) END AS value FROM t1
+SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(1 AS INT64)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(1 AS INT64)) AS FLOAT64) END AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Double to com.choreograph.tyda.Decimal$package.Decimal[38, 18] and back
-SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS BIGDECIMAL) >= CAST('-99999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS BIGDECIMAL) <= CAST('99999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS BIGDECIMAL) END, CAST(18 AS INT)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS BIGDECIMAL) >= CAST('-99999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS BIGDECIMAL) <= CAST('99999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS BIGDECIMAL) END, CAST(18 AS INT)) AS FLOAT64) END AS value FROM t1
+SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS BIGDECIMAL) >= CAST('-99999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS BIGDECIMAL) <= CAST('99999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS BIGDECIMAL) END, CAST(18 AS INT64)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS BIGDECIMAL) >= CAST('-99999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS BIGDECIMAL) <= CAST('99999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS BIGDECIMAL) END, CAST(18 AS INT64)) AS FLOAT64) END AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Double to com.choreograph.tyda.Decimal$package.Decimal[38, 9] and back
-SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT)) AS FLOAT64) END AS value FROM t1
+SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT64)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT64)) AS FLOAT64) END AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Double to scala.Float
@@ -355,15 +355,15 @@ SELECT CAST(t1.value AS FLOAT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Float to com.choreograph.tyda.Decimal$package.Decimal[2, 0] and back
-SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT)) AS FLOAT64) END AS value FROM t1
+SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT64)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT64)) AS FLOAT64) END AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Float to com.choreograph.tyda.Decimal$package.Decimal[38, 18] and back
-SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS BIGDECIMAL) >= CAST('-99999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS BIGDECIMAL) <= CAST('99999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS BIGDECIMAL) END, CAST(18 AS INT)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS BIGDECIMAL) >= CAST('-99999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS BIGDECIMAL) <= CAST('99999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS BIGDECIMAL) END, CAST(18 AS INT)) AS FLOAT64) END AS value FROM t1
+SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS BIGDECIMAL) >= CAST('-99999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS BIGDECIMAL) <= CAST('99999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS BIGDECIMAL) END, CAST(18 AS INT64)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS BIGDECIMAL) >= CAST('-99999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS BIGDECIMAL) <= CAST('99999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS BIGDECIMAL) END, CAST(18 AS INT64)) AS FLOAT64) END AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Float to com.choreograph.tyda.Decimal$package.Decimal[38, 9] and back
-SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT)) AS FLOAT64) END AS value FROM t1
+SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT64)) IS NOT NULL) THEN CAST(round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT64)) AS FLOAT64) END AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Float to scala.Double
@@ -387,7 +387,7 @@ SELECT CAST(t1.value AS FLOAT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Int to scala.Long
-SELECT CAST(t1.value AS BIGINT) AS value FROM t1
+SELECT CAST(t1.value AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Long to com.choreograph.tyda.Decimal$package.Decimal[22, 2]
@@ -423,11 +423,11 @@ SELECT CAST(t1.value AS FLOAT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Short to scala.Int
-SELECT CAST(t1.value AS INT) AS value FROM t1
+SELECT CAST(t1.value AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.Short to scala.Long
-SELECT CAST(t1.value AS BIGINT) AS value FROM t1
+SELECT CAST(t1.value AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.collection.immutable.Seq[scala.Byte] to scala.collection.immutable.Seq[scala.Double]
@@ -439,11 +439,11 @@ SELECT array((SELECT CAST(c0 AS FLOAT64) FROM unnest(t1.value) AS c0)) AS value 
 ------ end
 
 ------ Test: cast scala.collection.immutable.Seq[scala.Int] to scala.collection.immutable.Seq[scala.Long]
-SELECT array((SELECT CAST(c0 AS BIGINT) FROM unnest(t1.value) AS c0)) AS value FROM t1
+SELECT array((SELECT CAST(c0 AS INT64) FROM unnest(t1.value) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: cast scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.Int]] to scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.Long]]
-SELECT array((SELECT struct(CAST(c0.value AS ARRAY<BIGINT>) AS value) FROM unnest(t1.value) AS c0)) AS value FROM t1
+SELECT array((SELECT struct(CAST(c0.value AS ARRAY<INT64>) AS value) FROM unnest(t1.value) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: coalesce
@@ -479,27 +479,27 @@ SELECT CAST(NULL AS BOOL) FROM t1
 ------ end
 
 ------ Test: create literal (a,1) scala.NamedTuple.NamedTuple[scala.Tuple2["a", "b"], scala.Tuple2[scala.Predef.String, scala.Int]]
-SELECT 'a' AS a, CAST(1 AS INT) AS b FROM t1
+SELECT 'a' AS a, CAST(1 AS INT64) AS b FROM t1
 ------ end
 
 ------ Test: create literal (a,2) scala.NamedTuple.NamedTuple[scala.Tuple2["c", "d"], scala.Tuple2[scala.Predef.String, scala.Long]]
-SELECT 'a' AS c, CAST(2 AS BIGINT) AS d FROM t1
+SELECT 'a' AS c, CAST(2 AS INT64) AS d FROM t1
 ------ end
 
 ------ Test: create literal 0 scala.Byte
-SELECT CAST(0 AS TINYINT) AS value FROM t1
+SELECT CAST(0 AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: create literal 0 scala.Int
-SELECT CAST(0 AS INT) AS value FROM t1
+SELECT CAST(0 AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: create literal 0 scala.Long
-SELECT CAST(0 AS BIGINT) AS value FROM t1
+SELECT CAST(0 AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: create literal 0 scala.Short
-SELECT CAST(0 AS SMALLINT) AS value FROM t1
+SELECT CAST(0 AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: create literal 0.0 scala.Double
@@ -511,19 +511,19 @@ SELECT CAST(0.0 AS FLOAT64) AS value FROM t1
 ------ end
 
 ------ Test: create literal 1 com.choreograph.tyda.Date$package.Date
-SELECT date_from_unix_date(CAST(1 AS INT)) AS value FROM t1
+SELECT date_from_unix_date(CAST(1 AS INT64)) AS value FROM t1
 ------ end
 
 ------ Test: create literal 1 com.choreograph.tyda.Duration$package.Duration
-SELECT (CAST(1 AS BIGINT) - CAST(0 AS BIGINT)) AS value FROM t1
+SELECT (CAST(1 AS INT64) - CAST(0 AS INT64)) AS value FROM t1
 ------ end
 
 ------ Test: create literal 1 com.choreograph.tyda.Timestamp$package.Timestamp
-SELECT timestamp_micros(CAST(1 AS BIGINT)) AS value FROM t1
+SELECT timestamp_micros(CAST(1 AS INT64)) AS value FROM t1
 ------ end
 
 ------ Test: create literal 148600399274030924 com.choreograph.tyda.Timestamp$package.Timestamp
-SELECT timestamp_micros(CAST(148600399274030924 AS BIGINT)) AS value FROM t1
+SELECT timestamp_micros(CAST(148600399274030924 AS INT64)) AS value FROM t1
 ------ end
 
 ------ Test: create literal 20.00 com.choreograph.tyda.Decimal$package.Decimal[13, 2]
@@ -531,7 +531,7 @@ SELECT CAST('20.00' AS DECIMAL) AS value FROM t1
 ------ end
 
 ------ Test: create literal A com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum
-SELECT 'a' AS discriminant, CAST(NULL AS STRUCT<i INT>) AS c, CAST(NULL AS STRUCT<i INT>) AS d FROM t1
+SELECT 'a' AS discriminant, CAST(NULL AS STRUCT<i INT64>) AS c, CAST(NULL AS STRUCT<i INT64>) AS d FROM t1
 ------ end
 
 ------ Test: create literal ArraySeq(0, -54, -2, -70, -66) com.choreograph.tyda.Binary$package.Binary
@@ -539,23 +539,23 @@ SELECT B'\x00\xca\xfe\xba\xbe' AS value FROM t1
 ------ end
 
 ------ Test: create literal List() scala.collection.immutable.List[scala.Int]
-SELECT CAST([] AS ARRAY<INT>) AS value FROM t1
+SELECT CAST([] AS ARRAY<INT64>) AS value FROM t1
 ------ end
 
 ------ Test: create literal List(1, 2) scala.collection.immutable.Seq[scala.Int]
-SELECT [CAST(1 AS INT), CAST(2 AS INT)] AS value FROM t1
+SELECT [CAST(1 AS INT64), CAST(2 AS INT64)] AS value FROM t1
 ------ end
 
 ------ Test: create literal List(List(), List(1, 2)) scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.Int]]
-SELECT [struct(CAST([] AS ARRAY<INT>) AS value), struct([CAST(1 AS INT), CAST(2 AS INT)] AS value)] AS value FROM t1
+SELECT [struct(CAST([] AS ARRAY<INT64>) AS value), struct([CAST(1 AS INT64), CAST(2 AS INT64)] AS value)] AS value FROM t1
 ------ end
 
 ------ Test: create literal List(Some(1), None, Some(2)) scala.collection.immutable.Seq[scala.Option[scala.Int]]
-SELECT [CAST(1 AS INT), CAST(NULL AS INT), CAST(2 AS INT)] AS value FROM t1
+SELECT [CAST(1 AS INT64), CAST(NULL AS INT64), CAST(2 AS INT64)] AS value FROM t1
 ------ end
 
 ------ Test: create literal List(Some(List()), Some(List(1, 2)), None) scala.collection.immutable.Seq[scala.Option[scala.collection.immutable.Seq[scala.Int]]]
-SELECT [struct(CAST([] AS ARRAY<INT>) AS value), struct([CAST(1 AS INT), CAST(2 AS INT)] AS value), struct(CAST(NULL AS ARRAY<INT>) AS value)] AS value FROM t1
+SELECT [struct(CAST([] AS ARRAY<INT64>) AS value), struct([CAST(1 AS INT64), CAST(2 AS INT64)] AS value), struct(CAST(NULL AS ARRAY<INT64>) AS value)] AS value FROM t1
 ------ end
 
 ------ Test: create literal List(a, b) scala.collection.immutable.List[scala.Predef.String]
@@ -567,19 +567,19 @@ SELECT CAST(CAST([] AS ARRAY<STRUCT<_1 STRING,_2 STRING>>) AS ARRAY<STRUCT<key S
 ------ end
 
 ------ Test: create literal Map(a -> 1, b -> 2) scala.collection.immutable.Map[scala.Predef.String, scala.Int]
-SELECT CAST([struct('a' AS _1, CAST(1 AS INT) AS _2), struct('b' AS _1, CAST(2 AS INT) AS _2)] AS ARRAY<STRUCT<key STRING,value INT>>) AS value FROM t1
+SELECT CAST([struct('a' AS _1, CAST(1 AS INT64) AS _2), struct('b' AS _1, CAST(2 AS INT64) AS _2)] AS ARRAY<STRUCT<key STRING,value INT64>>) AS value FROM t1
 ------ end
 
 ------ Test: create literal Node(1,List(Node(2,List(Leaf(3), Leaf(4))), Node(5,List(Leaf(6))))) com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Node[scala.Int, 1]
-SELECT CAST(1 AS INT) AS value, [struct(CAST(2 AS INT) AS value, [struct(CAST(3 AS INT) AS value), struct(CAST(4 AS INT) AS value)] AS children), struct(CAST(5 AS INT) AS value, [struct(CAST(6 AS INT) AS value)] AS children)] AS children FROM t1
+SELECT CAST(1 AS INT64) AS value, [struct(CAST(2 AS INT64) AS value, [struct(CAST(3 AS INT64) AS value), struct(CAST(4 AS INT64) AS value)] AS children), struct(CAST(5 AS INT64) AS value, [struct(CAST(6 AS INT64) AS value)] AS children)] AS children FROM t1
 ------ end
 
 ------ Test: create literal None scala.Option[com.choreograph.tyda.Duration$package.Duration]
-SELECT CAST(NULL AS BIGINT) AS value FROM t1
+SELECT CAST(NULL AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: create literal None scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
-SELECT CAST(NULL AS STRUCT<a INT,b STRING,c BOOLEAN>) AS value FROM t1
+SELECT CAST(NULL AS STRUCT<a INT64,b STRING,c BOOLEAN>) AS value FROM t1
 ------ end
 
 ------ Test: create literal None scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum.A]
@@ -587,67 +587,67 @@ SELECT CAST(NULL AS STRUCT<`the cake is a lie 🎂` BOOL>) AS value FROM t1
 ------ end
 
 ------ Test: create literal None scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum]
-SELECT CAST(NULL AS STRUCT<discriminant STRING,c STRUCT<i INT>,d STRUCT<i INT>>) AS value FROM t1
+SELECT CAST(NULL AS STRUCT<discriminant STRING,c STRUCT<i INT64>,d STRUCT<i INT64>>) AS value FROM t1
 ------ end
 
 ------ Test: create literal None scala.Option[scala.Int]
-SELECT CAST(NULL AS INT) AS value FROM t1
+SELECT CAST(NULL AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: create literal None scala.Option[scala.Option[scala.Int]]
-SELECT CAST(NULL AS STRUCT<value INT>) AS value FROM t1
+SELECT CAST(NULL AS STRUCT<value INT64>) AS value FROM t1
 ------ end
 
 ------ Test: create literal None scala.Option[scala.Option[scala.Option[scala.Int]]]
-SELECT CAST(NULL AS STRUCT<value STRUCT<value INT>>) AS value FROM t1
+SELECT CAST(NULL AS STRUCT<value STRUCT<value INT64>>) AS value FROM t1
 ------ end
 
 ------ Test: create literal None scala.Option[scala.collection.immutable.Map[scala.Predef.String, scala.Int]]
-SELECT CAST(NULL AS ARRAY<STRUCT<key STRING,value INT>>) AS value FROM t1
+SELECT CAST(NULL AS ARRAY<STRUCT<key STRING,value INT64>>) AS value FROM t1
 ------ end
 
 ------ Test: create literal Some(0) scala.Option[scala.Int]
-SELECT CAST(0 AS INT) AS value FROM t1
+SELECT CAST(0 AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: create literal Some(C(1)) scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum]
-SELECT struct('c' AS discriminant, struct(CAST(1 AS INT) AS i) AS c, CAST(NULL AS STRUCT<i INT>) AS d) AS value FROM t1
+SELECT struct('c' AS discriminant, struct(CAST(1 AS INT64) AS i) AS c, CAST(NULL AS STRUCT<i INT64>) AS d) AS value FROM t1
 ------ end
 
 ------ Test: create literal Some(List(Some(List(1, 2)), None, Some(List()))) scala.Option[scala.collection.immutable.Seq[scala.Option[scala.collection.immutable.Seq[scala.Int]]]]
-SELECT [struct([CAST(1 AS INT), CAST(2 AS INT)] AS value), struct(CAST(NULL AS ARRAY<INT>) AS value), struct(CAST([] AS ARRAY<INT>) AS value)] AS value FROM t1
+SELECT [struct([CAST(1 AS INT64), CAST(2 AS INT64)] AS value), struct(CAST(NULL AS ARRAY<INT64>) AS value), struct(CAST([] AS ARRAY<INT64>) AS value)] AS value FROM t1
 ------ end
 
 ------ Test: create literal Some(None) scala.Option[scala.Option[scala.Int]]
-SELECT struct(CAST(NULL AS INT) AS value) AS value FROM t1
+SELECT struct(CAST(NULL AS INT64) AS value) AS value FROM t1
 ------ end
 
 ------ Test: create literal Some(None) scala.Option[scala.Option[scala.Option[scala.Int]]]
-SELECT struct(CAST(NULL AS STRUCT<value INT>) AS value) AS value FROM t1
+SELECT struct(CAST(NULL AS STRUCT<value INT64>) AS value) AS value FROM t1
 ------ end
 
 ------ Test: create literal Some(Some(0)) scala.Option[scala.Option[scala.Int]]
-SELECT struct(CAST(0 AS INT) AS value) AS value FROM t1
+SELECT struct(CAST(0 AS INT64) AS value) AS value FROM t1
 ------ end
 
 ------ Test: create literal Some(Some(List(1, 2))) scala.Option[scala.Option[scala.collection.immutable.Seq[scala.Int]]]
-SELECT struct([CAST(1 AS INT), CAST(2 AS INT)] AS value) AS value FROM t1
+SELECT struct([CAST(1 AS INT64), CAST(2 AS INT64)] AS value) AS value FROM t1
 ------ end
 
 ------ Test: create literal Some(Some(None)) scala.Option[scala.Option[scala.Option[scala.Int]]]
-SELECT struct(struct(CAST(NULL AS INT) AS value) AS value) AS value FROM t1
+SELECT struct(struct(CAST(NULL AS INT64) AS value) AS value) AS value FROM t1
 ------ end
 
 ------ Test: create literal Some(Some(Some(0))) scala.Option[scala.Option[scala.Option[scala.Int]]]
-SELECT struct(struct(CAST(0 AS INT) AS value) AS value) AS value FROM t1
+SELECT struct(struct(CAST(0 AS INT64) AS value) AS value) AS value FROM t1
 ------ end
 
 ------ Test: create literal Some(Struct(1,a,false)) scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
-SELECT struct(CAST(1 AS INT) AS a, 'a' AS b, FALSE AS c) AS value FROM t1
+SELECT struct(CAST(1 AS INT64) AS a, 'a' AS b, FALSE AS c) AS value FROM t1
 ------ end
 
 ------ Test: create literal Struct(1,a,false) com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct
-SELECT CAST(1 AS INT) AS a, 'a' AS b, FALSE AS c FROM t1
+SELECT CAST(1 AS INT64) AS a, 'a' AS b, FALSE AS c FROM t1
 ------ end
 
 ------ Test: create literal WithEmptyTuple(()) com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithEmptyTuple
@@ -675,15 +675,15 @@ SELECT (t1._1 IS NOT DISTINCT FROM t1._2) AS value FROM t1
 ------ end
 
 ------ Test: equals on Seq
-SELECT ((array_length(t1._1) = array_length(t1._2)) AND (SELECT coalesce(logical_and(c2), TRUE) FROM unnest(array((SELECT (c1._1 = c1._2) FROM unnest(array((SELECT struct(t1._1[c0] AS _1, t1._2[c0] AS _2) FROM unnest(generate_array(CAST(0 AS INT), (CASE WHEN (array_length(t1._1) < array_length(t1._2)) THEN array_length(t1._1) ELSE array_length(t1._2) END - CAST(1 AS INT)))) AS c0))) AS c1))) AS c2)) AS value FROM t1
+SELECT ((array_length(t1._1) = array_length(t1._2)) AND (SELECT coalesce(logical_and(c2), TRUE) FROM unnest(array((SELECT (c1._1 = c1._2) FROM unnest(array((SELECT struct(t1._1[c0] AS _1, t1._2[c0] AS _2) FROM unnest(generate_array(CAST(0 AS INT64), (CASE WHEN (array_length(t1._1) < array_length(t1._2)) THEN array_length(t1._1) ELSE array_length(t1._2) END - CAST(1 AS INT64)))) AS c0))) AS c1))) AS c2)) AS value FROM t1
 ------ end
 
 ------ Test: equals on Seq with product
-SELECT ((array_length(t1._1) = array_length(t1._2)) AND (SELECT coalesce(logical_and(c2), TRUE) FROM unnest(array((SELECT (c1._1 = c1._2) FROM unnest(array((SELECT struct(t1._1[c0] AS _1, t1._2[c0] AS _2) FROM unnest(generate_array(CAST(0 AS INT), (CASE WHEN (array_length(t1._1) < array_length(t1._2)) THEN array_length(t1._1) ELSE array_length(t1._2) END - CAST(1 AS INT)))) AS c0))) AS c1))) AS c2)) AS value FROM t1
+SELECT ((array_length(t1._1) = array_length(t1._2)) AND (SELECT coalesce(logical_and(c2), TRUE) FROM unnest(array((SELECT (c1._1 = c1._2) FROM unnest(array((SELECT struct(t1._1[c0] AS _1, t1._2[c0] AS _2) FROM unnest(generate_array(CAST(0 AS INT64), (CASE WHEN (array_length(t1._1) < array_length(t1._2)) THEN array_length(t1._1) ELSE array_length(t1._2) END - CAST(1 AS INT64)))) AS c0))) AS c1))) AS c2)) AS value FROM t1
 ------ end
 
 ------ Test: equals on Seq with product optional field
-SELECT ((array_length(t1._1) = array_length(t1._2)) AND (SELECT coalesce(logical_and(c2), TRUE) FROM unnest(array((SELECT (TRUE AND (c1._1.a IS NOT DISTINCT FROM c1._2.a)) FROM unnest(array((SELECT struct(t1._1[c0] AS _1, t1._2[c0] AS _2) FROM unnest(generate_array(CAST(0 AS INT), (CASE WHEN (array_length(t1._1) < array_length(t1._2)) THEN array_length(t1._1) ELSE array_length(t1._2) END - CAST(1 AS INT)))) AS c0))) AS c1))) AS c2)) AS value FROM t1
+SELECT ((array_length(t1._1) = array_length(t1._2)) AND (SELECT coalesce(logical_and(c2), TRUE) FROM unnest(array((SELECT (TRUE AND (c1._1.a IS NOT DISTINCT FROM c1._2.a)) FROM unnest(array((SELECT struct(t1._1[c0] AS _1, t1._2[c0] AS _2) FROM unnest(generate_array(CAST(0 AS INT64), (CASE WHEN (array_length(t1._1) < array_length(t1._2)) THEN array_length(t1._1) ELSE array_length(t1._2) END - CAST(1 AS INT64)))) AS c0))) AS c1))) AS c2)) AS value FROM t1
 ------ end
 
 ------ Test: equals on nested Option
@@ -703,23 +703,23 @@ SELECT (t1.value IS NULL) AS value FROM t1
 ------ end
 
 ------ Test: expect does not raise error when Some
-SELECT coalesce(t1.value, CAST(error('should not happen') AS INT)) AS value FROM t1
+SELECT coalesce(t1.value, CAST(error('should not happen') AS INT64)) AS value FROM t1
 ------ end
 
 ------ Test: extra stuff after json object is ignored
-SELECT CASE WHEN ((json_query(t1._2, '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(t1._2, '$._1') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(t1._2, '$._1') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(t1._2, '$._1') AS INT) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(t1._2, '$._1') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(t1._2, '$._1') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(t1._2, '$._1') AS INT) END AS _1) END AS value FROM t1
+SELECT CASE WHEN ((json_query(t1._2, '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(t1._2, '$._1') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(t1._2, '$._1') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(t1._2, '$._1') AS INT64) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(t1._2, '$._1') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(t1._2, '$._1') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(t1._2, '$._1') AS INT64) END AS _1) END AS value FROM t1
 ------ end
 
 ------ Test: fail on division by zero
-SELECT CAST(div(t1.value, CAST(0 AS INT)) AS INT) AS value FROM t1
+SELECT CAST(div(t1.value, CAST(0 AS INT64)) AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: fail on int overflow
-SELECT (t1.value + CAST(2147483647 AS INT)) AS value FROM t1
+SELECT (t1.value + CAST(2147483647 AS INT64)) AS value FROM t1
 ------ end
 
 ------ Test: flatMap Option
-SELECT CASE WHEN (t1.value IS NULL) THEN CAST(NULL AS INT) ELSE t1.value.value END AS value FROM t1
+SELECT CASE WHEN (t1.value IS NULL) THEN CAST(NULL AS INT64) ELSE t1.value.value END AS value FROM t1
 ------ end
 
 ------ Test: fromBase64
@@ -843,7 +843,7 @@ SELECT CASE WHEN (CASE WHEN ((json_query(t1._2, '$') != 'null') AND (SAFE_CAST(j
 ------ end
 
 ------ Test: json duration as long of microseconds
-SELECT CASE WHEN (CASE WHEN ((json_query(t1._2, '$') != 'null') AND (SAFE_CAST(json_value(t1._2, '$._1') AS BIGINT) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(t1._2, '$._1') AS BIGINT) AS _1) END IS NOT NULL) THEN CASE WHEN ((json_query(t1._2, '$') != 'null') AND (SAFE_CAST(json_value(t1._2, '$._1') AS BIGINT) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(t1._2, '$._1') AS BIGINT) AS _1) END._1 END AS value FROM t1
+SELECT CASE WHEN (CASE WHEN ((json_query(t1._2, '$') != 'null') AND (SAFE_CAST(json_value(t1._2, '$._1') AS INT64) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(t1._2, '$._1') AS INT64) AS _1) END IS NOT NULL) THEN CASE WHEN ((json_query(t1._2, '$') != 'null') AND (SAFE_CAST(json_value(t1._2, '$._1') AS INT64) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(t1._2, '$._1') AS INT64) AS _1) END._1 END AS value FROM t1
 ------ end
 
 ------ Test: lt for com.choreograph.tyda.Date$package.Date
@@ -927,7 +927,7 @@ SELECT (t1._1 <= t1._2) AS value FROM t1
 ------ end
 
 ------ Test: make empty map
-SELECT CAST(CAST([] AS ARRAY<STRUCT<_1 INT,_2 STRING>>) AS ARRAY<STRUCT<key INT,value STRING>>) AS value FROM t1
+SELECT CAST(CAST([] AS ARRAY<STRUCT<_1 INT64,_2 STRING>>) AS ARRAY<STRUCT<key INT64,value STRING>>) AS value FROM t1
 ------ end
 
 ------ Test: make empty namedTuple
@@ -935,7 +935,7 @@ SELECT CAST(NULL AS BOOL) FROM t1
 ------ end
 
 ------ Test: make empty seq
-SELECT CAST([] AS ARRAY<INT>) AS value FROM t1
+SELECT CAST([] AS ARRAY<INT64>) AS value FROM t1
 ------ end
 
 ------ Test: make empty tuple
@@ -943,23 +943,23 @@ SELECT CAST(NULL AS BOOL) FROM t1
 ------ end
 
 ------ Test: make map
-SELECT CASE WHEN (array_length([struct(t1._1 AS _1, t1._2 AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, t1._2 AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, t1._2 AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT,value STRING>>) END AS value FROM t1
+SELECT CASE WHEN (array_length([struct(t1._1 AS _1, t1._2 AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, t1._2 AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, t1._2 AS _2)] AS ARRAY<STRUCT<key INT64,value STRING>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT64,value STRING>>) END AS value FROM t1
 ------ end
 
 ------ Test: make map fails on duplicate keys
-SELECT CASE WHEN (array_length([struct(t1._1 AS _1, t1._2 AS _2), struct(t1._1 AS _1, 'duplicate' AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, t1._2 AS _2), struct(t1._1 AS _1, 'duplicate' AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, t1._2 AS _2), struct(t1._1 AS _1, 'duplicate' AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT,value STRING>>) END AS value FROM t1
+SELECT CASE WHEN (array_length([struct(t1._1 AS _1, t1._2 AS _2), struct(t1._1 AS _1, 'duplicate' AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, t1._2 AS _2), struct(t1._1 AS _1, 'duplicate' AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, t1._2 AS _2), struct(t1._1 AS _1, 'duplicate' AS _2)] AS ARRAY<STRUCT<key INT64,value STRING>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT64,value STRING>>) END AS value FROM t1
 ------ end
 
 ------ Test: make map fails on literal duplicate keys
-SELECT CASE WHEN (array_length([struct(CAST(1 AS INT) AS _1, t1.value AS _2), struct(CAST(1 AS INT) AS _1, 'duplicate' AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(CAST(1 AS INT) AS _1, t1.value AS _2), struct(CAST(1 AS INT) AS _1, 'duplicate' AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(CAST(1 AS INT) AS _1, t1.value AS _2), struct(CAST(1 AS INT) AS _1, 'duplicate' AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT,value STRING>>) END AS value FROM t1
+SELECT CASE WHEN (array_length([struct(CAST(1 AS INT64) AS _1, t1.value AS _2), struct(CAST(1 AS INT64) AS _1, 'duplicate' AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(CAST(1 AS INT64) AS _1, t1.value AS _2), struct(CAST(1 AS INT64) AS _1, 'duplicate' AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(CAST(1 AS INT64) AS _1, t1.value AS _2), struct(CAST(1 AS INT64) AS _1, 'duplicate' AS _2)] AS ARRAY<STRUCT<key INT64,value STRING>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT64,value STRING>>) END AS value FROM t1
 ------ end
 
 ------ Test: make map with a mix of literal and non-literal entries
-SELECT CASE WHEN (array_length([struct(t1._1 AS _1, 'a' AS _2), struct(CAST(2 AS INT) AS _1, 'b' AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, 'a' AS _2), struct(CAST(2 AS INT) AS _1, 'b' AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, 'a' AS _2), struct(CAST(2 AS INT) AS _1, 'b' AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT,value STRING>>) END AS value FROM t1
+SELECT CASE WHEN (array_length([struct(t1._1 AS _1, 'a' AS _2), struct(CAST(2 AS INT64) AS _1, 'b' AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, 'a' AS _2), struct(CAST(2 AS INT64) AS _1, 'b' AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, 'a' AS _2), struct(CAST(2 AS INT64) AS _1, 'b' AS _2)] AS ARRAY<STRUCT<key INT64,value STRING>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT64,value STRING>>) END AS value FROM t1
 ------ end
 
 ------ Test: make map with multiple entries
-SELECT CAST([struct(CAST(1 AS INT) AS _1, 'a' AS _2), struct(CAST(2 AS INT) AS _1, 'b' AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) AS value FROM t1
+SELECT CAST([struct(CAST(1 AS INT64) AS _1, 'a' AS _2), struct(CAST(2 AS INT64) AS _1, 'b' AS _2)] AS ARRAY<STRUCT<key INT64,value STRING>>) AS value FROM t1
 ------ end
 
 ------ Test: make namedTuple 2
@@ -983,7 +983,7 @@ SELECT t1.value AS int, 'literal' AS string FROM t1
 ------ end
 
 ------ Test: make range
-SELECT generate_array(t1._1, (t1._2 - CAST(1 AS INT))) AS value FROM t1
+SELECT generate_array(t1._1, (t1._2 - CAST(1 AS INT64))) AS value FROM t1
 ------ end
 
 ------ Test: make seq
@@ -1007,15 +1007,15 @@ SELECT t1.value AS _1, 'literal' AS _2 FROM t1
 ------ end
 
 ------ Test: malformed json array results in None
-SELECT CASE WHEN ((json_query_array(t1.value, '$') IS NOT NULL) AND (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT (CASE WHEN ((SAFE_CAST(json_value(c0, '$') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$') AS INT) END IS NOT NULL) FROM unnest(json_query_array(t1.value, '$')) AS c0))) AS c1)) THEN array((SELECT CASE WHEN ((SAFE_CAST(json_value(c0, '$') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$') AS INT) END FROM unnest(json_query_array(t1.value, '$')) AS c0)) END AS value FROM t1
+SELECT CASE WHEN ((json_query_array(t1.value, '$') IS NOT NULL) AND (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT (CASE WHEN ((SAFE_CAST(json_value(c0, '$') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(c0, '$') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(c0, '$') AS INT64) END IS NOT NULL) FROM unnest(json_query_array(t1.value, '$')) AS c0))) AS c1)) THEN array((SELECT CASE WHEN ((SAFE_CAST(json_value(c0, '$') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(c0, '$') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(c0, '$') AS INT64) END FROM unnest(json_query_array(t1.value, '$')) AS c0)) END AS value FROM t1
 ------ end
 
 ------ Test: malformed json object results in None
-SELECT CASE WHEN ((json_query(t1.value, '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(t1.value, '$._1') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(t1.value, '$._1') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(t1.value, '$._1') AS INT) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(t1.value, '$._1') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(t1.value, '$._1') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(t1.value, '$._1') AS INT) END AS _1) END AS value FROM t1
+SELECT CASE WHEN ((json_query(t1.value, '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(t1.value, '$._1') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(t1.value, '$._1') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(t1.value, '$._1') AS INT64) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(t1.value, '$._1') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(t1.value, '$._1') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(t1.value, '$._1') AS INT64) END AS _1) END AS value FROM t1
 ------ end
 
 ------ Test: map Option
-SELECT CASE WHEN (t1.value IS NOT NULL) THEN (t1.value = CAST(0 AS INT)) END AS value FROM t1
+SELECT CASE WHEN (t1.value IS NOT NULL) THEN (t1.value = CAST(0 AS INT64)) END AS value FROM t1
 ------ end
 
 ------ Test: map Option using nested outer
@@ -1035,7 +1035,7 @@ SELECT array((SELECT struct(c0.value AS value) FROM unnest(t1.value) AS c0)) AS 
 ------ end
 
 ------ Test: mapGet Option value
-SELECT (SELECT struct(c0.value AS value) FROM unnest(CAST([struct(CAST(1 AS INT) AS _1, t1.value AS _2)] AS ARRAY<STRUCT<key INT,value INT>>)) AS c0 WHERE (c0.key = CAST(1 AS INT))) AS _1, (SELECT struct(c1.value AS value) FROM unnest(CAST([struct(CAST(1 AS INT) AS _1, t1.value AS _2)] AS ARRAY<STRUCT<key INT,value INT>>)) AS c1 WHERE (c1.key = CAST(2 AS INT))) AS _2 FROM t1
+SELECT (SELECT struct(c0.value AS value) FROM unnest(CAST([struct(CAST(1 AS INT64) AS _1, t1.value AS _2)] AS ARRAY<STRUCT<key INT64,value INT64>>)) AS c0 WHERE (c0.key = CAST(1 AS INT64))) AS _1, (SELECT struct(c1.value AS value) FROM unnest(CAST([struct(CAST(1 AS INT64) AS _1, t1.value AS _2)] AS ARRAY<STRUCT<key INT64,value INT64>>)) AS c1 WHERE (c1.key = CAST(2 AS INT64))) AS _2 FROM t1
 ------ end
 
 ------ Test: mapGet existing key
@@ -1043,15 +1043,15 @@ SELECT (SELECT c0.value FROM unnest(t1._1) AS c0 WHERE (c0.key = t1._2)) AS valu
 ------ end
 
 ------ Test: mapGet missing key
-SELECT (SELECT c0.value FROM unnest(CAST([struct(CAST(1 AS INT) AS _1, 'x' AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>)) AS c0 WHERE (c0.key = t1._2)) AS value FROM t1
+SELECT (SELECT c0.value FROM unnest(CAST([struct(CAST(1 AS INT64) AS _1, 'x' AS _2)] AS ARRAY<STRUCT<key INT64,value STRING>>)) AS c0 WHERE (c0.key = t1._2)) AS value FROM t1
 ------ end
 
 ------ Test: mapGet with literal key
-SELECT (SELECT c2.value FROM unnest(CASE WHEN (array_length([struct(t1._1 AS _1, t1._2 AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, t1._2 AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, t1._2 AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT,value STRING>>) END) AS c2 WHERE (c2.key = t1._1)) AS value FROM t1
+SELECT (SELECT c2.value FROM unnest(CASE WHEN (array_length([struct(t1._1 AS _1, t1._2 AS _2)]) = array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT c0._1 FROM unnest([struct(t1._1 AS _1, t1._2 AS _2)]) AS c0))) AS c1)))) THEN CAST([struct(t1._1 AS _1, t1._2 AS _2)] AS ARRAY<STRUCT<key INT64,value STRING>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT64,value STRING>>) END) AS c2 WHERE (c2.key = t1._1)) AS value FROM t1
 ------ end
 
 ------ Test: match-case all cases sealed trait
-SELECT CASE WHEN (t1.b IS NOT NULL) THEN t1.b.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(error('Unknown case') AS INT) END AS value FROM t1
+SELECT CASE WHEN (t1.b IS NOT NULL) THEN t1.b.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT64) ELSE CAST(error('Unknown case') AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: match-case all cases string enum
@@ -1059,15 +1059,15 @@ SELECT CASE WHEN (CASE WHEN (t1.value = 'b') THEN struct(CAST(NULL AS BOOL) AS `
 ------ end
 
 ------ Test: match-case only otherwise
-SELECT CAST(99 AS INT) AS value FROM t1
+SELECT CAST(99 AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: match-case only when cases
-SELECT CASE WHEN (t1.d IS NOT NULL) THEN t1.d.i WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'b') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(2 AS INT) WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(error('Unknown case') AS INT) END AS value FROM t1
+SELECT CASE WHEN (t1.d IS NOT NULL) THEN t1.d.i WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'b') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(2 AS INT64) WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT64) ELSE CAST(error('Unknown case') AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: match-case when cases + otherwise
-SELECT CASE WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT) ELSE CAST(99 AS INT) END AS value FROM t1
+SELECT CASE WHEN (t1.c IS NOT NULL) THEN t1.c.i WHEN (CASE WHEN (t1.discriminant = 'a') THEN struct(CAST(NULL AS BOOL) AS `the cake is a lie 🎂`) END IS NOT NULL) THEN CAST(1 AS INT64) ELSE CAST(99 AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: max
@@ -1091,7 +1091,7 @@ SELECT t1._1.a AS a, t1._1.b AS b, t1._2.c AS c, t1._2.d AS d FROM t1
 ------ end
 
 ------ Test: named tuple concat literal
-SELECT t1.a AS a, t1.b AS b, 'abc' AS c, CAST(2 AS BIGINT) AS d FROM t1
+SELECT t1.a AS a, t1.b AS b, 'abc' AS c, CAST(2 AS INT64) AS d FROM t1
 ------ end
 
 ------ Test: nested Option
@@ -1099,7 +1099,7 @@ SELECT t1.value AS value FROM t1
 ------ end
 
 ------ Test: nested Option MakeSome
-SELECT CASE WHEN (t1.value IS NOT NULL) THEN struct(CASE WHEN (NOT (t1.value <= CAST(0 AS INT))) THEN t1.value END AS value) END AS value FROM t1
+SELECT CASE WHEN (t1.value IS NOT NULL) THEN struct(CASE WHEN (NOT (t1.value <= CAST(0 AS INT64))) THEN t1.value END AS value) END AS value FROM t1
 ------ end
 
 ------ Test: nested Option deep
@@ -1107,7 +1107,7 @@ SELECT CASE WHEN (t1.value IS NOT NULL) THEN struct(CASE WHEN (t1.value.value IS
 ------ end
 
 ------ Test: nested Option getOrElse
-SELECT coalesce(t1.value, struct(CAST(NULL AS INT) AS value)).value AS value FROM t1
+SELECT coalesce(t1.value, struct(CAST(NULL AS INT64) AS value)).value AS value FROM t1
 ------ end
 
 ------ Test: nested Option map
@@ -1115,11 +1115,11 @@ SELECT CASE WHEN (t1.value IS NOT NULL) THEN (t1.value.value IS NULL) END AS val
 ------ end
 
 ------ Test: nested seq inside option map
-SELECT coalesce(CASE WHEN (t1.value IS NOT NULL) THEN [struct(t1.value AS value)] END, CAST([] AS ARRAY<STRUCT<value ARRAY<INT>>>)) AS value FROM t1
+SELECT coalesce(CASE WHEN (t1.value IS NOT NULL) THEN [struct(t1.value AS value)] END, CAST([] AS ARRAY<STRUCT<value ARRAY<INT64>>>)) AS value FROM t1
 ------ end
 
 ------ Test: non ascii fields
-SELECT (CAST(t1.`瑞` AS INT) + CAST(t1.`典` AS INT)) AS value FROM t1
+SELECT (CAST(t1.`瑞` AS INT64) + CAST(t1.`典` AS INT64)) AS value FROM t1
 ------ end
 
 ------ Test: not equals on primitive
@@ -1131,7 +1131,7 @@ SELECT t1.a AS a FROM t1
 ------ end
 
 ------ Test: raise error in expect when None
-SELECT coalesce(CAST(NULL AS INT), CAST(error('oh no!') AS INT)) AS value FROM t1
+SELECT coalesce(CAST(NULL AS INT64), CAST(error('oh no!') AS INT64)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in &&
@@ -1139,27 +1139,27 @@ SELECT (FALSE AND CAST(error('error') AS BOOLEAN)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in coalesce
-SELECT coalesce(t1.value, CAST(error('error') AS INT)) AS value FROM t1
+SELECT coalesce(t1.value, CAST(error('error') AS INT64)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in getOrElse
-SELECT coalesce(t1.value, CAST(error('error') AS INT)) AS value FROM t1
+SELECT coalesce(t1.value, CAST(error('error') AS INT64)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in orElse
-SELECT coalesce(t1.value, CAST(error('error') AS INT)) AS value FROM t1
+SELECT coalesce(t1.value, CAST(error('error') AS INT64)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in ternary ifFalse
-SELECT CASE WHEN TRUE THEN t1.value ELSE CAST(error('error') AS INT) END AS value FROM t1
+SELECT CASE WHEN TRUE THEN t1.value ELSE CAST(error('error') AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in ternary ifTrue
-SELECT CASE WHEN FALSE THEN CAST(error('error') AS INT) ELSE t1.value END AS value FROM t1
+SELECT CASE WHEN FALSE THEN CAST(error('error') AS INT64) ELSE t1.value END AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in when
-SELECT CASE WHEN FALSE THEN CAST(error('error') AS INT) END AS value FROM t1
+SELECT CASE WHEN FALSE THEN CAST(error('error') AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in ||
@@ -1175,11 +1175,11 @@ SELECT coalesce(CAST(error('My error message') AS STRING), t1.value) AS value FR
 ------ end
 
 ------ Test: raiseError is strongly typed
-SELECT array((SELECT (c0 + CAST(1 AS INT)) FROM unnest(CAST(error('My error message') AS ARRAY<INT>)) AS c0)) AS value FROM t1
+SELECT array((SELECT (c0 + CAST(1 AS INT64)) FROM unnest(CAST(error('My error message') AS ARRAY<INT64>)) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: raiseError throws static error message
-SELECT CAST(error('My error message') AS INT) AS value FROM t1
+SELECT CAST(error('My error message') AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: remove
@@ -1203,7 +1203,7 @@ SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = T
 ------ end
 
 ------ Test: seq exists
-SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 < CAST(0 AS INT)) FROM unnest(t1.value) AS c0))) AS c1) AS value FROM t1
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 < CAST(0 AS INT64)) FROM unnest(t1.value) AS c0))) AS c1) AS value FROM t1
 ------ end
 
 ------ Test: seq exists outer
@@ -1211,11 +1211,11 @@ SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 < t
 ------ end
 
 ------ Test: seq filter
-SELECT array((SELECT c0 FROM unnest(t1.value) AS c0 WHERE (NOT (c0 <= CAST(0 AS INT))))) AS value FROM t1
+SELECT array((SELECT c0 FROM unnest(t1.value) AS c0 WHERE (NOT (c0 <= CAST(0 AS INT64))))) AS value FROM t1
 ------ end
 
 ------ Test: seq filter list
-SELECT array((SELECT c0 FROM unnest(t1.value) AS c0 WHERE (NOT (c0 <= CAST(0 AS INT))))) AS value FROM t1
+SELECT array((SELECT c0 FROM unnest(t1.value) AS c0 WHERE (NOT (c0 <= CAST(0 AS INT64))))) AS value FROM t1
 ------ end
 
 ------ Test: seq filter outer
@@ -1223,27 +1223,27 @@ SELECT array((SELECT c0 FROM unnest(t1._1) AS c0 WHERE (NOT (c0 <= t1._2)))) AS 
 ------ end
 
 ------ Test: seq flatMap
-SELECT array((SELECT c2 FROM unnest(array((SELECT struct([CAST(div(c0, CAST(2 AS INT)) AS INT), (CAST(div(c0, CAST(2 AS INT)) AS INT) + CAST(1 AS INT))] AS value) FROM unnest(t1.value) AS c0))) AS c1, unnest(c1.value) AS c2)) AS value FROM t1
+SELECT array((SELECT c2 FROM unnest(array((SELECT struct([CAST(div(c0, CAST(2 AS INT64)) AS INT64), (CAST(div(c0, CAST(2 AS INT64)) AS INT64) + CAST(1 AS INT64))] AS value) FROM unnest(t1.value) AS c0))) AS c1, unnest(c1.value) AS c2)) AS value FROM t1
 ------ end
 
 ------ Test: seq flatMap list
-SELECT array((SELECT c2 FROM unnest(array((SELECT struct([CAST(div(c0, CAST(2 AS INT)) AS INT), (CAST(div(c0, CAST(2 AS INT)) AS INT) + CAST(1 AS INT))] AS value) FROM unnest(t1.value) AS c0))) AS c1, unnest(c1.value) AS c2)) AS value FROM t1
+SELECT array((SELECT c2 FROM unnest(array((SELECT struct([CAST(div(c0, CAST(2 AS INT64)) AS INT64), (CAST(div(c0, CAST(2 AS INT64)) AS INT64) + CAST(1 AS INT64))] AS value) FROM unnest(t1.value) AS c0))) AS c1, unnest(c1.value) AS c2)) AS value FROM t1
 ------ end
 
 ------ Test: seq flatMap list with Option keeps Some, drops None
-SELECT array((SELECT c2 FROM unnest(array((SELECT struct(CASE WHEN (CASE WHEN (NOT (c0 <= CAST(0 AS INT))) THEN c0 END IS NOT NULL) THEN [CASE WHEN (NOT (c0 <= CAST(0 AS INT))) THEN c0 END] ELSE CAST([] AS ARRAY<INT>) END AS value) FROM unnest(t1.value) AS c0))) AS c1, unnest(c1.value) AS c2)) AS value FROM t1
+SELECT array((SELECT c2 FROM unnest(array((SELECT struct(CASE WHEN (CASE WHEN (NOT (c0 <= CAST(0 AS INT64))) THEN c0 END IS NOT NULL) THEN [CASE WHEN (NOT (c0 <= CAST(0 AS INT64))) THEN c0 END] ELSE CAST([] AS ARRAY<INT64>) END AS value) FROM unnest(t1.value) AS c0))) AS c1, unnest(c1.value) AS c2)) AS value FROM t1
 ------ end
 
 ------ Test: seq flatMap with Option keeps Some, drops None
-SELECT array((SELECT c2 FROM unnest(array((SELECT struct(CASE WHEN (CASE WHEN (NOT (c0 <= CAST(0 AS INT))) THEN c0 END IS NOT NULL) THEN [CASE WHEN (NOT (c0 <= CAST(0 AS INT))) THEN c0 END] ELSE CAST([] AS ARRAY<INT>) END AS value) FROM unnest(t1.value) AS c0))) AS c1, unnest(c1.value) AS c2)) AS value FROM t1
+SELECT array((SELECT c2 FROM unnest(array((SELECT struct(CASE WHEN (CASE WHEN (NOT (c0 <= CAST(0 AS INT64))) THEN c0 END IS NOT NULL) THEN [CASE WHEN (NOT (c0 <= CAST(0 AS INT64))) THEN c0 END] ELSE CAST([] AS ARRAY<INT64>) END AS value) FROM unnest(t1.value) AS c0))) AS c1, unnest(c1.value) AS c2)) AS value FROM t1
 ------ end
 
 ------ Test: seq forall
-SELECT (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT (c0 < CAST(0 AS INT)) FROM unnest(t1.value) AS c0))) AS c1) AS value FROM t1
+SELECT (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT (c0 < CAST(0 AS INT64)) FROM unnest(t1.value) AS c0))) AS c1) AS value FROM t1
 ------ end
 
 ------ Test: seq forall nested
-SELECT array((SELECT (SELECT coalesce(logical_and(c2), TRUE) FROM unnest(array((SELECT (c1 < CAST(0 AS INT)) FROM unnest(c0.value) AS c1))) AS c2) FROM unnest(t1.value) AS c0)) AS value FROM t1
+SELECT array((SELECT (SELECT coalesce(logical_and(c2), TRUE) FROM unnest(array((SELECT (c1 < CAST(0 AS INT64)) FROM unnest(c0.value) AS c1))) AS c2) FROM unnest(t1.value) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: seq forall outer
@@ -1251,15 +1251,15 @@ SELECT (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT (c0 < t
 ------ end
 
 ------ Test: seq map
-SELECT array((SELECT CAST(div(c0, CAST(2 AS INT)) AS INT) FROM unnest(t1.value) AS c0)) AS value FROM t1
+SELECT array((SELECT CAST(div(c0, CAST(2 AS INT64)) AS INT64) FROM unnest(t1.value) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: seq map constructed
-SELECT array((SELECT CAST(div(c0, CAST(2 AS INT)) AS INT) FROM unnest([t1.value, CAST(2 AS INT), CAST(3 AS INT)]) AS c0)) AS value FROM t1
+SELECT array((SELECT CAST(div(c0, CAST(2 AS INT64)) AS INT64) FROM unnest([t1.value, CAST(2 AS INT64), CAST(3 AS INT64)]) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: seq map custom collection
-SELECT array((SELECT CAST(div(c0, CAST(2 AS INT)) AS INT) FROM unnest(t1.value) AS c0)) AS value FROM t1
+SELECT array((SELECT CAST(div(c0, CAST(2 AS INT64)) AS INT64) FROM unnest(t1.value) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: seq map from product
@@ -1267,11 +1267,11 @@ SELECT array((SELECT c0._1 FROM unnest(t1.value) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: seq map list
-SELECT array((SELECT CAST(div(c0, CAST(2 AS INT)) AS INT) FROM unnest(t1.value) AS c0)) AS value FROM t1
+SELECT array((SELECT CAST(div(c0, CAST(2 AS INT64)) AS INT64) FROM unnest(t1.value) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: seq map nested
-SELECT array((SELECT struct(array((SELECT CAST(div(c1, CAST(2 AS INT)) AS INT) FROM unnest(c0.value) AS c1)) AS value) FROM unnest(t1.value) AS c0)) AS value FROM t1
+SELECT array((SELECT struct(array((SELECT CAST(div(c1, CAST(2 AS INT64)) AS INT64) FROM unnest(c0.value) AS c1)) AS value) FROM unnest(t1.value) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: seq map nested outer
@@ -1279,7 +1279,7 @@ SELECT array((SELECT struct(array((SELECT (NOT (c1 <= c0._2)) FROM unnest(c0._1)
 ------ end
 
 ------ Test: seq map nested with
-SELECT array((SELECT struct(array((SELECT (NOT (c1 <= CAST(1 AS INT))) FROM unnest(c0._1) AS c1)) AS a) FROM unnest(t1.value) AS c0)) AS value FROM t1
+SELECT array((SELECT struct(array((SELECT (NOT (c1 <= CAST(1 AS INT64))) FROM unnest(c0._1) AS c1)) AS a) FROM unnest(t1.value) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: seq map outer
@@ -1287,7 +1287,7 @@ SELECT array((SELECT (NOT (c0 <= t1._2)) FROM unnest(t1._1) AS c0)) AS value FRO
 ------ end
 
 ------ Test: seq map to product
-SELECT array((SELECT struct(c0 AS _1, CAST(1 AS INT) AS _2) FROM unnest(t1.value) AS c0)) AS value FROM t1
+SELECT array((SELECT struct(c0 AS _1, CAST(1 AS INT64) AS _2) FROM unnest(t1.value) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: seq toSeq
@@ -1295,7 +1295,7 @@ SELECT t1.value AS value FROM t1
 ------ end
 
 ------ Test: seq zip
-SELECT array((SELECT struct(t1._1[c0] AS _1, t1._2[c0] AS _2) FROM unnest(generate_array(CAST(0 AS INT), (CASE WHEN (array_length(t1._1) < array_length(t1._2)) THEN array_length(t1._1) ELSE array_length(t1._2) END - CAST(1 AS INT)))) AS c0)) AS value FROM t1
+SELECT array((SELECT struct(t1._1[c0] AS _1, t1._2[c0] AS _2) FROM unnest(generate_array(CAST(0 AS INT64), (CASE WHEN (array_length(t1._1) < array_length(t1._2)) THEN array_length(t1._1) ELSE array_length(t1._2) END - CAST(1 AS INT64)))) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: size on List[String]
@@ -1311,7 +1311,7 @@ SELECT CASE WHEN ((t1._2 = '') AND (NOT (t1._1 = ''))) THEN array_concat(split(t
 ------ end
 
 ------ Test: spreadOption
-SELECT CASE WHEN (t1.value IS NULL) THEN struct(CAST(NULL AS INT) AS a, CAST(NULL AS STRING) AS b, CAST(NULL AS BOOLEAN) AS c) ELSE struct(t1.value.a AS a, t1.value.b AS b, t1.value.c AS c) END.a AS a, CASE WHEN (t1.value IS NULL) THEN struct(CAST(NULL AS INT) AS a, CAST(NULL AS STRING) AS b, CAST(NULL AS BOOLEAN) AS c) ELSE struct(t1.value.a AS a, t1.value.b AS b, t1.value.c AS c) END.b AS b, CASE WHEN (t1.value IS NULL) THEN struct(CAST(NULL AS INT) AS a, CAST(NULL AS STRING) AS b, CAST(NULL AS BOOLEAN) AS c) ELSE struct(t1.value.a AS a, t1.value.b AS b, t1.value.c AS c) END.c AS c FROM t1
+SELECT CASE WHEN (t1.value IS NULL) THEN struct(CAST(NULL AS INT64) AS a, CAST(NULL AS STRING) AS b, CAST(NULL AS BOOLEAN) AS c) ELSE struct(t1.value.a AS a, t1.value.b AS b, t1.value.c AS c) END.a AS a, CASE WHEN (t1.value IS NULL) THEN struct(CAST(NULL AS INT64) AS a, CAST(NULL AS STRING) AS b, CAST(NULL AS BOOLEAN) AS c) ELSE struct(t1.value.a AS a, t1.value.b AS b, t1.value.c AS c) END.b AS b, CASE WHEN (t1.value IS NULL) THEN struct(CAST(NULL AS INT64) AS a, CAST(NULL AS STRING) AS b, CAST(NULL AS BOOLEAN) AS c) ELSE struct(t1.value.a AS a, t1.value.b AS b, t1.value.c AS c) END.c AS c FROM t1
 ------ end
 
 ------ Test: string startsWith
@@ -1323,7 +1323,7 @@ SELECT STARTS_WITH(t1._1, 'foo') AS value FROM t1
 ------ end
 
 ------ Test: support field names that are SQL keywords
-SELECT CAST(1 AS INT) AS `select`, CAST(2 AS INT) AS `group`, CAST(3 AS INT) AS `by` FROM t1
+SELECT CAST(1 AS INT64) AS `select`, CAST(2 AS INT64) AS `group`, CAST(3 AS INT64) AS `by` FROM t1
 ------ end
 
 ------ Test: ternary
@@ -1347,19 +1347,19 @@ SELECT to_json_string(t1.value) AS value FROM t1
 ------ end
 
 ------ Test: toJson/fromJson roundtrip for com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct
-SELECT CASE WHEN ((json_query(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$') != 'null') AND (((CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) END IS NOT NULL) AND (json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.b') IS NOT NULL)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.c') AS BOOLEAN) IS NOT NULL))) THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT) END AS a, json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.b') AS b, SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.c') AS BOOLEAN) AS c) END AS value FROM t1
+SELECT CASE WHEN ((json_query(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$') != 'null') AND (((CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT64) END IS NOT NULL) AND (json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.b') IS NOT NULL)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.c') AS BOOLEAN) IS NOT NULL))) THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.a') AS INT64) END AS a, json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.b') AS b, SAFE_CAST(json_value(to_json_string(struct(t1.a AS a, t1.b AS b, t1.c AS c)), '$.c') AS BOOLEAN) AS c) END AS value FROM t1
 ------ end
 
 ------ Test: toJson/fromJson roundtrip for scala.NamedTuple.NamedTuple[scala.Tuple1["0digitfirst"], scala.Tuple1[scala.Int]]
-SELECT CASE WHEN ((json_query(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT) END AS `0digitfirst`) END AS value FROM t1
+SELECT CASE WHEN ((json_query(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT64) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`0digitfirst` AS `0digitfirst`)), '$."0digitfirst"') AS INT64) END AS `0digitfirst`) END AS value FROM t1
 ------ end
 
 ------ Test: toJson/fromJson roundtrip for scala.NamedTuple.NamedTuple[scala.Tuple1["name with space"], scala.Tuple1[scala.Int]]
-SELECT CASE WHEN ((json_query(to_json_string(struct(t1.`name with space` AS `name with space`)), '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT) END AS `name with space`) END AS value FROM t1
+SELECT CASE WHEN ((json_query(to_json_string(struct(t1.`name with space` AS `name with space`)), '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT64) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`name with space` AS `name with space`)), '$."name with space"') AS INT64) END AS `name with space`) END AS value FROM t1
 ------ end
 
 ------ Test: toJson/fromJson roundtrip for scala.NamedTuple.NamedTuple[scala.Tuple1["name-with-dash"], scala.Tuple1[scala.Int]]
-SELECT CASE WHEN ((json_query(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT) END AS `name-with-dash`) END AS value FROM t1
+SELECT CASE WHEN ((json_query(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$') != 'null') AND (CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT64) END IS NOT NULL)) THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(to_json_string(struct(t1.`name-with-dash` AS `name-with-dash`)), '$."name-with-dash"') AS INT64) END AS `name-with-dash`) END AS value FROM t1
 ------ end
 
 ------ Test: toJson/fromJson roundtrip for scala.Tuple1[com.choreograph.tyda.Date$package.Date]
@@ -1367,7 +1367,7 @@ SELECT CASE WHEN ((json_query(to_json_string(struct(t1._1 AS _1)), '$') != 'null
 ------ end
 
 ------ Test: toJson/fromJson roundtrip for scala.Tuple1[com.choreograph.tyda.Duration$package.Duration]
-SELECT CASE WHEN ((json_query(to_json_string(struct(t1._1 AS _1)), '$') != 'null') AND (SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS BIGINT) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS BIGINT) AS _1) END AS value FROM t1
+SELECT CASE WHEN ((json_query(to_json_string(struct(t1._1 AS _1)), '$') != 'null') AND (SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS INT64) IS NOT NULL)) THEN struct(SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS INT64) AS _1) END AS value FROM t1
 ------ end
 
 ------ Test: toJson/fromJson roundtrip for scala.Tuple1[com.choreograph.tyda.Timestamp$package.Timestamp]
@@ -1375,35 +1375,35 @@ SELECT CASE WHEN ((json_query(to_json_string(struct(t1._1 AS _1)), '$') != 'null
 ------ end
 
 ------ Test: toJson/fromJson roundtrip for scala.Tuple1[scala.Option[scala.Int]]
-SELECT CASE WHEN (json_query(to_json_string(struct(t1._1 AS _1)), '$') != 'null') THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS INT) END AS _1) END AS value FROM t1
+SELECT CASE WHEN (json_query(to_json_string(struct(t1._1 AS _1)), '$') != 'null') THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1') AS INT64) END AS _1) END AS value FROM t1
 ------ end
 
 ------ Test: toJson/fromJson roundtrip for scala.Tuple1[scala.Option[scala.Option[scala.Int]]]
-SELECT CASE WHEN (json_query(to_json_string(struct(t1._1 AS _1)), '$') != 'null') THEN struct(CASE WHEN (json_query(to_json_string(struct(t1._1 AS _1)), '$._1') != 'null') THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1.value') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1.value') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1.value') AS INT) END AS value) END AS _1) END AS value FROM t1
+SELECT CASE WHEN (json_query(to_json_string(struct(t1._1 AS _1)), '$') != 'null') THEN struct(CASE WHEN (json_query(to_json_string(struct(t1._1 AS _1)), '$._1') != 'null') THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1.value') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1.value') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1.value') AS INT64) END AS value) END AS _1) END AS value FROM t1
 ------ end
 
 ------ Test: toJson/fromJson roundtrip for scala.Tuple1[scala.Option[scala.Option[scala.Option[scala.Int]]]]
-SELECT CASE WHEN (json_query(to_json_string(struct(t1._1 AS _1)), '$') != 'null') THEN struct(CASE WHEN (json_query(to_json_string(struct(t1._1 AS _1)), '$._1') != 'null') THEN struct(CASE WHEN (json_query(to_json_string(struct(t1._1 AS _1)), '$._1.value') != 'null') THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1.value.value') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1.value.value') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1.value.value') AS INT) END AS value) END AS value) END AS _1) END AS value FROM t1
+SELECT CASE WHEN (json_query(to_json_string(struct(t1._1 AS _1)), '$') != 'null') THEN struct(CASE WHEN (json_query(to_json_string(struct(t1._1 AS _1)), '$._1') != 'null') THEN struct(CASE WHEN (json_query(to_json_string(struct(t1._1 AS _1)), '$._1.value') != 'null') THEN struct(CASE WHEN ((SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1.value.value') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1.value.value') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(to_json_string(struct(t1._1 AS _1)), '$._1.value.value') AS INT64) END AS value) END AS value) END AS _1) END AS value FROM t1
 ------ end
 
 ------ Test: toJson/fromJson roundtrip for scala.collection.immutable.Map[scala.Predef.String, scala.Int]
-SELECT CASE WHEN ((json_query_array(to_json_string(t1.value), '$') IS NOT NULL) AND (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT ((json_query(c0, '$') != 'null') AND ((json_value(c0, '$.key') IS NOT NULL) AND (CASE WHEN ((SAFE_CAST(json_value(c0, '$.value') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$.value') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$.value') AS INT) END IS NOT NULL))) FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0))) AS c1)) THEN CAST(array((SELECT struct(json_value(c0, '$.key') AS key, CASE WHEN ((SAFE_CAST(json_value(c0, '$.value') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$.value') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$.value') AS INT) END AS value) FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0)) AS ARRAY<STRUCT<key STRING,value INT>>) END AS value FROM t1
+SELECT CASE WHEN ((json_query_array(to_json_string(t1.value), '$') IS NOT NULL) AND (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT ((json_query(c0, '$') != 'null') AND ((json_value(c0, '$.key') IS NOT NULL) AND (CASE WHEN ((SAFE_CAST(json_value(c0, '$.value') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(c0, '$.value') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(c0, '$.value') AS INT64) END IS NOT NULL))) FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0))) AS c1)) THEN CAST(array((SELECT struct(json_value(c0, '$.key') AS key, CASE WHEN ((SAFE_CAST(json_value(c0, '$.value') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(c0, '$.value') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(c0, '$.value') AS INT64) END AS value) FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0)) AS ARRAY<STRUCT<key STRING,value INT64>>) END AS value FROM t1
 ------ end
 
 ------ Test: toJson/fromJson roundtrip for scala.collection.immutable.Seq[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
-SELECT CASE WHEN ((json_query_array(to_json_string(t1.value), '$') IS NOT NULL) AND (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT ((json_query(c0, '$') != 'null') AND (((CASE WHEN ((SAFE_CAST(json_value(c0, '$.a') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$.a') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$.a') AS INT) END IS NOT NULL) AND (json_value(c0, '$.b') IS NOT NULL)) AND (SAFE_CAST(json_value(c0, '$.c') AS BOOLEAN) IS NOT NULL))) FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0))) AS c1)) THEN array((SELECT struct(CASE WHEN ((SAFE_CAST(json_value(c0, '$.a') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$.a') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$.a') AS INT) END AS a, json_value(c0, '$.b') AS b, SAFE_CAST(json_value(c0, '$.c') AS BOOLEAN) AS c) FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0)) END AS value FROM t1
+SELECT CASE WHEN ((json_query_array(to_json_string(t1.value), '$') IS NOT NULL) AND (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT ((json_query(c0, '$') != 'null') AND (((CASE WHEN ((SAFE_CAST(json_value(c0, '$.a') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(c0, '$.a') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(c0, '$.a') AS INT64) END IS NOT NULL) AND (json_value(c0, '$.b') IS NOT NULL)) AND (SAFE_CAST(json_value(c0, '$.c') AS BOOLEAN) IS NOT NULL))) FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0))) AS c1)) THEN array((SELECT struct(CASE WHEN ((SAFE_CAST(json_value(c0, '$.a') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(c0, '$.a') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(c0, '$.a') AS INT64) END AS a, json_value(c0, '$.b') AS b, SAFE_CAST(json_value(c0, '$.c') AS BOOLEAN) AS c) FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0)) END AS value FROM t1
 ------ end
 
 ------ Test: toJson/fromJson roundtrip for scala.collection.immutable.Seq[scala.Int]
-SELECT CASE WHEN ((json_query_array(to_json_string(t1.value), '$') IS NOT NULL) AND (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT (CASE WHEN ((SAFE_CAST(json_value(c0, '$') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$') AS INT) END IS NOT NULL) FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0))) AS c1)) THEN array((SELECT CASE WHEN ((SAFE_CAST(json_value(c0, '$') AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(json_value(c0, '$') AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(json_value(c0, '$') AS INT) END FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0)) END AS value FROM t1
+SELECT CASE WHEN ((json_query_array(to_json_string(t1.value), '$') IS NOT NULL) AND (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT (CASE WHEN ((SAFE_CAST(json_value(c0, '$') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(c0, '$') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(c0, '$') AS INT64) END IS NOT NULL) FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0))) AS c1)) THEN array((SELECT CASE WHEN ((SAFE_CAST(json_value(c0, '$') AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(json_value(c0, '$') AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(json_value(c0, '$') AS INT64) END FROM unnest(json_query_array(to_json_string(t1.value), '$')) AS c0)) END AS value FROM t1
 ------ end
 
 ------ Test: toMap
-SELECT CAST([struct(CAST(1 AS INT) AS _1, t1._1 AS _2), struct(CAST(2 AS INT) AS _1, t1._2 AS _2), struct(CAST(3 AS INT) AS _1, t1._3 AS _2)] AS ARRAY<STRUCT<key INT,value STRING>>) AS value FROM t1
+SELECT CAST([struct(CAST(1 AS INT64) AS _1, t1._1 AS _2), struct(CAST(2 AS INT64) AS _1, t1._2 AS _2), struct(CAST(3 AS INT64) AS _1, t1._3 AS _2)] AS ARRAY<STRUCT<key INT64,value STRING>>) AS value FROM t1
 ------ end
 
 ------ Test: toMap with many
-SELECT CASE WHEN (array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT struct(c0 AS _1, c0 AS _2) FROM unnest(t1.value) AS c0))) AS c1))) = array_length(array((SELECT DISTINCT c5 FROM unnest(array((SELECT c4._1 FROM unnest(array((SELECT DISTINCT c3 FROM unnest(array((SELECT struct(c2 AS _1, c2 AS _2) FROM unnest(t1.value) AS c2))) AS c3))) AS c4))) AS c5)))) THEN CAST(array((SELECT DISTINCT c7 FROM unnest(array((SELECT struct(c6 AS _1, c6 AS _2) FROM unnest(t1.value) AS c6))) AS c7)) AS ARRAY<STRUCT<key INT,value INT>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT,value INT>>) END AS value FROM t1
+SELECT CASE WHEN (array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT struct(c0 AS _1, c0 AS _2) FROM unnest(t1.value) AS c0))) AS c1))) = array_length(array((SELECT DISTINCT c5 FROM unnest(array((SELECT c4._1 FROM unnest(array((SELECT DISTINCT c3 FROM unnest(array((SELECT struct(c2 AS _1, c2 AS _2) FROM unnest(t1.value) AS c2))) AS c3))) AS c4))) AS c5)))) THEN CAST(array((SELECT DISTINCT c7 FROM unnest(array((SELECT struct(c6 AS _1, c6 AS _2) FROM unnest(t1.value) AS c6))) AS c7)) AS ARRAY<STRUCT<key INT64,value INT64>>) ELSE CAST(error('Duplicate keys found') AS ARRAY<STRUCT<key INT64,value INT64>>) END AS value FROM t1
 ------ end
 
 ------ Test: trim string
@@ -1411,11 +1411,11 @@ SELECT trim(t1.value, ' ') AS value FROM t1
 ------ end
 
 ------ Test: truncating divide first argument by second
-SELECT CAST(div(t1._1, t1._2) AS BIGINT) AS value FROM t1
+SELECT CAST(div(t1._1, t1._2) AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: truncating divide first int argument by second
-SELECT CAST(div(t1._1, t1._2) AS INT) AS value FROM t1
+SELECT CAST(div(t1._1, t1._2) AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[18, 0] to Long is consistent with Decimal rounding
@@ -1443,7 +1443,7 @@ SELECT CASE WHEN (round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-999
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 1] to com.choreograph.tyda.Decimal$package.Decimal[19, 0]
-SELECT round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-9999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('9999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT)) AS value FROM t1
+SELECT round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-9999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('9999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(0 AS INT64)) AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 1] to scala.Long
@@ -1451,11 +1451,11 @@ SELECT SAFE_CAST(round(t1.value, CAST(0 AS INT)) AS BIGINT) AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 3] to com.choreograph.tyda.Decimal$package.Decimal[10, 3]
-SELECT round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-9999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('9999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(3 AS INT)) AS value FROM t1
+SELECT round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-9999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('9999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(3 AS INT64)) AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 3] to com.choreograph.tyda.Decimal$package.Decimal[38, 9]
-SELECT round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT)) AS value FROM t1
+SELECT round(CASE WHEN ((SAFE_CAST(t1.value AS DECIMAL) >= CAST('-99999999999999999999999999999' AS BIGDECIMAL)) AND (SAFE_CAST(t1.value AS DECIMAL) <= CAST('99999999999999999999999999999' AS BIGDECIMAL))) THEN SAFE_CAST(t1.value AS DECIMAL) END, CAST(9 AS INT64)) AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[38, 9] to Long is consistent with Decimal rounding
@@ -1467,47 +1467,47 @@ SELECT SAFE_CAST(round(t1.value, CAST(0 AS INT)) AS BIGINT) AS value FROM t1
 ------ end
 
 ------ Test: try cast java.lang.String to scala.Byte
-SELECT CASE WHEN ((SAFE_CAST(t1.value AS TINYINT) >= CAST(-128 AS BIGINT)) AND (SAFE_CAST(t1.value AS TINYINT) <= CAST(127 AS BIGINT))) THEN SAFE_CAST(t1.value AS TINYINT) END AS value FROM t1
+SELECT CASE WHEN ((SAFE_CAST(t1.value AS INT64) >= CAST(-128 AS INT64)) AND (SAFE_CAST(t1.value AS INT64) <= CAST(127 AS INT64))) THEN SAFE_CAST(t1.value AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: try cast java.lang.String to scala.Int
-SELECT CASE WHEN ((SAFE_CAST(t1.value AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(t1.value AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(t1.value AS INT) END AS value FROM t1
+SELECT CASE WHEN ((SAFE_CAST(t1.value AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(t1.value AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(t1.value AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: try cast java.lang.String to scala.Long
-SELECT SAFE_CAST(t1.value AS BIGINT) AS value FROM t1
+SELECT SAFE_CAST(t1.value AS INT64) AS value FROM t1
 ------ end
 
 ------ Test: try cast java.lang.String to scala.Short
-SELECT CASE WHEN ((SAFE_CAST(t1.value AS SMALLINT) >= CAST(-32768 AS BIGINT)) AND (SAFE_CAST(t1.value AS SMALLINT) <= CAST(32767 AS BIGINT))) THEN SAFE_CAST(t1.value AS SMALLINT) END AS value FROM t1
+SELECT CASE WHEN ((SAFE_CAST(t1.value AS INT64) >= CAST(-32768 AS INT64)) AND (SAFE_CAST(t1.value AS INT64) <= CAST(32767 AS INT64))) THEN SAFE_CAST(t1.value AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: try cast scala.Int to scala.Byte
-SELECT CASE WHEN ((SAFE_CAST(t1.value AS TINYINT) >= CAST(-128 AS BIGINT)) AND (SAFE_CAST(t1.value AS TINYINT) <= CAST(127 AS BIGINT))) THEN SAFE_CAST(t1.value AS TINYINT) END AS value FROM t1
+SELECT CASE WHEN ((SAFE_CAST(t1.value AS INT64) >= CAST(-128 AS INT64)) AND (SAFE_CAST(t1.value AS INT64) <= CAST(127 AS INT64))) THEN SAFE_CAST(t1.value AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: try cast scala.Int to scala.Short
-SELECT CASE WHEN ((SAFE_CAST(t1.value AS SMALLINT) >= CAST(-32768 AS BIGINT)) AND (SAFE_CAST(t1.value AS SMALLINT) <= CAST(32767 AS BIGINT))) THEN SAFE_CAST(t1.value AS SMALLINT) END AS value FROM t1
+SELECT CASE WHEN ((SAFE_CAST(t1.value AS INT64) >= CAST(-32768 AS INT64)) AND (SAFE_CAST(t1.value AS INT64) <= CAST(32767 AS INT64))) THEN SAFE_CAST(t1.value AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: try cast scala.Long to scala.Byte
-SELECT CASE WHEN ((SAFE_CAST(t1.value AS TINYINT) >= CAST(-128 AS BIGINT)) AND (SAFE_CAST(t1.value AS TINYINT) <= CAST(127 AS BIGINT))) THEN SAFE_CAST(t1.value AS TINYINT) END AS value FROM t1
+SELECT CASE WHEN ((SAFE_CAST(t1.value AS INT64) >= CAST(-128 AS INT64)) AND (SAFE_CAST(t1.value AS INT64) <= CAST(127 AS INT64))) THEN SAFE_CAST(t1.value AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: try cast scala.Long to scala.Int
-SELECT CASE WHEN ((SAFE_CAST(t1.value AS INT) >= CAST(-2147483648 AS BIGINT)) AND (SAFE_CAST(t1.value AS INT) <= CAST(2147483647 AS BIGINT))) THEN SAFE_CAST(t1.value AS INT) END AS value FROM t1
+SELECT CASE WHEN ((SAFE_CAST(t1.value AS INT64) >= CAST(-2147483648 AS INT64)) AND (SAFE_CAST(t1.value AS INT64) <= CAST(2147483647 AS INT64))) THEN SAFE_CAST(t1.value AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: try cast scala.Long to scala.Short
-SELECT CASE WHEN ((SAFE_CAST(t1.value AS SMALLINT) >= CAST(-32768 AS BIGINT)) AND (SAFE_CAST(t1.value AS SMALLINT) <= CAST(32767 AS BIGINT))) THEN SAFE_CAST(t1.value AS SMALLINT) END AS value FROM t1
+SELECT CASE WHEN ((SAFE_CAST(t1.value AS INT64) >= CAST(-32768 AS INT64)) AND (SAFE_CAST(t1.value AS INT64) <= CAST(32767 AS INT64))) THEN SAFE_CAST(t1.value AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: try cast scala.Short to scala.Byte
-SELECT CASE WHEN ((SAFE_CAST(t1.value AS TINYINT) >= CAST(-128 AS BIGINT)) AND (SAFE_CAST(t1.value AS TINYINT) <= CAST(127 AS BIGINT))) THEN SAFE_CAST(t1.value AS TINYINT) END AS value FROM t1
+SELECT CASE WHEN ((SAFE_CAST(t1.value AS INT64) >= CAST(-128 AS INT64)) AND (SAFE_CAST(t1.value AS INT64) <= CAST(127 AS INT64))) THEN SAFE_CAST(t1.value AS INT64) END AS value FROM t1
 ------ end
 
 ------ Test: tuple *: construct
-SELECT CAST(1 AS INT) AS _1, t1._1 AS _2, t1._2 AS _3, t1._3 AS _4 FROM t1
+SELECT CAST(1 AS INT64) AS _1, t1._1 AS _2, t1._2 AS _3, t1._3 AS _4 FROM t1
 ------ end
 
 ------ Test: tuple head

@@ -31,11 +31,11 @@ SELECT DISTINCT table1.value AS value FROM table1
 ------ end
 
 ------ Test: explode Map
-SELECT t0._1 AS _1, t0._2 AS _2 FROM table1, unnest(CAST(table1.value AS ARRAY<STRUCT<_1 INT,_2 INT>>)) AS t0
+SELECT t0._1 AS _1, t0._2 AS _2 FROM table1, unnest(CAST(table1.value AS ARRAY<STRUCT<_1 INT64,_2 INT64>>)) AS t0
 ------ end
 
 ------ Test: explode Map and select Int
-SELECT t0 AS _1, table1._2 AS _2 FROM table1, unnest(CAST(table1._1 AS ARRAY<STRUCT<_1 INT,_2 INT>>)) AS t0
+SELECT t0 AS _1, table1._2 AS _2 FROM table1, unnest(CAST(table1._1 AS ARRAY<STRUCT<_1 INT64,_2 INT64>>)) AS t0
 ------ end
 
 ------ Test: explode Option
@@ -79,7 +79,7 @@ SELECT t0 AS value FROM table1, unnest(table1._2) AS t0 LIMIT 5
 ------ end
 
 ------ Test: limit after filter
-SELECT table1.value AS value FROM table1 WHERE (NOT (table1.value <= CAST(5 AS INT))) LIMIT 3
+SELECT table1.value AS value FROM table1 WHERE (NOT (table1.value <= CAST(5 AS INT64))) LIMIT 3
 ------ end
 
 ------ Test: limit after join
@@ -103,7 +103,7 @@ SELECT t1 AS value FROM (SELECT table1._1 AS _1, table1._2 AS _2 FROM table1 LIM
 ------ end
 
 ------ Test: limit before filter
-SELECT t0.value AS value FROM (SELECT table1.value AS value FROM table1 LIMIT 5) AS t0 WHERE (NOT (t0.value <= CAST(2 AS INT)))
+SELECT t0.value AS value FROM (SELECT table1.value AS value FROM table1 LIMIT 5) AS t0 WHERE (NOT (t0.value <= CAST(2 AS INT64)))
 ------ end
 
 ------ Test: limit before join
@@ -119,7 +119,7 @@ SELECT t0 AS _1, t1 AS _2 FROM table1, unnest(table1.d) AS t0, unnest(table1.d) 
 ------ end
 
 ------ Test: nested option upcast
-SELECT CASE WHEN (table1.value IS NOT NULL) THEN [table1.value.value] ELSE CAST([] AS ARRAY<INT>) END AS value FROM table1
+SELECT CASE WHEN (table1.value IS NOT NULL) THEN [table1.value.value] ELSE CAST([] AS ARRAY<INT64>) END AS value FROM table1
 ------ end
 
 ------ Test: select 2
@@ -151,7 +151,7 @@ SELECT t0 AS _1, t1 AS _2, t2 AS _3, t3 AS _4, t4 AS _5, t5 AS _6, t6 AS _7 FROM
 ------ end
 
 ------ Test: select Product
-SELECT table1.value AS _1, CAST(1 AS INT) AS _2 FROM table1
+SELECT table1.value AS _1, CAST(1 AS INT64) AS _2 FROM table1
 ------ end
 
 ------ Test: select after explode to product
@@ -159,7 +159,7 @@ SELECT t0.a AS value FROM table1, unnest(table1.value) AS t0
 ------ end
 
 ------ Test: select complex
-SELECT CAST(CAST([] AS ARRAY<STRUCT<_1 INT,_2 INT>>) AS ARRAY<STRUCT<key INT,value INT>>) AS value FROM table1
+SELECT CAST(CAST([] AS ARRAY<STRUCT<_1 INT64,_2 INT64>>) AS ARRAY<STRUCT<key INT64,value INT64>>) AS value FROM table1
 ------ end
 
 ------ Test: select different after explode to product
@@ -183,7 +183,7 @@ SELECT table1._1._1 AS value FROM table1
 ------ end
 
 ------ Test: select primitive
-SELECT CAST(1 AS INT) AS value FROM table1
+SELECT CAST(1 AS INT64) AS value FROM table1
 ------ end
 
 ------ Test: union
@@ -203,11 +203,11 @@ SELECT table1.value AS value FROM table1 WHERE table1.value
 ------ end
 
 ------ Test: where after explode
-SELECT t0 AS _1, t1 AS _2, table1._1 AS _3 FROM table1, unnest(table1._2) AS t0, unnest(table1._2) AS t1 WHERE (t0 < CAST(0 AS INT))
+SELECT t0 AS _1, t1 AS _2, table1._1 AS _3 FROM table1, unnest(table1._2) AS t0, unnest(table1._2) AS t1 WHERE (t0 < CAST(0 AS INT64))
 ------ end
 
 ------ Test: where before explode
-SELECT t0 AS _1, t1 AS _2, table1._1 AS _3 FROM table1, unnest(table1._2) AS t0, unnest(table1._2) AS t1 WHERE (array_length(table1._2) < CAST(2 AS INT))
+SELECT t0 AS _1, t1 AS _2, table1._1 AS _3 FROM table1, unnest(table1._2) AS t0, unnest(table1._2) AS t1 WHERE (array_length(table1._2) < CAST(2 AS INT64))
 ------ end
 
 ------ Test: where literal

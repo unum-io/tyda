@@ -94,3 +94,19 @@ ds.explain()
 ## Documentation
 
 Full API documentation and guides are available at [unum-io.github.io/tyda](https://unum-io.github.io/tyda/docs/index.html)
+
+## Local BigQuery SQL tests
+
+The BigQuery query suites run against the GoogleSQL reference executor when no
+`TYDA_BIGQUERY_TEST_PROJECT_ID` is configured. Build its pinned executable and
+pass its path to the tests. The bootstrap downloads and verifies the pinned
+official Linux release binary.
+
+```sh
+export TYDA_GOOGLESQL_EXECUTE_QUERY="$(dev/download-googlesql.sh)"
+bloop test tydaBigQuery
+```
+
+When `TYDA_BIGQUERY_TEST_PROJECT_ID` is set, the credential-backed BigQuery
+tests run instead. GCS read/write tests additionally require
+`TYDA_BIGQUERY_TEST_TMP_LOCATION` and remain real-service integration tests.

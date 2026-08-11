@@ -33,6 +33,11 @@ private[tyda] final case class SqlWriter(writer: Writer) {
       case SqlExpr.Brackets(exprs) => writeSql1"[$exprs]"
       case SqlExpr.FieldAccess(struct, field) => writeSql"$struct.$field"
       case SqlExpr.Function(name, args) => writeSql"$name($args)"
+      case SqlExpr.OrderedAggregate(name, arg, orderBy, descending, limit) =>
+        writeSql"$name($arg ORDER BY $orderBy"
+        write(if descending then " DESC LIMIT " else " ASC LIMIT ")
+        write(limit.toString)
+        write(")")
       case SqlExpr.Index(arr, idx) => writeSql"$arr[$idx]"
       case SqlExpr.Ident(name) => write(name)
       case SqlExpr.UnaryOp(op, e, true) => writeSql"($op $e)"
@@ -49,6 +54,10 @@ private[tyda] final case class SqlWriter(writer: Writer) {
           case '\t' => writer.write("\\t")
           case c => writer.write(c)
         }
+        writer.write('\'')
+      case SqlExpr.LiteralRawString(value) =>
+        writer.write("r'")
+        writer.write(value)
         writer.write('\'')
       case SqlExpr.LiteralHexString(value) =>
         write("X'")
@@ -117,6 +126,7 @@ private[tyda] final case class SqlWriter(writer: Writer) {
     from match {
       case From.Table(name) => write(name)
       case From.Expr(expr, alias) => writeSql"$expr AS $alias"
+      case From.ExprWithOffset(expr, alias, offset) => writeSql"$expr AS $alias WITH OFFSET AS $offset"
       case From.Subquery(query, alias) => writeSql"($query) AS $alias"
       case From.Join(left, right, JoinType.Inner, None) => writeSql"$left, $right"
       case From.Join(left, right, tpe, on) =>

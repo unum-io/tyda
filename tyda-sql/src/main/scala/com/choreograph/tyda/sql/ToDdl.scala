@@ -99,10 +99,10 @@ object ToDdl {
   private[tyda] def toNullableDdlType[T](codec: Codec[T], dialect: DdlDialect): DdlType =
     codec match {
       case Codec.Boolean => DdlType.Primitive("BOOLEAN")
-      case Codec.Byte => DdlType.Primitive("TINYINT")
-      case Codec.Short => DdlType.Primitive("SMALLINT")
-      case Codec.Int => DdlType.Primitive("INT")
-      case Codec.Long => DdlType.Primitive("BIGINT")
+      case Codec.Byte => DdlType.Primitive(dialect.byteType)
+      case Codec.Short => DdlType.Primitive(dialect.shortType)
+      case Codec.Int => DdlType.Primitive(dialect.intType)
+      case Codec.Long => DdlType.Primitive(dialect.longType)
       case Codec.Float => DdlType.Primitive(dialect.floatType)
       case Codec.Double => DdlType.Primitive(dialect.doubleType)
       case Codec.String => DdlType.Primitive("STRING")

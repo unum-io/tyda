@@ -2,6 +2,7 @@ package com.choreograph.tyda.testsuites
 
 import scala.reflect.ClassTag
 import scala.util.Random
+import scala.util.matching.Regex
 
 import org.scalactic.Equality
 import org.scalatest.Assertions.fail
@@ -182,7 +183,7 @@ trait DatasetSuite extends AnyFunSuite {
       name: String,
       input: Seq[T],
       computation: Dataset[T] => Dataset[R],
-      expectedError: String
+      expectedError: String | Regex
   ): Unit =
     test(name) {
       val ds = computation(Dataset.FromSeq(input))
@@ -190,11 +191,18 @@ trait DatasetSuite extends AnyFunSuite {
       e match {
         // TODO: Use ScalaTestControlException alias
         case e: (TestPendingException | TestCanceledException | TestFailedException) => throw e
-        case _ => Option(e.getMessage) match {
-            case None => fail(s"Expected exception with $expectedError but got exception with no message.", e)
-            case Some(message) => assert(
-                message.contains(expectedError),
-                s"Error message did not contain expected text.\nExpected to contain: $expectedError\nActual message: ${message}"
+        case _ =>
+          val message = Option(e.getMessage).getOrElse(
+            fail(s"Expected exception with $expectedError but got exception with no message.", e)
+          )
+          expectedError match {
+            case expected: String => assert(
+                message.contains(expected),
+                s"Error message did not contain expected text.\nExpected to contain: $expected\nActual message: $message"
+              )
+            case expected: Regex => assert(
+                expected.findFirstMatchIn(message).isDefined,
+                s"Error message did not match regex '$expected'.\nActual message: $message"
               )
           }
       }

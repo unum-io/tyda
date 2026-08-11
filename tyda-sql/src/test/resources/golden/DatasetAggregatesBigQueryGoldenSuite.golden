@@ -1,29 +1,29 @@
 ------ Test: aggregate 2 whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(table1.value) AS _2) END AS value FROM table1
+SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT64)) AS _1, array_agg(table1.value) AS _2) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate 3 whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(table1.value) AS _2, min(table1.value) AS _3) END AS value FROM table1
+SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT64)) AS _1, array_agg(table1.value) AS _2, min(table1.value) AS _3) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate 4 whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(table1.value) AS _2, min(table1.value) AS _3, max(table1.value) AS _4) END AS value FROM table1
+SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT64)) AS _1, array_agg(table1.value) AS _2, min(table1.value) AS _3, max(table1.value) AS _4) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate 5 whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(struct(table1._1 AS _1, table1._2 AS _2)) AS _2, min(table1._1) AS _3, max(table1._1) AS _4, min(table1._2) AS _5) END AS value FROM table1
+SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT64)) AS _1, array_agg(struct(table1._1 AS _1, table1._2 AS _2)) AS _2, min(table1._1) AS _3, max(table1._1) AS _4, min(table1._2) AS _5) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate 6 whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(struct(table1._1 AS _1, table1._2 AS _2)) AS _2, min(table1._1) AS _3, max(table1._1) AS _4, min(table1._2) AS _5, max(table1._2) AS _6) END AS value FROM table1
+SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT64)) AS _1, array_agg(struct(table1._1 AS _1, table1._2 AS _2)) AS _2, min(table1._1) AS _3, max(table1._1) AS _4, min(table1._2) AS _5, max(table1._2) AS _6) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate 7 whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(struct(table1._1 AS _1, table1._2 AS _2)) AS _2, min(table1._1) AS _3, max(table1._1) AS _4, min(table1._2) AS _5, max(table1._2) AS _6, array_agg(table1._2) AS _7) END AS value FROM table1
+SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT64)) AS _1, array_agg(struct(table1._1 AS _1, table1._2 AS _2)) AS _2, min(table1._1) AS _3, max(table1._1) AS _4, min(table1._2) AS _5, max(table1._2) AS _6, array_agg(table1._2) AS _7) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate 8 whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT)) AS _1, array_agg(struct(table1._1 AS _1, table1._2 AS _2)) AS _2, min(table1._1) AS _3, max(table1._1) AS _4, min(table1._2) AS _5, max(table1._2) AS _6, array_agg(table1._2) AS _7, sum(table1._1) AS _8) END AS value FROM table1
+SELECT CASE WHEN (count(1) <> 0) THEN struct(count(CAST(1 AS INT64)) AS _1, array_agg(struct(table1._1 AS _1, table1._2 AS _2)) AS _2, min(table1._1) AS _3, max(table1._1) AS _4, min(table1._2) AS _5, max(table1._2) AS _6, array_agg(table1._2) AS _7, sum(table1._1) AS _8) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate after explode
@@ -39,7 +39,7 @@ SELECT CASE WHEN (count(1) <> 0) THEN array_agg(table1.value) END AS value FROM 
 ------ end
 
 ------ Test: aggregate count whole dataset
-SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM table1
+SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT64)) END AS value FROM table1
 ------ end
 
 ------ Test: aggregate max whole dataset
@@ -55,7 +55,7 @@ SELECT CASE WHEN (count(1) <> 0) THEN struct(sum(table1.value) AS value) END AS 
 ------ end
 
 ------ Test: boolAnd expr
-SELECT logical_and((NOT (table1._2 <= CAST(0 AS INT)))) AS value FROM table1 GROUP BY table1._1
+SELECT logical_and((NOT (table1._2 <= CAST(0 AS INT64)))) AS value FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: boolAnd whole row
@@ -63,7 +63,7 @@ SELECT CASE WHEN (count(1) <> 0) THEN logical_and(table1.value) END AS value FRO
 ------ end
 
 ------ Test: boolOr expr
-SELECT logical_or((NOT (table1._2 <= CAST(0 AS INT)))) AS value FROM table1 GROUP BY table1._1
+SELECT logical_or((NOT (table1._2 <= CAST(0 AS INT64)))) AS value FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: boolOr whole row
@@ -71,23 +71,23 @@ SELECT CASE WHEN (count(1) <> 0) THEN logical_or(table1.value) END AS value FROM
 ------ end
 
 ------ Test: collect Option
-SELECT array_agg(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT array_agg(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: collect Option Seq
-SELECT array_agg(struct(table1.value AS value)) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT array_agg(struct(table1.value AS value)) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: collect Seq
-SELECT array_agg(struct(table1.value AS value)) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT array_agg(struct(table1.value AS value)) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: collect and map
-SELECT array((SELECT (CAST(c0 AS INT) + CAST(1 AS INT)) FROM unnest(t0.value) AS c0)) AS value FROM (SELECT array_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
+SELECT array((SELECT (CAST(c0 AS INT64) + CAST(1 AS INT64)) FROM unnest(t0.value) AS c0)) AS value FROM (SELECT array_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
 ------ end
 
 ------ Test: collect and map pairs
-SELECT t0._1 AS _1, array((SELECT (CAST(c0 AS INT) + CAST(1 AS INT)) FROM unnest(t0._2) AS c0)) AS _2 FROM (SELECT table1._1 AS _1, array_agg(table1._2) AS _2 FROM table1 GROUP BY table1._1) AS t0
+SELECT t0._1 AS _1, array((SELECT (CAST(c0 AS INT64) + CAST(1 AS INT64)) FROM unnest(t0._2) AS c0)) AS _2 FROM (SELECT table1._1 AS _1, array_agg(table1._2) AS _2 FROM table1 GROUP BY table1._1) AS t0
 ------ end
 
 ------ Test: collect column
@@ -95,7 +95,7 @@ SELECT array_agg(table1._2) AS value FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: collect whole row
-SELECT array_agg(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT array_agg(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: concat and distinct
@@ -103,11 +103,11 @@ SELECT array((SELECT DISTINCT c0 FROM unnest(t0.value) AS c0)) AS value FROM (SE
 ------ end
 
 ------ Test: concat and exists
-SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (NOT (CAST(c0 AS INT) <= CAST(0 AS INT))) FROM unnest(t0.value) AS c0))) AS c1) AS value FROM (SELECT array_concat_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (NOT (CAST(c0 AS INT64) <= CAST(0 AS INT64))) FROM unnest(t0.value) AS c0))) AS c1) AS value FROM (SELECT array_concat_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
 ------ end
 
 ------ Test: concat and filter
-SELECT array((SELECT c0 FROM unnest(t0.value) AS c0 WHERE (NOT (CAST(c0 AS INT) <= CAST(1 AS INT))))) AS value FROM (SELECT array_concat_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
+SELECT array((SELECT c0 FROM unnest(t0.value) AS c0 WHERE (NOT (CAST(c0 AS INT64) <= CAST(1 AS INT64))))) AS value FROM (SELECT array_concat_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
 ------ end
 
 ------ Test: concat and flatten
@@ -115,11 +115,11 @@ SELECT array((SELECT c2 FROM unnest(array((SELECT struct([c0, c0] AS value) FROM
 ------ end
 
 ------ Test: concat and forall
-SELECT (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT (NOT (CAST(c0 AS INT) <= CAST(0 AS INT))) FROM unnest(t0.value) AS c0))) AS c1) AS value FROM (SELECT array_concat_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
+SELECT (SELECT coalesce(logical_and(c1), TRUE) FROM unnest(array((SELECT (NOT (CAST(c0 AS INT64) <= CAST(0 AS INT64))) FROM unnest(t0.value) AS c0))) AS c1) AS value FROM (SELECT array_concat_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
 ------ end
 
 ------ Test: concat and map
-SELECT array((SELECT (CAST(c0 AS INT) + CAST(1 AS INT)) FROM unnest(t0.value) AS c0)) AS value FROM (SELECT array_concat_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
+SELECT array((SELECT (CAST(c0 AS INT64) + CAST(1 AS INT64)) FROM unnest(t0.value) AS c0)) AS value FROM (SELECT array_concat_agg(table1._2) AS value FROM table1 GROUP BY table1._1) AS t0
 ------ end
 
 ------ Test: concat column
@@ -127,7 +127,7 @@ SELECT array_concat_agg(table1._2) AS value FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: concat seq
-SELECT array_concat_agg(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT array_concat_agg(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: concat seq by group
@@ -135,23 +135,23 @@ SELECT table1._1 AS _1, array_concat_agg(table1._2) AS _2 FROM table1 GROUP BY t
 ------ end
 
 ------ Test: count group by
-SELECT table1._1 AS _1, count(CAST(1 AS INT)) AS _2 FROM table1 GROUP BY table1._1
+SELECT table1._1 AS _1, count(CAST(1 AS INT64)) AS _2 FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: count whole row
-SELECT count(CAST(1 AS INT)) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT count(CAST(1 AS INT64)) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: countIf expr
-SELECT count(CASE WHEN (NOT (table1.value <= CAST(0 AS INT))) THEN CAST(1 AS INT) END) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT count(CASE WHEN (NOT (table1.value <= CAST(0 AS INT64))) THEN CAST(1 AS INT64) END) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: countIf group by
-SELECT table1._1 AS _1, count(CASE WHEN (NOT (table1._2 <= CAST(0 AS INT))) THEN CAST(1 AS INT) END) AS _2 FROM table1 GROUP BY table1._1
+SELECT table1._1 AS _1, count(CASE WHEN (NOT (table1._2 <= CAST(0 AS INT64))) THEN CAST(1 AS INT64) END) AS _2 FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: countIf whole row
-SELECT count(CASE WHEN table1.value THEN CAST(1 AS INT) END) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT count(CASE WHEN table1.value THEN CAST(1 AS INT64) END) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: countSome expr
@@ -159,7 +159,7 @@ SELECT count(table1._2) AS value FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: countSome whole row
-SELECT count(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT count(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: explode after aggregate
@@ -179,11 +179,11 @@ SELECT struct(table1._1 AS _1, table1._2 AS _2) AS _1, min(table1._1) AS _2 FROM
 ------ end
 
 ------ Test: groupBy transform
-SELECT (NOT (table1._1 <= CAST(2 AS INT))) AS _1, min(table1._2) AS _2 FROM table1 GROUP BY (NOT (table1._1 <= CAST(2 AS INT)))
+SELECT (NOT (table1._1 <= CAST(2 AS INT64))) AS _1, min(table1._2) AS _2 FROM table1 GROUP BY (NOT (table1._1 <= CAST(2 AS INT64)))
 ------ end
 
 ------ Test: max Double
-SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: maxBy
@@ -191,31 +191,31 @@ SELECT table1._1 AS _1, max_by(struct(table1._1 AS _1, table1._2 AS _2)._1, stru
 ------ end
 
 ------ Test: min Boolean
-SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: min Byte
-SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: min Double
-SELECT coalesce(min(CASE WHEN (NOT is_nan(table1.value)) THEN table1.value END), CAST('NaN' AS FLOAT64)) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT coalesce(min(CASE WHEN (NOT is_nan(table1.value)) THEN table1.value END), CAST('NaN' AS FLOAT64)) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: min Float
-SELECT coalesce(min(CASE WHEN (NOT is_nan(table1.value)) THEN table1.value END), CAST('NaN' AS FLOAT64)) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT coalesce(min(CASE WHEN (NOT is_nan(table1.value)) THEN table1.value END), CAST('NaN' AS FLOAT64)) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: min Int
-SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: min Short
-SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: min String
-SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: min expr
@@ -223,7 +223,7 @@ SELECT table1._1 AS _1, min(table1._2) AS _2 FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: min whole row
-SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: minBy
@@ -231,23 +231,23 @@ SELECT table1._1 AS _1, min_by(struct(table1._1 AS _1, table1._2 AS _2)._1, stru
 ------ end
 
 ------ Test: reduce group by nested option
-SELECT count(CAST(1 AS INT)) AS value FROM (SELECT table1.value AS _1, struct(CASE WHEN CASE WHEN (table1.value IS NULL) THEN TRUE ELSE (NOT (table1.value <= CAST(0 AS INT))) END THEN struct(table1.value AS value) END AS key) AS _2 FROM table1) AS t0 GROUP BY t0._2
+SELECT count(CAST(1 AS INT64)) AS value FROM (SELECT table1.value AS _1, struct(CASE WHEN CASE WHEN (table1.value IS NULL) THEN TRUE ELSE (NOT (table1.value <= CAST(0 AS INT64))) END THEN struct(table1.value AS value) END AS key) AS _2 FROM table1) AS t0 GROUP BY t0._2
 ------ end
 
 ------ Test: reduce group by option.map with struct
-SELECT count(CAST(1 AS INT)) AS value FROM (SELECT table1.value AS _1, struct(CASE WHEN (table1.value IS NOT NULL) THEN struct(table1.value._1 AS _1, CAST(1 AS INT) AS _2) END AS key) AS _2 FROM table1) AS t0 GROUP BY t0._2
+SELECT count(CAST(1 AS INT64)) AS value FROM (SELECT table1.value AS _1, struct(CASE WHEN (table1.value IS NOT NULL) THEN struct(table1.value._1 AS _1, CAST(1 AS INT64) AS _2) END AS key) AS _2 FROM table1) AS t0 GROUP BY t0._2
 ------ end
 
 ------ Test: reduce group by option.orElse with struct
-SELECT count(CAST(1 AS INT)) AS value FROM (SELECT table1.value AS _1, struct(coalesce(table1.value, struct(CAST(0 AS INT) AS _1, CAST(0 AS INT) AS _2)) AS key) AS _2 FROM table1) AS t0 GROUP BY t0._2
+SELECT count(CAST(1 AS INT64)) AS value FROM (SELECT table1.value AS _1, struct(coalesce(table1.value, struct(CAST(0 AS INT64) AS _1, CAST(0 AS INT64) AS _2)) AS key) AS _2 FROM table1) AS t0 GROUP BY t0._2
 ------ end
 
 ------ Test: select after where after aggregate
-SELECT (CAST(min(table1.a) AS BIGINT) + CAST(1 AS BIGINT)) AS value FROM table1 GROUP BY table1.d HAVING (NOT (min(table1.a) <= CAST(0 AS INT)))
+SELECT (CAST(min(table1.a) AS INT64) + CAST(1 AS INT64)) AS value FROM table1 GROUP BY table1.d HAVING (NOT (min(table1.a) <= CAST(0 AS INT64)))
 ------ end
 
 ------ Test: sum Byte
-SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: sum Decimal overflow should error
@@ -255,27 +255,27 @@ SELECT CASE WHEN (count(1) <> 0) THEN sum(table1.value) END AS value FROM table1
 ------ end
 
 ------ Test: sum Decimal(MaxPrecision, 2)
-SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: sum Decimal(MaxPrecision, 9)
-SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: sum Double
-SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: sum Float
-SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: sum Int
-SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: sum Long
-SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: sum Long overflow should error
@@ -283,29 +283,29 @@ SELECT CASE WHEN (count(1) <> 0) THEN sum(table1.value) END AS value FROM table1
 ------ end
 
 ------ Test: sum Option[Int]
-SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: sum Short
-SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: support group by with enum
-SELECT struct('a' AS discriminant, struct(table1.value AS a) AS a, CAST(NULL AS STRUCT<b INT>) AS b, CAST(NULL AS STRUCT<c INT>) AS c) AS _1, count(CAST(1 AS INT)) AS _2 FROM table1 GROUP BY table1.value
+SELECT struct('a' AS discriminant, struct(table1.value AS a) AS a, CAST(NULL AS STRUCT<b INT64>) AS b, CAST(NULL AS STRUCT<c INT64>) AS c) AS _1, count(CAST(1 AS INT64)) AS _2 FROM table1 GROUP BY table1.value
 ------ end
 
 ------ Test: support group by with nested option
-SELECT struct(table1.value AS value) AS _1, count(CAST(1 AS INT)) AS _2 FROM table1 GROUP BY table1.value
+SELECT struct(table1.value AS value) AS _1, count(CAST(1 AS INT64)) AS _2 FROM table1 GROUP BY table1.value
 ------ end
 
 ------ Test: support group by with select from literal
-SELECT CAST(1 AS INT) AS _1, count(CAST(1 AS INT)) AS _2 FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT CAST(1 AS INT64) AS _1, count(CAST(1 AS INT64)) AS _2 FROM table1 GROUP BY CAST(NULL AS INT64)
 ------ end
 
 ------ Test: support group with complex literals
-SELECT struct(struct(table1.value AS i, CAST(NULL AS STRING) AS a) AS i, CAST(NULL AS STRUCT<i INT,a STRING>) AS a) AS _1, count(CAST(1 AS INT)) AS _2 FROM table1 GROUP BY table1.value
+SELECT struct(struct(table1.value AS i, CAST(NULL AS STRING) AS a) AS i, CAST(NULL AS STRUCT<i INT64,a STRING>) AS a) AS _1, count(CAST(1 AS INT64)) AS _2 FROM table1 GROUP BY table1.value
 ------ end
 
 ------ Test: where after aggregate
-SELECT table1.b AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.b HAVING (min(table1.a) < CAST(10 AS INT))
+SELECT table1.b AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.b HAVING (min(table1.a) < CAST(10 AS INT64))
 ------ end

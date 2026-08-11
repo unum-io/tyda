@@ -31,6 +31,7 @@ final case class SqlDialect(
     binaryLiteral: SqlDialect.BinaryLiteral,
     boolAndFunction: String,
     boolOrFunction: String,
+    useCaseForShortCircuitBooleanOperators: Boolean = false,
     bytesLength: String,
     fromBase64: SqlDialect.FromBase64Support,
     toBase64: SqlDialect.ToBase64Support.Function,
@@ -53,6 +54,7 @@ final case class SqlDialect(
     makeStruct: SqlDialect.MakeStruct,
     makeTimestamp: SqlDialect.MakeTimestamp,
     mapSupport: SqlDialect.MapSupport,
+    minMaxBy: SqlDialect.MinMaxBy = SqlDialect.MinMaxBy.Function("min_by", "max_by"),
     range: SqlDialect.Range,
     regexp: String,
     endsWithFunction: String,
@@ -98,6 +100,8 @@ object SqlDialect {
       * `SAFE.FROM_BASE64(str)`.
       */
     case Function(name: String)
+
+    case StrictFunction(name: String, replace: String, matches: String)
   }
 
   /** How to encode binary to a Base64 string. */
@@ -212,11 +216,21 @@ object SqlDialect {
       * ```
       */
     case Subquery(makeArray: String, unnest: String)
+
+    /** Array distinct needs to preserve the first occurrence of each element
+      * using a subquery.
+      */
+    case OrderedSubquery(makeArray: String, unnest: String)
   }
 
   enum MapSupport {
     case Array
     case Native(makeMap: String, mapEntries: String, mapGet: String, mapContains: String)
+  }
+
+  enum MinMaxBy {
+    case Function(min: String, max: String)
+    case OrderedArrayAgg(name: String)
   }
 
   enum IntegerSupport {
@@ -425,6 +439,7 @@ object SqlDialect {
     binaryLiteral = BinaryLiteral.ByteEscapeString,
     boolAndFunction = "logical_and",
     boolOrFunction = "logical_or",
+    useCaseForShortCircuitBooleanOperators = false,
     bytesLength = "byte_length",
     fromBase64 = FromBase64Support.Function("SAFE.FROM_BASE64"),
     toBase64 = ToBase64Support.Function("TO_BASE64", false),
@@ -440,6 +455,10 @@ object SqlDialect {
       floatType = "FLOAT64",
       doubleType = "FLOAT64",
       bytesType = "BYTES",
+      byteType = "INT64",
+      shortType = "INT64",
+      intType = "INT64",
+      longType = "INT64",
       supportsArrayAsArrayElement = false
     ),
     errorFunction = "error",
@@ -462,6 +481,7 @@ object SqlDialect {
     makeStruct = MakeStruct.FunctionAndAlias("struct"),
     makeTimestamp = MakeTimestamp.Function("timestamp_micros"),
     mapSupport = MapSupport.Array,
+    minMaxBy = MinMaxBy.Function("min_by", "max_by"),
     range = Range.Inclusive("generate_array", errorOnEmpty = false),
     regexp = "regexp_contains",
     endsWithFunction = "ends_with",
@@ -484,6 +504,13 @@ object SqlDialect {
     )
   )
 
+  val GoogleSql: SqlDialect = BigQuery.copy(
+    arrayDistinct = ArrayDistinct.OrderedSubquery("array", "unnest"),
+    fromBase64 = FromBase64Support.StrictFunction("SAFE.FROM_BASE64", "regexp_replace", "regexp_contains"),
+    minMaxBy = MinMaxBy.OrderedArrayAgg("array_agg"),
+    useCaseForShortCircuitBooleanOperators = true
+  )
+
   private val sparkJsonOptions =
     Map("timeZone" -> "UTC", "timestampFormat" -> "yyyy-MM-dd'T'HH:mm[:ss][.SSSSSS][XXX]")
   val Spark: SqlDialect = SqlDialect(
@@ -499,6 +526,7 @@ object SqlDialect {
     binaryLiteral = BinaryLiteral.HexString,
     boolAndFunction = "bool_and",
     boolOrFunction = "bool_or",
+    useCaseForShortCircuitBooleanOperators = false,
     bytesLength = "length",
     fromBase64 = FromBase64Support.TryFunction("try_to_binary", "base64"),
     toBase64 = ToBase64Support.Function("base64", true),
@@ -526,6 +554,7 @@ object SqlDialect {
       mapGet = "element_at",
       mapContains = "map_contains_key"
     ),
+    minMaxBy = MinMaxBy.Function("min_by", "max_by"),
     range = Range.Inclusive("sequence", errorOnEmpty = true),
     regexp = "regexp",
     endsWithFunction = "endswith",

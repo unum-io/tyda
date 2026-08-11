@@ -870,7 +870,11 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
 
   {
     given Arbitrary[Int] = Arbitrary.int.filter(_ > 0)
-    testFailure[Int, Int]("fail on int overflow", _ + Expr.lit(Int.MaxValue), "(overflow)|(out of range)".r)
+    testFailure[Int, Int](
+      "fail on int overflow",
+      _ + Expr.lit(Int.MaxValue),
+      "(overflow)|(out of range)|(too large for int)".r
+    )
   }
 
   {
