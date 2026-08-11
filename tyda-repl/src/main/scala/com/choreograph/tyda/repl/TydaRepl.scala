@@ -1,5 +1,10 @@
 package com.choreograph.tyda.repl
 
+import java.io.File
+import java.net.URL
+import java.net.URLClassLoader
+import java.nio.file.Paths
+
 import scala.util.chaining.scalaUtilChainingOps
 
 import dotty.tools.repl.ReplDriver
@@ -27,7 +32,7 @@ object TydaRepl {
           System.setProperty("spark.master", "local[*]"): Unit
       case _ =>
 
-    val classPath = System.getProperty("java.class.path")
+    val classPath = currentClassPath
     val settings = Array("-classpath", classPath, "-color:always")
     val driver = new ReplDriver(settings, System.out, None)
 
@@ -44,6 +49,38 @@ object TydaRepl {
       .copy(quiet = false)
     driver.runUntilQuit(using state)(): Unit
   }
+
+  /** Reconstructs the classpath of the process that launched the REPL.
+    *
+    * `System.getProperty("java.class.path")` is unreliable under sbt's
+    * in-process runner: it only contains the sbt launcher jar, not the project
+    * classpath, which is instead exposed through the run ClassLoader hierarchy.
+    * We walk that hierarchy, collect every URLClassLoader's entries, and fall
+    * back to (and supplement with) the system property so the REPL works both
+    * under sbt and when launched directly with `java`.
+    */
+  private def currentClassPath: String = {
+    val loaderEntries = LazyList
+      .iterate(Option(Thread.currentThread.getContextClassLoader))(_.flatMap(l => Option(l.getParent)))
+      .takeWhile(_.isDefined)
+      .flatten
+      .collect { case u: URLClassLoader => u.getURLs.toSeq }
+      .flatten
+      .flatMap(urlToPath)
+
+    val propertyEntries = System.getProperty("java.class.path").split(File.pathSeparator).toSeq
+
+    (loaderEntries ++ propertyEntries).distinct.mkString(File.pathSeparator)
+  }
+
+  private def urlToPath(url: URL): Option[String] =
+    try Some(Paths.get(url.toURI).toString)
+    catch {
+      case e @ (_: java.net.URISyntaxException | _: IllegalArgumentException |
+          _: java.nio.file.FileSystemNotFoundException) =>
+        System.err.println(s"Skipping classpath entry that could not be resolved to a file path: $url ($e)")
+        None
+    }
 
   // If the bind was implemented https://github.com/scala/scala3/issues/5069
   // We should be able to bind the runner instead of needing to build this complicated string
