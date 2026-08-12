@@ -2,8 +2,8 @@ package com.choreograph.tyda.parquet
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.parquet.hadoop.util.HadoopOutputFile
 import org.apache.parquet.hadoop.ParquetWriter
+import org.apache.parquet.hadoop.util.HadoopOutputFile
 
 import com.choreograph.tyda.Codec
 
