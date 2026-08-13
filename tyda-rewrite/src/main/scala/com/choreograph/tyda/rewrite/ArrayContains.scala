@@ -12,6 +12,7 @@ private[tyda] object ArrayContains {
       val arg = compiled.arg
       def isIndependentOfArg(e: ExprNode[?]): Boolean = e.forall(_ != arg)
       compiled.expr match {
+        case ExprNode.Equals(Nullable(_), Nullable(_)) => None
         case ExprNode.Equals(`arg`, e) if isIndependentOfArg(e) => Some(e)
         case ExprNode.Equals(e, `arg`) if isIndependentOfArg(e) => Some(e)
         case _ => None
