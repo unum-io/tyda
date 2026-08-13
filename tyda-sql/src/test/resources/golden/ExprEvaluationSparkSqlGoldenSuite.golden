@@ -1379,23 +1379,23 @@ SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
-SELECT array_contains(t1._1, t1._2) AS value FROM t1
+SELECT aggregate(transform(t1._1, c0 -> (c0 IS NOT DISTINCT FROM t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.Option[scala.Boolean]
-SELECT array_contains(t1._1, t1._2) AS value FROM t1
+SELECT aggregate(transform(t1._1, c0 -> (c0 IS NOT DISTINCT FROM t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.Option[scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]]
-SELECT array_contains(t1._1, t1._2) AS value FROM t1
+SELECT aggregate(transform(t1._1, c0 -> (c0 IS NOT DISTINCT FROM t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.Option[scala.Option[scala.Boolean]]
-SELECT array_contains(t1._1, t1._2) AS value FROM t1
+SELECT aggregate(transform(t1._1, c0 -> (c0 IS NOT DISTINCT FROM t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.Option[scala.collection.immutable.Seq[scala.Boolean]]
-SELECT array_contains(t1._1, t1._2) AS value FROM t1
+SELECT aggregate(transform(t1._1, c0 -> (c0 IS NOT DISTINCT FROM t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.collection.immutable.Seq[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
