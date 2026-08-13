@@ -88,7 +88,7 @@ object ExprEvaluationSuiteBase {
     case _ => NestedOption[Levels - 1, Option[Value]]
   }
 
-  private final case class WithOptionField(a: Option[Int]) derives Arbitrary, Codec
+  private final case class WithOptionField(a: Option[Boolean]) derives Arbitrary, Codec
 
   private final case class WithEmptyTuple(empty: EmptyTuple) derives Arbitrary, Codec
   private final case class WithNamedTupleEmpty(empty: NamedTuple.Empty) derives Arbitrary, Codec
@@ -169,30 +169,30 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     t => !t._1 == !t._2
   )
 
-  testHasSameBehavior[(Int, Int), Boolean]("equals on primitive", t => t._1 == t._2, _ == _)
-  testHasSameBehavior[(Int, Int), Boolean]("not equals on primitive", t => t._1 != t._2, _ != _)
-  testHasSameBehavior[(Option[Int], Option[Int]), Boolean]("equals on Option", t => t._1 == t._2, _ == _)
-  testHasSameBehavior[(Option[Option[Boolean]], Option[Option[Boolean]]), Boolean](
-    "equals on nested Option",
-    t => t._1 == t._2,
-    _ == _
-  )
-  testHasSameBehavior[(Seq[Boolean], Seq[Boolean]), Boolean]("equals on Seq", t => t._1 == t._2, _ == _)
-  testHasSameBehavior[(WithOptionField, WithOptionField), Boolean](
-    "equals on struct with optional field",
-    t => t._1 == t._2,
-    _ == _
-  )
-  testHasSameBehavior[(Seq[(Int, Int)], Seq[(Int, Int)]), Boolean](
-    "equals on Seq with product",
-    t => t._1 == t._2,
-    _ == _
-  )
-  testHasSameBehavior[(Seq[WithOptionField], Seq[WithOptionField]), Boolean](
-    "equals on Seq with product optional field",
-    t => t._1 == t._2,
-    _ == _
-  )
+  def testEqualsAndContains[T: Codec: Arbitrary: TypeName] = {
+    testHasSameBehavior[(T, T), Boolean](s"equals on ${TypeName.name}", t => t._1 == t._2, _ == _)
+    testHasSameBehavior[(T, T), Boolean](s"not equals on ${TypeName.name}", t => t._1 != t._2, _ != _)
+    testHasSameBehavior[(Seq[T], T), Boolean](
+      s"seq contains ${TypeName.name}",
+      x => x._1.contains(x._2),
+      x => x._1.contains(x._2)
+    )
+  }
+
+  testEqualsAndContains[Boolean]
+  testEqualsAndContains[Option[Boolean]]
+  testEqualsAndContains[Option[Option[Boolean]]]
+  testEqualsAndContains[Seq[Boolean]]
+  testEqualsAndContains[Seq[Struct]]
+  testEqualsAndContains[Seq[WithOptionField]]
+  testEqualsAndContains[Seq[Seq[Boolean]]]
+  testEqualsAndContains[(bool: Boolean)]
+  testEqualsAndContains[WithOptionField]
+  testEqualsAndContains[(seq: Seq[Boolean])]
+  testEqualsAndContains[Seq[(Int, Int)]]
+  testEqualsAndContains[Struct]
+  testEqualsAndContains[TestEnumString]
+
   testHasSameBehavior[Option[Int], Boolean]("equals to None", _ == None, _ == None)
 
   testHasSameBehavior[Option[Option[Int]], Option[Option[Int]]]("nested Option", identity, identity)
@@ -431,23 +431,6 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testHasSameBehavior[Seq[Int], Boolean]("seq exists", _.exists(_ < 0), _.exists(_ < 0))
 
   testHasSameBehavior[Seq[Boolean], Boolean]("seq contains", _.contains(true), _.contains(elem = true))
-
-  def testSeqContains[T: TypeName: Codec: Arbitrary] =
-    testHasSameBehavior[(Seq[T], T), Boolean](
-      s"seq contains ${TypeName.name}",
-      x => x._1.contains(x._2),
-      x => x._1.contains(x._2)
-    )
-
-  testSeqContains[Boolean]
-  testSeqContains[Option[Boolean]]
-  testSeqContains[Seq[Boolean]]
-  testSeqContains[(bool: Boolean)]
-  testSeqContains[(opt: Option[Boolean])]
-  testSeqContains[(opt: Seq[Boolean])]
-  testSeqContains[Struct]
-  testSeqContains[TestEnum]
-  testSeqContains[TestEnumString]
 
   testHasSameBehavior[Seq[Int], Boolean]("seq forall", _.forall(_ < 0), _.forall(_ < 0))
   testHasSameBehavior[Seq[Seq[Int]], Seq[Boolean]](

@@ -670,31 +670,55 @@ SELECT array_distinct(t1.value) AS value FROM t1
 SELECT endswith(t1._1, t1._2) AS value FROM t1
 ------ end
 
------- Test: equals on Option
+------ Test: equals on com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct
+SELECT (t1._1 = t1._2) AS value FROM t1
+------ end
+
+------ Test: equals on com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnumString
+SELECT (t1._1 = t1._2) AS value FROM t1
+------ end
+
+------ Test: equals on com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithOptionField
+SELECT (t1._1 = t1._2) AS value FROM t1
+------ end
+
+------ Test: equals on scala.Boolean
+SELECT (t1._1 = t1._2) AS value FROM t1
+------ end
+
+------ Test: equals on scala.NamedTuple.NamedTuple[scala.Tuple1["bool"], scala.Tuple1[scala.Boolean]]
+SELECT (t1._1 = t1._2) AS value FROM t1
+------ end
+
+------ Test: equals on scala.NamedTuple.NamedTuple[scala.Tuple1["seq"], scala.Tuple1[scala.collection.immutable.Seq[scala.Boolean]]]
+SELECT (t1._1 = t1._2) AS value FROM t1
+------ end
+
+------ Test: equals on scala.Option[scala.Boolean]
 SELECT (t1._1 IS NOT DISTINCT FROM t1._2) AS value FROM t1
 ------ end
 
------- Test: equals on Seq
-SELECT (t1._1 = t1._2) AS value FROM t1
------- end
-
------- Test: equals on Seq with product
-SELECT (t1._1 = t1._2) AS value FROM t1
------- end
-
------- Test: equals on Seq with product optional field
-SELECT (t1._1 = t1._2) AS value FROM t1
------- end
-
------- Test: equals on nested Option
+------ Test: equals on scala.Option[scala.Option[scala.Boolean]]
 SELECT (t1._1 IS NOT DISTINCT FROM t1._2) AS value FROM t1
 ------ end
 
------- Test: equals on primitive
+------ Test: equals on scala.collection.immutable.Seq[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
 SELECT (t1._1 = t1._2) AS value FROM t1
 ------ end
 
------- Test: equals on struct with optional field
+------ Test: equals on scala.collection.immutable.Seq[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithOptionField]
+SELECT (t1._1 = t1._2) AS value FROM t1
+------ end
+
+------ Test: equals on scala.collection.immutable.Seq[scala.Boolean]
+SELECT (t1._1 = t1._2) AS value FROM t1
+------ end
+
+------ Test: equals on scala.collection.immutable.Seq[scala.Tuple2[scala.Int, scala.Int]]
+SELECT (t1._1 = t1._2) AS value FROM t1
+------ end
+
+------ Test: equals on scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.Boolean]]
 SELECT (t1._1 = t1._2) AS value FROM t1
 ------ end
 
@@ -1122,7 +1146,55 @@ SELECT coalesce(CASE WHEN (t1.value IS NOT NULL) THEN array(t1.value) END, CAST(
 SELECT (CAST(t1.`瑞` AS INT) + CAST(t1.`典` AS INT)) AS value FROM t1
 ------ end
 
------- Test: not equals on primitive
+------ Test: not equals on com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct
+SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
+------ end
+
+------ Test: not equals on com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnumString
+SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
+------ end
+
+------ Test: not equals on com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithOptionField
+SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
+------ end
+
+------ Test: not equals on scala.Boolean
+SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
+------ end
+
+------ Test: not equals on scala.NamedTuple.NamedTuple[scala.Tuple1["bool"], scala.Tuple1[scala.Boolean]]
+SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
+------ end
+
+------ Test: not equals on scala.NamedTuple.NamedTuple[scala.Tuple1["seq"], scala.Tuple1[scala.collection.immutable.Seq[scala.Boolean]]]
+SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
+------ end
+
+------ Test: not equals on scala.Option[scala.Boolean]
+SELECT (NOT (t1._1 IS NOT DISTINCT FROM t1._2)) AS value FROM t1
+------ end
+
+------ Test: not equals on scala.Option[scala.Option[scala.Boolean]]
+SELECT (NOT (t1._1 IS NOT DISTINCT FROM t1._2)) AS value FROM t1
+------ end
+
+------ Test: not equals on scala.collection.immutable.Seq[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
+SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
+------ end
+
+------ Test: not equals on scala.collection.immutable.Seq[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithOptionField]
+SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
+------ end
+
+------ Test: not equals on scala.collection.immutable.Seq[scala.Boolean]
+SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
+------ end
+
+------ Test: not equals on scala.collection.immutable.Seq[scala.Tuple2[scala.Int, scala.Int]]
+SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
+------ end
+
+------ Test: not equals on scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.Boolean]]
 SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
 ------ end
 
@@ -1206,11 +1278,11 @@ SELECT aggregate(transform(t1.value, c0 -> (c0 = TRUE)), FALSE, (c1, c2) -> (c1 
 SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
------- Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum
+------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnumString
 SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
------- Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnumString
+------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithOptionField
 SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
@@ -1222,11 +1294,7 @@ SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR
 SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
------- Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["opt"], scala.Tuple1[scala.Option[scala.Boolean]]]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
------- end
-
------- Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["opt"], scala.Tuple1[scala.collection.immutable.Seq[scala.Boolean]]]
+------ Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["seq"], scala.Tuple1[scala.collection.immutable.Seq[scala.Boolean]]]
 SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
@@ -1234,7 +1302,27 @@ SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR
 SELECT aggregate(transform(t1._1, c0 -> (c0 IS NOT DISTINCT FROM t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
+------ Test: seq contains scala.Option[scala.Option[scala.Boolean]]
+SELECT aggregate(transform(t1._1, c0 -> (c0 IS NOT DISTINCT FROM t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.collection.immutable.Seq[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
+SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.collection.immutable.Seq[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithOptionField]
+SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
 ------ Test: seq contains scala.collection.immutable.Seq[scala.Boolean]
+SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.collection.immutable.Seq[scala.Tuple2[scala.Int, scala.Int]]
+SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.Boolean]]
 SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
