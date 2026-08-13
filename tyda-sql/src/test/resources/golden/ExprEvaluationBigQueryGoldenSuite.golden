@@ -1202,8 +1202,40 @@ SELECT (t1.value = TRUE) AS value FROM t1
 SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = TRUE) FROM unnest(t1.value) AS c0))) AS c1) AS value FROM t1
 ------ end
 
------- Test: seq contains option
+------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = t1._2) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
+------ end
+
+------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (((TRUE AND (c0.discriminant = t1._2.discriminant)) AND (c0.c IS NOT DISTINCT FROM t1._2.c)) AND (c0.d IS NOT DISTINCT FROM t1._2.d)) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
+------ end
+
+------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnumString
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = t1._2) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.Boolean
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = t1._2) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["bool"], scala.Tuple1[scala.Boolean]]
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = t1._2) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["opt"], scala.Tuple1[scala.Option[scala.Boolean]]]
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (TRUE AND (c0.opt IS NOT DISTINCT FROM t1._2.opt)) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["opt"], scala.Tuple1[scala.collection.immutable.Seq[scala.Boolean]]]
+SELECT (SELECT coalesce(logical_or(c4), FALSE) FROM unnest(array((SELECT (TRUE AND ((array_length(c0.opt) = array_length(t1._2.opt)) AND (SELECT coalesce(logical_and(c3), TRUE) FROM unnest(array((SELECT (c2._1 = c2._2) FROM unnest(array((SELECT struct(c0.opt[c1] AS _1, t1._2.opt[c1] AS _2) FROM unnest(generate_array(CAST(0 AS INT), (CASE WHEN (array_length(c0.opt) < array_length(t1._2.opt)) THEN array_length(c0.opt) ELSE array_length(t1._2.opt) END - CAST(1 AS INT)))) AS c1))) AS c2))) AS c3))) FROM unnest(t1._1) AS c0))) AS c4) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.Option[scala.Boolean]
 SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 IS NOT DISTINCT FROM t1._2) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.collection.immutable.Seq[scala.Boolean]
+SELECT (SELECT coalesce(logical_or(c4), FALSE) FROM unnest(array((SELECT ((array_length(c0.value) = array_length(t1._2)) AND (SELECT coalesce(logical_and(c3), TRUE) FROM unnest(array((SELECT (c2._1 = c2._2) FROM unnest(array((SELECT struct(c0.value[c1] AS _1, t1._2[c1] AS _2) FROM unnest(generate_array(CAST(0 AS INT), (CASE WHEN (array_length(c0.value) < array_length(t1._2)) THEN array_length(c0.value) ELSE array_length(t1._2) END - CAST(1 AS INT)))) AS c1))) AS c2))) AS c3)) FROM unnest(t1._1) AS c0))) AS c4) AS value FROM t1
 ------ end
 
 ------ Test: seq exists

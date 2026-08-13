@@ -429,12 +429,26 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     _.map(t => (a = t._1.map(_ > t._2)))
   )
   testHasSameBehavior[Seq[Int], Boolean]("seq exists", _.exists(_ < 0), _.exists(_ < 0))
+
   testHasSameBehavior[Seq[Boolean], Boolean]("seq contains", _.contains(true), _.contains(elem = true))
-  testHasSameBehavior[(Seq[Option[Boolean]], Option[Boolean]), Boolean](
-    "seq contains option",
-    x => x._1.contains(x._2),
-    x => x._1.contains(x._2)
-  )
+
+  def testSeqContains[T: TypeName: Codec: Arbitrary] =
+    testHasSameBehavior[(Seq[T], T), Boolean](
+      s"seq contains ${TypeName.name}",
+      x => x._1.contains(x._2),
+      x => x._1.contains(x._2)
+    )
+
+  testSeqContains[Boolean]
+  testSeqContains[Option[Boolean]]
+  testSeqContains[Seq[Boolean]]
+  testSeqContains[(bool: Boolean)]
+  testSeqContains[(opt: Option[Boolean])]
+  testSeqContains[(opt: Seq[Boolean])]
+  testSeqContains[Struct]
+  testSeqContains[TestEnum]
+  testSeqContains[TestEnumString]
+
   testHasSameBehavior[Seq[Int], Boolean]("seq forall", _.forall(_ < 0), _.forall(_ < 0))
   testHasSameBehavior[Seq[Seq[Int]], Seq[Boolean]](
     "seq forall nested",

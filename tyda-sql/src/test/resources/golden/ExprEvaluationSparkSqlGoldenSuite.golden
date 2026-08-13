@@ -1202,8 +1202,40 @@ SELECT (t1.value = TRUE) AS value FROM t1
 SELECT aggregate(transform(t1.value, c0 -> (c0 = TRUE)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
------- Test: seq contains option
+------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct
+SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
+------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum
+SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
+------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnumString
+SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.Boolean
+SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["bool"], scala.Tuple1[scala.Boolean]]
+SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["opt"], scala.Tuple1[scala.Option[scala.Boolean]]]
+SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["opt"], scala.Tuple1[scala.collection.immutable.Seq[scala.Boolean]]]
+SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.Option[scala.Boolean]
 SELECT aggregate(transform(t1._1, c0 -> (c0 IS NOT DISTINCT FROM t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.collection.immutable.Seq[scala.Boolean]
+SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
 ------ Test: seq exists
