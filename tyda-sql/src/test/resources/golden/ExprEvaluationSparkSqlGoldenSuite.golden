@@ -1202,6 +1202,10 @@ SELECT (t1.value = TRUE) AS value FROM t1
 SELECT aggregate(transform(t1.value, c0 -> (c0 = TRUE)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
+------ Test: seq contains option
+SELECT aggregate(transform(t1._1, c0 -> (c0 IS NOT DISTINCT FROM t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
 ------ Test: seq exists
 SELECT aggregate(transform(t1.value, c0 -> (c0 < CAST(0 AS INT))), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
