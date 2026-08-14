@@ -35,7 +35,7 @@ object DistributeProductAndSeqEquals extends ExprRule {
     Codec
       .iterate(codec)
       .exists {
-        case Codec.Seq(_) | Codec.Option(Codec.Option(_)) => true
+        case Codec.Seq(_) | Codec.Option(Codec.Option(_)) | Codec.Option(Codec.Product(_, _, _)) => true
         case Codec.Product(_, fields, _) => fields.foldLeft0(false)([t] =>
             (_, f) =>
               f.codec match {
