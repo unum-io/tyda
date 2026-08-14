@@ -193,6 +193,9 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testEqualsAndContains[(seq: Seq[Boolean])]
   testEqualsAndContains[Seq[(Int, Int)]]
   testEqualsAndContains[Struct]
+  testEqualsAndContains[Option[Struct]]
+  testEqualsAndContains[Option[Option[Struct]]]
+  testEqualsAndContains[TestEnum]
   testEqualsAndContains[TestEnumString]
 
   testHasSameBehavior[Option[Int], Boolean]("equals to None", _ == None, _ == None)
