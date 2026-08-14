@@ -463,7 +463,7 @@ SELECT coalesce(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: compare to literal enum variant
-SELECT (((TRUE AND (t1.discriminant = 'b')) AND (t1.c IS NULL)) AND (t1.d IS NULL)) AS value FROM t1
+SELECT (((TRUE AND (t1.discriminant = 'b')) AND CASE WHEN ((t1.c IS NOT NULL) AND (CAST(NULL AS STRUCT<i INT>) IS NOT NULL)) THEN (t1.c = CAST(NULL AS STRUCT<i INT>)) ELSE ((t1.c IS NULL) = (CAST(NULL AS STRUCT<i INT>) IS NULL)) END) AND CASE WHEN ((t1.d IS NOT NULL) AND (CAST(NULL AS STRUCT<i INT>) IS NOT NULL)) THEN (t1.d = CAST(NULL AS STRUCT<i INT>)) ELSE ((t1.d IS NULL) = (CAST(NULL AS STRUCT<i INT>) IS NULL)) END) AS value FROM t1
 ------ end
 
 ------ Test: concat seq
@@ -694,6 +694,10 @@ SELECT ends_with(t1._1, t1._2) AS value FROM t1
 SELECT (t1._1 = t1._2) AS value FROM t1
 ------ end
 
+------ Test: equals on com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum
+SELECT (((TRUE AND (t1._1.discriminant = t1._2.discriminant)) AND CASE WHEN ((t1._1.c IS NOT NULL) AND (t1._2.c IS NOT NULL)) THEN (t1._1.c = t1._2.c) ELSE ((t1._1.c IS NULL) = (t1._2.c IS NULL)) END) AND CASE WHEN ((t1._1.d IS NOT NULL) AND (t1._2.d IS NOT NULL)) THEN (t1._1.d = t1._2.d) ELSE ((t1._1.d IS NULL) = (t1._2.d IS NULL)) END) AS value FROM t1
+------ end
+
 ------ Test: equals on com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnumString
 SELECT (t1._1 = t1._2) AS value FROM t1
 ------ end
@@ -714,8 +718,16 @@ SELECT (t1._1 = t1._2) AS value FROM t1
 SELECT (TRUE AND ((array_length(t1._1.seq) = array_length(t1._2.seq)) AND (SELECT coalesce(logical_and(c2), TRUE) FROM unnest(array((SELECT (c1._1 = c1._2) FROM unnest(array((SELECT struct(t1._1.seq[c0] AS _1, t1._2.seq[c0] AS _2) FROM unnest(generate_array(CAST(0 AS INT), (CASE WHEN (array_length(t1._1.seq) < array_length(t1._2.seq)) THEN array_length(t1._1.seq) ELSE array_length(t1._2.seq) END - CAST(1 AS INT)))) AS c0))) AS c1))) AS c2))) AS value FROM t1
 ------ end
 
+------ Test: equals on scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
+SELECT CASE WHEN ((t1._1 IS NOT NULL) AND (t1._2 IS NOT NULL)) THEN (t1._1 = t1._2) ELSE ((t1._1 IS NULL) = (t1._2 IS NULL)) END AS value FROM t1
+------ end
+
 ------ Test: equals on scala.Option[scala.Boolean]
 SELECT (t1._1 IS NOT DISTINCT FROM t1._2) AS value FROM t1
+------ end
+
+------ Test: equals on scala.Option[scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]]
+SELECT CASE WHEN ((t1._1 IS NOT NULL) AND (t1._2 IS NOT NULL)) THEN CASE WHEN ((t1._1.value IS NOT NULL) AND (t1._2.value IS NOT NULL)) THEN (t1._1.value = t1._2.value) ELSE ((t1._1.value IS NULL) = (t1._2.value IS NULL)) END ELSE ((t1._1 IS NULL) = (t1._2 IS NULL)) END AS value FROM t1
 ------ end
 
 ------ Test: equals on scala.Option[scala.Option[scala.Boolean]]
@@ -1178,6 +1190,10 @@ SELECT (CAST(t1.`瑞` AS INT) + CAST(t1.`典` AS INT)) AS value FROM t1
 SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
 ------ end
 
+------ Test: not equals on com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum
+SELECT (NOT (((TRUE AND (t1._1.discriminant = t1._2.discriminant)) AND CASE WHEN ((t1._1.c IS NOT NULL) AND (t1._2.c IS NOT NULL)) THEN (t1._1.c = t1._2.c) ELSE ((t1._1.c IS NULL) = (t1._2.c IS NULL)) END) AND CASE WHEN ((t1._1.d IS NOT NULL) AND (t1._2.d IS NOT NULL)) THEN (t1._1.d = t1._2.d) ELSE ((t1._1.d IS NULL) = (t1._2.d IS NULL)) END)) AS value FROM t1
+------ end
+
 ------ Test: not equals on com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnumString
 SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
 ------ end
@@ -1198,8 +1214,16 @@ SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
 SELECT (NOT (TRUE AND ((array_length(t1._1.seq) = array_length(t1._2.seq)) AND (SELECT coalesce(logical_and(c2), TRUE) FROM unnest(array((SELECT (c1._1 = c1._2) FROM unnest(array((SELECT struct(t1._1.seq[c0] AS _1, t1._2.seq[c0] AS _2) FROM unnest(generate_array(CAST(0 AS INT), (CASE WHEN (array_length(t1._1.seq) < array_length(t1._2.seq)) THEN array_length(t1._1.seq) ELSE array_length(t1._2.seq) END - CAST(1 AS INT)))) AS c0))) AS c1))) AS c2)))) AS value FROM t1
 ------ end
 
+------ Test: not equals on scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
+SELECT (NOT CASE WHEN ((t1._1 IS NOT NULL) AND (t1._2 IS NOT NULL)) THEN (t1._1 = t1._2) ELSE ((t1._1 IS NULL) = (t1._2 IS NULL)) END) AS value FROM t1
+------ end
+
 ------ Test: not equals on scala.Option[scala.Boolean]
 SELECT (NOT (t1._1 IS NOT DISTINCT FROM t1._2)) AS value FROM t1
+------ end
+
+------ Test: not equals on scala.Option[scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]]
+SELECT (NOT CASE WHEN ((t1._1 IS NOT NULL) AND (t1._2 IS NOT NULL)) THEN CASE WHEN ((t1._1.value IS NOT NULL) AND (t1._2.value IS NOT NULL)) THEN (t1._1.value = t1._2.value) ELSE ((t1._1.value IS NULL) = (t1._2.value IS NULL)) END ELSE ((t1._1 IS NULL) = (t1._2 IS NULL)) END) AS value FROM t1
 ------ end
 
 ------ Test: not equals on scala.Option[scala.Option[scala.Boolean]]
@@ -1314,6 +1338,10 @@ SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = T
 SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = t1._2) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
 ------ end
 
+------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (((TRUE AND (c0.discriminant = t1._2.discriminant)) AND CASE WHEN ((c0.c IS NOT NULL) AND (t1._2.c IS NOT NULL)) THEN (c0.c = t1._2.c) ELSE ((c0.c IS NULL) = (t1._2.c IS NULL)) END) AND CASE WHEN ((c0.d IS NOT NULL) AND (t1._2.d IS NOT NULL)) THEN (c0.d = t1._2.d) ELSE ((c0.d IS NULL) = (t1._2.d IS NULL)) END) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
+------ end
+
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnumString
 SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = t1._2) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
 ------ end
@@ -1334,8 +1362,16 @@ SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = t
 SELECT (SELECT coalesce(logical_or(c4), FALSE) FROM unnest(array((SELECT (TRUE AND ((array_length(c0.seq) = array_length(t1._2.seq)) AND (SELECT coalesce(logical_and(c3), TRUE) FROM unnest(array((SELECT (c2._1 = c2._2) FROM unnest(array((SELECT struct(c0.seq[c1] AS _1, t1._2.seq[c1] AS _2) FROM unnest(generate_array(CAST(0 AS INT), (CASE WHEN (array_length(c0.seq) < array_length(t1._2.seq)) THEN array_length(c0.seq) ELSE array_length(t1._2.seq) END - CAST(1 AS INT)))) AS c1))) AS c2))) AS c3))) FROM unnest(t1._1) AS c0))) AS c4) AS value FROM t1
 ------ end
 
+------ Test: seq contains scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT CASE WHEN ((c0 IS NOT NULL) AND (t1._2 IS NOT NULL)) THEN (c0 = t1._2) ELSE ((c0 IS NULL) = (t1._2 IS NULL)) END FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
+------ end
+
 ------ Test: seq contains scala.Option[scala.Boolean]
 SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 IS NOT DISTINCT FROM t1._2) FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.Option[scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]]
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT CASE WHEN ((c0 IS NOT NULL) AND (t1._2 IS NOT NULL)) THEN CASE WHEN ((c0.value IS NOT NULL) AND (t1._2.value IS NOT NULL)) THEN (c0.value = t1._2.value) ELSE ((c0.value IS NULL) = (t1._2.value IS NULL)) END ELSE ((c0 IS NULL) = (t1._2 IS NULL)) END FROM unnest(t1._1) AS c0))) AS c1) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.Option[scala.Option[scala.Boolean]]
