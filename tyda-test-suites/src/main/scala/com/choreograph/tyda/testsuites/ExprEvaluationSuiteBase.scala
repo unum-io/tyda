@@ -233,6 +233,17 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testHasSameBehavior[Option[Byte], Boolean]("Option.exists", _.exists(_ == byte0), _.exists(_ == byte0))
   testHasSameBehavior[Option[Byte], Boolean]("Option.forall", _.forall(_ == byte0), _.forall(_ == byte0))
   testHasSameBehavior[Option[Byte], Boolean]("Option.contains", _.contains(byte0), _.contains(byte0))
+  testHasSameBehavior[Option[Byte], Option[Byte]]("Option.filter", _.filter(_ > 0), _.filter(_ > 0))
+  testHasSameBehavior[Option[Option[Byte]], Option[Option[Byte]]](
+    "Nested Option.filter outside",
+    _.filter(_.exists(_ > 0)),
+    _.filter(_.exists(_ > 0))
+  )
+  testHasSameBehavior[Option[Option[Byte]], Option[Option[Byte]]](
+    "Nested Option.filter inside",
+    _.map(_.filter(_ > 0)),
+    _.map(_.filter(_ > 0))
+  )
 
   testHasSameBehavior[Option[Int], Option[Boolean]]("map Option", _.map(_ == 0), _.map(_ == 0))
   testHasSameBehavior[Option[Option[Int]], Option[Int]]("flatMap Option", _.flatMap(identity), _.flatten)
