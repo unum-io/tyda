@@ -95,7 +95,7 @@ trait ExprApi[Expr[T]] {
     def flatMap[U, I: AsExpr.Of[Option[U]]](f: Expr[T] => I): Expr[Option[U]] = {
       val mapped = AsExpr(f(get))
       given Codec[U] = mapped.elementCodec
-      ternary(isEmpty, lit[Option[U]](None), mapped)
+      ternary(!isEmpty, mapped, none)
     }
 
     /** Combine two options into one option of a tuple. If either option is None

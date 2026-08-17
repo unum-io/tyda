@@ -35,7 +35,7 @@ SELECT unix_micros(timestamp_micros(t1.value)) AS value FROM t1
 ------ end
 
 ------ Test: Option for comprehension
-SELECT CASE WHEN (t1._1 IS NULL) THEN CAST(NULL AS BOOLEAN) ELSE CASE WHEN (t1._2 IS NOT NULL) THEN (t1._1 AND t1._2) END END AS value FROM t1
+SELECT CASE WHEN (t1._1 IS NOT NULL) THEN CASE WHEN (t1._2 IS NOT NULL) THEN (t1._1 AND t1._2) END END AS value FROM t1
 ------ end
 
 ------ Test: Option zip
@@ -743,7 +743,7 @@ SELECT (t1.value + CAST(2147483647 AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: flatMap Option
-SELECT CASE WHEN (t1.value IS NULL) THEN CAST(NULL AS INT) ELSE t1.value.value END AS value FROM t1
+SELECT CASE WHEN (t1.value IS NOT NULL) THEN t1.value.value END AS value FROM t1
 ------ end
 
 ------ Test: fromBase64
@@ -1547,7 +1547,7 @@ SELECT CAST(div(t1._1, t1._2) AS INT) AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[18, 0] to Long is consistent with Decimal rounding
-SELECT CASE WHEN (TRY_CAST(t1.value AS DECIMAL(18,0)) IS NULL) THEN CAST(NULL AS BIGINT) ELSE TRY_CAST(round(TRY_CAST(t1.value AS DECIMAL(18,0)), CAST(0 AS INT)) AS BIGINT) END AS value FROM t1
+SELECT CASE WHEN (TRY_CAST(t1.value AS DECIMAL(18,0)) IS NOT NULL) THEN TRY_CAST(round(TRY_CAST(t1.value AS DECIMAL(18,0)), CAST(0 AS INT)) AS BIGINT) END AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[18, 0] to scala.Long
@@ -1555,7 +1555,7 @@ SELECT TRY_CAST(round(t1.value, CAST(0 AS INT)) AS BIGINT) AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[18, 1] to Long is consistent with Decimal rounding
-SELECT CASE WHEN (TRY_CAST(t1.value AS DECIMAL(18,0)) IS NULL) THEN CAST(NULL AS BIGINT) ELSE TRY_CAST(round(TRY_CAST(t1.value AS DECIMAL(18,0)), CAST(0 AS INT)) AS BIGINT) END AS value FROM t1
+SELECT CASE WHEN (TRY_CAST(t1.value AS DECIMAL(18,0)) IS NOT NULL) THEN TRY_CAST(round(TRY_CAST(t1.value AS DECIMAL(18,0)), CAST(0 AS INT)) AS BIGINT) END AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[18, 1] to scala.Long
@@ -1563,11 +1563,11 @@ SELECT TRY_CAST(round(t1.value, CAST(0 AS INT)) AS BIGINT) AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 0] to Long is consistent with Decimal rounding
-SELECT CASE WHEN (TRY_CAST(t1.value AS DECIMAL(19,0)) IS NULL) THEN CAST(NULL AS BIGINT) ELSE TRY_CAST(round(TRY_CAST(t1.value AS DECIMAL(19,0)), CAST(0 AS INT)) AS BIGINT) END AS value FROM t1
+SELECT CASE WHEN (TRY_CAST(t1.value AS DECIMAL(19,0)) IS NOT NULL) THEN TRY_CAST(round(TRY_CAST(t1.value AS DECIMAL(19,0)), CAST(0 AS INT)) AS BIGINT) END AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 1] to Long is consistent with Decimal rounding
-SELECT CASE WHEN (TRY_CAST(t1.value AS DECIMAL(19,0)) IS NULL) THEN CAST(NULL AS BIGINT) ELSE TRY_CAST(round(TRY_CAST(t1.value AS DECIMAL(19,0)), CAST(0 AS INT)) AS BIGINT) END AS value FROM t1
+SELECT CASE WHEN (TRY_CAST(t1.value AS DECIMAL(19,0)) IS NOT NULL) THEN TRY_CAST(round(TRY_CAST(t1.value AS DECIMAL(19,0)), CAST(0 AS INT)) AS BIGINT) END AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[19, 1] to com.choreograph.tyda.Decimal$package.Decimal[19, 0]
@@ -1587,7 +1587,7 @@ SELECT TRY_CAST(t1.value AS DECIMAL(38,9)) AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[38, 9] to Long is consistent with Decimal rounding
-SELECT CASE WHEN (TRY_CAST(t1.value AS DECIMAL(38,0)) IS NULL) THEN CAST(NULL AS BIGINT) ELSE TRY_CAST(round(TRY_CAST(t1.value AS DECIMAL(38,0)), CAST(0 AS INT)) AS BIGINT) END AS value FROM t1
+SELECT CASE WHEN (TRY_CAST(t1.value AS DECIMAL(38,0)) IS NOT NULL) THEN TRY_CAST(round(TRY_CAST(t1.value AS DECIMAL(38,0)), CAST(0 AS INT)) AS BIGINT) END AS value FROM t1
 ------ end
 
 ------ Test: try cast com.choreograph.tyda.Decimal$package.Decimal[38, 9] to scala.Long
