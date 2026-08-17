@@ -87,7 +87,7 @@ trait ExprApi[Expr[T]] {
       * empty, otherwise returns None.
       */
     @targetName("optionFilter")
-    def filter(p: Expr[T] => Expr[Boolean]): Expr[Option[T]] = when(isEmpty || p(get), get)
+    def filter(p: Expr[T] => Expr[Boolean]): Expr[Option[T]] = when(!isEmpty && p(get), get)
 
     /** Apply the Expr function returning an Option to the contained value if
       * the option is Some otherwise returns None.

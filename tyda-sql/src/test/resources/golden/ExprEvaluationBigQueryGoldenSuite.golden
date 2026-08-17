@@ -35,11 +35,11 @@ SELECT unix_micros(timestamp_micros(t1.value)) AS value FROM t1
 ------ end
 
 ------ Test: Nested Option.filter inside
-SELECT CASE WHEN (t1.value IS NOT NULL) THEN struct(CASE WHEN ((t1.value.value IS NULL) OR (NOT (t1.value.value <= CAST(0 AS TINYINT)))) THEN t1.value.value END AS value) END AS value FROM t1
+SELECT CASE WHEN (t1.value IS NOT NULL) THEN struct(CASE WHEN ((t1.value.value IS NOT NULL) AND (NOT (t1.value.value <= CAST(0 AS TINYINT)))) THEN t1.value.value END AS value) END AS value FROM t1
 ------ end
 
 ------ Test: Nested Option.filter outside
-SELECT CASE WHEN ((t1.value IS NULL) OR CASE WHEN (t1.value.value IS NULL) THEN FALSE ELSE (NOT (t1.value.value <= CAST(0 AS TINYINT))) END) THEN struct(t1.value.value AS value) END AS value FROM t1
+SELECT CASE WHEN ((t1.value IS NOT NULL) AND CASE WHEN (t1.value.value IS NULL) THEN FALSE ELSE (NOT (t1.value.value <= CAST(0 AS TINYINT))) END) THEN struct(t1.value.value AS value) END AS value FROM t1
 ------ end
 
 ------ Test: Option for comprehension
@@ -59,7 +59,7 @@ SELECT CASE WHEN (t1.value IS NULL) THEN FALSE ELSE (t1.value = CAST(0 AS TINYIN
 ------ end
 
 ------ Test: Option.filter
-SELECT CASE WHEN ((t1.value IS NULL) OR (NOT (t1.value <= CAST(0 AS TINYINT)))) THEN t1.value END AS value FROM t1
+SELECT CASE WHEN ((t1.value IS NOT NULL) AND (NOT (t1.value <= CAST(0 AS TINYINT)))) THEN t1.value END AS value FROM t1
 ------ end
 
 ------ Test: Option.forall
