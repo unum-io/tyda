@@ -2,6 +2,10 @@
 SELECT table1.a AS a, table1.b AS b FROM table1
 ------ end
 
+------ Test: creation of enums
+SELECT t0.discriminant AS discriminant, t0.c AS c, t0.d AS d FROM VALUES ('a', CAST(NULL AS STRUCT<i INT NOT NULL>), CAST(NULL AS STRUCT<i INT NOT NULL>)), ('b', CAST(NULL AS STRUCT<i INT NOT NULL>), CAST(NULL AS STRUCT<i INT NOT NULL>)), ('c', named_struct('i', CAST(1 AS INT)), CAST(NULL AS STRUCT<i INT NOT NULL>)), ('d', CAST(NULL AS STRUCT<i INT NOT NULL>), named_struct('i', CAST(2 AS INT))) AS t0(discriminant, c, d)
+------ end
+
 ------ Test: distinct List
 SELECT DISTINCT table1.value AS value FROM table1
 ------ end

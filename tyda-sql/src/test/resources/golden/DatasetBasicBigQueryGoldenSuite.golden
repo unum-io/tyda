@@ -2,6 +2,10 @@
 SELECT table1.a AS a, table1.b AS b FROM table1
 ------ end
 
+------ Test: creation of enums
+((SELECT 'a' AS discriminant, CAST(NULL AS STRUCT<i INT>) AS c, CAST(NULL AS STRUCT<i INT>) AS d) UNION ALL (SELECT 'b' AS discriminant, CAST(NULL AS STRUCT<i INT>) AS c, CAST(NULL AS STRUCT<i INT>) AS d)) UNION ALL ((SELECT 'c' AS discriminant, struct(CAST(1 AS INT) AS i) AS c, CAST(NULL AS STRUCT<i INT>) AS d) UNION ALL (SELECT 'd' AS discriminant, CAST(NULL AS STRUCT<i INT>) AS c, struct(CAST(2 AS INT) AS i) AS d))
+------ end
+
 ------ Test: distinct List
 SELECT DISTINCT table1.value AS value FROM table1
 ------ end
