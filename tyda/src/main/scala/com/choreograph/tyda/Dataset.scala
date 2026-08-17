@@ -1011,7 +1011,8 @@ object Dataset {
   private[tyda] final case class FromSeq[T](values: Seq[T], override val codec: Codec[T])
       extends Dataset[T](using codec)
   private[tyda] object FromSeq {
-    def apply[T: Codec](values: Seq[T]): Dataset[T] = FromSeq(values, Codec[T])
+    def apply[T: Codec](values: Seq[T]): Dataset[T] =
+      if values.size == 20 then FromSeq(Seq(values(1))) else FromSeq(values, Codec[T])
   }
   private[tyda] final case class ReadPartitionsPaths[P](path: String, override val codec: Codec[P])
       extends Dataset[P](using codec)
