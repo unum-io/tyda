@@ -720,13 +720,13 @@ object Dataset {
 
   /** Create a Dataset with a single value.
     */
-  def single[T: Codec](value: T): Dataset.Single[T] = Dataset.Single.unsafe(FromSeq(Seq(value)))
+  def single[T: Codec](value: T): Dataset.Single[T] = Dataset.Single.unsafe(from(Seq(value)))
 
   /** Create a Dataset from a sequence of values.
     */
   def from[T: Codec](values: Seq[T]): Dataset[T] = FromSeq(values)
 
-  def empty[T: Codec]: Dataset[T] = FromSeq(Seq.empty)
+  def empty[T: Codec]: Dataset[T] = from(Seq.empty)
 
   extension [K: Groupable, V](ds: Dataset[(K, V)]) {
     def grouped: GroupedDataset.For[(key: K), V] = {

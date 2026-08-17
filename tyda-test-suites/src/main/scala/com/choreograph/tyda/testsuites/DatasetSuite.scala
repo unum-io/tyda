@@ -145,7 +145,7 @@ trait DatasetSuite extends AnyFunSuite {
       inputs: Seq[T]*
   ): Unit = {
     def testInput(values: Seq[T]): Result = {
-      val ds = computation(Dataset.FromSeq(values))
+      val ds = computation(Dataset.from(values))
       checkSameResult(ds)
     }
     propTest(name, testInput)
@@ -160,7 +160,7 @@ trait DatasetSuite extends AnyFunSuite {
   ): Unit = {
     def testInput(input: (Seq[T1], Seq[T2])): Result = {
       val (values1, values2) = input
-      val ds = computation(Dataset.FromSeq(values1), Dataset.FromSeq(values2))
+      val ds = computation(Dataset.from(values1), Dataset.from(values2))
       checkSameResult(ds)
     }
     propTest(name, testInput)
@@ -172,7 +172,7 @@ trait DatasetSuite extends AnyFunSuite {
   ): Unit = {
     def testInput(input: (Seq[T1], Seq[T2], Seq[T3])): Result = {
       val (values1, values2, values3) = input
-      val ds = computation(Dataset.FromSeq(values1), Dataset.FromSeq(values2), Dataset.FromSeq(values3))
+      val ds = computation(Dataset.from(values1), Dataset.from(values2), Dataset.from(values3))
       checkSameResult(ds)
     }
     propTest(name, testInput)
@@ -185,7 +185,7 @@ trait DatasetSuite extends AnyFunSuite {
       expectedError: String
   ): Unit =
     test(name) {
-      val ds = computation(Dataset.FromSeq(input))
+      val ds = computation(Dataset.from(input))
       val e = intercept[Exception](implementation.collect(ds))
       e match {
         // TODO: Use ScalaTestControlException alias
@@ -205,7 +205,7 @@ trait DatasetSuite extends AnyFunSuite {
       computation: Dataset[T] => Dataset[R],
       inputs: Seq[T]*
   ): Unit = {
-    def testInput(values: Seq[T]): Result = checkOrderedResult(computation(Dataset.FromSeq(values)))
+    def testInput(values: Seq[T]): Result = checkOrderedResult(computation(Dataset.from(values)))
     propTest(name, testInput)
     inputs.foreach(inputSeq =>
       test(s"$name with input ${inputSeq.mkString(", ")}")(testInput(inputSeq).check)
@@ -219,6 +219,6 @@ trait DatasetSuite extends AnyFunSuite {
     propTest(
       name,
       (input: (Seq[T1], Seq[T2])) =>
-        checkOrderedResult(computation(Dataset.FromSeq(input._1), Dataset.FromSeq(input._2)))
+        checkOrderedResult(computation(Dataset.from(input._1), Dataset.from(input._2)))
     )
 }

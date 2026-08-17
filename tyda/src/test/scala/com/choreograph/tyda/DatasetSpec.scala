@@ -11,7 +11,7 @@ import com.choreograph.tyda.compiletimeextras.assertCompileTimeError
 
 class DatasetSpec extends AnyFunSuite {
   test("support where") {
-    val ds = Dataset.FromSeq(Seq((1, true), (2, false)))
+    val ds = Dataset.from(Seq((1, true), (2, false)))
     ds.where(_._2) match {
       case Dataset.Filter(`ds`, compiled) =>
         assert(compiled.expr == ExprNode.Select[(Int, Boolean), Boolean](compiled.arg, "_2"))
@@ -20,23 +20,23 @@ class DatasetSpec extends AnyFunSuite {
   }
 
   test("support map") {
-    val ds: Dataset[(Int, Int)] = Dataset.FromSeq(Seq((1, 1)))
+    val ds: Dataset[(Int, Int)] = Dataset.from(Seq((1, 1)))
     // The test here is that the following should compile without and type hints
     ds.map(i => (i._1, (i._2, 1)))
   }
 
   test("support select") {
-    val ds: Dataset[(Int, Int)] = Dataset.FromSeq(Seq((1, 1)))
+    val ds: Dataset[(Int, Int)] = Dataset.from(Seq((1, 1)))
     ds.select(_._1, _._2)
   }
 
   test("support Expr extractor in select") {
-    val ds: Dataset[(Int, Int)] = Dataset.FromSeq(Seq((1, 1)))
+    val ds: Dataset[(Int, Int)] = Dataset.from(Seq((1, 1)))
     ds.select { case Expr(a, _) => a }
   }
 
   test("support limit") {
-    val ds: Dataset[Int] = Dataset.FromSeq(Seq(1, 2, 3))
+    val ds: Dataset[Int] = Dataset.from(Seq(1, 2, 3))
     ds.limit(5) match {
       case Dataset.Limit(`ds`, 5) => ()
       case _ => fail("Expected Dataset.Limit")
@@ -44,14 +44,14 @@ class DatasetSpec extends AnyFunSuite {
   }
 
   test("reject negative limit") {
-    val ds: Dataset[Int] = Dataset.FromSeq(Seq(1, 2, 3))
+    val ds: Dataset[Int] = Dataset.from(Seq(1, 2, 3))
     val exception = intercept[IllegalArgumentException] { ds.limit(-1) }
     assert(exception.getMessage.contains("non-negative"))
   }
 
   test("Do not allow Map in groupBy") {
     @nowarn("msg=unused")
-    val ds: Dataset[(Map[Int, Int], Int)] = Dataset.FromSeq(Seq((Map(1 -> 1), 1)))
+    val ds: Dataset[(Map[Int, Int], Int)] = Dataset.from(Seq((Map(1 -> 1), 1)))
     assertCompileTimeError("ds.groupBy(r => (g = r._1))", "Map[Int, Int] is not groupable")
     assertCompileTimeError("ds.grouped", "Map[Int, Int] is not groupable")
     assertCompileTimeError("ds.groupByKey(identity)", "Map[Int, Int] is not groupable")
@@ -60,14 +60,14 @@ class DatasetSpec extends AnyFunSuite {
   test("Do not allow Set in groupBy") {
     given Codec[Set[Int]] = Codec.Iterable[Int, Set[Int]](summon, summon)
     @nowarn("msg=unused")
-    val ds: Dataset[(Set[Int], Int)] = Dataset.FromSeq(Seq((Set(1, 2), 1)))
+    val ds: Dataset[(Set[Int], Int)] = Dataset.from(Seq((Set(1, 2), 1)))
     assertCompileTimeError("ds.groupBy(r => (g = r._1))", "Set[Int] is not groupable")
     assertCompileTimeError("ds.grouped", "Set[Int] is not groupable")
     assertCompileTimeError("ds.groupByKey(identity)", "Set[Int] is not groupable")
   }
 
   test("Do not allow sum of unsupported types") {
-    val ds: Dataset[(String, Int)] = Dataset.FromSeq(Seq(("a", 1)))
+    val ds: Dataset[(String, Int)] = Dataset.from(Seq(("a", 1)))
     // Sanity check
     val _ = ds.aggregate(sum(_._2))
     assertCompileTimeError("ds.aggregate(sum(_._1))", "Sum is not supported for type String")
