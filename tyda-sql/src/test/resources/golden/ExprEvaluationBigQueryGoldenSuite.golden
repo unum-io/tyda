@@ -466,6 +466,10 @@ SELECT coalesce(t1._1, t1._2) AS value FROM t1
 SELECT (((TRUE AND (t1.discriminant = 'b')) AND CASE WHEN ((t1.c IS NOT NULL) AND (CAST(NULL AS STRUCT<i INT>) IS NOT NULL)) THEN (t1.c = CAST(NULL AS STRUCT<i INT>)) ELSE ((t1.c IS NULL) = (CAST(NULL AS STRUCT<i INT>) IS NULL)) END) AND CASE WHEN ((t1.d IS NOT NULL) AND (CAST(NULL AS STRUCT<i INT>) IS NOT NULL)) THEN (t1.d = CAST(NULL AS STRUCT<i INT>)) ELSE ((t1.d IS NULL) = (CAST(NULL AS STRUCT<i INT>) IS NULL)) END) AS value FROM t1
 ------ end
 
+------ Test: compare to literal non-singleton enum variant
+SELECT (((TRUE AND (t1.discriminant = 'c')) AND CASE WHEN ((t1.c IS NOT NULL) AND (struct(CAST(0 AS INT) AS i) IS NOT NULL)) THEN (t1.c = struct(CAST(0 AS INT) AS i)) ELSE ((t1.c IS NULL) = (struct(CAST(0 AS INT) AS i) IS NULL)) END) AND CASE WHEN ((t1.d IS NOT NULL) AND (CAST(NULL AS STRUCT<i INT>) IS NOT NULL)) THEN (t1.d = CAST(NULL AS STRUCT<i INT>)) ELSE ((t1.d IS NULL) = (CAST(NULL AS STRUCT<i INT>) IS NULL)) END) AS value FROM t1
+------ end
+
 ------ Test: concat seq
 SELECT array_concat(t1._1, t1._2) AS value FROM t1
 ------ end
