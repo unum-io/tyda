@@ -85,7 +85,7 @@ object Dependencies {
 
   val tydaSql = libraryDependencies ++= Seq(CompileDeps.slf4j)
 
-  val tydaSparkSql = libraryDependencies ++= Seq(TestDeps.spark3Sql)
+  val tydaSparkSql = libraryDependencies ++= Seq(TestDeps.spark4Sql)
 
   val tydaBigQuery = libraryDependencies ++=
     Seq(CompileDeps.bigQuery, TestDeps.scalatest, TestDeps.gcsConnector)
