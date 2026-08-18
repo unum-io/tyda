@@ -83,11 +83,9 @@ trait ExprApi[Expr[T]] {
     @targetName("optionMap")
     def map[U, I: AsExpr.Of[U]](f: Expr[T] => I): Expr[Option[U]] = when(!isEmpty, f(get))
 
-    /** Returns this Option if the predicate returns true or the option is
-      * empty, otherwise returns None.
-   /** Returns this Option if it is nonempty and applying the predicate `p` to this Option's 
-     * value returns true. Otherwise, return None.
-    */
+    /** Returns this Option if it is nonempty and applying the predicate `p` to
+      * this Option's value returns true. Otherwise, return None.
+      */
     @targetName("optionFilter")
     def filter(p: Expr[T] => Expr[Boolean]): Expr[Option[T]] = when(!isEmpty && p(get), get)
 
