@@ -63,10 +63,7 @@ trait ExprApi[Expr[T]] {
       * At runtime, the default expressions is evaluated lazily, so that this
       * function can be used for control flow involving raiseError.
       */
-    def getOrElse[I: AsExpr.Of[T]](default: I): Expr[T] = {
-      val coalesced = ExprNode.Coalesce(Seq(unlift(opt), ExprNode.MakeSome(unlift(AsExpr(default)))))
-      lift(ExprNode.KnownNotNull(coalesced))
-    }
+    def getOrElse[I: AsExpr.Of[T]](default: I): Expr[T] = orElse(some(default)).get
 
     /** If this option is Some then the value is returned otherwise raises an
       * error with the given message.
