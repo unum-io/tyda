@@ -22,6 +22,30 @@ object ExprSpec {
 class ExprSpec extends AnyFunSuite {
   import ExprSpec.Person
 
+  private def assertBinaryNumericExpr[T: Codec](
+      build: (Expr[T], Expr[T]) => Expr[T],
+      expected: (ExprNode[T], ExprNode[T]) => ExprNode[T]
+  ): Unit = {
+    val rNode = ExprNode.Reference[(T, T)]()(using Codec[(T, T)])
+    val r = Expr.lift(rNode)
+    val lhs = r._1
+    val rhs = r._2
+    val expr = build(lhs, rhs)
+
+    val _ = assert(expr.node == expected(Expr.unlift(lhs), Expr.unlift(rhs)))
+  }
+
+  private def assertUnaryNumericExpr[T: Codec](
+      build: Expr[T] => Expr[T],
+      expected: ExprNode[T] => ExprNode[T]
+  ): Unit = {
+    val rNode = ExprNode.Reference[T]()
+    val r = Expr.lift(rNode)
+    val expr = build(r)
+
+    val _ = assert(expr.node == expected(Expr.unlift(r)))
+  }
+
   test("support accessing fields using name") {
     val eNode = ExprNode.Reference[(Int, Int)]()
     val e: Expr[(Int, Int)] = Expr.lift(eNode)
@@ -142,22 +166,52 @@ class ExprSpec extends AnyFunSuite {
     assert(expr.node == ExprNode.Split(Expr.unlift(str), Expr.unlift(del)))
   }
 
-  test("support add") {
-    val rNode = ExprNode.Reference[(Int, Int)]()
-    val r = Expr.lift(rNode)
-    val lhs = r._1
-    val rhs = r._2
-    val expr = lhs + rhs
-    assert(expr.node == ExprNode.Add(AdditiveExpr[Int], Expr.unlift(lhs), Expr.unlift(rhs)))
+  test("support byte numeric operators") {
+    assertBinaryNumericExpr[Byte](_ + _, (l, r) => ExprNode.Add(Num[Byte], l, r))
+    assertBinaryNumericExpr[Byte](_ - _, (l, r) => ExprNode.Subtract(Num[Byte], l, r))
+    assertBinaryNumericExpr[Byte](_ * _, (l, r) => ExprNode.Multiply(Num[Byte], l, r))
+    assertBinaryNumericExpr[Byte](_ / _, (l, r) => ExprNode.Quotient(Num[Byte], l, r))
+    assertUnaryNumericExpr[Byte](-_, operand => ExprNode.Negate(Num[Byte], operand))
   }
 
-  test("support quotient") {
-    val rNode = ExprNode.Reference[(Int, Int)]()
-    val r = Expr.lift(rNode)
-    val lhs = r._1
-    val rhs = r._2
-    val expr = lhs / rhs
-    assert(expr.node == ExprNode.Quotient(Integral[Int], Expr.unlift(lhs), Expr.unlift(rhs)))
+  test("support short numeric operators") {
+    assertBinaryNumericExpr[Short](_ + _, (l, r) => ExprNode.Add(Num[Short], l, r))
+    assertBinaryNumericExpr[Short](_ - _, (l, r) => ExprNode.Subtract(Num[Short], l, r))
+    assertBinaryNumericExpr[Short](_ * _, (l, r) => ExprNode.Multiply(Num[Short], l, r))
+    assertBinaryNumericExpr[Short](_ / _, (l, r) => ExprNode.Quotient(Num[Short], l, r))
+    assertUnaryNumericExpr[Short](-_, operand => ExprNode.Negate(Num[Short], operand))
+  }
+
+  test("support int numeric operators") {
+    assertBinaryNumericExpr[Int](_ + _, (l, r) => ExprNode.Add(Num[Int], l, r))
+    assertBinaryNumericExpr[Int](_ - _, (l, r) => ExprNode.Subtract(Num[Int], l, r))
+    assertBinaryNumericExpr[Int](_ * _, (l, r) => ExprNode.Multiply(Num[Int], l, r))
+    assertBinaryNumericExpr[Int](_ / _, (l, r) => ExprNode.Quotient(Num[Int], l, r))
+    assertUnaryNumericExpr[Int](-_, operand => ExprNode.Negate(Num[Int], operand))
+  }
+
+  test("support long numeric operators") {
+    assertBinaryNumericExpr[Long](_ + _, (l, r) => ExprNode.Add(Num[Long], l, r))
+    assertBinaryNumericExpr[Long](_ - _, (l, r) => ExprNode.Subtract(Num[Long], l, r))
+    assertBinaryNumericExpr[Long](_ * _, (l, r) => ExprNode.Multiply(Num[Long], l, r))
+    assertBinaryNumericExpr[Long](_ / _, (l, r) => ExprNode.Quotient(Num[Long], l, r))
+    assertUnaryNumericExpr[Long](-_, operand => ExprNode.Negate(Num[Long], operand))
+  }
+
+  test("support float numeric operators") {
+    assertBinaryNumericExpr[Float](_ + _, (l, r) => ExprNode.Add(Num[Float], l, r))
+    assertBinaryNumericExpr[Float](_ - _, (l, r) => ExprNode.Subtract(Num[Float], l, r))
+    assertBinaryNumericExpr[Float](_ * _, (l, r) => ExprNode.Multiply(Num[Float], l, r))
+    assertBinaryNumericExpr[Float](_ / _, (l, r) => ExprNode.Quotient(Num[Float], l, r))
+    assertUnaryNumericExpr[Float](-_, operand => ExprNode.Negate(Num[Float], operand))
+  }
+
+  test("support double numeric operators") {
+    assertBinaryNumericExpr[Double](_ + _, (l, r) => ExprNode.Add(Num[Double], l, r))
+    assertBinaryNumericExpr[Double](_ - _, (l, r) => ExprNode.Subtract(Num[Double], l, r))
+    assertBinaryNumericExpr[Double](_ * _, (l, r) => ExprNode.Multiply(Num[Double], l, r))
+    assertBinaryNumericExpr[Double](_ / _, (l, r) => ExprNode.Quotient(Num[Double], l, r))
+    assertUnaryNumericExpr[Double](-_, operand => ExprNode.Negate(Num[Double], operand))
   }
 
   test("Expr.apply requires exact field match") {

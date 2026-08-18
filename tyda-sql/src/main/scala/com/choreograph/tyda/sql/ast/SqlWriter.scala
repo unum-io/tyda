@@ -74,6 +74,15 @@ private[tyda] final case class SqlWriter(writer: Writer) {
           case Seq(arg) => writeSql"$arg -> $body"
           case args => writeSql"($args) -> $body"
         }
+      case SqlExpr.With(assignments, body) =>
+        write("WITH(")
+        assignments
+          .zipWithIndex
+          .foreach { case ((name, value), index) =>
+            writeSql"$name AS $value"
+            if index < assignments.size - 1 then write(", ")
+          }
+        writeSql1", $body)"
     }
 
   def write(options: Query.Options): Unit =
