@@ -1072,6 +1072,12 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     _ == TestEnum.B
   )
 
+  testHasSameBehavior[TestEnum, Boolean](
+    "compare to literal non-singleton enum variant",
+    _ == lit(TestEnum.C(0)),
+    _ == TestEnum.C(0)
+  )
+
   val specialStrings = Seq("\b", "\f", "\n", "\r", "\t", "\u000B", "'", "\\", "\"", "`", "${var}")
   testHasSameBehavior[Int, Seq[String]](
     "handle special strings",

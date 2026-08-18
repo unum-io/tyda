@@ -466,6 +466,10 @@ SELECT coalesce(t1._1, t1._2) AS value FROM t1
 SELECT (named_struct('discriminant', t1.discriminant, 'c', t1.c, 'd', t1.d) = named_struct('discriminant', 'b', 'c', CAST(NULL AS STRUCT<i INT NOT NULL>), 'd', CAST(NULL AS STRUCT<i INT NOT NULL>))) AS value FROM t1
 ------ end
 
+------ Test: compare to literal non-singleton enum variant
+SELECT (named_struct('discriminant', t1.discriminant, 'c', t1.c, 'd', t1.d) = named_struct('discriminant', 'c', 'c', named_struct('i', CAST(0 AS INT)), 'd', CAST(NULL AS STRUCT<i INT NOT NULL>))) AS value FROM t1
+------ end
+
 ------ Test: concat seq
 SELECT concat(t1._1, t1._2) AS value FROM t1
 ------ end
