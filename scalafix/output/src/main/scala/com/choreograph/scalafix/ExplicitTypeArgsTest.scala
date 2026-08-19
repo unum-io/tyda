@@ -5,7 +5,7 @@ import java.time.Instant
 import scala.collection.immutable.TreeSet
 import scala.collection.mutable.Buffer
 import scala.concurrent.duration.FiniteDuration
-import scala.util.{ Either, Success, Try }
+import scala.util.{Either, Success, Try}
 
 object ExplicitTypeArgsTest {
   // Type from another package that needs import
