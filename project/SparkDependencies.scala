@@ -234,6 +234,6 @@ object SparkDependencies {
     "org.yaml" % "snakeyaml" % "2.0",
     "oro" % "oro" % "2.0.8",
     "pl.edu.icm" % "JLargeArrays" % "1.5",
-    "stax" % "stax-api" % "1.0.1",
+    "stax" % "stax-api" % "1.0.1"
   )
 }
