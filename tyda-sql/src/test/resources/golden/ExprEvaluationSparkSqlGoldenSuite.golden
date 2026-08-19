@@ -466,6 +466,10 @@ SELECT coalesce(t1._1, t1._2) AS value FROM t1
 SELECT (named_struct('discriminant', t1.discriminant, 'c', t1.c, 'd', t1.d) = named_struct('discriminant', 'b', 'c', CAST(NULL AS STRUCT<i INT NOT NULL>), 'd', CAST(NULL AS STRUCT<i INT NOT NULL>))) AS value FROM t1
 ------ end
 
+------ Test: compare to literal non-singleton enum variant
+SELECT (named_struct('discriminant', t1.discriminant, 'c', t1.c, 'd', t1.d) = named_struct('discriminant', 'c', 'c', named_struct('i', CAST(0 AS INT)), 'd', CAST(NULL AS STRUCT<i INT NOT NULL>))) AS value FROM t1
+------ end
+
 ------ Test: concat seq
 SELECT concat(t1._1, t1._2) AS value FROM t1
 ------ end
@@ -694,6 +698,10 @@ SELECT endswith(t1._1, t1._2) AS value FROM t1
 SELECT (t1._1 = t1._2) AS value FROM t1
 ------ end
 
+------ Test: equals on com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum
+SELECT (t1._1 = t1._2) AS value FROM t1
+------ end
+
 ------ Test: equals on com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnumString
 SELECT (t1._1 = t1._2) AS value FROM t1
 ------ end
@@ -714,7 +722,15 @@ SELECT (t1._1 = t1._2) AS value FROM t1
 SELECT (t1._1 = t1._2) AS value FROM t1
 ------ end
 
+------ Test: equals on scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
+SELECT (t1._1 IS NOT DISTINCT FROM t1._2) AS value FROM t1
+------ end
+
 ------ Test: equals on scala.Option[scala.Boolean]
+SELECT (t1._1 IS NOT DISTINCT FROM t1._2) AS value FROM t1
+------ end
+
+------ Test: equals on scala.Option[scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]]
 SELECT (t1._1 IS NOT DISTINCT FROM t1._2) AS value FROM t1
 ------ end
 
@@ -880,6 +896,18 @@ SELECT CAST(NULL AS void) FROM t1
 
 ------ Test: identity tuple
 SELECT t1._1 AS _1, t1._2 AS _2 FROM t1
+------ end
+
+------ Test: in exprs
+SELECT t1._1 IN (t1._2, CASE WHEN t1._4 THEN t1._1 ELSE t1._3 END) AS value FROM t1
+------ end
+
+------ Test: in literals
+SELECT t1.value IN (CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT)) AS value FROM t1
+------ end
+
+------ Test: in match struct
+SELECT t1._1 IN (t1._2, t1._3) AS value FROM t1
 ------ end
 
 ------ Test: isNaN for Double
@@ -1178,6 +1206,10 @@ SELECT (CAST(t1.`瑞` AS INT) + CAST(t1.`典` AS INT)) AS value FROM t1
 SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
 ------ end
 
+------ Test: not equals on com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum
+SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
+------ end
+
 ------ Test: not equals on com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnumString
 SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
 ------ end
@@ -1198,7 +1230,15 @@ SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
 SELECT (NOT (t1._1 = t1._2)) AS value FROM t1
 ------ end
 
+------ Test: not equals on scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
+SELECT (NOT (t1._1 IS NOT DISTINCT FROM t1._2)) AS value FROM t1
+------ end
+
 ------ Test: not equals on scala.Option[scala.Boolean]
+SELECT (NOT (t1._1 IS NOT DISTINCT FROM t1._2)) AS value FROM t1
+------ end
+
+------ Test: not equals on scala.Option[scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]]
 SELECT (NOT (t1._1 IS NOT DISTINCT FROM t1._2)) AS value FROM t1
 ------ end
 
@@ -1307,34 +1347,46 @@ SELECT (t1.value = TRUE) AS value FROM t1
 ------ end
 
 ------ Test: seq contains
-SELECT aggregate(transform(t1.value, c0 -> (c0 = TRUE)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1.value, TRUE) AS value FROM t1
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
+------ end
+
+------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnumString
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithOptionField
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.Boolean
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["bool"], scala.Tuple1[scala.Boolean]]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["seq"], scala.Tuple1[scala.collection.immutable.Seq[scala.Boolean]]]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
+SELECT aggregate(transform(t1._1, c0 -> (c0 IS NOT DISTINCT FROM t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.Option[scala.Boolean]
+SELECT aggregate(transform(t1._1, c0 -> (c0 IS NOT DISTINCT FROM t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
+------ Test: seq contains scala.Option[scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]]
 SELECT aggregate(transform(t1._1, c0 -> (c0 IS NOT DISTINCT FROM t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
@@ -1347,27 +1399,27 @@ SELECT aggregate(transform(t1._1, c0 -> (c0 IS NOT DISTINCT FROM t1._2)), FALSE,
 ------ end
 
 ------ Test: seq contains scala.collection.immutable.Seq[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.collection.immutable.Seq[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithOptionField]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.collection.immutable.Seq[scala.Boolean]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.collection.immutable.Seq[scala.Option[scala.Boolean]]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.collection.immutable.Seq[scala.Tuple2[scala.Int, scala.Int]]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.Boolean]]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq exists
