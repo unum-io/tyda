@@ -131,6 +131,7 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
 
   def convert(expr: ExprNode[?])(using spark: SparkSession): Column =
     expr match {
+      case ExprNode.Explode(_) => unreachable("ExprNode.Explode should be handled in DatasetOnSpark")
       case ExprNode.Select(ref: ExprNode.Reference[?], name) => cfFromRef(ref).column(name)
       case ExprNode.Select(p, name) => convert(p)(name)
       case ref @ ExprNode.Reference(_, _) => cfFromRef(ref).row
