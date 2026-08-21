@@ -238,7 +238,7 @@ lazy val scalafixTests = (project in file("scalafix/tests"))
   .settings(name := "tyda-scalafix-tests")
   .settings(commonSettings)
   .settings(
-    scalaVersion := "3.7.4", // Needs to match scalafix testkit version
+    scalaVersion := "3.8.4", // Needs to match scalafix testkit version
     scalafixTestkitOutputSourceDirectories := (scalafixOutput / Compile / sourceDirectories).value,
     scalafixTestkitInputSourceDirectories := (scalafixInput / Compile / sourceDirectories).value,
     scalafixTestkitInputClasspath := (scalafixInput / Compile / fullClasspath).value,
