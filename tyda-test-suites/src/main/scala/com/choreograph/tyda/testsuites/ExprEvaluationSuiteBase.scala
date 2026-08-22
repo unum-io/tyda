@@ -193,6 +193,9 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testEqualsAndContains[(seq: Seq[Boolean])]
   testEqualsAndContains[Seq[(Int, Int)]]
   testEqualsAndContains[Struct]
+  testEqualsAndContains[Option[Struct]]
+  testEqualsAndContains[Option[Option[Struct]]]
+  testEqualsAndContains[TestEnum]
   testEqualsAndContains[TestEnumString]
 
   testHasSameBehavior[Option[Int], Boolean]("equals to None", _ == None, _ == None)
@@ -1067,6 +1070,12 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     "compare to literal enum variant",
     _ == lit(TestEnum.B),
     _ == TestEnum.B
+  )
+
+  testHasSameBehavior[TestEnum, Boolean](
+    "compare to literal non-singleton enum variant",
+    _ == lit(TestEnum.C(0)),
+    _ == TestEnum.C(0)
   )
 
   val specialStrings = Seq("\b", "\f", "\n", "\r", "\t", "\u000B", "'", "\\", "\"", "`", "${var}")
