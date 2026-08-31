@@ -6,6 +6,7 @@ import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.aggregates.sum
 import com.choreograph.tyda.functions.explode
 import com.choreograph.tyda.functions.lit
+import com.choreograph.tyda.Decimal
 
 object DatasetBasicSuite {
   private type WideTuple = (Int, Int, Int, Int, Int, Int, Int)
@@ -105,6 +106,7 @@ trait DatasetBasicSuite extends DatasetSuite {
   test[TinyByte, TinyByte]("distinct primitive", _.distinct)
   test[Option[TinyByte], Option[TinyByte]]("distinct Option", _.distinct)
   test[List[TinyByte], List[TinyByte]]("distinct List", _.distinct)
+  test[Decimal[38, 9], Decimal[38, 9]]("distinct decimal", _.distinct)
   test[(a: Boolean, b: Boolean), Boolean]("distinct before select", _.distinct.select(_.a))
 
   test[Int, Int, Int]("union", (left, right) => left.union(right))
