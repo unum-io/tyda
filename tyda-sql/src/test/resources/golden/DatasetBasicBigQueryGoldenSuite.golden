@@ -18,6 +18,10 @@ SELECT DISTINCT table1.value AS value FROM table1
 SELECT t0.a AS value FROM (SELECT DISTINCT table1.a AS a, table1.b AS b FROM table1) AS t0
 ------ end
 
+------ Test: distinct decimal
+SELECT DISTINCT table1.value AS value FROM table1
+------ end
+
 ------ Test: distinct primitive
 SELECT DISTINCT table1.value AS value FROM table1
 ------ end
