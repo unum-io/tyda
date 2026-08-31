@@ -3,10 +3,10 @@ package com.choreograph.tyda.testsuites
 import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Dataset
+import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.aggregates.sum
 import com.choreograph.tyda.functions.explode
 import com.choreograph.tyda.functions.lit
-import com.choreograph.tyda.Decimal
 
 object DatasetBasicSuite {
   private type WideTuple = (Int, Int, Int, Int, Int, Int, Int)
