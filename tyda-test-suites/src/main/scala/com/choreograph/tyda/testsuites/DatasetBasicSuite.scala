@@ -3,6 +3,7 @@ package com.choreograph.tyda.testsuites
 import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Dataset
+import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.aggregates.sum
 import com.choreograph.tyda.functions.explode
 import com.choreograph.tyda.functions.lit
@@ -105,6 +106,7 @@ trait DatasetBasicSuite extends DatasetSuite {
   test[TinyByte, TinyByte]("distinct primitive", _.distinct)
   test[Option[TinyByte], Option[TinyByte]]("distinct Option", _.distinct)
   test[List[TinyByte], List[TinyByte]]("distinct List", _.distinct)
+  test[Decimal[38, 9], Decimal[38, 9]]("distinct decimal", _.distinct)
   test[(a: Boolean, b: Boolean), Boolean]("distinct before select", _.distinct.select(_.a))
 
   test[Int, Int, Int]("union", (left, right) => left.union(right))

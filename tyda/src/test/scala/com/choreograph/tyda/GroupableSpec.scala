@@ -54,6 +54,9 @@ class GroupableSpec extends AnyFunSuite {
   checkExists[Timestamp]
   checkExists[Duration]
   checkExists[Date]
+  checkExists[Decimal[38, 9]]
+  checkExists[Decimal[19, 9]]
+  checkExists[Decimal[21, 0]]
 
   checkExists[Option[Int]]
   checkExists[Option[String]]
