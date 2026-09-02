@@ -29,7 +29,7 @@ object Dependencies {
     val scalatest = "org.scalatest" %% "scalatest" % "3.2.20"
     val commonsIo = "commons-io" % "commons-io" % "2.22.0"
     val slf4j = "org.slf4j" % "slf4j-api" % "2.0.18"
-    val bigQuery = "com.google.cloud" % "google-cloud-bigquery" % "2.69.0"
+    val bigQuery = "com.google.cloud" % "google-cloud-bigquery" % "2.70.0"
     val parquet = "org.apache.parquet" % "parquet-hadoop" % "1.18.0"
     val hadoop = "org.apache.hadoop" % "hadoop-client-runtime" % "3.3.6"
     val spark3Sql = ("org.apache.spark" %% "spark-sql" % spark3Version).cross(CrossVersion.for3Use2_13)
