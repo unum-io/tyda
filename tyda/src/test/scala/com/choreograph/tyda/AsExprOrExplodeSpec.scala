@@ -14,13 +14,19 @@ class AsExprOrExplodeSpec extends AnyFunSuite {
     AsExprOrExplode(f(Expr.lift(ref)))
 
   test("support explode Option") {
-    val actual = create(explode(_._1))
-    assert(actual == ExplodeExpr(ExprNode.OptionToIterable(ExprNode.Select[Row, Option[Int]](ref, "_1"))))
+    val actual = create(x => explode(x._1))
+    assert(
+      actual ==
+        ExplodeExpr(ExprNode.Explode(ExprNode.OptionToIterable(ExprNode.Select[Row, Option[Int]](ref, "_1"))))
+    )
   }
 
   test("support explode Seq") {
-    val actual = create(explode(_._2))
-    assert(actual == ExplodeExpr(ExprNode.UpcastToIterable(ExprNode.Select[Row, Seq[Int]](ref, "_2"))))
+    val actual = create(x => explode(x._2))
+    assert(
+      actual ==
+        ExplodeExpr(ExprNode.Explode(ExprNode.UpcastToIterable(ExprNode.Select[Row, Seq[Int]](ref, "_2"))))
+    )
   }
 
   test("support expr") {
@@ -32,6 +38,18 @@ class AsExprOrExplodeSpec extends AnyFunSuite {
   }
 
   test("do not allow explode for Int") {
-    assertCompileTimeError("create(explode(_._3))", "method explode in object Expr")
+    assertCompileTimeError("create(x => explode(x._3))", "method explode in object Expr")
+  }
+
+  test("explode with named tuple") {
+    val actual = create(x => (exploded = explode(x._2)))
+    actual match {
+      case ExplodeExpr(_) => fail("fail")
+      case expr: Expr[?] => assert(
+          expr.node == ExprNode.makeNamedTuple[(exploded: Int)]((exploded =
+            ExprNode.Explode(ExprNode.UpcastToIterable(ExprNode.Select[Row, Seq[Int]](ref, "_2")))
+          ))
+        )
+    }
   }
 }

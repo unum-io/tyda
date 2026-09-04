@@ -28,9 +28,9 @@ import shapeless3.deriving.K0
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.CompiledAggregateExpr
 import com.choreograph.tyda.CompiledExplodeExpr
+import com.choreograph.tyda.CompiledExplodeExpr.Extracted
 import com.choreograph.tyda.CompiledExpr
 import com.choreograph.tyda.CompiledExpr2
-import com.choreograph.tyda.CompiledExprOrExplode
 import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.Expr
 import com.choreograph.tyda.ExprNode
@@ -267,14 +267,7 @@ object DatasetOnSpark {
           }
           IntermediateDataset(filtered)
         case ExplodeOptionToFilter(ds) => toIntermediate(ds)
-        case select: Dataset.Select1[?, T] => IntermediateDataset(select1(select))
-        case selectN: Dataset.SelectN[?, ?] =>
-          val (input, cf) = toIntermediate(selectN.input).toDataFrameAndColumnFactory
-          val columns = tupleInstances(selectN.exprs)
-            .mapConst([t] => convertExplodeExpr(cf, _))
-            .zipWithIndex
-            .map { case (column, i) => column.as(s"_${i + 1}") }
-          IntermediateDataset(input.select(columns*).as[T])
+        case dsSelect: Dataset.Select[?, T] => IntermediateDataset(select(dsSelect))
         case Dataset.MapPartitions(input, f, _) =>
           val ds = toIntermediate(input).toDataset
           IntermediateDataset(ds.mapPartitions(f))
@@ -354,21 +347,37 @@ object DatasetOnSpark {
     existingConversions.computeIfAbsent(ds, _ => compute).asInstanceOf[IntermediateDataset[T]]
   }
 
-  private def select1[T, U: Codec](select1: Dataset.Select1[T, U])(using SparkSession): SparkDataset[U] = {
-    val input = toIntermediate(select1.input)
-    val arg = select1.expr match {
-      case CompiledExpr(arg, _) => arg
-      case CompiledExplodeExpr(arg, _) => arg
-    }
-    select1.expr match {
+  private def select[T, U: Codec](select: Dataset.Select[T, U])(using SparkSession): SparkDataset[U] = {
+    val input = toIntermediate(select.input)
+    val arg = select.expr.arg
+    select.expr match {
       /* Use map/flatMap for row level operations instead of UDFs as this allows Spark to potentially optimize
        * away serialization between operations. */
-      case CompiledExpr(_, ExprNode.Udf(`arg`, f, _)) => input.toDataset.map(f)
-      case CompiledExplodeExpr(_, ExprNode.Udf(`arg`, f, _)) => input.toDataset.flatMap(f)
+      case CompiledExplodeExpr(_, ExprNode.Udf(`arg`, f, _)) => input.toDataset.map(f)
+      case CompiledExplodeExpr(_, ExprNode.Explode(ExprNode.Udf(`arg`, f, _))) => input.toDataset.flatMap(f)
       case other =>
         val (df, cf) = input.toDataFrameAndColumnFactory
-        val column = convertExplodeExpr(cf, other)
-        selectAndUnpack(df, column)
+        other.extractExplodes match {
+          case Extracted.NoExplodes(compiled) =>
+            val column = ExprOnSpark.resolved(cf, compiled)
+            selectAndUnpack(df, column)
+          case Extracted.Explodes(explodes, compiled, onlyExplodesCompiled) =>
+            val columns = tupleInstances(explodes)
+              .mapConst([t] => ExprOnSpark.resolved(cf, _))
+              .map(explode)
+              .zipWithIndex
+            onlyExplodesCompiled match {
+              case None =>
+                val exploded =
+                  df.select(cf.row.as("_1") +: columns.map((column, idx) => column.as(s"_${idx + 2}"))*)
+                val explodedCf = ColumnFactory.fromDF(exploded, compiled.arg.codec)
+                selectAndUnpack(exploded, ExprOnSpark.resolved(explodedCf, compiled))
+              case Some(compiled) =>
+                val exploded = df.select(columns.map((column, idx) => column.as(s"_${idx + 1}"))*)
+                val explodedCf = ColumnFactory.fromDF(exploded, compiled.arg.codec)
+                selectAndUnpack(exploded, ExprOnSpark.resolved(explodedCf, compiled))
+            }
+        }
     }
   }
 
@@ -386,14 +395,6 @@ object DatasetOnSpark {
     val rightInputs = joinInputs(right)
     left.exists(rightInputs.contains)
   }
-
-  private def convertExplodeExpr[T, E](cf: ColumnFactory[T], expr: CompiledExprOrExplode[T, E])(using
-      SparkSession
-  ): Column =
-    expr match {
-      case c: CompiledExpr[T, E] => ExprOnSpark.resolved(cf, c)
-      case c: CompiledExplodeExpr[T, E] => explode(ExprOnSpark.resolved(cf, c.asCompiledExpr))
-    }
 
   private def leftJoin[T, U](leftDs: Dataset[T], rightDs: Dataset[U], p: CompiledExpr2[T, U, Boolean])(using
       SparkSession

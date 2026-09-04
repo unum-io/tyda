@@ -14,8 +14,8 @@ import shapeless3.deriving.K0
 import com.choreograph.tyda.Aggregator
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.CompiledExplodeExpr
+import com.choreograph.tyda.CompiledExplodeExpr.Extracted
 import com.choreograph.tyda.CompiledExpr
-import com.choreograph.tyda.CompiledExprOrExplode
 import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
@@ -69,11 +69,7 @@ object DatasetOnIterator {
         )
       case Dataset.FromSeq(values, _) => values.iterator
       case Dataset.Filter(input, p) => apply(input).filter(lambda(p))
-      case Dataset.Select1(input, compiled) => compiled match {
-          case c: CompiledExpr[?, ?] => apply(input).map(lambda(c))
-          case c: CompiledExplodeExpr[?, ?] => apply(input).flatMap(lambda(c.asCompiledExpr))
-        }
-      case Dataset.SelectN(input, exprs) => selectN(apply(input), exprs)
+      case Dataset.Select(input, compiled) => select(apply(input), compiled)
       case Dataset.MapPartitions(input, f, _) => f(apply(input))
       case Dataset.Distinct(input) => apply(input).distinct
       case Dataset.Join(left, right, p) => JoinSelection.join(apply(left), apply(right), p)
@@ -92,18 +88,17 @@ object DatasetOnIterator {
         apply(input).to(Vector).sortBy(lambda(key)).iterator
     }
 
-  private def selectN[T, R <: Tuple](
-      input: Iterator[T],
-      exprs: Tuple.Map[R, [X] =>> CompiledExprOrExplode[T, X]]
-  ): Iterator[R] = {
-    def asLambda[R](compiled: CompiledExprOrExplode[T, R]): T => Vector[R] =
-      compiled match {
-        case c: CompiledExpr[T, R] => lambda[T, R](c).andThen(Vector(_))
-        case c: CompiledExplodeExpr[T, R] => lambda[T, Iterable[R]](c.asCompiledExpr).andThen(_.toVector)
-      }
-    val lambdas = tupleInstances(exprs).mapK[[X] =>> T => Vector[X]]([t] => asLambda(_))
-    input.flatMap(row => lambdas.constructCartesianProduct([t] => _(row)))
-  }
+  private def select[T, R](input: Iterator[T], compiled: CompiledExplodeExpr[T, R]): Iterator[R] =
+    compiled.extractExplodes match {
+      case Extracted.NoExplodes(expr) => input.map(lambda(expr))
+      case Extracted.Explodes(explodes, compiled, _) =>
+        val lambdas =
+          tupleInstances(explodes).mapK[[s] =>> T => Vector[s]]([t] => lambda(_).andThen(_.toVector))
+        input
+          .flatMap(row => lambdas.constructCartesianProduct([t] => _(row)).map((row *: _)))
+          .map(lambda(compiled))
+
+    }
 
   extension [F[_], T](instances: K0.ProductInstances[F, T]) {
     private def constructCartesianProduct(f: [t] => F[t] => Vector[t]): Vector[T] = {
