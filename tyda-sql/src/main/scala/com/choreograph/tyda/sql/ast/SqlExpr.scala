@@ -20,6 +20,7 @@ private[sql] enum SqlExpr {
   case Subquery(query: Query)
   case Exists(query: Query)
   case LambdaFunction(args: Seq[SqlExpr], body: SqlExpr)
+  case With(assignments: Seq[(Identifier, SqlExpr)], body: SqlExpr)
 }
 
 private[sql] object SqlExpr {

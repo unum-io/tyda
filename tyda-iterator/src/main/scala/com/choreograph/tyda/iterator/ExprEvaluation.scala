@@ -226,8 +226,25 @@ object ExprEvaluation {
             branches
               .collectFirst { case (whenEval, thenEval) if whenEval(from) => thenEval(from) }
               .getOrElse(elseEval(from))
-        case ExprNode.Add(additive, lhs, rhs) => binaryOp(lhs, rhs, additive.plus)
-        case ExprNode.Quotient(integral, lhs, rhs) => binaryOp(lhs, rhs, integral.quot)
+        case ExprNode.Let(value, reference, body) =>
+          val valueEval = impl(value)
+          val bodyEval = lambdaN(args :+ reference, body)
+          from => {
+            val value = valueEval(from)
+            if args.size == 1 then bodyEval((from, value))
+            else {
+              // TYPE SAFETY: More than one argument is represented as a Tuple by lambdaN.
+              bodyEval(from.asInstanceOf[Tuple] :* value)
+            }
+          }
+        case ExprNode.Abs(num, operand) => impl(operand).andThen(num.abs)
+        case ExprNode.Add(num, lhs, rhs) => binaryOp(lhs, rhs, num.plus)
+        case ExprNode.Subtract(num, lhs, rhs) => binaryOp(lhs, rhs, num.minus)
+        case ExprNode.Multiply(num, lhs, rhs) => binaryOp(lhs, rhs, num.times)
+        case ExprNode.Quotient(num, lhs, rhs) => binaryOp(lhs, rhs, num.quot)
+        case ExprNode.Negate(num, operand) =>
+          val eval = impl(operand)
+          from => num.negate(eval(from))
         case ExprNode.ToRepr(inner, Codec.FromInjection(injection, _)) =>
           val innerEval = impl(inner)
           from => injection(innerEval(from))

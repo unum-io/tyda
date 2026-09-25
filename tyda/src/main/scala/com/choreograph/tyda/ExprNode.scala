@@ -370,6 +370,19 @@ private object ExprNode extends ExprApi[ExprNode] {
       Cases(WhenThen(condition, ifTrue), Seq.empty, ifFalse)
   }
 
+  /** Evaluates `value` once and makes it available as `reference` in `body`.
+    *
+    * This is an internal node used by correctness rewrites that need to reuse
+    * an intermediate expression without duplicating it in generated SQL.
+    */
+  private[tyda] final case class Let[T, U](
+      value: ExprNode[T],
+      reference: ExprNode.Reference[T],
+      body: ExprNode[U]
+  ) extends ExprNode[U] {
+    override def codec: Codec[U] = body.codec
+  }
+
   /* Internal expr used to turn a `Option[T]` into a `T` when we know it's not None.
    *
    * This is used in GroupedDataset.fullOuterJoin where the `coalesce(l.key, r.key)` must not be null, but
@@ -433,13 +446,28 @@ private object ExprNode extends ExprApi[ExprNode] {
     override def codec: Codec[T] = array.codec.element
   }
 
-  final case class Add[T](additive: AdditiveExpr[T], lhs: ExprNode[T], rhs: ExprNode[T]) extends ExprNode[T] {
+  final case class Abs[T](num: Num[T], operand: ExprNode[T]) extends ExprNode[T] {
+    override def codec: Codec[T] = operand.codec
+  }
+
+  final case class Add[T](num: Num[T], lhs: ExprNode[T], rhs: ExprNode[T]) extends ExprNode[T] {
     override def codec: Codec[T] = lhs.codec
   }
 
-  final case class Quotient[T](integral: Integral[T], lhs: ExprNode[T], rhs: ExprNode[T])
-      extends ExprNode[T] {
+  final case class Subtract[T](num: Num[T], lhs: ExprNode[T], rhs: ExprNode[T]) extends ExprNode[T] {
     override def codec: Codec[T] = lhs.codec
+  }
+
+  final case class Multiply[T](num: Num[T], lhs: ExprNode[T], rhs: ExprNode[T]) extends ExprNode[T] {
+    override def codec: Codec[T] = lhs.codec
+  }
+
+  final case class Quotient[T](num: Num[T], lhs: ExprNode[T], rhs: ExprNode[T]) extends ExprNode[T] {
+    override def codec: Codec[T] = lhs.codec
+  }
+
+  final case class Negate[T](num: Num[T], operand: ExprNode[T]) extends ExprNode[T] {
+    override def codec: Codec[T] = operand.codec
   }
 
   final case class Cast[T, U](expr: ExprNode[T], canCast: CanCast[T, U]) extends ExprNode[U] {
@@ -503,8 +531,7 @@ private object ExprNode extends ExprApi[ExprNode] {
     given TreeApi[String, N] = TreeApi.leaf
     given TreeApi[Int, N] = TreeApi.leaf
     given [T]: TreeApi[Comparable[T], N] = TreeApi.leaf
-    given [T]: TreeApi[Integral[T], N] = TreeApi.leaf
-    given [T]: TreeApi[AdditiveExpr[T], N] = TreeApi.leaf
+    given [T]: TreeApi[Num[T], N] = TreeApi.leaf
     given [T]: TreeApi[Codec[T], N] = TreeApi.leaf
     given [T]: TreeApi[Codec.Product[T], N] = TreeApi.leaf
     given [T, R]: TreeApi[Codec.FromInjection[T, R], N] = TreeApi.leaf

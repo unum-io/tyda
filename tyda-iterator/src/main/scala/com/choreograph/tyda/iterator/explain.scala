@@ -173,6 +173,12 @@ private def explainLambdaBody[T](expr: ExprNode[T], args: Map[ExprNode.Reference
           .map(branch => s"when ${body(branch.whenExpr)} then ${body(branch.thenExpr)}")
           .mkString(" ")
         s"(case $whenThenStr else ${body(elseExpr)})"
+      case ExprNode.Let(value, reference, letBody) =>
+        val referenceName = s"x${args.size}"
+        s"let $referenceName = ${body(value)} in ${explainLambdaBody(
+            letBody,
+            args + (reference -> referenceName)
+          )}"
       case ExprNode.StartsWith(string, prefix) => s"${body(string)}.startsWith(${body(prefix)})"
       case ExprNode.Trim(string) => s"${body(string)}.trim()"
       case ExprNode.EndsWith(string, suffix) => s"${body(string)}.endsWith(${body(suffix)})"
@@ -181,8 +187,12 @@ private def explainLambdaBody[T](expr: ExprNode[T], args: Map[ExprNode.Reference
       case ExprNode.FromJson(inner, _) => s"fromJson(${body(inner)})"
       case ExprNode.SizeSeq(operand) => s"${body(operand)}.size"
       case ExprNode.ElementSeq(array, index) => s"${body(array)}.get(${body(index)})"
+      case ExprNode.Abs(_, operand) => s"${body(operand)}.abs"
       case ExprNode.Add(_, lhs, rhs) => s"${body(lhs)} + ${body(rhs)}"
+      case ExprNode.Subtract(_, lhs, rhs) => s"${body(lhs)} - ${body(rhs)}"
+      case ExprNode.Multiply(_, lhs, rhs) => s"${body(lhs)} * ${body(rhs)}"
       case ExprNode.Quotient(_, lhs, rhs) => s"${body(lhs)} / ${body(rhs)}"
+      case ExprNode.Negate(_, operand) => s"-${body(operand)}"
       case ExprNode.Cast(arg, canCast) =>
         val simpleName = canCast.codec.classTag.runtimeClass.getSimpleName
         s"${body(arg)}.cast[$simpleName]"
