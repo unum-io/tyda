@@ -347,6 +347,13 @@ class ArgsParserSuite extends AnyFunSuite {
     assert(ArgsParser.serialize(expected) == args)
   }
 
+  test("support reading Source.Document") {
+    val args = Seq("--source-uri", "graphdb://graphdb.example.com/repositories/my-repo")
+    val expected = ArgsWithSource(Source.Document("graphdb://graphdb.example.com/repositories/my-repo"))
+    assert(ArgsParser.parse[ArgsWithSource](args) == Right(expected))
+    assert(ArgsParser.serialize(expected) == args)
+  }
+
   test("support reading Option[Source]") {
     val args = Seq("--source-base-path", "/tmp")
     val expected = ArgsWithOptionSource(Some(Source.Path("/tmp")))
@@ -358,6 +365,13 @@ class ArgsParserSuite extends AnyFunSuite {
     val args = Seq()
     val expected = ArgsWithOptionSource(None)
     assert(ArgsParser.parse[ArgsWithOptionSource](args) == Right(expected))
+    assert(ArgsParser.serialize(expected) == args)
+  }
+
+  test("support reading Sink.Document") {
+    val args = Seq("--sink-uri", "graphdb://graphdb.example.com/repositories/my-repo")
+    val expected = ArgsWithSink(Sink.Document("graphdb://graphdb.example.com/repositories/my-repo"))
+    assert(ArgsParser.parse[ArgsWithSink](args) == Right(expected))
     assert(ArgsParser.serialize(expected) == args)
   }
 
@@ -652,9 +666,24 @@ class ArgsParserSuite extends AnyFunSuite {
                       |Table:
                       |  --source-identifier <string> [required]
                       |  --source-location <native|big-query> (default: native)
+                      |Document:
+                      |  --source-uri <string> [required]
                       |Test:
                       |  --source-data <BASE64 encoded java serialization of object> [required]
                       |  --source-metadata-file_path <string> [required]""".stripMargin
+    assert(help == expected)
+  }
+
+  test("help for args with sink") {
+    val help = ArgsParser.help[ArgsWithSink]
+    val expected = """|Alternative --sink one of:
+                      |Path:
+                      |  --sink-base-path <string> [required]
+                      |  --sink-format <parquet|json> (default: parquet)
+                      |Document:
+                      |  --sink-uri <string> [required]
+                      |Test:
+                      |  --sink-verify <BASE64 encoded java serialization of object> [required]""".stripMargin
     assert(help == expected)
   }
 }

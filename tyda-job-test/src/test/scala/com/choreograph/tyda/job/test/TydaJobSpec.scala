@@ -1,10 +1,14 @@
 package com.choreograph.tyda.job.test
 
+import scala.collection.mutable
+
 import org.scalatest.funsuite.AnyFunSuite
 
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Dataset
 import com.choreograph.tyda.job.CheckpointArg
+import com.choreograph.tyda.job.DocumentReader
+import com.choreograph.tyda.job.DocumentWriter
 import com.choreograph.tyda.job.TydaJob
 import com.choreograph.tyda.job.TydaJobContext
 import com.choreograph.tyda.table.Partitioner
@@ -18,6 +22,26 @@ object TydaJobSpec {
 
     def run(args: Args)(using TydaJobContext): Unit = {
       args.source.read.filter(_.name == "a").write(args.sink, EmptyTuple)
+    }
+  }
+
+  object JobWithDocumentSink extends TydaJob[JobWithDocumentSink.Args] {
+    final case class Args(
+        source: Source[String, Partitioner.None],
+        sink: Sink.Document[String, Partitioner.None]
+    )
+
+    def run(args: Args)(using TydaJobContext): Unit = { args.source.read.writeDocument(args.sink) }
+  }
+
+  object JobWithDocumentSource extends TydaJob[JobWithDocumentSource.Args] {
+    final case class Args(
+        source: Source.Document[String, Partitioner.None],
+        sink: Sink[String, Partitioner.None]
+    )
+
+    def run(args: Args)(using TydaJobContext): Unit = {
+      args.source.readDocument().write(args.sink, EmptyTuple)
     }
   }
 
@@ -142,6 +166,68 @@ class TydaJobSpec extends AnyFunSuite {
       }
     ))
     assert(ranVerify)
+  }
+
+  test("Document sink can not be written through Tyda's Dataset API") {
+    intercept[UnsupportedOperationException] {
+      testJob(Job.Args(
+        Source.Test(Seq(Model("a"), Model("b"))),
+        Sink.Document("graphdb://graphdb.example.com/repositories/my-repo")
+      ))
+    }
+  }
+
+  test("writeDocument throws when no DocumentWriter is configured") {
+    intercept[UnsupportedOperationException] {
+      testJob(JobWithDocumentSink.Args(
+        Source.Test(Seq("<a> <b> <c> .", "<d> <e> <f> .")),
+        Sink.Document("graphdb://graphdb.example.com/repositories/my-repo")
+      ))
+    }
+  }
+
+  test("writeDocument sends each row as a document through the injected DocumentWriter") {
+    val received = mutable.Buffer.empty[(String, String)]
+    val fakeWriter: DocumentWriter = (uri, document) => received += ((uri, document))
+
+    testJob(
+      JobWithDocumentSink.Args(
+        Source.Test(Seq("<a> <b> <c> .", "<d> <e> <f> .")),
+        Sink.Document("graphdb://graphdb.example.com/repositories/my-repo")
+      ),
+      fakeWriter
+    )
+
+    assert(
+      received.toSeq == Seq(
+        ("graphdb://graphdb.example.com/repositories/my-repo", "<a> <b> <c> ."),
+        ("graphdb://graphdb.example.com/repositories/my-repo", "<d> <e> <f> .")
+      )
+    )
+  }
+
+  test("readDocument throws when no DocumentReader is configured") {
+    intercept[UnsupportedOperationException] {
+      testJob(JobWithDocumentSource.Args(
+        Source.Document("graphdb://graphdb.example.com/repositories/my-repo"),
+        Sink.Test(_ => ())
+      ))
+    }
+  }
+
+  test("readDocument fetches documents through the injected DocumentReader") {
+    val fakeReader: DocumentReader = {
+      case "graphdb://graphdb.example.com/repositories/my-repo" => Seq("<a> <b> <c> .", "<d> <e> <f> .")
+      case uri => throw new RuntimeException(s"Unexpected uri $uri")
+    }
+
+    testJob(
+      JobWithDocumentSource.Args(
+        Source.Document("graphdb://graphdb.example.com/repositories/my-repo"),
+        Sink.Test { data => assert(data == Seq("<a> <b> <c> .", "<d> <e> <f> .")) }
+      ),
+      documentReader = fakeReader
+    )
   }
 
   test("checkpoint") {
