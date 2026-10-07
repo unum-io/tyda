@@ -146,6 +146,10 @@ SELECT count(CAST(1 AS INT)) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 SELECT count(DISTINCT table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
+------ Test: countDistinct decimal
+SELECT count(DISTINCT table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
 ------ Test: countDistinct group by
 SELECT table1._1 AS _1, count(DISTINCT table1._2) AS _2 FROM table1 GROUP BY table1._1
 ------ end
@@ -208,6 +212,10 @@ SELECT table1.value AS value FROM table1 GROUP BY table1.value
 
 ------ Test: group by whole struct row
 SELECT named_struct('_1', table1._1, '_2', table1._2) AS _1, min(table1._1) AS _2 FROM table1 GROUP BY table1._1, table1._2
+------ end
+
+------ Test: groupBy decimal
+SELECT table1._1 AS key, count(CAST(1 AS INT)) AS value FROM table1 GROUP BY table1._1
 ------ end
 
 ------ Test: groupBy transform

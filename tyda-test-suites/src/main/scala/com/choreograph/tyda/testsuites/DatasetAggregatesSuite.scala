@@ -195,6 +195,10 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     "countDistinct array",
     ds => ds.groupByKey(_ => 1).aggregateValue(countDistinct).values
   )
+  test[Decimal[38, 9], Long](
+    "countDistinct decimal",
+    ds => ds.groupByKey(_ => 1).aggregateValue(countDistinct).values
+  )
   test[(TinyByte, Option[Int]), Long](
     "countSome expr",
     ds => ds.groupByKey(_._1).aggregateValue(countSome(_._2)).values
@@ -214,6 +218,10 @@ trait DatasetAggregatesSuite extends DatasetSuite {
   test[(Int, Int), (Boolean, Int)](
     "groupBy transform",
     ds => ds.groupByKey(_._1 > 2).aggregateValue(min(_._2)).pairs
+  )
+  test[(Decimal[2, 1], Int), (key: Decimal[2, 1], value: Long)](
+    "groupBy decimal",
+    ds => ds.grouped.aggregateValue(count)
   )
 
   test[Pair, Pair]("maxBy", ds => ds.groupByKey(_._1).aggregateValue(maxBy(_._1, _._2)).pairs)
