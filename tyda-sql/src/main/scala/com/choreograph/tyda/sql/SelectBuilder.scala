@@ -285,11 +285,19 @@ private final case class SelectBuilder[T, R](
           .zipWithIndex
         onlyExplodesCompiled match {
           case None =>
-            val initial = (RelaxedCompiledExpr(select), "_1")
-            buildWithSelect(NonEmpty[Seq](initial, selects.map((sql, idx) => (sql, s"_${idx + 2}"))*))
-              .map(makeSubquery(_, compiled.arg.codec))
-              .flatMap(_.selectWithoutExplode(compiled))
-          case Some(compiled) => inlineExplodes(selects.map(_._1), compiled) match {
+            val prefix = select match {
+              case current: CompiledExpr[T, R] => Some(current.expr)
+              case _ => None
+            }
+            prefix.flatMap(p => inlineExplodes(p +: selects.map(_._1.expr), selects.size, compiled)) match {
+              case Some(inlined) => Right(inlined)
+              case None =>
+                val initial = (RelaxedCompiledExpr(select), "_1")
+                buildWithSelect(NonEmpty[Seq](initial, selects.map((sql, idx) => (sql, s"_${idx + 2}"))*))
+                  .map(makeSubquery(_, compiled.arg.codec))
+                  .flatMap(_.selectWithoutExplode(compiled))
+            }
+          case Some(compiled) => inlineExplodes(selects.map(_._1.expr), selects.size, compiled) match {
               case Some(inlined) => Right(inlined)
               case None => buildWithSelect(
                   NonEmpty
@@ -307,15 +315,16 @@ private final case class SelectBuilder[T, R](
     * generator.
     */
   private def inlineExplodes[Tup <: Tuple, R2](
-      explodes: Seq[RelaxedCompiledExpr[T, ?]],
+      tupleElements: Seq[ExprNode[?]],
+      explodeCount: Int,
       compiled: CompiledExpr[Tup, R2]
   ): Option[SelectBuilder[T, R2]] =
     select match {
       case current: CompiledExpr[T, R]
           if groupBy.isEmpty && having.isEmpty && orderBy.isEmpty && limit.isEmpty =>
-        val explodesTuple = ExprNode.makeTupleUnsafe[Tup](explodes.map(_.expr))
-        val inlined = simplifySelects(compiled.expr.replace(compiled.arg, explodesTuple))
-        Option.when(explodesAreTopLevelColumns(inlined, explodes.size))(
+        val tuple = ExprNode.makeTupleUnsafe[Tup](tupleElements)
+        val inlined = simplifySelects(compiled.expr.replace(compiled.arg, tuple))
+        Option.when(explodesAreTopLevelColumns(inlined, explodeCount))(
           copy(select = Generator(RelaxedCompiledExpr(current.arg, inlined)))
         )
       case _ => None
