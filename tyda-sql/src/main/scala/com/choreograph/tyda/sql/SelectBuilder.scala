@@ -71,8 +71,7 @@ private final case class SelectBuilder[T, R](
   def limit(n: Int): Result[SelectBuilder[R, R]] =
     /* We wrap the limit in a subquery to make sure the order of operations is preserved when it's combined
      * with other operations that can change the number of rows (e.g. filters, joins, aggregates). */
-    if selectHasGenerator then toSubquery.flatMap(_.limit(n))
-    else copy(limit = Some(n)).toSubquery
+    if selectHasGenerator then toSubquery.flatMap(_.limit(n)) else copy(limit = Some(n)).toSubquery
 
   def orderBy[K](key: CompiledExpr[R, K]): Result[SelectBuilder[?, R]] = {
     val ordered = select match {
@@ -91,7 +90,8 @@ private final case class SelectBuilder[T, R](
   }
 
   def select[R2](expr: CompiledExplodeExpr[R, R2]): Result[SelectBuilder[?, R2]] =
-    if distinct || selectHasGenerator || requiresSubqueryForSeqOps(expr) then toSubquery.flatMap(_.select(expr))
+    if distinct || selectHasGenerator || requiresSubqueryForSeqOps(expr) then
+      toSubquery.flatMap(_.select(expr))
     else selectExplode(expr)
 
   def aggregate[A](agg: CompiledAggregateExpr[R, A]): Result[SelectBuilder[?, Option[A]]] = {
@@ -324,9 +324,9 @@ private final case class SelectBuilder[T, R](
           if groupBy.isEmpty && having.isEmpty && orderBy.isEmpty && limit.isEmpty =>
         val tuple = ExprNode.makeTupleUnsafe[Tup](tupleElements)
         val inlined = simplifySelects(compiled.expr.replace(compiled.arg, tuple))
-        Option.when(explodesAreTopLevelColumns(inlined, explodeCount))(
-          copy(select = Generator(RelaxedCompiledExpr(current.arg, inlined)))
-        )
+        Option.when(explodesAreTopLevelColumns(inlined, explodeCount))(copy(select =
+          Generator(RelaxedCompiledExpr(current.arg, inlined))
+        ))
       case _ => None
     }
 
@@ -592,8 +592,7 @@ private object SelectBuilder {
     def isExplode(node: ExprNode[?]) = node.isInstanceOf[ExprNode.Explode[?]]
     val columns: Option[Seq[ExprNode[?]]] = expr match {
       case ExprNode.MakeProduct(values, _) => Some(values.toList.collect { case e: ExprNode[?] => e })
-      case _ =>
-        expr.codec match {
+      case _ => expr.codec match {
           case Codec.Product(_, _, _) | Codec.Sum(_, _) => None
           case _ => Some(Seq(expr))
         }
