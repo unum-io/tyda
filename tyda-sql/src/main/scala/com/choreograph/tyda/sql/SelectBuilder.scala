@@ -22,6 +22,7 @@ import com.choreograph.tyda.Field
 import com.choreograph.tyda.NonEmpty
 import com.choreograph.tyda.TreeApi.Continue
 import com.choreograph.tyda.TreeApi.Skip
+import com.choreograph.tyda.TreeApi.Stop
 import com.choreograph.tyda.functions.lit
 import com.choreograph.tyda.rewrite.IsNone
 import com.choreograph.tyda.rewrite.Nullable
@@ -590,6 +591,14 @@ private object SelectBuilder {
 
   private def explodesAreTopLevelColumns(expr: ExprNode[?], explodeCount: Int): Boolean = {
     def isExplode(node: ExprNode[?]) = node.isInstanceOf[ExprNode.Explode[?]]
+    def containsExplode(node: ExprNode[?]) =
+      node.fold(false)((_, n) =>
+        n match {
+          case ExprNode.ScalarSubquery(_) | ExprNode.ExistsSubquery(_) => Skip(false)
+          case ExprNode.Explode(_) => Stop(true)
+          case _ => Continue(false)
+        }
+      )
     val columns: Option[Seq[ExprNode[?]]] = expr match {
       case ExprNode.MakeProduct(values, _) => Some(values.toList.collect { case e: ExprNode[?] => e })
       case _ => expr.codec match {
@@ -598,7 +607,7 @@ private object SelectBuilder {
         }
     }
     columns.exists(cols =>
-      cols.count(isExplode) == explodeCount && cols.forall(col => isExplode(col) || !col.exists(isExplode))
+      cols.count(isExplode) == explodeCount && cols.forall(col => isExplode(col) || !containsExplode(col))
     )
   }
 
