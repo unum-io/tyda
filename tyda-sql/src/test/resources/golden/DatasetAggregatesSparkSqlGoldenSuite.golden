@@ -250,6 +250,54 @@ SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
+------ Test: max Option[Boolean]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Byte]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Date]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Decimal[Int,Int]]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Double]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Duration]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Float]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Int]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Long]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Short]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[String]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Timestamp]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
 ------ Test: max Short
 SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
@@ -299,6 +347,54 @@ SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Long
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Boolean]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Byte]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Date]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Decimal[Int,Int]]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Double]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Duration]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Float]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Int]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Long]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Short]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[String]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Timestamp]
 SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 

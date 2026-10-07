@@ -14,11 +14,15 @@ private object PrimitiveAggregate {
   final case class BoolAnd() extends PrimitiveAggregate[Boolean, Boolean]
   final case class BoolOr() extends PrimitiveAggregate[Boolean, Boolean]
   final case class Min[T: Codec](comparable: Comparable[T]) extends PrimitiveAggregate[T, T]
+  final case class MinOption[T: Codec](comparable: Comparable[T])
+      extends PrimitiveAggregate[Option[T], Option[T]]
   final case class MinBy[V: Codec, O: Codec](comparable: Comparable[O])
       extends PrimitiveAggregate[(V, O), V] {
     def inputCodec: Codec[(V, O)] = summon
   }
   final case class Max[T: Codec](comparable: Comparable[T]) extends PrimitiveAggregate[T, T]
+  final case class MaxOption[T: Codec](comparable: Comparable[T])
+      extends PrimitiveAggregate[Option[T], Option[T]]
   final case class MaxBy[V: Codec, O: Codec](comparable: Comparable[O])
       extends PrimitiveAggregate[(V, O), V] {
     def inputCodec: Codec[(V, O)] = summon

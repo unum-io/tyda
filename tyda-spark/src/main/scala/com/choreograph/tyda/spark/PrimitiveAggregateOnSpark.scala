@@ -36,7 +36,9 @@ private[spark] object PrimitiveAggregateOnSpark {
       case PrimitiveAggregate.BoolAnd() => bool_and(cf.row)
       case PrimitiveAggregate.BoolOr() => bool_or(cf.row)
       case PrimitiveAggregate.Max(_) => max(cf.row)
+      case PrimitiveAggregate.MaxOption(_) => max(cf.row)
       case PrimitiveAggregate.Min(_) => min(cf.row)
+      case PrimitiveAggregate.MinOption(_) => min(cf.row)
       case PrimitiveAggregate.MaxBy(_) =>
         assert(cf.columns.size == 2, "MaxBy requires exactly two columns but found: " + cf.columns.size)
         max_by(cf.column("_1"), cf.column("_2"))

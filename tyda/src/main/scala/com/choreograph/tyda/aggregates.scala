@@ -1,5 +1,6 @@
 package com.choreograph.tyda
 
+import scala.annotation.targetName
 import scala.annotation.unused
 
 import com.choreograph.tyda.Expr.AsExpr
@@ -12,8 +13,10 @@ import com.choreograph.tyda.PrimitiveAggregate.CountDistinct
 import com.choreograph.tyda.PrimitiveAggregate.CountSome
 import com.choreograph.tyda.PrimitiveAggregate.Max
 import com.choreograph.tyda.PrimitiveAggregate.MaxBy
+import com.choreograph.tyda.PrimitiveAggregate.MaxOption
 import com.choreograph.tyda.PrimitiveAggregate.Min
 import com.choreograph.tyda.PrimitiveAggregate.MinBy
+import com.choreograph.tyda.PrimitiveAggregate.MinOption
 import com.choreograph.tyda.PrimitiveAggregate.Reduce
 import com.choreograph.tyda.PrimitiveAggregate.SeqConcat
 import com.choreograph.tyda.PrimitiveAggregate.Sum
@@ -114,6 +117,17 @@ object aggregates {
   def min[T, R, I: AsExpr.Of[R]](f: Expr[T] => I)(using Comparable[R]): Expr[T] => AggregateExpr[R] =
     f.andThen(AsExpr(_)).andThen(min)
 
+  /** AggregateExpr returning the minimum of the values using the given
+    * [[Comparable]].
+    *
+    * Supports Option[T] for any T with a [[Comparable]] instance. If all values
+    * are None, the result is None. Otherwise the minimum of all non-None values
+    * is returned.
+    */
+  @targetName("minOption")
+  def min[T: Comparable](e: Expr[Option[T]]): AggregateExpr[Option[T]] =
+    aggregate(e, MinOption[T](summon)(using e.codec.element))
+
   /** AggregateExpr returning the maximum value using the given [[Comparable]].
     */
   def max[T: Comparable](e: Expr[T]): AggregateExpr[T] = aggregate(e, Max[T](summon)(using e.codec))
@@ -123,6 +137,17 @@ object aggregates {
     */
   def max[T, R, I: AsExpr.Of[R]](f: Expr[T] => I)(using Comparable[R]): Expr[T] => AggregateExpr[R] =
     f.andThen(AsExpr(_)).andThen(max)
+
+  /** AggregateExpr returning the maximum of the values using the given
+    * [[Comparable]].
+    *
+    * Supports Option[T] for any T with a [[Comparable]] instance. If all values
+    * are None, the result is None. Otherwise the maximum of all non-None values
+    * is returned.
+    */
+  @targetName("maxOption")
+  def max[T: Comparable](e: Expr[Option[T]]): AggregateExpr[Option[T]] =
+    aggregate(e, MaxOption[T](summon)(using e.codec.element))
 
   /** AggregateExpr returning minimum value of the first [[Expr]] when ordered
     * by the second [[Expr]].

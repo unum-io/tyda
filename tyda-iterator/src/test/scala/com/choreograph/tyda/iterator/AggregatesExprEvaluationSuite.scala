@@ -82,6 +82,10 @@ class AggregatesExprEvaluationSuite extends AnyFunSuite {
     val input = Arbitrary[Seq[T]].filter(_.nonEmpty)()
     test[T, T](input, input.min)(min)
     test[T, T](input, input.max)(max)
+    val nullableInput = Arbitrary[Seq[Option[T]]].filter(_.nonEmpty)()
+    val flattened = nullableInput.flatten
+    test[Option[T], Option[T]](nullableInput, Option.when(flattened.nonEmpty)(flattened.min))(min)
+    test[Option[T], Option[T]](nullableInput, Option.when(flattened.nonEmpty)(flattened.max))(max)
   }
 
   testMinMax[Boolean]
