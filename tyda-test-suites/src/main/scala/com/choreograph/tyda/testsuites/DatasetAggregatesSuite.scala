@@ -9,12 +9,17 @@ import org.scalactic.TolerantNumerics
 import com.choreograph.tyda.AggregateExpr
 import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Codec
+import com.choreograph.tyda.Comparable
+import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Decimal.MaxPrecision
+import com.choreograph.tyda.Duration
 import com.choreograph.tyda.Expr
 import com.choreograph.tyda.Expr.explode
 import com.choreograph.tyda.NumericLimits
+import com.choreograph.tyda.SimpleTypeName
 import com.choreograph.tyda.SumMagnet
+import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.aggregates.boolAnd
 import com.choreograph.tyda.aggregates.boolOr
 import com.choreograph.tyda.aggregates.collect
@@ -205,21 +210,6 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     ds => ds.groupByKey(_._1).aggregateValue(boolOr(_._2 > 0)).values
   )
   test[Pair, Pair]("min expr", ds => ds.groupByKey(_._1).aggregateValue(min(_._2)).pairs)
-  test[Boolean, Boolean]("min Boolean", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-  test[Byte, Byte]("min Byte", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-  test[Short, Short]("min Short", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-  test[Int, Int]("min Int", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-  test[String, String]("min String", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-  {
-    import FloatingPointEquality.given
-    test[Float, Float]("min Float", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-    test[Double, Double]("min Double", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-    test[Double, Double](
-      "max Double",
-      ds => ds.groupByKey(_ => lit(1)).aggregateValue(max).values,
-      Seq(1, Double.NaN)
-    )
-  }
   test[Pair, (TinyByte, Long)]("count group by", ds => ds.groupByKey(_._1).aggregateValue(count).pairs)
   test[(Int, Int), (Boolean, Int)](
     "groupBy transform",
@@ -233,18 +223,6 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     ds => ds.groupByKey(_._1).aggregate(v => (min = minBy(v._1, v._2), max = maxBy(v._1, v._2)))
   )
 
-  test[Byte, Long]("sum Byte", ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values)
-  test[Short, Long]("sum Short", ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values)
-  test[Int, Long]("sum Int", ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values)
-  {
-
-    /** Generate Long values that are small enough to not cause overflow when
-      * summed a resonable number of them.
-      */
-    given Arbitrary[Long] = Arbitrary.between(Int.MinValue, Int.MaxValue)
-    test[Long, Long]("sum Long", ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values)
-  }
-
   testFailure[Long, Option[Long]](
     "sum Long overflow should error",
     Seq(Long.MaxValue, 1L),
@@ -252,21 +230,6 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     "overflow"
   )
 
-  {
-    /* Summing floating point is sensitive to the order of the elements, since the order in not promised we
-     * only check using small values and using some tolerance for equality. */
-    import DatasetAggregatesSuite.{smallFloat, smallDouble}
-    given Equality[Double] = TolerantNumerics.tolerantDoubleEquality(1e-12)
-    test[Float, Double]("sum Float", ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values)
-    test[Double, Double]("sum Double", ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values)
-  }
-  test[Option[Int], Option[Long]](
-    "sum Option[Int]",
-    ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values,
-    Seq(None, None),
-    Seq(None, Some(1)),
-    Seq()
-  )
   {
     given [S <: Int](using
         Decimal.Valid[MaxPrecision, S],
@@ -396,4 +359,52 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     "select after where after aggregate",
     ds => ds.groupByKey(_.d).aggregateValue(min(_.a)).values.where(_ > 0).select(x => x.cast[Long] + 1L)
   )
+
+  def testSum[T: SimpleTypeName: Arbitrary: Codec: SumMagnet as magnet](using Equality[magnet.Result]): Unit =
+    test[(Int, T), magnet.Result](s"sum ${SimpleTypeName.name}", ds => ds.grouped.aggregateValue(sum).values)
+    test[(Int, Option[T]), Option[magnet.Result]](
+      s"sum Option[${SimpleTypeName.name}]",
+      ds => ds.grouped.aggregateValue(sum).values
+    )
+
+  testSum[Byte]
+  testSum[Short]
+  testSum[Int]
+  {
+    /* Summing floating point is sensitive to the order of the elements, since the order in not promised we
+     * only check using small values and using some tolerance for equality. */
+    import DatasetAggregatesSuite.{smallFloat, smallDouble}
+    given Equality[Double] = TolerantNumerics.tolerantDoubleEquality(1e-12)
+    testSum[Float]
+    testSum[Double]
+  }
+  {
+
+    /* Generate Long values that are small enough to not cause overflow when summed a resonable number of
+     * them. */
+    given Arbitrary[Long] = Arbitrary.between(Int.MinValue, Int.MaxValue)
+    testSum[Long]
+  }
+
+  def testMinMax[T: SimpleTypeName: Arbitrary: Codec: Comparable: Equality]: Unit = {
+    test[(Int, T), T](s"min ${SimpleTypeName.name}", ds => ds.grouped.aggregateValue(min).values)
+    test[(Int, T), T](s"max ${SimpleTypeName.name}", ds => ds.grouped.aggregateValue(max).values)
+  }
+
+  testMinMax[Boolean]
+  testMinMax[Byte]
+  testMinMax[Short]
+  testMinMax[Int]
+  testMinMax[Long]
+  {
+    import FloatingPointEquality.given
+    testMinMax[Float]
+    testMinMax[Double]
+  }
+  testMinMax[Decimal[37, 9]]
+  testMinMax[String]
+  testMinMax[Duration]
+  testMinMax[Date]
+  testMinMax[Timestamp]
+
 }
