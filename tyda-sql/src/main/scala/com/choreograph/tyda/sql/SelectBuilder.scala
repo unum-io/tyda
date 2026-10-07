@@ -285,12 +285,7 @@ private final case class SelectBuilder[T, R](
           }
           .zipWithIndex
         onlyExplodesCompiled match {
-          case None =>
-            val prefix = select match {
-              case current: CompiledExpr[T, R] => Some(current.expr)
-              case _ => None
-            }
-            prefix.flatMap(p => inlineExplodes(p +: selects.map(_._1.expr), selects.size, compiled)) match {
+          case None => inlineExplodes(select.expr +: selects.map(_._1.expr), selects.size, compiled) match {
               case Some(inlined) => Right(inlined)
               case None =>
                 val initial = (RelaxedCompiledExpr(select), "_1")
@@ -319,17 +314,23 @@ private final case class SelectBuilder[T, R](
       tupleElements: Seq[ExprNode[?]],
       explodeCount: Int,
       compiled: CompiledExpr[Tup, R2]
-  ): Option[SelectBuilder[T, R2]] =
-    select match {
-      case current: CompiledExpr[T, R]
-          if groupBy.isEmpty && having.isEmpty && orderBy.isEmpty && limit.isEmpty =>
+  ): Option[SelectBuilder[T, R2]] = {
+    /* Generators are evaluated after GROUP BY, so a grouped aggregate can be combined with explodes in the
+     * same SELECT. HAVING, ORDER BY and LIMIT would however be applied to the wrong rows. */
+    val canInline = having.isEmpty && orderBy.isEmpty && limit.isEmpty &&
+      (select match {
+        case _: CompiledExpr[T, R] => groupBy.isEmpty
+        case _: CompiledAggregateExpr[T, R] => groupBy.nonEmpty
+        case Generator(_) => false
+      })
+    Option
+      .when(canInline) {
         val tuple = ExprNode.makeTupleUnsafe[Tup](tupleElements)
-        val inlined = simplifySelects(compiled.expr.replace(compiled.arg, tuple))
-        Option.when(explodesAreTopLevelColumns(inlined, explodeCount))(copy(select =
-          Generator(RelaxedCompiledExpr(current.arg, inlined))
-        ))
-      case _ => None
-    }
+        simplifySelects(compiled.expr.replace(compiled.arg, tuple))
+      }
+      .filter(explodesAreTopLevelColumns(_, explodeCount))
+      .map(inlined => copy(select = Generator(RelaxedCompiledExpr(select.arg, inlined))))
+  }
 
   private def selectExplodeJoin[R2](explode: CompiledExplodeExpr[R, R2]): Result[SelectBuilder[?, R2]] =
     select match {
