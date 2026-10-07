@@ -15,7 +15,7 @@ import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Duration
 import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.TypeName
-import com.choreograph.tyda.testsuites.FloatingPointEquality.given
+import com.choreograph.tyda.testsuites.CodecToEquality.given
 
 object CodecToJsoniterSpec {
   final case class SimpleProduct(a: Int, b: Option[String]) derives Arbitrary, Codec

@@ -3,8 +3,6 @@ package com.choreograph.tyda.sql
 import scala.reflect.ClassTag
 import scala.util.matching.Regex
 
-import org.scalactic.Equality
-
 import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Dataset
@@ -23,7 +21,7 @@ trait ExprEvaluationSuiteAsGoldenSuite extends SqlGoldenTestSuite, ExprEvaluatio
       messages: (String | Regex)*
   ) = testSqlOrSkip(name) { Dataset.readTable[From, EmptyTuple]("t1").select(_._1).select(expr) }
 
-  override def testHasSameBehavior[From: ClassTag: Codec: Arbitrary, To: Equality](
+  override def testHasSameBehavior[From: ClassTag: Codec: Arbitrary, To](
       name: String,
       expr: Expr[From] => Expr[To],
       expected: From => To

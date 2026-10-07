@@ -10,7 +10,7 @@ import com.choreograph.tyda.Orderable
 import com.choreograph.tyda.SimpleTypeName
 import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.aggregates.count
-import com.choreograph.tyda.testsuites.FloatingPointEquality.given
+import com.choreograph.tyda.testsuites.CodecToEquality.given
 
 object DatasetOrderBySuite {
   private final case class Inner(x: Int, y: String) derives Arbitrary, Codec

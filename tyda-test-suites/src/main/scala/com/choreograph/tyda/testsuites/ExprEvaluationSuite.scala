@@ -14,6 +14,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
 import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Codec
+import com.choreograph.tyda.CompiledExpr
 import com.choreograph.tyda.Expr
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.functions.rand
@@ -42,7 +43,10 @@ abstract class ExprEvaluationSuite extends AnyFunSuite, ExprEvaluationSuiteBase 
   private def evaluator[From: Codec, To](expr: Expr[From] => Expr[To]): From => To =
     from => evaluate(expr, Seq(from)).head
 
-  def testHasSameBehavior[From: ClassTag: Codec: Arbitrary, To: Equality](
+  private def getEquiv[From: Codec, To](expr: Expr[From] => Expr[To]): Equiv[To] =
+    CodecToEquiv[To](using CompiledExpr(expr).codec)
+
+  def testHasSameBehavior[From: ClassTag: Codec: Arbitrary, To](
       name: String,
       expr: Expr[From] => Expr[To],
       expected: From => To
@@ -64,13 +68,14 @@ abstract class ExprEvaluationSuite extends AnyFunSuite, ExprEvaluationSuiteBase 
             alert(exceptionFailureMessage(expr, values, e) + "\n\nStarting to shrink failure...")
             val minimized = shrinkableValues.minimize(input => Try(evalInOrder(input)).isFailure)
             fail(exceptionFailureMessage(expr, minimized, e), e)
+      val equiv = getEquiv(expr)
       val expectedResults = values.map(expected)
       assert(results.size == values.size, "Evaluator returned different number of values than expected")
       assert(results.size == expectedResults.size)
       shrinkableValues
         .zip(results.zip(expectedResults))
         .foreach { case (input, (result, expectedValue)) =>
-          if result !== expectedValue then {
+          if !equiv.equiv(result, expectedValue) then {
             alert(
               comparisonFailureMessage(expr, input.value, result, expectedValue) +
                 "\n\nStarting to shrink failure..."
