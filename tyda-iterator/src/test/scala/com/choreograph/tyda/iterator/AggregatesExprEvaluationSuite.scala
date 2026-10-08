@@ -78,21 +78,23 @@ class AggregatesExprEvaluationSuite extends AnyFunSuite {
   test((0 to 10).map(_.toDouble), (0.0, 10.0))(i => tuple(min(i), max(i)))
   test((0 to 10).map(_.toDouble), (0.0, 10.0, 55.0))(i => tuple(min(i), max(i), sum(i)))
 
-  def testMinMaxNumeric[T: Codec: Arbitrary: Numeric: Comparable: Equality]: Unit = {
+  def testMinMax[T: Codec: Arbitrary: Ordering: Comparable: Equality]: Unit = {
     val input = Arbitrary[Seq[T]].filter(_.nonEmpty)()
     test[T, T](input, input.min)(min)
     test[T, T](input, input.max)(max)
   }
 
-  testMinMaxNumeric[Int]
-  testMinMaxNumeric[Long]
-  testMinMaxNumeric[Short]
-  testMinMaxNumeric[Byte]
-
+  testMinMax[Boolean]
+  testMinMax[Byte]
+  testMinMax[Short]
+  testMinMax[Int]
+  testMinMax[Long]
   {
     import com.choreograph.tyda.testsuites.FloatingPointEquality.given
-
-    testMinMaxNumeric[Double]
-    testMinMaxNumeric[Float]
+    testMinMax[Double]
+    testMinMax[Float]
   }
+  testMinMax[Decimal[37, 9]]
+  testMinMax[String]
+
 }
