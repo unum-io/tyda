@@ -215,51 +215,51 @@ SELECT (NOT (table1._1 <= CAST(2 AS INT))) AS _1, min(table1._2) AS _2 FROM tabl
 ------ end
 
 ------ Test: max Boolean
-SELECT max(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: max Byte
-SELECT max(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: max Date
-SELECT max(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: max Decimal[Int,Int]
-SELECT max(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: max Double
-SELECT max(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: max Duration
-SELECT max(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: max Float
-SELECT max(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: max Int
-SELECT max(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: max Long
-SELECT max(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: max Short
-SELECT max(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: max String
-SELECT max(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: max Timestamp
-SELECT max(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: maxBy
@@ -267,51 +267,51 @@ SELECT table1._1 AS _1, max_by(struct(table1._1 AS _1, table1._2 AS _2)._1, stru
 ------ end
 
 ------ Test: min Boolean
-SELECT min(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Byte
-SELECT min(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Date
-SELECT min(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Decimal[Int,Int]
-SELECT min(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Double
-SELECT coalesce(min(CASE WHEN (NOT is_nan(table1._2)) THEN table1._2 END), CAST('NaN' AS FLOAT64)) AS value FROM table1 GROUP BY table1._1
+SELECT coalesce(min(CASE WHEN (NOT is_nan(table1.value)) THEN table1.value END), CAST('NaN' AS FLOAT64)) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Duration
-SELECT min(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Float
-SELECT coalesce(min(CASE WHEN (NOT is_nan(table1._2)) THEN table1._2 END), CAST('NaN' AS FLOAT64)) AS value FROM table1 GROUP BY table1._1
+SELECT coalesce(min(CASE WHEN (NOT is_nan(table1.value)) THEN table1.value END), CAST('NaN' AS FLOAT64)) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Int
-SELECT min(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Long
-SELECT min(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Short
-SELECT min(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min String
-SELECT min(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Timestamp
-SELECT min(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min expr
@@ -343,7 +343,7 @@ SELECT (CAST(min(table1.a) AS BIGINT) + CAST(1 AS BIGINT)) AS value FROM table1 
 ------ end
 
 ------ Test: sum Byte
-SELECT sum(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Decimal overflow should error
@@ -359,19 +359,19 @@ SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Double
-SELECT sum(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Float
-SELECT sum(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Int
-SELECT sum(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Long
-SELECT sum(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Long overflow should error
@@ -379,31 +379,31 @@ SELECT CASE WHEN (count(1) <> 0) THEN sum(table1.value) END AS value FROM table1
 ------ end
 
 ------ Test: sum Option[Byte]
-SELECT sum(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Option[Double]
-SELECT sum(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Option[Float]
-SELECT sum(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Option[Int]
-SELECT sum(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Option[Long]
-SELECT sum(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Option[Short]
-SELECT sum(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: sum Short
-SELECT sum(table1._2) AS value FROM table1 GROUP BY table1._1
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: support group by with enum

@@ -361,10 +361,13 @@ trait DatasetAggregatesSuite extends DatasetSuite {
   )
 
   def testSum[T: SimpleTypeName: Arbitrary: Codec: SumMagnet as magnet](using Equality[magnet.Result]): Unit =
-    test[(Int, T), magnet.Result](s"sum ${SimpleTypeName.name}", ds => ds.grouped.aggregateValue(sum).values)
-    test[(Int, Option[T]), Option[magnet.Result]](
+    test[T, magnet.Result](
+      s"sum ${SimpleTypeName.name}",
+      ds => ds.groupByKey(_ => 1).aggregateValue(sum).values
+    )
+    test[Option[T], Option[magnet.Result]](
       s"sum Option[${SimpleTypeName.name}]",
-      ds => ds.grouped.aggregateValue(sum).values
+      ds => ds.groupByKey(_ => 1).aggregateValue(sum).values
     )
 
   testSum[Byte]
@@ -387,8 +390,8 @@ trait DatasetAggregatesSuite extends DatasetSuite {
   }
 
   def testMinMax[T: SimpleTypeName: Arbitrary: Codec: Comparable: Equality]: Unit = {
-    test[(Int, T), T](s"min ${SimpleTypeName.name}", ds => ds.grouped.aggregateValue(min).values)
-    test[(Int, T), T](s"max ${SimpleTypeName.name}", ds => ds.grouped.aggregateValue(max).values)
+    test[T, T](s"min ${SimpleTypeName.name}", ds => ds.groupByKey(_ => 1).aggregateValue(min).values)
+    test[T, T](s"max ${SimpleTypeName.name}", ds => ds.groupByKey(_ => 1).aggregateValue(max).values)
   }
 
   testMinMax[Boolean]
