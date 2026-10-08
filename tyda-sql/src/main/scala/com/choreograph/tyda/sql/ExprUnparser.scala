@@ -832,7 +832,7 @@ private def isFloatingPoint(codec: Codec[?]): Boolean =
     case _ => false
   }
 
-private def isFloatingPointOrOption(codec: Codec[?]): Boolean =
+private def isFloatingPointOrOptionFloatingPoint(codec: Codec[?]): Boolean =
   codec match {
     case Codec.Option(element) => isFloatingPoint(element)
     case codec => isFloatingPoint(codec)
@@ -918,7 +918,7 @@ private def primitiveAggregate[T: Codec](
         case SqlDialect.FloatingAggregate.NaNIsSmallestAndLargest =>
           Right(coalesce(minExcludingNaN(arg, dialect), literalToSqlExpr(Float.NaN, Codec.Float, dialect)))
       }
-    case PrimitiveAggregate.MinOption(_) if isFloatingPointOrOption(Codec[T]) =>
+    case PrimitiveAggregate.MinOption(_) if isFloatingPointOrOptionFloatingPoint(Codec[T]) =>
       dialect.floatingAggregate match {
         case SqlDialect.FloatingAggregate.NaNIsLargest => simple("min")
         case SqlDialect.FloatingAggregate.NaNIsSmallestAndLargest =>
