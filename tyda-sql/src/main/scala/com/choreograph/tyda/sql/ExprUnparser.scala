@@ -922,16 +922,11 @@ private def primitiveAggregate[T: Codec](
       dialect.floatingAggregate match {
         case SqlDialect.FloatingAggregate.NaNIsLargest => simple("min")
         case SqlDialect.FloatingAggregate.NaNIsSmallestAndLargest =>
-          val minWithoutNan = minExcludingNaN(arg, dialect)
-          val hasNonNullValue = SqlExpr.BinaryOp(
-            ">",
-            SqlExpr.Function("count", Seq(arg)),
-            literalToSqlExpr(0, Codec.Int, dialect)
-          )
-          val allNonNullAreNaN = SqlExpr.BinaryOp("AND", SqlExpr.isNull(minWithoutNan), hasNonNullValue)
+          val isNan = SqlExpr.Function(dialect.isNanFunction, Seq(arg))
+          val allNonNullAreNaN = SqlExpr.Function(dialect.boolAndFunction, Seq(isNan))
           Right(SqlExpr.Case(
             Seq((condition = allNonNullAreNaN, result = literalToSqlExpr(Float.NaN, Codec.Float, dialect))),
-            elseExpr = Some(minWithoutNan)
+            elseExpr = Some(minExcludingNaN(arg, dialect))
           ))
       }
     case PrimitiveAggregate.Max(_) => simple("max")

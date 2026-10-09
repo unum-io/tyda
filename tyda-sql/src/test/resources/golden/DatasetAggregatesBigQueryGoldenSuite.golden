@@ -367,7 +367,7 @@ SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Option[Double]
-SELECT CASE WHEN ((min(CASE WHEN (NOT is_nan(table1.value)) THEN table1.value END) IS NULL) AND (count(table1.value) > CAST(0 AS INT))) THEN CAST('NaN' AS FLOAT64) ELSE min(CASE WHEN (NOT is_nan(table1.value)) THEN table1.value END) END AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT CASE WHEN logical_and(is_nan(table1.value)) THEN CAST('NaN' AS FLOAT64) ELSE min(CASE WHEN (NOT is_nan(table1.value)) THEN table1.value END) END AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Option[Duration]
@@ -375,7 +375,7 @@ SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Option[Float]
-SELECT CASE WHEN ((min(CASE WHEN (NOT is_nan(table1.value)) THEN table1.value END) IS NULL) AND (count(table1.value) > CAST(0 AS INT))) THEN CAST('NaN' AS FLOAT64) ELSE min(CASE WHEN (NOT is_nan(table1.value)) THEN table1.value END) END AS value FROM table1 GROUP BY CAST(NULL AS INT)
+SELECT CASE WHEN logical_and(is_nan(table1.value)) THEN CAST('NaN' AS FLOAT64) ELSE min(CASE WHEN (NOT is_nan(table1.value)) THEN table1.value END) END AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min Option[Int]
