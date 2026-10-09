@@ -368,7 +368,10 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     ds => ds.groupByKey(_.d).aggregateValue(min(_.a)).values.where(_ > 0).select(x => x.cast[Long] + 1L)
   )
 
-  def testSum[T: SimpleTypeName: Arbitrary: Codec: SumMagnet as magnet](using Equality[magnet.Result]): Unit =
+  def testSum[T: SimpleTypeName: Arbitrary: Codec: SumMagnet as magnet](using
+      Equality[magnet.Result],
+      Equality[Option[magnet.Result]]
+  ): Unit =
     test[T, magnet.Result](
       s"sum ${SimpleTypeName.name}",
       ds => ds.groupByKey(_ => 1).aggregateValue(sum).values
@@ -386,6 +389,15 @@ trait DatasetAggregatesSuite extends DatasetSuite {
      * only check using small values and using some tolerance for equality. */
     import DatasetAggregatesSuite.{smallFloat, smallDouble}
     given Equality[Double] = TolerantNumerics.tolerantDoubleEquality(1e-12)
+    given Equality[Option[Double]] =
+      new Equality[Option[Double]] {
+        override def areEqual(a: Option[Double], b: Any): Boolean =
+          b match {
+            case None => a.isEmpty
+            case Some(b: Double) => a.exists(summon[Equality[Double]].areEqual(_, b))
+            case _ => false
+          }
+      }
     testSum[Float]
     testSum[Double]
   }
