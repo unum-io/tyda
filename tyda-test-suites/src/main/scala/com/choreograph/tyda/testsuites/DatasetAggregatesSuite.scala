@@ -388,13 +388,13 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     /* Summing floating point is sensitive to the order of the elements, since the order in not promised we
      * only check using small values and using some tolerance for equality. */
     import DatasetAggregatesSuite.{smallFloat, smallDouble}
-    given Equality[Double] = TolerantNumerics.tolerantDoubleEquality(1e-12)
+given doubleEq: Equality[Double] = TolerantNumerics.tolerantDoubleEquality(1e-12)
     given Equality[Option[Double]] =
       new Equality[Option[Double]] {
         override def areEqual(a: Option[Double], b: Any): Boolean =
           b match {
             case None => a.isEmpty
-            case Some(b: Double) => a.exists(summon[Equality[Double]].areEqual(_, b))
+            case Some(b: Double) => a.exists(doubleEq.areEqual(_, b))
             case _ => false
           }
       }
