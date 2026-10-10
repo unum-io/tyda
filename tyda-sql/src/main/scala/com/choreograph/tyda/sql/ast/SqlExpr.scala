@@ -19,6 +19,8 @@ private[sql] enum SqlExpr {
   case Cast(variant: String, expr: SqlExpr, to: DdlType)
   case Subquery(query: Query)
   case Exists(query: Query)
+  case InSubquery(expr: SqlExpr, subquery: SqlExpr)
+  case In(expr: SqlExpr, values: Seq[SqlExpr])
   case LambdaFunction(args: Seq[SqlExpr], body: SqlExpr)
 }
 
