@@ -1271,7 +1271,7 @@ SELECT coalesce(CAST(NULL AS INT), CAST(raise_error('oh no!') AS INT)) AS value 
 ------ end
 
 ------ Test: raise error is lazy in &&
-SELECT (FALSE AND CAST(raise_error('error') AS BOOLEAN)) AS value FROM t1
+SELECT FALSE AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in coalesce
@@ -1287,19 +1287,19 @@ SELECT coalesce(t1.value, CAST(raise_error('error') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in ternary ifFalse
-SELECT CASE WHEN TRUE THEN t1.value ELSE CAST(raise_error('error') AS INT) END AS value FROM t1
+SELECT t1.value AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in ternary ifTrue
-SELECT CASE WHEN FALSE THEN CAST(raise_error('error') AS INT) ELSE t1.value END AS value FROM t1
+SELECT t1.value AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in when
-SELECT CASE WHEN FALSE THEN CAST(raise_error('error') AS INT) END AS value FROM t1
+SELECT CAST(NULL AS INT) AS value FROM t1
 ------ end
 
 ------ Test: raise error is lazy in ||
-SELECT (TRUE OR CAST(raise_error('error') AS BOOLEAN)) AS value FROM t1
+SELECT TRUE AS value FROM t1
 ------ end
 
 ------ Test: raise error raises in coalesce after None
@@ -1331,11 +1331,11 @@ SELECT t1.i AS value FROM t1
 ------ end
 
 ------ Test: select from literal product
-SELECT (t1.value = TRUE) AS value FROM t1
+SELECT t1.value AS value FROM t1
 ------ end
 
 ------ Test: seq contains
-SELECT aggregate(transform(t1.value, c0 -> (c0 = TRUE)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT aggregate(transform(t1.value, c0 -> c0), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct

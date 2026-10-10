@@ -10,7 +10,7 @@ class IsNoneSpec extends AnyFunSuite {
   test("IsNone should match Expr[T].isEmpty") {
     val rNode = ExprNode.Reference[Option[Int]]()
     assert(Expr.unlift(Expr.lift(rNode).isEmpty) match {
-      case IsNone(`rNode`) => true
+      case IsNone(`rNode`, _) => true
       case _ => false
     })
   }

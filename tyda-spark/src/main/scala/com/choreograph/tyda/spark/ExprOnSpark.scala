@@ -181,7 +181,7 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
       case ExprNode.And(lhs, rhs) => convert(lhs) && convert(rhs)
       case ExprNode.Or(lhs, rhs) => convert(lhs) || convert(rhs)
       case ExprNode.Not(e) => !convert(e)
-      case IsNone(e) => convert(e).isNull
+      case IsNone(e, _) => convert(e).isNull
       /* We do not want Option[?] to get the sql null semantics and have to use the null safe comparision. But
        * we do not use it for all types bacause of how spark handles null safe equals in joins and it would
        * potentially lead to extra shuffles. */
