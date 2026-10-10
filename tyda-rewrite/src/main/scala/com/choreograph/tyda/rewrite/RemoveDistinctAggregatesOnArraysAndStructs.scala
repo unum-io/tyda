@@ -41,7 +41,7 @@ object RemoveDistinctAggregatesOnArraysAndStructs extends DatasetRule {
         key: CompiledExpr[A, K]
     ): AggregatePart[K, (value: R)] = {
       val distinctInput: Dataset[(K, T)] =
-        Dataset.Distinct(Dataset.Select1(input, key.combine(CompiledExpr(aggRef, agg.arg))))
+        Dataset.Distinct(Dataset.Select(input, key.combine(CompiledExpr(aggRef, agg.arg))))
       given Codec[K] = key.codec
       given Codec[T] = agg.arg.codec
       given Codec[R] = agg.codec
@@ -99,7 +99,7 @@ object RemoveDistinctAggregatesOnArraysAndStructs extends DatasetRule {
         }
       val key = CompiledExpr[(K, V), K](_._1)(using ds.codec)
       val value = CompiledExpr(resultRef, replaced)
-      Dataset.Select1(ds, key.combine(value))
+      Dataset.Select(ds, key.combine(value))
     }
   }
 
@@ -168,7 +168,7 @@ object RemoveDistinctAggregatesOnArraysAndStructs extends DatasetRule {
         val ref = ExprNode.Reference()(using agg.arg.codec)
         CompiledExpr(ref, arg.replace(agg.arg, ref))
       }
-      Dataset.Distinct(Dataset.Select1(input, extractArg))
+      Dataset.Distinct(Dataset.Select(input, extractArg))
     }
 
     if nbrAggregates == 1 then {

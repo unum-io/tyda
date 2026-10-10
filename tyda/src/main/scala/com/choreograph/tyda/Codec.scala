@@ -430,6 +430,9 @@ object Codec {
     else if arity > 0 then ClassTag(Class.forName(s"scala.Tuple$arity"))
     else ClassTag(EmptyTuple.getClass)
 
+  private[tyda] def cons[T, Tup <: Tuple](t: Codec[T], tup: Codec[Tup]): Codec[T *: Tup] =
+    tuple(tupleInstances(t *: tup.elements))
+
   /** Create a codec for a tuple given codecs for each element.
     */
   private[tyda] def tuple[T <: Tuple](instances: K0.ProductInstances[Codec, T]): Codec.Product[T] = {

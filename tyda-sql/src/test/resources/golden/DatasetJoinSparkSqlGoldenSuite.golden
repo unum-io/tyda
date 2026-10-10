@@ -27,7 +27,7 @@ SELECT table1.value AS _1, table2.value AS _2 FROM table1 JOIN table2 ON (table1
 ------ end
 
 ------ Test: join and then explode
-SELECT explode(table1.d) AS _1, explode(table2.d) AS _2 FROM table1 JOIN table2 ON (table1.a = table2.a)
+SELECT t0._1 AS _1, t0._2 AS _2 FROM (SELECT explode(table1.d) AS _1, explode(table2.d) AS _2 FROM table1 JOIN table2 ON (table1.a = table2.a)) AS t0
 ------ end
 
 ------ Test: join complex condition
