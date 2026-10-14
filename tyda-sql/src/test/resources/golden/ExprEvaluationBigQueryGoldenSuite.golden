@@ -254,6 +254,10 @@ SELECT CASE WHEN (t1.c IS NOT NULL) THEN t1.c.i END AS value FROM t1
 SELECT (t1._1 AND t1._2) AS value FROM t1
 ------ end
 
+------ Test: boolean in expr of sequence
+SELECT ((SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = t1._2) FROM unnest(t1._1) AS c0))) AS c1) = t1._3) AS value FROM t1
+------ end
+
 ------ Test: boolean not and equals
 SELECT ((NOT t1._1) = (NOT t1._2)) AS value FROM t1
 ------ end
@@ -688,6 +692,10 @@ SELECT FALSE AS value FROM t1
 
 ------ Test: distinct on Seq[Int]
 SELECT array((SELECT DISTINCT c0 FROM unnest(t1.value) AS c0)) AS value FROM t1
+------ end
+
+------ Test: empty sequence contains boolean
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = t1.value) FROM unnest(CAST([] AS ARRAY<BOOLEAN>)) AS c0))) AS c1) AS value FROM t1
 ------ end
 
 ------ Test: endsWith string
@@ -1310,12 +1318,28 @@ SELECT coalesce(CAST(NULL AS STRING), CAST(error('My error message') AS STRING))
 SELECT coalesce(CAST(error('My error message') AS STRING), t1.value) AS value FROM t1
 ------ end
 
+------ Test: raiseError is lazy for empty sequence contains
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = CAST(error('My error message') AS INT)) FROM unnest(CAST([] AS ARRAY<INT>)) AS c0))) AS c1) AS value FROM t1
+------ end
+
 ------ Test: raiseError is strongly typed
 SELECT array((SELECT (c0 + CAST(1 AS INT)) FROM unnest(CAST(error('My error message') AS ARRAY<INT>)) AS c0)) AS value FROM t1
 ------ end
 
 ------ Test: raiseError throws static error message
 SELECT CAST(error('My error message') AS INT) AS value FROM t1
+------ end
+
+------ Test: rand is also rand with exists
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT ((NOT is_nan(RAND())) AND (is_nan(CAST(0.5 AS FLOAT64)) OR (RAND() < CAST(0.5 AS FLOAT64)))) FROM unnest(generate_array(CAST(0 AS INT), (CAST(100 AS INT) - CAST(1 AS INT)))) AS c0))) AS c1) AS value FROM t1
+------ end
+
+------ Test: rand is also rand with exists equals
+SELECT (SELECT coalesce(logical_or(c2), FALSE) FROM unnest(array((SELECT (c1 = ((NOT is_nan(RAND())) AND (is_nan(CAST(0.5 AS FLOAT64)) OR (RAND() < CAST(0.5 AS FLOAT64))))) FROM unnest(array((SELECT TRUE FROM unnest(generate_array(CAST(0 AS INT), (CAST(100 AS INT) - CAST(1 AS INT)))) AS c0))) AS c1))) AS c2) AS value FROM t1
+------ end
+
+------ Test: rand is rand
+SELECT (NOT (array_length(array((SELECT DISTINCT c1 FROM unnest(array((SELECT RAND() FROM unnest(generate_array(CAST(0 AS INT), (CAST(100 AS INT) - CAST(1 AS INT)))) AS c0))) AS c1))) <= CAST(1 AS INT))) AS value FROM t1
 ------ end
 
 ------ Test: remove

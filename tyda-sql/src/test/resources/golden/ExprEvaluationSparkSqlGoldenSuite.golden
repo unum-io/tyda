@@ -254,6 +254,10 @@ SELECT CASE WHEN (t1.c IS NOT NULL) THEN t1.c.i END AS value FROM t1
 SELECT (t1._1 AND t1._2) AS value FROM t1
 ------ end
 
+------ Test: boolean in expr of sequence
+SELECT (aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) = t1._3) AS value FROM t1
+------ end
+
 ------ Test: boolean not and equals
 SELECT ((NOT t1._1) = (NOT t1._2)) AS value FROM t1
 ------ end
@@ -688,6 +692,10 @@ SELECT FALSE AS value FROM t1
 
 ------ Test: distinct on Seq[Int]
 SELECT array_distinct(t1.value) AS value FROM t1
+------ end
+
+------ Test: empty sequence contains boolean
+SELECT aggregate(transform(CAST(array() AS ARRAY<BOOLEAN>), c0 -> (c0 = t1.value)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
 ------ Test: endsWith string
@@ -1310,12 +1318,28 @@ SELECT coalesce(CAST(NULL AS STRING), CAST(raise_error('My error message') AS ST
 SELECT coalesce(CAST(raise_error('My error message') AS STRING), t1.value) AS value FROM t1
 ------ end
 
+------ Test: raiseError is lazy for empty sequence contains
+SELECT aggregate(transform(CAST(array() AS ARRAY<INT>), c0 -> (c0 = CAST(raise_error('My error message') AS INT))), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
 ------ Test: raiseError is strongly typed
 SELECT transform(CAST(raise_error('My error message') AS ARRAY<INT>), c0 -> (c0 + CAST(1 AS INT))) AS value FROM t1
 ------ end
 
 ------ Test: raiseError throws static error message
 SELECT CAST(raise_error('My error message') AS INT) AS value FROM t1
+------ end
+
+------ Test: rand is also rand with exists
+SELECT aggregate(transform(CASE WHEN (CAST(100 AS INT) > CAST(0 AS INT)) THEN sequence(CAST(0 AS INT), (CAST(100 AS INT) - CAST(1 AS INT))) ELSE CAST(array() AS ARRAY<INT>) END, c0 -> (rand() < CAST(0.5 AS DOUBLE))), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
+------ Test: rand is also rand with exists equals
+SELECT aggregate(transform(transform(CASE WHEN (CAST(100 AS INT) > CAST(0 AS INT)) THEN sequence(CAST(0 AS INT), (CAST(100 AS INT) - CAST(1 AS INT))) ELSE CAST(array() AS ARRAY<INT>) END, c0 -> TRUE), c1 -> (c1 = (rand() < CAST(0.5 AS DOUBLE)))), FALSE, (c2, c3) -> (c2 OR c3), c4 -> c4) AS value FROM t1
+------ end
+
+------ Test: rand is rand
+SELECT (NOT (size(array_distinct(transform(CASE WHEN (CAST(100 AS INT) > CAST(0 AS INT)) THEN sequence(CAST(0 AS INT), (CAST(100 AS INT) - CAST(1 AS INT))) ELSE CAST(array() AS ARRAY<INT>) END, c0 -> rand()))) <= CAST(1 AS INT))) AS value FROM t1
 ------ end
 
 ------ Test: remove

@@ -47,6 +47,7 @@ import com.choreograph.tyda.functions.microsToTimestamp
 import com.choreograph.tyda.functions.namedTuple
 import com.choreograph.tyda.functions.none
 import com.choreograph.tyda.functions.raiseError
+import com.choreograph.tyda.functions.rand
 import com.choreograph.tyda.functions.range
 import com.choreograph.tyda.functions.seq
 import com.choreograph.tyda.functions.some
@@ -446,6 +447,16 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   )
   testHasSameBehavior[Seq[Int], Boolean]("seq exists", _.exists(_ < 0), _.exists(_ < 0))
   testHasSameBehavior[Seq[Boolean], Boolean]("seq contains", _.contains(true), _.contains(elem = true))
+  testHasSameBehavior[(Seq[Boolean], Boolean, Boolean), Boolean](
+    "boolean in expr of sequence",
+    { case Expr(a, b, c) => a.contains(b) == c },
+    _.contains(_) == _
+  )
+  testHasSameBehavior[Boolean, Boolean](
+    "empty sequence contains boolean",
+    seq[Boolean]().contains(_),
+    _ => false
+  )
   testHasSameBehavior[Seq[Int], Boolean]("seq forall", _.forall(_ < 0), _.forall(_ < 0))
   testHasSameBehavior[Seq[Seq[Int]], Seq[Boolean]](
     "seq forall nested",
@@ -740,6 +751,11 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     "(out of bounds)|(index)|(Invalid)|(100)".r
   )
 
+  testHasSameBehavior[String, Boolean](
+    "raiseError is lazy for empty sequence contains",
+    _ => seq[Int]().contains(raiseError[Int](errorMessage)),
+    _ => false
+  )
   testHasSameBehavior[Int, Boolean](
     "raise error is lazy in &&",
     _ => lit(false) && raiseError[Boolean]("error"),
@@ -1472,4 +1488,19 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     )
   }
   testHasSameBehavior[Seq[Int], String]("toJson Seq[Int]", toJson, _.mkString("[", ",", "]"))
+  testHasSameBehavior[EmptyTuple, Boolean](
+    "rand is rand",
+    _ => range(0, 100).map(_ => rand()).distinct.size > 1,
+    _ => true
+  )
+  testHasSameBehavior[EmptyTuple, Boolean](
+    "rand is also rand with exists",
+    _ => range(0, 100).exists(_ => rand() < 0.5),
+    _ => true
+  )
+  testHasSameBehavior[EmptyTuple, Boolean](
+    "rand is also rand with exists equals",
+    _ => range(0, 100).map(_ => true).exists(_ == rand() < 0.5),
+    _ => true
+  )
 }
