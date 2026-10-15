@@ -1322,6 +1322,10 @@ SELECT coalesce(CAST(raise_error('My error message') AS STRING), t1.value) AS va
 SELECT aggregate(transform(CAST(array() AS ARRAY<INT>), c0 -> (c0 = CAST(raise_error('My error message') AS INT))), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
 ------ end
 
+------ Test: raiseError is lazy for empty sequence expr contains
+SELECT aggregate(transform(t1.value, c0 -> (c0 = CAST(raise_error('My error message') AS INT))), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+------ end
+
 ------ Test: raiseError is strongly typed
 SELECT transform(CAST(raise_error('My error message') AS ARRAY<INT>), c0 -> (c0 + CAST(1 AS INT))) AS value FROM t1
 ------ end

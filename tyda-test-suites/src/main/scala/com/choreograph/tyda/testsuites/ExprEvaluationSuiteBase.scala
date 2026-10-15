@@ -756,6 +756,14 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     _ => seq[Int]().contains(raiseError[Int](errorMessage)),
     _ => false
   )
+  {
+    given Arbitrary[Seq[Int]] = Arbitrary.seqN(0)
+    testHasSameBehavior[Seq[Int], Boolean](
+      "raiseError is lazy for empty sequence expr contains",
+      _.contains(raiseError[Int](errorMessage)),
+      _ => false
+    )
+  }
   testHasSameBehavior[Int, Boolean](
     "raise error is lazy in &&",
     _ => lit(false) && raiseError[Boolean]("error"),

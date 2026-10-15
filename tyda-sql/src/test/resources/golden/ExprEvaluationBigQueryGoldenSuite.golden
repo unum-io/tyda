@@ -1322,6 +1322,10 @@ SELECT coalesce(CAST(error('My error message') AS STRING), t1.value) AS value FR
 SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = CAST(error('My error message') AS INT)) FROM unnest(CAST([] AS ARRAY<INT>)) AS c0))) AS c1) AS value FROM t1
 ------ end
 
+------ Test: raiseError is lazy for empty sequence expr contains
+SELECT (SELECT coalesce(logical_or(c1), FALSE) FROM unnest(array((SELECT (c0 = CAST(error('My error message') AS INT)) FROM unnest(t1.value) AS c0))) AS c1) AS value FROM t1
+------ end
+
 ------ Test: raiseError is strongly typed
 SELECT array((SELECT (c0 + CAST(1 AS INT)) FROM unnest(CAST(error('My error message') AS ARRAY<INT>)) AS c0)) AS value FROM t1
 ------ end
