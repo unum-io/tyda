@@ -13,8 +13,7 @@ import com.choreograph.tyda.Duration
 import com.choreograph.tyda.Errors
 import com.choreograph.tyda.ExplodeExpr
 import com.choreograph.tyda.ExprNode
-import com.choreograph.tyda.ExprNode.KnownNotNull
-import com.choreograph.tyda.ExprNode.Or
+import com.choreograph.tyda.ExprNode.WhenThen
 import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.NonEmpty
 import com.choreograph.tyda.PrimitiveAggregate
@@ -70,6 +69,35 @@ private def simplifySelects[T](expr: ExprNode[T]): ExprNode[T] =
       n match {
         case SimplifySelects(simplified) => Continue(simplified)
         case ToFromRepr(value) => Continue(value)
+        case ExprNode.Not(ExprNode.Literal(p, codec)) => Continue(ExprNode.Literal(!p, codec))
+        case ExprNode.And(ExprNode.Literal(p, codec), e) =>
+          Continue(if p then e else ExprNode.Literal(false, codec))
+        case ExprNode.And(e, ExprNode.Literal(p, codec)) =>
+          Continue(if p then e else ExprNode.Literal(false, codec))
+        case ExprNode.Or(ExprNode.Literal(p, codec), e) =>
+          Continue(if p then ExprNode.Literal(true, codec) else e)
+        case ExprNode.Or(e, ExprNode.Literal(p, codec)) =>
+          Continue(if p then ExprNode.Literal(true, codec) else e)
+        case ExprNode.Equals(e: ExprNode[Boolean], ExprNode.Literal(p: Boolean, _)) =>
+          Continue(if p then e else ExprNode.Not(e))
+        case ExprNode.Equals(ExprNode.Literal(p: Boolean, _), e: ExprNode[Boolean]) =>
+          Continue(if p then e else ExprNode.Not(e))
+        case IsNone(ExprNode.None(_), witness) =>
+          Continue(ExprNode.Literal(witness(true), witness.substituteCo(Codec.Boolean)))
+        case IsNone(ExprNode.MakeSome(_), witness) =>
+          Continue(ExprNode.Literal(witness(false), witness.substituteCo(Codec.Boolean)))
+        case ExprNode.Cases(WhenThen(ExprNode.Literal(p, _), whenTrue), Seq(), whenFalse) =>
+          Continue(if p then whenTrue else whenFalse)
+        case ExprNode.Cases(WhenThen(p, whenTrue), Seq(), whenFalse) if p == whenTrue =>
+          // TYPE SAFETY: Trust me
+          val tmp = whenFalse.asInstanceOf[ExprNode[Boolean]]
+          // TYPE SAFETY: Trust me
+          Continue(ExprNode.Or(p, tmp).asInstanceOf[ExprNode[t]])
+        case ExprNode.Cases(WhenThen(p, whenTrue), Seq(), whenFalse) if p == whenFalse =>
+          // TYPE SAFETY: Trust me
+          val tmp = whenTrue.asInstanceOf[ExprNode[Boolean]]
+          // TYPE SAFETY: Trust me
+          Continue(ExprNode.And(p, tmp).asInstanceOf[ExprNode[t]])
         case other => Continue(other)
       }
   )
@@ -165,8 +193,8 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
       case ExprNode.Literal(value, codec) => Right(literalToSqlExpr(value, codec, dialect))
       case ExprNode.Rand() => Right(SqlExpr.Function(dialect.rand, Seq.empty))
       case ExprNode.IsNaN(operand) => inner(operand).map(e => SqlExpr.Function(dialect.isNanFunction, Seq(e)))
-      case ExprNode.Not(IsNone(operand)) => inner(operand).map(SqlExpr.isNotNull)
-      case IsNone(operand) => inner(operand).map(SqlExpr.isNull)
+      case ExprNode.Not(IsNone(operand, _)) => inner(operand).map(SqlExpr.isNotNull)
+      case IsNone(operand, _) => inner(operand).map(SqlExpr.isNull)
       case ExprNode.Equals(Nullable(lhs), Nullable(rhs)) => binaryOp("IS NOT DISTINCT FROM", lhs, rhs)
       case ExprNode.Equals(lhs, rhs) => binaryOp("=", lhs, rhs)
       case ExprNode.LessThan(_, lhs, rhs) if isFloatingPoint(lhs.codec) =>

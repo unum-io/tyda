@@ -1,5 +1,6 @@
 package com.choreograph.tyda.rewrite
 
+import com.choreograph.tyda.Codec
 import com.choreograph.tyda.ExprNode
 
 private[tyda] object IsNone {
@@ -7,10 +8,10 @@ private[tyda] object IsNone {
   /** If expr represents an equality comparison against None, will extract the
     * node being compared.
     */
-  def unapply[U](expr: ExprNode[U]): Option[ExprNode[Option[?]]] =
+  def unapply[U](expr: ExprNode[U]): Option[(ExprNode[Option[?]], Boolean =:= U)] =
     expr match {
-      case ExprNode.Equals(Nullable(opt), ExprNode.None(_)) => Some(opt)
-      case ExprNode.Equals(ExprNode.None(_), Nullable(opt)) => Some(opt)
+      case ExprNode.Equals(Nullable(opt), ExprNode.None(_)) => Some(opt, summon)
+      case ExprNode.Equals(ExprNode.None(_), Nullable(opt)) => Some(opt, summon)
       case _ => None
     }
 
