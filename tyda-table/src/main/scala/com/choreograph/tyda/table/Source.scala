@@ -155,7 +155,7 @@ object Source {
                 )
               } else {
                 ReadDatasetWrapper(
-                  Dataset.from(data).select(_ => metadata, _._1.udf(decoder.decode(_)), explode(_._2))
+                  Dataset.from(data).select(x => (metadata, x._1.udf(decoder.decode(_)), explode(x._2)))
                 )
               }
           }

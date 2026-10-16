@@ -1,9 +1,8 @@
 package com.choreograph.tyda.sql
 
 import com.choreograph.tyda.Codec
-import com.choreograph.tyda.CompiledExplodeExpr
+import com.choreograph.tyda.CompiledExpr
 import com.choreograph.tyda.CompiledExpr2
-import com.choreograph.tyda.ExplodeExpr
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.Forbidden
 import com.choreograph.tyda.NonEmpty
@@ -59,40 +58,23 @@ private object TypedFrom {
     }
   }
 
-  /** Explode right column using INNER JOIN syntax */
-  def join[T, U](
-      left: TypedFrom[T],
-      right: CompiledExplodeExpr[T, U],
-      args: UnparserArgs
-  ): Result[TypedFrom[(T, U)]] = {
-    val exprReplaced = ExplodeExpr(right.expr.replace(right.arg, left.output))
-    val alias = args.aliasGen.table()
-    val (ref, output) = joinExplodeReferenceAndOutput(right.codec, args.dialect)
-    simplifyAndToSqlExpr(exprReplaced, left.ids, args).map(rightSql =>
-      TypedFrom(
-        From.Join(left.from, From.Expr(rightSql, alias), JoinType.Inner, None),
-        ExprNode.makeTuple(left.output, output),
-        left.ids + (ref -> IdentifierOrSqlExpr.Expr(alias))
-      )
-    )
-  }
-
   /** Explode multiple columns using INNER JOIN syntax
     */
   def joinExplode[T, R <: Tuple](
       left: TypedFrom[T],
-      rights: Tuple.Map[R, [r] =>> CompiledExplodeExpr[T, r]],
+      rights: Tuple.Map[R, [r] =>> CompiledExpr[T, Iterable[r]]],
       args: UnparserArgs
   ): Result[TypedFrom[T *: R]] =
     val instances = tupleInstances(rights)
     instances
       .mapConst([t] =>
-        f => simplifyAndToSqlExpr(ExplodeExpr(f.expr.replace(f.arg, left.output)), left.ids, args)
+        f => simplifyAndToSqlExpr(ExprNode.Explode(f.expr.replace(f.arg, left.output)), left.ids, args)
       )
       .sequence
       .map { exprs =>
-        val refsAndOutputs =
-          instances.mapK[RefAndOutput]([t] => f => joinExplodeReferenceAndOutput(f.codec, args.dialect))
+        val refsAndOutputs = instances.mapK[RefAndOutput]([t] =>
+          f => joinExplodeReferenceAndOutput(f.codec.element, args.dialect)
+        )
         val refs = refsAndOutputs.mapConst[ExprNode.Reference[?]]([t] => _.reference)
         val output = ExprNode.makeTuple[T *: R](left.output *: refsAndOutputs.mapK([t] => _.output).toTuple)
         val aliases = refs.map(_ => args.aliasGen.table())
