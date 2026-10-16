@@ -255,7 +255,11 @@ SELECT (t1._1 AND t1._2) AS value FROM t1
 ------ end
 
 ------ Test: boolean in expr of sequence
-SELECT (aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) = t1._3) AS value FROM t1
+SELECT (array_contains(t1._1, t1._2) = t1._3) AS value FROM t1
+------ end
+
+------ Test: boolean in sequence of expr
+SELECT ((t1._1 IN (t1._2)) = t1._3) AS value FROM t1
 ------ end
 
 ------ Test: boolean not and equals
@@ -695,7 +699,7 @@ SELECT array_distinct(t1.value) AS value FROM t1
 ------ end
 
 ------ Test: empty sequence contains boolean
-SELECT aggregate(transform(CAST(array() AS ARRAY<BOOLEAN>), c0 -> (c0 = t1.value)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT FALSE AS value FROM t1
 ------ end
 
 ------ Test: endsWith string
@@ -904,6 +908,18 @@ SELECT CAST(NULL AS void) FROM t1
 
 ------ Test: identity tuple
 SELECT t1._1 AS _1, t1._2 AS _2 FROM t1
+------ end
+
+------ Test: in exprs
+SELECT (t1._1 IN (t1._2, CASE WHEN t1._4 THEN t1._1 ELSE t1._3 END)) AS value FROM t1
+------ end
+
+------ Test: in literals
+SELECT (t1.value IN (CAST(1 AS INT), CAST(2 AS INT), CAST(3 AS INT))) AS value FROM t1
+------ end
+
+------ Test: in match struct
+SELECT (t1._1 IN (t1._2, t1._3)) AS value FROM t1
 ------ end
 
 ------ Test: isNaN for Double
@@ -1319,11 +1335,11 @@ SELECT coalesce(CAST(raise_error('My error message') AS STRING), t1.value) AS va
 ------ end
 
 ------ Test: raiseError is lazy for empty sequence contains
-SELECT aggregate(transform(CAST(array() AS ARRAY<INT>), c0 -> (c0 = CAST(raise_error('My error message') AS INT))), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT FALSE AS value FROM t1
 ------ end
 
 ------ Test: raiseError is lazy for empty sequence expr contains
-SELECT aggregate(transform(t1.value, c0 -> (c0 = CAST(raise_error('My error message') AS INT))), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1.value, CAST(raise_error('My error message') AS INT)) AS value FROM t1
 ------ end
 
 ------ Test: raiseError is strongly typed
@@ -1339,7 +1355,11 @@ SELECT aggregate(transform(CASE WHEN (CAST(100 AS INT) > CAST(0 AS INT)) THEN se
 ------ end
 
 ------ Test: rand is also rand with exists equals
-SELECT aggregate(transform(transform(CASE WHEN (CAST(100 AS INT) > CAST(0 AS INT)) THEN sequence(CAST(0 AS INT), (CAST(100 AS INT) - CAST(1 AS INT))) ELSE CAST(array() AS ARRAY<INT>) END, c0 -> TRUE), c1 -> (c1 = (rand() < CAST(0.5 AS DOUBLE)))), FALSE, (c2, c3) -> (c2 OR c3), c4 -> c4) AS value FROM t1
+SELECT array_contains(transform(CASE WHEN (CAST(100 AS INT) > CAST(0 AS INT)) THEN sequence(CAST(0 AS INT), (CAST(100 AS INT) - CAST(1 AS INT))) ELSE CAST(array() AS ARRAY<INT>) END, c0 -> TRUE), (rand() < CAST(0.5 AS DOUBLE))) AS value FROM t1
+------ end
+
+------ Test: rand is less rand with contains
+SELECT aggregate(transform(CASE WHEN (CAST(100 AS INT) > CAST(0 AS INT)) THEN sequence(CAST(0 AS INT), (CAST(100 AS INT) - CAST(1 AS INT))) ELSE CAST(array() AS ARRAY<INT>) END, c0 -> (NOT array_contains(transform(CASE WHEN (CAST(100 AS INT) > CAST(0 AS INT)) THEN sequence(CAST(0 AS INT), (CAST(100 AS INT) - CAST(1 AS INT))) ELSE CAST(array() AS ARRAY<INT>) END, c1 -> TRUE), (rand() < CAST(0.5 AS DOUBLE))))), FALSE, (c2, c3) -> (c2 OR c3), c4 -> c4) AS value FROM t1
 ------ end
 
 ------ Test: rand is rand
@@ -1363,35 +1383,35 @@ SELECT (t1.value = TRUE) AS value FROM t1
 ------ end
 
 ------ Test: seq contains
-SELECT aggregate(transform(t1.value, c0 -> (c0 = TRUE)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1.value, TRUE) AS value FROM t1
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnum
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.TestEnumString
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithOptionField
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.Boolean
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["bool"], scala.Tuple1[scala.Boolean]]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.NamedTuple.NamedTuple[scala.Tuple1["seq"], scala.Tuple1[scala.collection.immutable.Seq[scala.Boolean]]]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.Option[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
@@ -1415,27 +1435,27 @@ SELECT aggregate(transform(t1._1, c0 -> (c0 IS NOT DISTINCT FROM t1._2)), FALSE,
 ------ end
 
 ------ Test: seq contains scala.collection.immutable.Seq[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.Struct]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.collection.immutable.Seq[com.choreograph.tyda.testsuites.ExprEvaluationSuiteBase.WithOptionField]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.collection.immutable.Seq[scala.Boolean]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.collection.immutable.Seq[scala.Option[scala.Boolean]]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.collection.immutable.Seq[scala.Tuple2[scala.Int, scala.Int]]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq contains scala.collection.immutable.Seq[scala.collection.immutable.Seq[scala.Boolean]]
-SELECT aggregate(transform(t1._1, c0 -> (c0 = t1._2)), FALSE, (c1, c2) -> (c1 OR c2), c3 -> c3) AS value FROM t1
+SELECT array_contains(t1._1, t1._2) AS value FROM t1
 ------ end
 
 ------ Test: seq exists
