@@ -590,7 +590,7 @@ sealed trait Dataset[T: Codec] {
 
 object Dataset {
   sealed trait Action
-  private[tyda] object Action {
+  object Action {
     final case class Write[T](input: Dataset[T], path: String, format: Format) extends Action
     final case class WriteTable[T](input: Dataset[T], identifier: String, location: TableLocation)
         extends Action
