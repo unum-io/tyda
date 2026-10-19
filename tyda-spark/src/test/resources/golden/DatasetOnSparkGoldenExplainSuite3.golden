@@ -117,29 +117,31 @@ LocalTableScan [value#2]
 
 ------ Test: explode option multiple
 == Parsed Logical Plan ==
-Project [opt1#1 AS _1#2, opt2#3 AS _2#4]
-+- Filter (NOT isnull(opt1#1) AND NOT isnull(opt2#3))
-   +- Project [tmp#5.opt1 AS opt1#1, tmp#5.opt2 AS opt2#3]
-      +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(opt1, opt1#6, opt2, opt2#7))._2 AS tmp#5]
-         +- SubqueryAlias golden_test_t6
-            +- View (`golden_test_t6`, [opt1#6,opt2#7])
-               +- LocalRelation [opt1#6, opt2#7]
+Project [tmp#1._1 AS _1#2, tmp#1._2 AS _2#3]
++- Project [struct(_1, opt1#4, _2, opt2#5) AS tmp#1]
+   +- Filter (NOT isnull(opt1#4) AND NOT isnull(opt2#5))
+      +- Project [tmp#6.opt1 AS opt1#4, tmp#6.opt2 AS opt2#5]
+         +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(opt1, opt1#7, opt2, opt2#8))._2 AS tmp#6]
+            +- SubqueryAlias golden_test_t6
+               +- View (`golden_test_t6`, [opt1#7,opt2#8])
+                  +- LocalRelation [opt1#7, opt2#8]
 
 == Analyzed Logical Plan ==
 _1: int, _2: int
-Project [opt1#1 AS _1#2, opt2#3 AS _2#4]
-+- Filter (NOT isnull(opt1#1) AND NOT isnull(opt2#3))
-   +- Project [tmp#5.opt1 AS opt1#1, tmp#5.opt2 AS opt2#3]
-      +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(opt1, opt1#6, opt2, opt2#7))._2 AS tmp#5]
-         +- SubqueryAlias golden_test_t6
-            +- View (`golden_test_t6`, [opt1#6,opt2#7])
-               +- LocalRelation [opt1#6, opt2#7]
+Project [tmp#1._1 AS _1#2, tmp#1._2 AS _2#3]
++- Project [struct(_1, opt1#4, _2, opt2#5) AS tmp#1]
+   +- Filter (NOT isnull(opt1#4) AND NOT isnull(opt2#5))
+      +- Project [tmp#6.opt1 AS opt1#4, tmp#6.opt2 AS opt2#5]
+         +- Project [struct(_1, struct(the cake is a lie 🎂, null), _2, struct(opt1, opt1#7, opt2, opt2#8))._2 AS tmp#6]
+            +- SubqueryAlias golden_test_t6
+               +- View (`golden_test_t6`, [opt1#7,opt2#8])
+                  +- LocalRelation [opt1#7, opt2#8]
 
 == Optimized Logical Plan ==
-LocalRelation [_1#2, _2#4]
+LocalRelation [_1#2, _2#3]
 
 == Physical Plan ==
-LocalTableScan [_1#2, _2#4]
+LocalTableScan [_1#2, _2#3]
 
 ------ end
 
