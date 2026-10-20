@@ -34,7 +34,9 @@ import com.choreograph.tyda.aggregates.min
 import com.choreograph.tyda.aggregates.minBy
 import com.choreograph.tyda.aggregates.reduce
 import com.choreograph.tyda.aggregates.sum
+import com.choreograph.tyda.functions.cube
 import com.choreograph.tyda.functions.lit
+import com.choreograph.tyda.functions.rollup
 import com.choreograph.tyda.functions.seq
 import com.choreograph.tyda.functions.some
 import com.choreograph.tyda.functions.tuple
@@ -296,6 +298,26 @@ trait DatasetAggregatesSuite extends DatasetSuite {
       ds.groupByKey(i => Expr[EnumWithOrdering.A]((a = i)).asBase[EnumWithOrdering])
         .aggregateValue(count)
         .pairs
+  )
+  test[(TinyByte, TinyByte, Int), (a: Option[TinyByte], b: Option[TinyByte], n: Long, m: Int)](
+    "group by cube",
+    ds => ds.groupBy(r => cube((a = r._1, b = r._2))).aggregate(r => (n = count(), m = max(r._3)))
+  )
+  test[(TinyByte, TinyByte, Int), (a: Option[TinyByte], b: Option[TinyByte], n: Long)](
+    "group by rollup",
+    ds => ds.groupBy(r => rollup((a = r._1, b = r._2))).aggregate(_ => (n = count()))
+  )
+  test[(TinyByte, TinyByte), (a: Option[TinyByte], b: TinyByte, n: Long)](
+    "group by cube and key",
+    ds => ds.groupBy(r => cube((a = r._1)) ++ (b = r._2)).aggregate(_ => (n = count()))
+  )
+  test[(Option[TinyByte], TinyByte), (a: Option[Option[TinyByte]], b: Option[TinyByte], n: Long)](
+    "group by cube of option and cube",
+    ds => ds.groupBy(r => cube((a = r._1)) ++ cube((b = r._2))).aggregate(_ => (n = count()))
+  )
+  test[(TinyByte, TinyByte), (a: Option[(TinyByte, TinyByte)], b: Option[TinyByte], n: Long)](
+    "group by cube of struct",
+    ds => ds.groupBy(r => cube((a = r, b = r._1))).aggregate(_ => (n = count()))
   )
   test[Int, (Option[Option[Int]], Long)](
     "support group by with nested option",

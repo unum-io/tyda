@@ -228,6 +228,8 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
       case Nullable(ExprNode.KnownNotNull(operand)) =>
         inner(operand).map(sqlExpr => SqlExpr.FieldAccess(sqlExpr, "value"))
       case ExprNode.KnownNotNull(operand) => inner(operand)
+      case ExprNode.GroupingSets(_, _, _) =>
+        unreachable("ExprNode.GroupingSets should be expanded before reaching the backend")
       case ExprNode.OptionToIterable(opt) => inner(opt).map(optSql =>
           val elementSql = opt.codec match {
             case Codec.Option(Codec.Option(_)) => SqlExpr.FieldAccess(optSql, "value")

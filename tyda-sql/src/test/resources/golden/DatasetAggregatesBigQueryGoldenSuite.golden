@@ -202,6 +202,26 @@ SELECT count(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 SELECT t1 AS _1, t0._2 AS _2 FROM (SELECT table1.d AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.d) AS t0, unnest(t0._1) AS t1
 ------ end
 
+------ Test: group by cube
+SELECT t0._1.a AS a, t0._1.b AS b, count(CAST(1 AS INT)) AS n, max(t0._2._3) AS m FROM table1, unnest([struct(struct(table1._1 AS a, table1._2 AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2, table1._3 AS _3) AS _2), struct(struct(table1._1 AS a, CAST(NULL AS TINYINT) AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2, table1._3 AS _3) AS _2), struct(struct(CAST(NULL AS TINYINT) AS a, table1._2 AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2, table1._3 AS _3) AS _2), struct(struct(CAST(NULL AS TINYINT) AS a, CAST(NULL AS TINYINT) AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2, table1._3 AS _3) AS _2)]) AS t0 GROUP BY t0._1
+------ end
+
+------ Test: group by cube and key
+SELECT t0._1.a AS a, t0._1.b AS b, count(CAST(1 AS INT)) AS n FROM table1, unnest([struct(struct(table1._1 AS a, table1._2 AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2) AS _2), struct(struct(CAST(NULL AS TINYINT) AS a, table1._2 AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2) AS _2)]) AS t0 GROUP BY t0._1
+------ end
+
+------ Test: group by cube of option and cube
+SELECT t0._1.a AS a, t0._1.b AS b, count(CAST(1 AS INT)) AS n FROM table1, unnest([struct(struct(struct(table1._1 AS value) AS a, table1._2 AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2) AS _2), struct(struct(struct(table1._1 AS value) AS a, CAST(NULL AS TINYINT) AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2) AS _2), struct(struct(CAST(NULL AS STRUCT<value TINYINT>) AS a, table1._2 AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2) AS _2), struct(struct(CAST(NULL AS STRUCT<value TINYINT>) AS a, CAST(NULL AS TINYINT) AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2) AS _2)]) AS t0 GROUP BY t0._1
+------ end
+
+------ Test: group by cube of struct
+SELECT t0._1.a AS a, t0._1.b AS b, count(CAST(1 AS INT)) AS n FROM table1, unnest([struct(struct(struct(table1._1 AS _1, table1._2 AS _2) AS a, table1._1 AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2) AS _2), struct(struct(struct(table1._1 AS _1, table1._2 AS _2) AS a, CAST(NULL AS TINYINT) AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2) AS _2), struct(struct(CAST(NULL AS STRUCT<_1 TINYINT,_2 TINYINT>) AS a, table1._1 AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2) AS _2), struct(struct(CAST(NULL AS STRUCT<_1 TINYINT,_2 TINYINT>) AS a, CAST(NULL AS TINYINT) AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2) AS _2)]) AS t0 GROUP BY t0._1
+------ end
+
+------ Test: group by rollup
+SELECT t0._1.a AS a, t0._1.b AS b, count(CAST(1 AS INT)) AS n FROM table1, unnest([struct(struct(table1._1 AS a, table1._2 AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2, table1._3 AS _3) AS _2), struct(struct(table1._1 AS a, CAST(NULL AS TINYINT) AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2, table1._3 AS _3) AS _2), struct(struct(CAST(NULL AS TINYINT) AS a, CAST(NULL AS TINYINT) AS b) AS _1, struct(table1._1 AS _1, table1._2 AS _2, table1._3 AS _3) AS _2)]) AS t0 GROUP BY t0._1
+------ end
+
 ------ Test: group by whole enum row
 SELECT table1.discriminant AS discriminant, table1.a AS a, table1.b AS b, table1.c AS c FROM table1 GROUP BY table1.discriminant, table1.a, table1.b, table1.c
 ------ end

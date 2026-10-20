@@ -7,6 +7,7 @@ import shapeless3.deriving.Complete
 import com.choreograph.tyda.TreeApi.Continue
 import com.choreograph.tyda.TreeApi.Control
 import com.choreograph.tyda.TreeApi.StopOrContinue
+import com.choreograph.tyda.shapeless3extras.mapConst
 import com.choreograph.tyda.shapeless3extras.tupleInstances
 
 private sealed trait ExprNode[T] extends Selectable {
@@ -376,6 +377,50 @@ private object ExprNode extends ExprApi[ExprNode] {
    * it's not captured in types. */
   final case class KnownNotNull[T](expr: ExprNode[Option[T]]) extends ExprNode[T] {
     override def codec: Codec[T] = expr.codec.element
+  }
+
+  /* Internal expr for grouping keys that are grouped once per grouping set, as in SQL `GROUP BY CUBE(...)`.
+   *
+   * Each set holds the indices of the fields in `fields` that are grouped by, all other fields are None. This
+   * is only valid in grouping keys and is removed using `GroupingSets.expand` before reaching any backend. */
+  final case class GroupingSets[P, R](
+      fields: ExprNode[P],
+      sets: Seq[Seq[Int]],
+      override val codec: Codec.Product[R]
+  ) extends ExprNode[R] {
+
+    private[tyda] def select(set: Seq[Int]): ExprNode[R] =
+      fields.codec match {
+        case Codec.Product(_, fieldInstances, _) =>
+          val included = set.toSet
+          val values = fieldInstances
+            .mapConst[Field[?]]([t] => identity(_))
+            .zipWithIndex
+            .map {
+              case (Field(name, _), i) if included(i) => MakeSome(Select[P, Any](fields, name))
+              case (Field(_, fieldCodec), _) => None(fieldCodec)
+            }
+          makeProductUnsafe(values, codec)
+        case unsupported => unreachable(s"GroupingSets requires a Product codec but found ${unsupported}")
+      }
+  }
+
+  object GroupingSets {
+
+    /** Expand every GroupingSets in `node` into one expression per combination
+      * of grouping sets.
+      *
+      * Equal GroupingSets nodes are the same grouping, e.g. `cube(...) ++ key`
+      * selects each field from the same node, so they are expanded together.
+      */
+    def expand[T](node: ExprNode[T]): Seq[ExprNode[T]] =
+      node.collect { case groupingSets: GroupingSets[?, ?] => groupingSets }.headOption match {
+        case scala.None => Seq(node)
+        case Some(groupingSets) => selectEach(node, groupingSets).flatMap(expand)
+      }
+
+    private def selectEach[T, P, R](node: ExprNode[T], groupingSets: GroupingSets[P, R]): Seq[ExprNode[T]] =
+      groupingSets.sets.map(set => node.replace(groupingSets, groupingSets.select(set)))
   }
 
   final case class Split(string: ExprNode[String], delimiter: ExprNode[String])

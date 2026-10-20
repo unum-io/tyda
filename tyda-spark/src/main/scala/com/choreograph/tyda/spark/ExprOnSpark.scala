@@ -208,6 +208,8 @@ private class ExprOnSpark[T](cfs: Map[ExprNode.Reference[?], ColumnFactory[?]]) 
       case ExprNode.Coalesce(operands) => coalesce(operands.map(convert(_))*)
       case Nullable(ExprNode.KnownNotNull(e)) => convert(e)("value")
       case ExprNode.KnownNotNull(e) => convert(e)
+      case ExprNode.GroupingSets(_, _, _) =>
+        unreachable("ExprNode.GroupingSets should be expanded before reaching the backend")
       case ExprNode.RaiseError(message, codec) => raise_error(convert(message)).cast(catalystType(codec))
       case ExprNode.ScalarSubquery(ds) =>
         // TODO: When only supporting Spark 4.0+ we can use the improve subquery apis from

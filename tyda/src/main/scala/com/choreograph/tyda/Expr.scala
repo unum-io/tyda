@@ -1,5 +1,8 @@
 package com.choreograph.tyda
 
+import scala.NamedTuple.AnyNamedTuple
+import scala.NamedTuple.NamedTuple
+
 /** A typed expression using in the Dataset API.
   *
   * This leverages NamedTuple to provide type safe access to fields when `T` is
@@ -41,4 +44,42 @@ object Expr extends ExprApi[Expr] {
     */
   def explode[T, E, I: AsExpr.Of[Iterable[E]]](f: Expr[T] => I): Expr[T] => ExplodeExpr[E] =
     expr => ExplodeExpr(unlift(AsExpr((f(expr)))))
+
+  /** Group by every subset of the fields in `key`, like SQL's `GROUP BY
+    * CUBE(...)`.
+    *
+    * Fields that are not part of a grouping set are None in the result. This
+    * can only be used as a key in [[Dataset.groupBy]], where it can be combined
+    * with other keys using `++`. For example:
+    * ```scala
+    * import com.choreograph.tyda.aggregates.sum
+    * import com.choreograph.tyda.functions.cube
+    * val ds: Dataset[(a: Int, b: Int, v: Long)] = ???
+    * // Groups by (a, b), (a), (b) and ()
+    * ds.groupBy(r => cube((a = r.a, b = r.b))).aggregate(r => (v = sum(r.v)))
+    * ```
+    */
+  def cube[N <: Tuple, K <: Tuple, I <: AnyNamedTuple: AsExpr.Of[NamedTuple[N, K]]](
+      key: I
+  ): GroupingExpr[NamedTuple.Map[NamedTuple[N, K], Option]] =
+    GroupingExpr.groupingSets(AsExpr(key), n => (n to 0 by -1).flatMap((0 until n).combinations))
+
+  /** Group by every prefix of the fields in `key`, like SQL's `GROUP BY
+    * ROLLUP(...)`.
+    *
+    * Fields that are not part of a grouping set are None in the result. This
+    * can only be used as a key in [[Dataset.groupBy]], where it can be combined
+    * with other keys using `++`. For example:
+    * ```scala
+    * import com.choreograph.tyda.aggregates.sum
+    * import com.choreograph.tyda.functions.rollup
+    * val ds: Dataset[(a: Int, b: Int, v: Long)] = ???
+    * // Groups by (a, b), (a) and ()
+    * ds.groupBy(r => rollup((a = r.a, b = r.b))).aggregate(r => (v = sum(r.v)))
+    * ```
+    */
+  def rollup[N <: Tuple, K <: Tuple, I <: AnyNamedTuple: AsExpr.Of[NamedTuple[N, K]]](
+      key: I
+  ): GroupingExpr[NamedTuple.Map[NamedTuple[N, K], Option]] =
+    GroupingExpr.groupingSets(AsExpr(key), n => (n to 0 by -1).map(0 until _))
 }

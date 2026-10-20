@@ -52,7 +52,10 @@ sealed trait GroupedDataset[N <: Tuple, KV <: Tuple, V: Codec](using Codec[Named
       e: Expr[V] => I
   )(using CanMerge[K, NamedTuple[NR, RV]]): Dataset[Concat[K, NamedTuple[NR, RV]]] = {
     val agg = CompiledAggregateExpr(value.andThen(e).andThen(AggregateExpr.AsExpr(_)))
-    Dataset.GroupedAggregate(rows, CompiledExpr(key), agg).select { case Expr(keys, aggs) => keys ++ aggs }
+    Dataset
+      .GroupedAggregate
+      .withGroupingSets(rows, CompiledExpr(key), agg)
+      .select { case Expr(keys, aggs) => keys ++ aggs }
   }
 
   /** Aggregate the values using a single [[AggregateExpr]].

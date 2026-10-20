@@ -137,6 +137,8 @@ private def explainLambdaBody[T](expr: ExprNode[T], args: Map[ExprNode.Reference
       case ExprNode.Coalesce(values) => values.map(body).mkString("coalesce(", ", ", ")")
       case ExprNode.Equals(lhs, rhs) => s"(${body(lhs)} == ${body(rhs)})"
       case ExprNode.KnownNotNull(expr) => s"${body(expr)}.get"
+      case ExprNode.GroupingSets(fields, sets, _) =>
+        s"groupingSets(${body(fields)}, ${sets.map(_.mkString("(", ", ", ")")).mkString(", ")})"
       case ExprNode.LessThan(_, lhs, rhs) => s"(${body(lhs)} < ${body(rhs)})"
       case ExprNode.LessThanOrEqual(_, lhs, rhs) => s"(${body(lhs)} <= ${body(rhs)})"
       case ExprNode.Literal(value, _) => value.toString

@@ -350,12 +350,21 @@ sealed trait Dataset[T: Codec] {
     * specified named tuple.
     *
     * The [[GroupedDataset]] is used to perform aggregations and equi-joins.
+    *
+    * The key can also use grouping sets, see [[Expr.cube]] and [[Expr.rollup]].
+    * For example:
+    * ```scala
+    * import com.choreograph.tyda.functions.cube
+    * val ds: Dataset[(a: Int, b: Int, c: Int, v: Long)] = ???
+    * ds.groupBy(r => cube((a = r.a, b = r.b)) ++ (c = r.c))
+    * ```
     */
-  def groupBy[N <: Tuple, K <: Tuple: Groupable, I <: AnyNamedTuple: AsExpr.Of[NamedTuple[N, K]]](
+  def groupBy[N <: Tuple, K <: Tuple: Groupable, I: GroupingExpr.AsExpr.Of[NamedTuple[N, K]]](
       key: Expr[T] => I
   ): GroupedDataset[N, K, T] = {
-    given Codec[NamedTuple[N, K]] = CompiledExpr(key).codec
-    GroupedDataset.FromDataset(this, key.andThen(AsExpr(_)), identity)
+    val groupingKey = key.andThen(i => Expr.lift(GroupingExpr.unlift(GroupingExpr.AsExpr(i))))
+    given Codec[NamedTuple[N, K]] = CompiledExpr(groupingKey).codec
+    GroupedDataset.FromDataset(this, groupingKey, identity)
   }
 
   /** Groups the Dataset to a [[GroupedDataset]] using the specified expression.
@@ -363,7 +372,7 @@ sealed trait Dataset[T: Codec] {
     * The [[GroupedDataset]] is used to perform aggregations and equi-joins.
     */
   def groupByKey[I: AsExpr.Of[K], K: Groupable](key: Expr[T] => I): GroupedDataset.For[(key: K), T] =
-    groupBy(r => (key = key(r)))
+    groupBy(r => (key = AsExpr(key(r))))
 
   /** Returns a new Dataset without any duplicates.
     */
@@ -1071,6 +1080,30 @@ object Dataset {
       key: CompiledExpr[V, K],
       agg: CompiledAggregateExpr[V, R]
   ) extends Dataset[(K, R)](using tuple2Codec(using key.codec, agg.codec))
+
+  private[tyda] object GroupedAggregate {
+
+    /** Create a [[GroupedAggregate]] where the key can contain
+      * [[ExprNode.GroupingSets]].
+      *
+      * When it does, each input row is exploded into one row per combination of
+      * grouping sets before being grouped.
+      */
+    def withGroupingSets[V, K <: AnyNamedTuple, R <: AnyNamedTuple](
+        input: Dataset[V],
+        key: CompiledExpr[V, K],
+        agg: CompiledAggregateExpr[V, R]
+    ): Dataset[(K, R)] =
+      ExprNode.GroupingSets.expand(key.expr) match {
+        case Seq(single) => GroupedAggregate(input, CompiledExpr(key.arg, single), agg)
+        case keys =>
+          given Codec[V] = input.codec
+          given Codec[K] = key.codec
+          val rowPerKey = ExprNode.MakeSeq(keys.map(k => ExprNode.makeTuple[(K, V)]((k, key.arg))))
+          val exploded = Select1(input, CompiledExplodeExpr(key.arg, ExprNode.UpcastToIterable(rowPerKey)))
+          GroupedAggregate(exploded, CompiledExpr(_._1), agg.compose(CompiledExpr(_._2)))
+      }
+  }
 
   private[tyda] final case class Union[T](left: Dataset[T], right: Dataset[T])
       extends Dataset[T](using left.codec)
