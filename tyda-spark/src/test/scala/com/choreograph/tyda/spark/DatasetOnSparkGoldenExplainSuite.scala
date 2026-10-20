@@ -63,9 +63,9 @@ class DatasetOnSparkGoldenExplainSuite extends GoldenTestSuite, SharedSparkSessi
 
   testExplain("use typed api for map and flatMap") { ds5.flatMap(_.seq).map(identity) }
 
-  testExplain("explode option") { ds6.select(explode(_.opt1)) }
+  testExplain("explode option") { ds6.select(x => explode(x.opt1)) }
 
-  testExplain("explode option multiple") { ds6.select(explode(_.opt1), explode(_.opt2)) }
+  testExplain("explode option multiple") { ds6.select(x => (explode(x.opt1), explode(x.opt2))) }
 }
 
 object DatasetOnSparkGoldenExplainSuite {
