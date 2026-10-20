@@ -52,6 +52,7 @@ import com.choreograph.tyda.functions.range
 import com.choreograph.tyda.functions.seq
 import com.choreograph.tyda.functions.some
 import com.choreograph.tyda.functions.startsWith
+import com.choreograph.tyda.functions.ternary
 import com.choreograph.tyda.functions.toBase64
 import com.choreograph.tyda.functions.toJson
 import com.choreograph.tyda.functions.tuple
@@ -447,6 +448,11 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   )
   testHasSameBehavior[Seq[Int], Boolean]("seq exists", _.exists(_ < 0), _.exists(_ < 0))
   testHasSameBehavior[Seq[Boolean], Boolean]("seq contains", _.contains(true), _.contains(elem = true))
+  testHasSameBehavior[(Boolean, Boolean, Boolean), Boolean](
+    "boolean in sequence of expr",
+    { case Expr(a, b, c) => a.in(b) == c },
+    _ == _ == _
+  )
   testHasSameBehavior[(Seq[Boolean], Boolean, Boolean), Boolean](
     "boolean in expr of sequence",
     { case Expr(a, b, c) => a.contains(b) == c },
@@ -456,6 +462,17 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     "empty sequence contains boolean",
     seq[Boolean]().contains(_),
     _ => false
+  )
+  testHasSameBehavior[Int, Boolean]("in literals", _.in(1, 2, 3), v => Seq(1, 2, 3).contains(v))
+  testHasSameBehavior[(Int, Int, Int, Boolean), Boolean](
+    "in exprs",
+    { case Expr(i1, i2, i3, b) => i1.in(i2, ternary(b, i1, i3)) },
+    (i1, i2, i3, b) => i1 == i2 || i1 == (if b then i1 else i3)
+  )
+  testHasSameBehavior[(Struct, Struct, Struct), Boolean](
+    "in match struct",
+    { case Expr(a, b, c) => a.in(b, c) },
+    { case (a, b, c) => Seq(b, c).contains(a) }
   )
   testHasSameBehavior[Seq[Int], Boolean]("seq forall", _.forall(_ < 0), _.forall(_ < 0))
   testHasSameBehavior[Seq[Seq[Int]], Seq[Boolean]](
@@ -1509,6 +1526,11 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testHasSameBehavior[EmptyTuple, Boolean](
     "rand is also rand with exists equals",
     _ => range(0, 100).map(_ => true).exists(_ == rand() < 0.5),
+    _ => true
+  )
+  testHasSameBehavior[EmptyTuple, Boolean](
+    "rand is less rand with contains",
+    _ => range(0, 100).exists(_ => !range(0, 100).map(_ => true).contains(rand() < 0.5)),
     _ => true
   )
 }
