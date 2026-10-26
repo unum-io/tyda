@@ -529,6 +529,10 @@ sealed trait Dataset[T: Codec] {
 
   /** Write a Dataset to path using the specified format.
     *
+    * The runner writes a [[Dataset.SuccessMarker]] file into `path` after all
+    * data has been written. Output without the marker is incomplete, e.g. left
+    * behind by a failed write.
+    *
     * Note: This is a lazy operation and the returned [[Dataset.Action]] needs
     * to be passed to a runner for the data to be written.
     */
@@ -564,6 +568,11 @@ object Dataset {
     "Use a single select returning a tuple instead, e.g. for ds: Dataset[(a: Int, bs: Seq[Long])] replace " +
       "ds.select(_.a, explode(_.bs)) with ds.select(x => (x.a, explode(x.bs))), or with " +
       "ds.select(x => (a = x.a, b = explode(x.bs))) to name the fields"
+
+  /** Name of the file that marks the output of [[Dataset.writeToPath]] as
+    * complete.
+    */
+  val SuccessMarker: String = "_SUCCESS"
 
   sealed trait Action
   private[tyda] object Action {
