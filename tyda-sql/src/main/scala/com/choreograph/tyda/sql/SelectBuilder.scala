@@ -22,6 +22,7 @@ import com.choreograph.tyda.Field
 import com.choreograph.tyda.NonEmpty
 import com.choreograph.tyda.TreeApi.Continue
 import com.choreograph.tyda.TreeApi.Skip
+import com.choreograph.tyda.TreeApi.Stop
 import com.choreograph.tyda.functions.lit
 import com.choreograph.tyda.rewrite.IsNone
 import com.choreograph.tyda.rewrite.Nullable
@@ -44,7 +45,7 @@ import com.choreograph.tyda.unreachable
 private final case class SelectBuilder[T, R](
     args: UnparserArgs,
     from: TypedFrom[T],
-    select: CompiledExpr[T, R] | CompiledAggregateExpr[T, R],
+    select: CompiledExpr[T, R] | CompiledAggregateExpr[T, R] | SelectBuilder.Generator[T, R],
     where: Option[CompiledExpr[T, Boolean]] = None,
     groupBy: Option[CompiledExpr[T, ?]] = None,
     having: Option[CompiledExpr[T, Boolean]] = None,
@@ -54,21 +55,28 @@ private final case class SelectBuilder[T, R](
 ) {
   import SelectBuilder.*
 
-  def filter(predicate: CompiledExpr[R, Boolean]): SelectBuilder[T, R] =
+  private def selectHasGenerator: Boolean = select.isInstanceOf[Generator[?, ?]]
+
+  def filter(predicate: CompiledExpr[R, Boolean]): Result[SelectBuilder[?, R]] =
     select match {
+      case Generator(_) => toSubquery.flatMap(_.filter(predicate))
       case CompiledAggregateExpr(arg, expr) =>
-        copy(having = Some(combinePredicates(having, predicate.compose(CompiledExpr(arg, expr)))))
+        Right(copy(having = Some(combinePredicates(having, predicate.compose(CompiledExpr(arg, expr))))))
       case compiled: CompiledExpr[T, R] =>
-        copy(where = Some(combinePredicates(where, predicate.compose(compiled))))
+        Right(copy(where = Some(combinePredicates(where, predicate.compose(compiled)))))
     }
+
+  def makeDistinct: Result[SelectBuilder[?, R]] =
+    if selectHasGenerator then toSubquery.flatMap(_.makeDistinct) else Right(copy(distinct = true))
 
   def limit(n: Int): Result[SelectBuilder[R, R]] =
     /* We wrap the limit in a subquery to make sure the order of operations is preserved when it's combined
      * with other operations that can change the number of rows (e.g. filters, joins, aggregates). */
-    copy(limit = Some(n)).toSubquery
+    if selectHasGenerator then toSubquery.flatMap(_.limit(n)) else copy(limit = Some(n)).toSubquery
 
   def orderBy[K](key: CompiledExpr[R, K]): Result[SelectBuilder[?, R]] = {
     val ordered = select match {
+      case Generator(_) => toSubquery.flatMap(_.orderBy(key))
       // TODO: orderBy should be fine to combine with distinct. But it currently it leads to spark
       // not resolving fully qualified column names in the order by clause.
       case _ if distinct => toSubquery.flatMap(_.orderBy(key))
@@ -83,13 +91,14 @@ private final case class SelectBuilder[T, R](
   }
 
   def select[R2](expr: CompiledExplodeExpr[R, R2]): Result[SelectBuilder[?, R2]] =
-    if distinct || requiresSubqueryForSeqOps(expr) then toSubquery.flatMap(_.select(expr))
+    if distinct || selectHasGenerator || requiresSubqueryForSeqOps(expr) then
+      toSubquery.flatMap(_.select(expr))
     else selectExplode(expr)
 
   def aggregate[A](agg: CompiledAggregateExpr[R, A]): Result[SelectBuilder[?, Option[A]]] = {
     given Codec[A] = agg.expr.codec
     select match {
-      case compiled: CompiledExpr[T, R] if !distinct =>
+      case compiled: CompiledExpr[T, R] if !distinct && !selectHasGenerator =>
         val combinedAgg = agg.compose(compiled).andThen(CompiledExpr(Expr.some(_)))
         buildWithSelect(FinalSelect.Aggregate(combinedAgg)).map(makeSubquery(_, summon))
       case _ => toSubquery.flatMap(_.aggregate(agg))
@@ -101,7 +110,7 @@ private final case class SelectBuilder[T, R](
       aggregate: CompiledAggregateExpr[R, A]
   ): Result[SelectBuilder[?, (K, A)]] =
     select match {
-      case compiled @ CompiledExpr(_, _) if !distinct =>
+      case compiled @ CompiledExpr(_, _) if !distinct && !selectHasGenerator =>
         val newGroupBy = key.compose(compiled)
         val newSelect = aggregate.compose(compiled).combine(key.compose(compiled))
         if args.dialect.useSubqueryToAvoidStructInGroupBy && hasMakeProductAfterFlattening(newGroupBy) then
@@ -119,13 +128,14 @@ private final case class SelectBuilder[T, R](
       on: CompiledExpr2[R, R2, Boolean]
   ): Result[SelectBuilder[?, (R, R2)]] = {
     val selectLhs = select match {
-      case compiled: CompiledExpr[T, R] if !distinct => compiled
+      case compiled: CompiledExpr[T, R] if !distinct && !selectHasGenerator => compiled
       case _ => return toSubquery.flatMap(_.join(rhs, on))
     }
     val selectRhs = rhs.select match {
       // If the right hand side is already a join we force a subquery to maintain join order.
       // It might be possible to relax this condition in the future.
-      case compiled: CompiledExpr[U, R2] if !rhs.distinct && !isJoin(rhs.from) => compiled
+      case compiled: CompiledExpr[U, R2] if !rhs.distinct && !rhs.selectHasGenerator && !isJoin(rhs.from) =>
+        compiled
       case _ => return rhs.toSubquery.flatMap(join(_, on))
     }
     given Codec[T] = selectLhs.arg.codec
@@ -158,7 +168,7 @@ private final case class SelectBuilder[T, R](
       on: CompiledExpr2[R, R2, Boolean]
   ): Result[SelectBuilder[?, (R, R2)]] = {
     val selectLhs = select match {
-      case compiled: CompiledExpr[T, R] if !distinct => compiled
+      case compiled: CompiledExpr[T, R] if !distinct && !selectHasGenerator => compiled
       case _ => return toSubquery.flatMap(_.leftJoinNullable(rhs, on))
     }
     val selectRhs = rhs.select match {
@@ -195,7 +205,7 @@ private final case class SelectBuilder[T, R](
 
   def antiJoin[R2](rhs: Dataset[R2], on: CompiledExpr2[R, R2, Boolean]): Result[SelectBuilder[?, R]] = {
     val lhsSelect = select match {
-      case compiled @ CompiledExpr(_, _) if !distinct => compiled
+      case compiled @ CompiledExpr(_, _) if !distinct && !selectHasGenerator => compiled
       case _ => return toSubquery.flatMap(_.antiJoin(rhs, on))
     }
     given Codec[R2] = rhs.codec
@@ -255,9 +265,16 @@ private final case class SelectBuilder[T, R](
     }
 
   private def selectWithoutExplode[R2](compiled: CompiledExpr[R, R2]): Result[SelectBuilder[?, R2]] =
-    Right(copy(select = andThen(select, compiled)))
+    Right(copy(select = andThen(nonGeneratorSelect, compiled)))
 
-  private def selectExplodeFunction[R2](explode: CompiledExplodeExpr[R, R2]): Result[SelectBuilder[?, R2]] =
+  private def nonGeneratorSelect: CompiledExprOrAggregate[T, R] =
+    select match {
+      case Generator(_) => unreachable("Selects on top of a generator must go through a subquery")
+      case other: CompiledExprOrAggregate[T, R] => other
+    }
+
+  private def selectExplodeFunction[R2](explode: CompiledExplodeExpr[R, R2]): Result[SelectBuilder[?, R2]] = {
+    val select = nonGeneratorSelect
     explode.extractExplodes match {
       case Extracted.NoExplodes(compiled) => selectWithoutExplode(compiled)
       case Extracted.Explodes(explodes, compiled, onlyExplodesCompiled) =>
@@ -268,18 +285,52 @@ private final case class SelectBuilder[T, R](
           }
           .zipWithIndex
         onlyExplodesCompiled match {
-          case None =>
-            val initial = (RelaxedCompiledExpr(select), "_1")
-            buildWithSelect(NonEmpty[Seq](initial, selects.map((sql, idx) => (sql, s"_${idx + 2}"))*))
-              .map(makeSubquery(_, compiled.arg.codec))
-              .flatMap(_.selectWithoutExplode(compiled))
-          case Some(compiled) => buildWithSelect(
-              NonEmpty
-                .from(selects.map((sql, idx) => (sql, s"_${idx + 1}")))
-                .getOrElse(unreachable("There is at least one explode"))
-            ).map(makeSubquery(_, compiled.arg.codec)).flatMap(_.selectWithoutExplode(compiled))
+          case None => inlineExplodes(select.expr +: selects.map(_._1.expr), selects.size, compiled) match {
+              case Some(inlined) => Right(inlined)
+              case None =>
+                val initial = (RelaxedCompiledExpr(select), "_1")
+                buildWithSelect(NonEmpty[Seq](initial, selects.map((sql, idx) => (sql, s"_${idx + 2}"))*))
+                  .map(makeSubquery(_, compiled.arg.codec))
+                  .flatMap(_.selectWithoutExplode(compiled))
+            }
+          case Some(compiled) => inlineExplodes(selects.map(_._1.expr), selects.size, compiled) match {
+              case Some(inlined) => Right(inlined)
+              case None => buildWithSelect(
+                  NonEmpty
+                    .from(selects.map((sql, idx) => (sql, s"_${idx + 1}")))
+                    .getOrElse(unreachable("There is at least one explode"))
+                ).map(makeSubquery(_, compiled.arg.codec)).flatMap(_.selectWithoutExplode(compiled))
+            }
         }
     }
+  }
+
+  /** Places the explodes directly in this SELECT instead of wrapping them in a
+    * subquery. Only possible when each explode ends up as exactly one top level
+    * output column and nothing in this builder would be evaluated after the
+    * generator.
+    */
+  private def inlineExplodes[Tup <: Tuple, R2](
+      tupleElements: Seq[ExprNode[?]],
+      explodeCount: Int,
+      compiled: CompiledExpr[Tup, R2]
+  ): Option[SelectBuilder[T, R2]] = {
+    /* Generators are evaluated after GROUP BY, so a grouped aggregate can be combined with explodes in the
+     * same SELECT. HAVING, ORDER BY and LIMIT would however be applied to the wrong rows. */
+    val canInline = having.isEmpty && orderBy.isEmpty && limit.isEmpty &&
+      (select match {
+        case _: CompiledExpr[T, R] => groupBy.isEmpty
+        case _: CompiledAggregateExpr[T, R] => groupBy.nonEmpty
+        case Generator(_) => false
+      })
+    Option
+      .when(canInline) {
+        val tuple = ExprNode.makeTupleUnsafe[Tup](tupleElements)
+        simplifySelects(compiled.expr.replace(compiled.arg, tuple))
+      }
+      .filter(explodesAreTopLevelColumns(_, explodeCount))
+      .map(inlined => copy(select = Generator(RelaxedCompiledExpr(select.arg, inlined))))
+  }
 
   private def selectExplodeJoin[R2](explode: CompiledExplodeExpr[R, R2]): Result[SelectBuilder[?, R2]] =
     select match {
@@ -327,7 +378,7 @@ private final case class SelectBuilder[T, R](
           )
           maybeFields.map(FinalSelect.Multiple(_)).getOrElse(FinalSelect.Empty())
         case sum @ Codec.Sum(_, _) => finalSelect(ExprNode.ToRepr(expr, sum))
-        case _ => FinalSelect.Multiple(NonEmpty((RelaxedCompiledExpr(select), "value")))
+        case _ => FinalSelect.Multiple(NonEmpty((RelaxedCompiledExpr(select.arg, select.expr), "value")))
       }
 
     buildWithSelect(finalSelect(select.expr))
@@ -394,6 +445,7 @@ private final case class SelectBuilder[T, R](
       select match {
         case compiled: CompiledExpr[T, R] => simplifySelects(compiled)
         case aggregate: CompiledAggregateExpr[T, R] => simplifySelects(aggregate)
+        case Generator(relaxed) => Generator(relaxed.copy(expr = simplifySelects(relaxed.expr)))
       },
       where.map(simplifySelects),
       groupBy.map(simplifySelects),
@@ -465,7 +517,11 @@ private object SelectBuilder {
   def empty[T](codec: Codec[T], args: UnparserArgs): Result[SelectBuilder[T, T]] =
     TypedFrom
       .dummy(codec, args)
-      .map(SelectBuilder.from(_, args).filter(CompiledExpr[T, Boolean](_ => lit(false))(using codec)))
+      .map(from =>
+        SelectBuilder
+          .from(from, args)
+          .copy(where = Some(CompiledExpr[T, Boolean](_ => lit(false))(using codec)))
+      )
 
   def fromSeq[T](values: Seq[T], codec: Codec[T], args: UnparserArgs): Result[SelectBuilder[T, T]] =
     NonEmpty
@@ -512,18 +568,48 @@ private object SelectBuilder {
 
   type CompiledExprOrAggregate[T, R] = CompiledExpr[T, R] | CompiledAggregateExpr[T, R]
 
-  extension [T, R](select: CompiledExprOrAggregate[T, R]) {
+  /** A select whose top level output columns contain Explode nodes, emitted
+    * directly in the SELECT clause. Any further operation must go through a
+    * subquery since generators are evaluated after WHERE.
+    */
+  final case class Generator[T, R](relaxed: RelaxedCompiledExpr[T, R])
+
+  extension [T, R](select: CompiledExprOrAggregate[T, R] | Generator[T, R]) {
     private def expr: ExprNode[R] =
       select match {
         case agg: CompiledAggregateExpr[T, R] => agg.expr
         case e: CompiledExpr[T, R] => e.expr
+        case Generator(relaxed) => relaxed.expr
       }
 
     private def arg: ExprNode.Reference[T] =
       select match {
         case agg: CompiledAggregateExpr[T, R] => agg.arg
         case e: CompiledExpr[T, R] => e.arg
+        case Generator(relaxed) => relaxed.arg
       }
+  }
+
+  private def explodesAreTopLevelColumns(expr: ExprNode[?], explodeCount: Int): Boolean = {
+    def isExplode(node: ExprNode[?]) = node.isInstanceOf[ExprNode.Explode[?]]
+    def containsExplode(node: ExprNode[?]) =
+      node.fold(false)((_, n) =>
+        n match {
+          case ExprNode.ScalarSubquery(_) | ExprNode.ExistsSubquery(_) => Skip(false)
+          case ExprNode.Explode(_) => Stop(true)
+          case _ => Continue(false)
+        }
+      )
+    val columns: Option[Seq[ExprNode[?]]] = expr match {
+      case ExprNode.MakeProduct(values, _) => Some(values.toList.collect { case e: ExprNode[?] => e })
+      case _ => expr.codec match {
+          case Codec.Product(_, _, _) | Codec.Sum(_, _) => None
+          case _ => Some(Seq(expr))
+        }
+    }
+    columns.exists(cols =>
+      cols.count(isExplode) == explodeCount && cols.forall(col => isExplode(col) || !containsExplode(col))
+    )
   }
 
   private def isJoin(from: TypedFrom[?]): Boolean =

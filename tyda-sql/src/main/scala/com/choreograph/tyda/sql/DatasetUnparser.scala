@@ -122,8 +122,8 @@ private def unparseDs[T](ds: Dataset[T], args: UnparserArgs): Result[SelectBuild
           rhs <- inner(right)
           except <- lhs.except(rhs)
         } yield except
-      case Dataset.Distinct(input) => inner(input).map(_.copy(distinct = true))
-      case Dataset.Filter(input, predicate) => inner(input).map(_.filter(predicate))
+      case Dataset.Distinct(input) => inner(input).flatMap(_.makeDistinct)
+      case Dataset.Filter(input, predicate) => inner(input).flatMap(_.filter(predicate))
       case Dataset.FromSeq(values, codec) => SelectBuilder.fromSeq(values, codec, args)
       case Dataset.FullOuterJoin(left, right, on) => for {
           lhs <- inner(left)
