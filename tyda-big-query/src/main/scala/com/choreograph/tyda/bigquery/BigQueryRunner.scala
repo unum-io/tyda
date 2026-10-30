@@ -14,6 +14,10 @@ import com.google.cloud.bigquery.JobStatistics.QueryStatistics
 import com.google.cloud.bigquery.QueryJobConfiguration
 import com.google.cloud.bigquery.TableDefinition
 import com.google.cloud.bigquery.TableId
+import com.google.cloud.storage.BlobId
+import com.google.cloud.storage.BlobInfo
+import com.google.cloud.storage.Storage
+import com.google.cloud.storage.StorageOptions
 import org.slf4j.LoggerFactory
 
 import com.choreograph.tyda.Codec
@@ -36,8 +40,29 @@ class BigQueryRunner(args: RunnerArgs.BigQuery) extends Runner {
       case Left(err) => throw new RuntimeException(s"Failed to unparse dataset to SQL: $err")
     }
 
+  private lazy val storage: Storage = StorageOptions
+    .newBuilder()
+    .setProjectId(args.projectId)
+    .build()
+    .getService
+
+  /** Writes to a path using `EXPORT DATA`, followed by a
+    * [[Dataset.SuccessMarker]]. Table writes get no marker.
+    */
   def execute(ds: Dataset.Action): Unit = {
     validateReadTableSchemas(ds, args.validateSchemas)
+    ds match {
+      case Dataset.Action.Write(_, path, _) =>
+        val output = BlobId.fromGsUtilUri(path)
+        executeQuery(ds)
+        storage.create(
+          BlobInfo.newBuilder(output.getBucket, output.getName + Dataset.SuccessMarker).build()
+        ): Unit
+      case Dataset.Action.WriteTable(_, _, _) => executeQuery(ds)
+    }
+  }
+
+  private def executeQuery(ds: Dataset.Action): Unit =
     // Do we need error handling here, or will those always result in exceptions?
     try
       sql(ds).executeSingle { queryStr =>
@@ -48,7 +73,6 @@ class BigQueryRunner(args: RunnerArgs.BigQuery) extends Runner {
     catch
       case e: BigQueryException =>
         throw new RuntimeException(s"Failed to execute query:\n${explain(ds)}\nError: ${e.getMessage}", e)
-  }
 
   def collect[T](ds: Dataset[T]): Seq[T] = {
     validateReadTableSchemas(ds, args.validateSchemas)

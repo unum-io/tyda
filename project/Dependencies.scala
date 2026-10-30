@@ -30,6 +30,7 @@ object Dependencies {
     val commonsIo = "commons-io" % "commons-io" % "2.22.0"
     val slf4j = "org.slf4j" % "slf4j-api" % "2.0.20"
     val bigQuery = "com.google.cloud" % "google-cloud-bigquery" % "2.73.0"
+    val cloudStorage = "com.google.cloud" % "google-cloud-storage" % "2.75.0"
     val parquet = "org.apache.parquet" % "parquet-hadoop" % "1.18.1"
     val hadoop = "org.apache.hadoop" % "hadoop-client-runtime" % "3.3.6"
     val spark3Sql = ("org.apache.spark" %% "spark-sql" % spark3Version).cross(CrossVersion.for3Use2_13)
@@ -88,7 +89,7 @@ object Dependencies {
   val tydaSparkSql = libraryDependencies ++= Seq(TestDeps.spark3Sql)
 
   val tydaBigQuery = libraryDependencies ++=
-    Seq(CompileDeps.bigQuery, TestDeps.scalatest, TestDeps.gcsConnector)
+    Seq(CompileDeps.bigQuery, CompileDeps.cloudStorage, TestDeps.scalatest, TestDeps.gcsConnector)
 
   val tydaSpark3 = libraryDependencies ++= Seq(
     TestDeps.scalatest,

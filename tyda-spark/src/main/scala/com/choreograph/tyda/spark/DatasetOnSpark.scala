@@ -10,6 +10,7 @@ import scala.ref.WeakReference
 
 import com.google.common.collect.MapMaker
 import org.apache.hadoop.fs.Path
+import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.DataFrameReader
@@ -127,9 +128,18 @@ object DatasetOnSpark {
   private val referenceQueue = new ReferenceQueue[Dataset[?]]()
   private val unpersistTasks = Collections.newSetFromMap[UnpersistTask](ConcurrentHashMap())
 
+  /** Writes `ds` to `path`, which must not contain a [[Dataset.SuccessMarker]].
+    *
+    * The marker is enabled explicitly since clusters, e.g. Dataproc, may
+    * override the committer settings.
+    */
   def perform(action: Dataset.Action)(using spark: SparkSession): Unit =
     def write[T](ds: SparkDataset[T], format: Format, path: String): Unit =
-      ds.write.format(format.toString.toLowerCase).options(formatOptions(format)).save(path)
+      ds.write
+        .format(format.toString.toLowerCase)
+        .options(formatOptions(format))
+        .option(FileOutputCommitter.SUCCESSFUL_JOB_OUTPUT_DIR_MARKER, value = true)
+        .save(path)
     action match {
       case SparkJsonCompatability.ConvertWrites(converted) => perform(converted)
       case Dataset.Action.Write(input, path, format) => write(DatasetOnSpark(input), format, path)

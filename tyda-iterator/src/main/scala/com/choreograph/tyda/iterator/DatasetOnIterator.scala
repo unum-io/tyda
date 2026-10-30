@@ -1,10 +1,14 @@
 package com.choreograph.tyda.iterator
+import java.io.IOException
+import java.util.UUID
+
 import scala.util.Using
 
 import com.github.plokhotnyuk.jsoniter_scala.core.ReaderConfig
 import com.github.plokhotnyuk.jsoniter_scala.core.readFromArray
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToStream
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.Text
 import org.apache.hadoop.util.LineReader
@@ -177,27 +181,48 @@ object DatasetOnIterator {
 
   private def writeParquetToPath[T](input: Dataset[T], path: String, codec: Codec[T]): Unit = {
     given Codec[T] = codec
-    val hadoopPath = new Path(path, "data.parquet")
-    Using.resource(CodecParquetWriter[T](hadoopPath))(writer => apply(input).foreach(writer.write))
+    writeCompleted(path, "data.parquet") { (_, filePath) =>
+      Using.resource(CodecParquetWriter[T](filePath))(writer => apply(input).foreach(writer.write))
+    }
   }
 
-  private def writeJsonToPath[T](input: Dataset[T], path: String, codec: Codec[T]): Unit = {
-    /* Check if output directory exists and contains and fail if it does to avoid accidentally overwriting
-     * data. This is similar to Spark's behavior when writing to a path. */
-    val conf = new Configuration()
-    val fs = new Path(path).getFileSystem(conf)
-    if fs.exists(new Path(path)) then
+  private def writeJsonToPath[T](input: Dataset[T], path: String, codec: Codec[T]): Unit =
+    writeCompleted(path, "data.json") { (fs, filePath) =>
+      Using.resource(fs.create(filePath, false)) { outputStream =>
+        val jsonCodec = CodecToJsoniter.create(using codec)
+        apply(input).foreach { value =>
+          writeToStream(value, outputStream)(using jsonCodec)
+          outputStream.write('\n')
+        }
+      }
+    }
+
+  private final case class TemporaryDirectory(fs: FileSystem, path: Path)
+
+  private given Using.Releasable[TemporaryDirectory] = dir => dir.fs.delete(dir.path, true): Unit
+
+  /** Writes `fileName` into `path` such that the file only appears once it is
+    * complete, followed by a [[Dataset.SuccessMarker]].
+    *
+    * The file is written into a temporary directory and renamed into place.
+    * Readers ignore the temporary directory since its name starts with `_`.
+    * Writing to an existing path fails, similar to Spark's behavior when
+    * writing to a path.
+    */
+  private def writeCompleted(path: String, fileName: String)(write: (FileSystem, Path) => Unit): Unit = {
+    val outputPath = new Path(path)
+    val fs = outputPath.getFileSystem(new Configuration())
+    if fs.exists(outputPath) then
       throw new RuntimeException(
         s"Output path $path already exists. Please remove it before writing or choose a different path."
       )
-    val dataPath = new Path(path, "data.json")
-    Using.resource(fs.create(dataPath)) { outputStream =>
-      val jsonCodec = CodecToJsoniter.create(using codec)
-      apply(input).foreach { value =>
-        writeToStream(value, outputStream)(using jsonCodec)
-        outputStream.write('\n')
-      }
+    Using.resource(TemporaryDirectory(fs, new Path(outputPath, "_temporary"))) { temporary =>
+      val temporaryFile = new Path(temporary.path, s"${UUID.randomUUID()}/$fileName")
+      write(fs, temporaryFile)
+      if !fs.rename(temporaryFile, new Path(outputPath, fileName)) then
+        throw new IOException(s"Failed to move $temporaryFile to $outputPath")
     }
+    fs.create(new Path(outputPath, Dataset.SuccessMarker), false).close()
   }
 
   private def ordFromCodec[T](codec: Codec[T]): Ord[T] =

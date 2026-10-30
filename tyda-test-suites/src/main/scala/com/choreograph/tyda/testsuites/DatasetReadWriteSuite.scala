@@ -105,6 +105,11 @@ trait DatasetReadWriteSuite extends DatasetSuite {
   def includeReadTests: Boolean = true
   def includeOverwriteTests: Boolean = true
 
+  /** Whether to test [[Dataset.SuccessMarker]] handling. These tests access the
+    * output on the local filesystem and fail the write in `mapPartitions`.
+    */
+  def includeSuccessMarkerTests: Boolean = includeOverwriteTests
+
   private def checkSame[T](read: Seq[T], expected: Seq[T])(using aggregating: Aggregating[Seq[T]]): Result = {
     val containsSameElements = aggregating.containsTheSameElementsAs(read, expected)
     if containsSameElements then Result.Success else Result.Failure(s"""|Read values:
@@ -232,6 +237,7 @@ trait DatasetReadWriteSuite extends DatasetSuite {
         val write = Dataset.from(values).writeToPath(path, format)
         implementation.execute(write)
         val exception = intercept[Exception](implementation.execute(write))
+        if includeSuccessMarkerTests then checkSame(readValues(path), values).check
         val expectedOneOf = List("already exists", "destination is not empty")
         assert(
           anyCauseContains(exception, expectedOneOf),
@@ -239,6 +245,41 @@ trait DatasetReadWriteSuite extends DatasetSuite {
               ", "
             )}"
         )
+      }: Unit
+    }
+  }
+
+  private def successMarker(path: String): File = new File(path, Dataset.SuccessMarker)
+
+  private def dataFiles(path: String): Seq[String] = {
+    val extension = pattern(format).stripPrefix("*")
+    Option(new File(path).list()).toSeq.flatten.filter(_.endsWith(extension))
+  }
+
+  private def failingWrite(path: String): Dataset.Action =
+    Dataset
+      .from(1 to 1000)
+      .mapPartitions(_.map(i => if i == 500 then throw new RuntimeException("Failing write") else i))
+      .writeToPath(path, format)
+
+  private def readValues(path: String): Seq[Int] =
+    reference.collect(Dataset.read[Int](path, format, unpivot = false, filenameGlobFilter = pattern(format)))
+
+  test("successful write has success marker") {
+    if includeSuccessMarkerTests then {
+      Using.resource(TmpPath(tmpDir, cleanupPath)) { tmpPath =>
+        implementation.execute(Dataset.from(Seq(1, 2, 3)).writeToPath(tmpPath.path, format))
+        assert(successMarker(tmpPath.path).isFile)
+      }: Unit
+    }
+  }
+
+  test("failed write leaves no data files and no success marker") {
+    if includeSuccessMarkerTests then {
+      Using.resource(TmpPath(tmpDir, cleanupPath)) { tmpPath =>
+        intercept[Exception](implementation.execute(failingWrite(tmpPath.path))): Unit
+        assert(!successMarker(tmpPath.path).exists)
+        assert(dataFiles(tmpPath.path).isEmpty)
       }: Unit
     }
   }

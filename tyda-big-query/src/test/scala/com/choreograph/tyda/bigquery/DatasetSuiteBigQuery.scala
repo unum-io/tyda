@@ -70,6 +70,7 @@ class DatasetSubquerySuiteBigQuery extends DatasetSubquerySuite, BigQuerySuiteRu
 class DatasetOrderBySuiteBigQuery extends DatasetOrderBySuite, BigQuerySuiteRunner
 abstract class DatasetReadWriteSuiteBigQuery extends DatasetReadWriteSuite, BigQuerySuiteRunner {
   override def includeReadTests: Boolean = false
+  override def includeSuccessMarkerTests: Boolean = false
 
   override def tmpDir: String = BigQueryIntegrationTestEnvVariables.getTmpDirOrSkip
 
