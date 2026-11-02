@@ -55,8 +55,6 @@ private final case class SelectBuilder[T, R](
 ) {
   import SelectBuilder.*
 
-  private def selectHasGenerator: Boolean = select.isInstanceOf[Generator[?, ?]]
-
   def filter(predicate: CompiledExpr[R, Boolean]): Result[SelectBuilder[?, R]] =
     select match {
       case Generator(_) => toSubquery.flatMap(_.filter(predicate))
@@ -67,12 +65,18 @@ private final case class SelectBuilder[T, R](
     }
 
   def makeDistinct: Result[SelectBuilder[?, R]] =
-    if selectHasGenerator then toSubquery.flatMap(_.makeDistinct) else Right(copy(distinct = true))
+    select match {
+      case Generator(_) => toSubquery.flatMap(_.makeDistinct)
+      case _ => Right(copy(distinct = true))
+    }
 
   def limit(n: Int): Result[SelectBuilder[R, R]] =
     /* We wrap the limit in a subquery to make sure the order of operations is preserved when it's combined
      * with other operations that can change the number of rows (e.g. filters, joins, aggregates). */
-    if selectHasGenerator then toSubquery.flatMap(_.limit(n)) else copy(limit = Some(n)).toSubquery
+    select match {
+      case Generator(_) => toSubquery.flatMap(_.limit(n))
+      case _ => copy(limit = Some(n)).toSubquery
+    }
 
   def orderBy[K](key: CompiledExpr[R, K]): Result[SelectBuilder[?, R]] = {
     val ordered = select match {
@@ -91,14 +95,16 @@ private final case class SelectBuilder[T, R](
   }
 
   def select[R2](expr: CompiledExplodeExpr[R, R2]): Result[SelectBuilder[?, R2]] =
-    if distinct || selectHasGenerator || requiresSubqueryForSeqOps(expr) then
-      toSubquery.flatMap(_.select(expr))
-    else selectExplode(expr)
+    select match {
+      case Generator(_) => toSubquery.flatMap(_.select(expr))
+      case _ if distinct || requiresSubqueryForSeqOps(expr) => toSubquery.flatMap(_.select(expr))
+      case _ => selectExplode(expr)
+    }
 
   def aggregate[A](agg: CompiledAggregateExpr[R, A]): Result[SelectBuilder[?, Option[A]]] = {
     given Codec[A] = agg.expr.codec
-    select match {
-      case compiled: CompiledExpr[T, R] if !distinct && !selectHasGenerator =>
+    this match {
+      case Extendable(compiled) =>
         val combinedAgg = agg.compose(compiled).andThen(CompiledExpr(Expr.some(_)))
         buildWithSelect(FinalSelect.Aggregate(combinedAgg)).map(makeSubquery(_, summon))
       case _ => toSubquery.flatMap(_.aggregate(agg))
@@ -109,8 +115,8 @@ private final case class SelectBuilder[T, R](
       key: CompiledExpr[R, K],
       aggregate: CompiledAggregateExpr[R, A]
   ): Result[SelectBuilder[?, (K, A)]] =
-    select match {
-      case compiled @ CompiledExpr(_, _) if !distinct && !selectHasGenerator =>
+    this match {
+      case Extendable(compiled) =>
         val newGroupBy = key.compose(compiled)
         val newSelect = aggregate.compose(compiled).combine(key.compose(compiled))
         if args.dialect.useSubqueryToAvoidStructInGroupBy && hasMakeProductAfterFlattening(newGroupBy) then
@@ -127,15 +133,14 @@ private final case class SelectBuilder[T, R](
       rhs: SelectBuilder[U, R2],
       on: CompiledExpr2[R, R2, Boolean]
   ): Result[SelectBuilder[?, (R, R2)]] = {
-    val selectLhs = select match {
-      case compiled: CompiledExpr[T, R] if !distinct && !selectHasGenerator => compiled
+    val selectLhs = this match {
+      case Extendable(compiled) => compiled
       case _ => return toSubquery.flatMap(_.join(rhs, on))
     }
-    val selectRhs = rhs.select match {
+    val selectRhs = rhs match {
       // If the right hand side is already a join we force a subquery to maintain join order.
       // It might be possible to relax this condition in the future.
-      case compiled: CompiledExpr[U, R2] if !rhs.distinct && !rhs.selectHasGenerator && !isJoin(rhs.from) =>
-        compiled
+      case Extendable(compiled) if !isJoin(rhs.from) => compiled
       case _ => return rhs.toSubquery.flatMap(join(_, on))
     }
     given Codec[T] = selectLhs.arg.codec
@@ -167,8 +172,8 @@ private final case class SelectBuilder[T, R](
       rhs: SelectBuilder[R2, R2],
       on: CompiledExpr2[R, R2, Boolean]
   ): Result[SelectBuilder[?, (R, R2)]] = {
-    val selectLhs = select match {
-      case compiled: CompiledExpr[T, R] if !distinct && !selectHasGenerator => compiled
+    val selectLhs = this match {
+      case Extendable(compiled) => compiled
       case _ => return toSubquery.flatMap(_.leftJoinNullable(rhs, on))
     }
     val selectRhs = rhs.select match {
@@ -204,8 +209,8 @@ private final case class SelectBuilder[T, R](
   }
 
   def antiJoin[R2](rhs: Dataset[R2], on: CompiledExpr2[R, R2, Boolean]): Result[SelectBuilder[?, R]] = {
-    val lhsSelect = select match {
-      case compiled @ CompiledExpr(_, _) if !distinct && !selectHasGenerator => compiled
+    val lhsSelect = this match {
+      case Extendable(compiled) => compiled
       case _ => return toSubquery.flatMap(_.antiJoin(rhs, on))
     }
     given Codec[R2] = rhs.codec
@@ -610,6 +615,17 @@ private object SelectBuilder {
     columns.exists(cols =>
       cols.count(isExplode) == explodeCount && cols.forall(col => isExplode(col) || !containsExplode(col))
     )
+  }
+
+  /** Matches builders whose select can be composed with further operations
+    * without first wrapping the builder in a subquery.
+    */
+  private object Extendable {
+    def unapply[T, R](builder: SelectBuilder[T, R]): Option[CompiledExpr[T, R]] =
+      builder.select match {
+        case compiled: CompiledExpr[T, R] if !builder.distinct => Some(compiled)
+        case _ => None
+      }
   }
 
   private def isJoin(from: TypedFrom[?]): Boolean =
