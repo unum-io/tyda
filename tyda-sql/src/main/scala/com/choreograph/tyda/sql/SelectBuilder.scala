@@ -260,6 +260,7 @@ private final case class SelectBuilder[T, R](
   private def selectExplodeFunction[R2](explode: CompiledExplodeExpr[R, R2]): Result[SelectBuilder[?, R2]] =
     explode.extractExplodes match {
       case Extracted.NoExplodes(compiled) => selectWithoutExplode(compiled)
+      case _: Extracted.Explodes[?, ?, ?] if having.isDefined => toSubquery.flatMap(_.select(explode))
       case Extracted.Explodes(explodes, compiled, onlyExplodesCompiled) =>
         val selects = tupleInstances(explodes)
           .mapConst[RelaxedCompiledExpr[T, ?]] { [t] => explode =>
