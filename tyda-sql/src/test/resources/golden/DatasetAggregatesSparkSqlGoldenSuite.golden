@@ -202,6 +202,10 @@ SELECT count(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 SELECT t0._2 AS _1, t0._1._2 AS _2 FROM (SELECT named_struct('_1', table1.d, '_2', min(table1.a)) AS _1, explode(table1.d) AS _2 FROM table1 GROUP BY table1.d) AS t0
 ------ end
 
+------ Test: explode after filtered aggregate
+SELECT t0._2 AS _1, t0._1._2 AS _2 FROM (SELECT named_struct('_1', table1.d, '_2', min(table1.a)) AS _1, explode(table1.d) AS _2 FROM table1 GROUP BY table1.d HAVING (NOT (min(table1.a) <= CAST(0 AS INT)))) AS t0
+------ end
+
 ------ Test: group by whole enum row
 SELECT table1.discriminant AS discriminant, table1.a AS a, table1.b AS b, table1.c AS c FROM table1 GROUP BY table1.discriminant, table1.a, table1.b, table1.c
 ------ end
