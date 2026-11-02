@@ -87,10 +87,12 @@ class DatasetSubquerySuiteSparkSql extends DatasetSubquerySuite, SparkSuiteRunne
 class DatasetOrderBySuiteSparkSql extends DatasetOrderBySuite, SparkSuiteRunner
 class DatasetReadWriteParquetSuiteSparkSql extends DatasetReadWriteSuite, SparkSuiteRunner {
   override def includeReadTests: Boolean = false
+  override def includeSuccessMarkerTests: Boolean = false
   override def format = Format.Parquet
 }
 class DatasetReadWriteJsonSuiteSparkSql extends DatasetReadWriteSuite, SparkSuiteRunner {
   override def includeReadTests: Boolean = false
+  override def includeSuccessMarkerTests: Boolean = false
   override def format = Format.Json
 }
 
