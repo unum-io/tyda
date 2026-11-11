@@ -441,6 +441,10 @@ object SqlDialect {
       floatType = "FLOAT64",
       doubleType = "FLOAT64",
       bytesType = "BYTES",
+      byteType = "INT64",
+      shortType = "INT64",
+      intType = "INT64",
+      longType = "INT64",
       supportsArrayAsArrayElement = false
     ),
     errorFunction = "error",
