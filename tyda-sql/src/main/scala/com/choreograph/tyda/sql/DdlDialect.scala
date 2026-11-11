@@ -17,7 +17,11 @@ final case class DdlDialect(
     supportsArrayAsArrayElement: Boolean = true,
     floatType: String = "FLOAT",
     doubleType: String = "DOUBLE",
-    bytesType: String = "BINARY"
+    bytesType: String = "BINARY",
+    byteType: String = "TINYINT",
+    shortType: String = "SMALLINT",
+    intType: String = "INT",
+    longType: String = "BIGINT"
 )
 
 object DdlDialect {
