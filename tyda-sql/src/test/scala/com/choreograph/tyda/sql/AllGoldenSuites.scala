@@ -53,3 +53,27 @@ class DatasetReadWriteJsonBigQueryGoldenSuite
     extends DatasetReadWriteSuiteAsGoldenSuite, BigQueryGoldenSuite {
   override def format = Format.Json
 }
+
+trait GoogleSqlGoldenSuite extends SqlGoldenTestSuite {
+  def dialect = SqlDialect.GoogleSql
+}
+class UnparserGoogleSqlGoldenSuite extends UnparserSuite, GoogleSqlGoldenSuite
+class ExprEvaluationGoogleSqlGoldenSuite extends ExprEvaluationSuiteAsGoldenSuite, GoogleSqlGoldenSuite
+class DatasetAggregatesGoogleSqlGoldenSuite
+    extends DatasetSuiteAsGoldenSuite, GoogleSqlGoldenSuite, DatasetAggregatesSuite
+class DatasetBasicGoogleSqlGoldenSuite
+    extends DatasetSuiteAsGoldenSuite, GoogleSqlGoldenSuite, DatasetBasicSuite
+class DatasetJoinGoogleSqlGoldenSuite
+    extends DatasetSuiteAsGoldenSuite, GoogleSqlGoldenSuite, DatasetJoinSuite
+class DatasetSubqueryGoogleSqlGoldenSuite
+    extends DatasetSuiteAsGoldenSuite, GoogleSqlGoldenSuite, DatasetSubquerySuite
+class DatasetOrderByGoogleSqlGoldenSuite
+    extends DatasetSuiteAsGoldenSuite, GoogleSqlGoldenSuite, DatasetOrderBySuite
+class DatasetReadWriteParquetGoogleSqlGoldenSuite
+    extends DatasetReadWriteSuiteAsGoldenSuite, GoogleSqlGoldenSuite {
+  override def format = Format.Parquet
+}
+class DatasetReadWriteJsonGoogleSqlGoldenSuite
+    extends DatasetReadWriteSuiteAsGoldenSuite, GoogleSqlGoldenSuite {
+  override def format = Format.Json
+}
