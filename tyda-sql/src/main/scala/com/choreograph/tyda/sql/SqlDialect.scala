@@ -101,6 +101,12 @@ object SqlDialect {
       */
     case Function(name: String)
 
+    /** A decoder guarded by explicit Base64 validation, used to match BigQuery
+      * semantics in the GoogleSQL reference executor.
+      *
+      * `replace` removes ASCII whitespace and `matches` checks the alphabet and
+      * padding before calling `name`. Invalid input returns `null`.
+      */
     case StrictFunction(name: String, replace: String, matches: String)
   }
 
