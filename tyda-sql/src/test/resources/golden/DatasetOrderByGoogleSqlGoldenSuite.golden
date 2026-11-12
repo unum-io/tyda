@@ -1,0 +1,143 @@
+------ Test: distinct then orderBy
+SELECT t0.value AS value FROM (SELECT DISTINCT table1.value AS value FROM table1) AS t0 ORDER BY t0.value
+------ end
+
+------ Test: filter then orderBy
+SELECT table1.value AS value FROM table1 WHERE (NOT (table1.value <= CAST(0 AS INT64))) ORDER BY table1.value
+------ end
+
+------ Test: groupBy aggregate then orderBy
+SELECT table1._1 AS _1, count(CAST(1 AS INT64)) AS _2 FROM table1 GROUP BY table1._1 ORDER BY table1._1
+------ end
+
+------ Test: join then orderBy
+SELECT t1.value AS value FROM t1 JOIN t2 ON (t1.value = t2.value) ORDER BY t1.value
+------ end
+
+------ Test: orderBy 2 keys
+SELECT table1._1 AS _1, table1._2 AS _2 FROM table1 ORDER BY table1._1, table1._2
+------ end
+
+------ Test: orderBy 3 keys
+SELECT table1._1 AS _1, table1._2 AS _2, table1._3 AS _3 FROM table1 ORDER BY table1._1, table1._2, table1._3
+------ end
+
+------ Test: orderBy 4 keys
+SELECT table1._1 AS _1, table1._2 AS _2, table1._3 AS _3, table1._4 AS _4 FROM table1 ORDER BY table1._1, table1._2, table1._3, table1._4
+------ end
+
+------ Test: orderBy 5 keys
+SELECT table1._1 AS _1, table1._2 AS _2, table1._3 AS _3, table1._4 AS _4, table1._5 AS _5 FROM table1 ORDER BY table1._1, table1._2, table1._3, table1._4, table1._5
+------ end
+
+------ Test: orderBy 6 keys
+SELECT table1._1 AS _1, table1._2 AS _2, table1._3 AS _3, table1._4 AS _4, table1._5 AS _5, table1._6 AS _6 FROM table1 ORDER BY table1._1, table1._2, table1._3, table1._4, table1._5, table1._6
+------ end
+
+------ Test: orderBy 7 keys
+SELECT table1._1 AS _1, table1._2 AS _2, table1._3 AS _3, table1._4 AS _4, table1._5 AS _5, table1._6 AS _6, table1._7 AS _7 FROM table1 ORDER BY table1._1, table1._2, table1._3, table1._4, table1._5, table1._6, table1._7
+------ end
+
+------ Test: orderBy Boolean
+SELECT table1.value AS value FROM table1 ORDER BY table1.value
+------ end
+
+------ Test: orderBy Byte
+SELECT table1.value AS value FROM table1 ORDER BY table1.value
+------ end
+
+------ Test: orderBy Date
+SELECT table1.value AS value FROM table1 ORDER BY table1.value
+------ end
+
+------ Test: orderBy Decimal[Int,Int]
+SELECT table1.value AS value FROM table1 ORDER BY table1.value
+------ end
+
+------ Test: orderBy Double
+SELECT table1.value AS value FROM table1 ORDER BY is_nan(table1.value), table1.value
+------ end
+
+------ Test: orderBy Float
+SELECT table1.value AS value FROM table1 ORDER BY is_nan(table1.value), table1.value
+------ end
+
+------ Test: orderBy Inner
+SELECT table1.x AS x, table1.y AS y FROM table1 ORDER BY table1.x, table1.y
+------ end
+
+------ Test: orderBy Int
+SELECT table1.value AS value FROM table1 ORDER BY table1.value
+------ end
+
+------ Test: orderBy Long
+SELECT table1.value AS value FROM table1 ORDER BY table1.value
+------ end
+
+------ Test: orderBy Option[AllNullable]
+SELECT table1.value AS value FROM table1 ORDER BY (table1.value IS NOT NULL), table1.value.a, table1.value.b
+------ end
+
+------ Test: orderBy Option[Double]
+SELECT table1.value AS value FROM table1 ORDER BY is_nan(table1.value), table1.value
+------ end
+
+------ Test: orderBy Option[Inner]
+SELECT table1.value AS value FROM table1 ORDER BY (table1.value IS NOT NULL), table1.value.x, table1.value.y
+------ end
+
+------ Test: orderBy Option[Int]
+SELECT table1.value AS value FROM table1 ORDER BY table1.value
+------ end
+
+------ Test: orderBy Option[Option[Int]]
+SELECT table1.value AS value FROM table1 ORDER BY (table1.value IS NOT NULL), table1.value.value
+------ end
+
+------ Test: orderBy Outer
+SELECT table1.a AS a, table1.b AS b FROM table1 ORDER BY table1.a.x, table1.a.y, table1.b
+------ end
+
+------ Test: orderBy Short
+SELECT table1.value AS value FROM table1 ORDER BY table1.value
+------ end
+
+------ Test: orderBy String
+SELECT table1.value AS value FROM table1 ORDER BY table1.value
+------ end
+
+------ Test: orderBy Timestamp
+SELECT table1.value AS value FROM table1 ORDER BY table1.value
+------ end
+
+------ Test: orderBy nested struct inner field
+SELECT table1.a AS a, table1.b AS b FROM table1 ORDER BY table1.a.x, table1.a.y
+------ end
+
+------ Test: orderBy then distinct
+SELECT DISTINCT t0.value AS value FROM (SELECT table1.value AS value FROM table1 ORDER BY table1.value) AS t0
+------ end
+
+------ Test: orderBy then filter
+SELECT t0.value AS value FROM (SELECT table1.value AS value FROM table1 ORDER BY table1.value) AS t0 WHERE (NOT (t0.value <= CAST(0 AS INT64)))
+------ end
+
+------ Test: orderBy then groupBy aggregate
+SELECT t0._1 AS _1, count(CAST(1 AS INT64)) AS _2 FROM (SELECT table1._1 AS _1, table1._2 AS _2 FROM table1 ORDER BY table1._1) AS t0 GROUP BY t0._1
+------ end
+
+------ Test: orderBy then join
+SELECT t0.value AS value FROM (SELECT table1.value AS value FROM table1 ORDER BY table1.value) AS t0 JOIN table2 ON (t0.value = table2.value)
+------ end
+
+------ Test: orderBy then limit
+SELECT t0.value AS value FROM (SELECT table1.value AS value FROM table1 ORDER BY table1.value) AS t0 LIMIT 3
+------ end
+
+------ Test: orderBy then select
+SELECT t0._2 AS value FROM (SELECT table1._1 AS _1, table1._2 AS _2 FROM table1 ORDER BY table1._1) AS t0
+------ end
+
+------ Test: orderBy tuple with struct
+SELECT table1._1 AS _1, table1._2 AS _2 FROM table1 ORDER BY table1._1.x, table1._1.y
+------ end

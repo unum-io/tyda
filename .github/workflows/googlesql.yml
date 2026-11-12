@@ -1,0 +1,33 @@
+name: GoogleSQL Conformance
+
+on:
+  pull_request:
+    branches: ['**']
+  push:
+    branches: ['**']
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: sbt/setup-sbt@v1
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: sbt
+
+      - uses: actions/cache@v4
+        with:
+          path: target/execute_query_linux
+          key: googlesql-execute-query-2026.7.2-d362b2469f7077db5c8029f594dd4c435efb162fce0f50c51c9b85695fe98041
+
+      - name: Download pinned GoogleSQL executor
+        run: echo "TYDA_GOOGLESQL_EXECUTE_QUERY=$(dev/download-googlesql.sh)" >> "$GITHUB_ENV"
+
+      - name: Run BigQuery conformance tests
+        run: sbt 'project tydaBigQuery' test

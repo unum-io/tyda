@@ -3,11 +3,11 @@ SELECT t0.value AS value FROM (SELECT DISTINCT table1.value AS value FROM table1
 ------ end
 
 ------ Test: filter then orderBy
-SELECT table1.value AS value FROM table1 WHERE (NOT (table1.value <= CAST(0 AS INT))) ORDER BY table1.value
+SELECT table1.value AS value FROM table1 WHERE (NOT (table1.value <= CAST(0 AS INT64))) ORDER BY table1.value
 ------ end
 
 ------ Test: groupBy aggregate then orderBy
-SELECT table1._1 AS _1, count(CAST(1 AS INT)) AS _2 FROM table1 GROUP BY table1._1 ORDER BY table1._1
+SELECT table1._1 AS _1, count(CAST(1 AS INT64)) AS _2 FROM table1 GROUP BY table1._1 ORDER BY table1._1
 ------ end
 
 ------ Test: join then orderBy
@@ -119,11 +119,11 @@ SELECT DISTINCT t0.value AS value FROM (SELECT table1.value AS value FROM table1
 ------ end
 
 ------ Test: orderBy then filter
-SELECT t0.value AS value FROM (SELECT table1.value AS value FROM table1 ORDER BY table1.value) AS t0 WHERE (NOT (t0.value <= CAST(0 AS INT)))
+SELECT t0.value AS value FROM (SELECT table1.value AS value FROM table1 ORDER BY table1.value) AS t0 WHERE (NOT (t0.value <= CAST(0 AS INT64)))
 ------ end
 
 ------ Test: orderBy then groupBy aggregate
-SELECT t0._1 AS _1, count(CAST(1 AS INT)) AS _2 FROM (SELECT table1._1 AS _1, table1._2 AS _2 FROM table1 ORDER BY table1._1) AS t0 GROUP BY t0._1
+SELECT t0._1 AS _1, count(CAST(1 AS INT64)) AS _2 FROM (SELECT table1._1 AS _1, table1._2 AS _2 FROM table1 ORDER BY table1._1) AS t0 GROUP BY t0._1
 ------ end
 
 ------ Test: orderBy then join

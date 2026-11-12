@@ -50,7 +50,7 @@ trait DatasetSuiteAsGoldenSuite extends DatasetSuite, SqlGoldenTestSuite {
       name: String,
       input: Seq[T],
       computation: Dataset[T] => Dataset[R],
-      expectedError: String
+      expectedError: String | scala.util.matching.Regex
   ): Unit = {
     testSqlOrSkip(name) { computation(Dataset.readTable[T, EmptyTuple](s"${tablePrefix}1").select(_._1)) }
   }

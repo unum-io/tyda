@@ -17,6 +17,14 @@ object BigQueryIntegrationTestEnvVariables {
     ): Unit
   }
 
+  def skipIfProjectIsSet(): Unit = {
+    val shouldRun = !sys.env.contains(ProjectId)
+    assume(
+      condition = shouldRun,
+      s"Skipping local GoogleSQL tests: real BigQuery integration is active ($ProjectId is set)"
+    ): Unit
+  }
+
   def getProjectId: Option[String] = sys.env.get(ProjectId)
 
   def getProjectIdOrSkip: String =

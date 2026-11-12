@@ -404,6 +404,7 @@ lazy val tydaBigQuery = (project in file("tyda-big-query"))
   .settings(Dependencies.tydaBigQuery)
   .dependsOn(scalafixRules % ScalafixConfig)
   .dependsOn(tydaSql)
+  .dependsOn(tydaJson % "test->compile")
   .dependsOn(tydaIterator % "test->compile")
   .dependsOn(tydaTestSuites % "test->compile")
 
