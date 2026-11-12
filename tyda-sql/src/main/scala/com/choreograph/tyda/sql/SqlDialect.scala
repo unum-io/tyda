@@ -9,6 +9,7 @@ import com.choreograph.tyda.rewrite.DisfavorIsNotDistinctFrom
 import com.choreograph.tyda.rewrite.DistributeProductAndSeqEquals
 import com.choreograph.tyda.rewrite.ExprRule
 import com.choreograph.tyda.rewrite.RemoveArrayCasts
+import com.choreograph.tyda.rewrite.RemoveDistinctAggregatesOnArraysAndStructs
 import com.choreograph.tyda.rewrite.RemoveNullSafeEqualsInJoinCondition
 import com.choreograph.tyda.rewrite.SparkJsonCompatability
 import com.choreograph.tyda.rewrite.WrapOptionInCollect
@@ -506,7 +507,8 @@ object SqlDialect {
       DistributeProductAndSeqEquals,
       DisfavorIsNotDistinctFrom,
       RemoveArrayCasts,
-      RemoveNullSafeEqualsInJoinCondition
+      RemoveNullSafeEqualsInJoinCondition,
+      RemoveDistinctAggregatesOnArraysAndStructs
     )
   )
 

@@ -63,10 +63,7 @@ trait ExprApi[Expr[T]] {
       * At runtime, the default expressions is evaluated lazily, so that this
       * function can be used for control flow involving raiseError.
       */
-    def getOrElse[I: AsExpr.Of[T]](default: I): Expr[T] = {
-      val coalesced = ExprNode.Coalesce(Seq(unlift(opt), ExprNode.MakeSome(unlift(AsExpr(default)))))
-      lift(ExprNode.KnownNotNull(coalesced))
-    }
+    def getOrElse[I: AsExpr.Of[T]](default: I): Expr[T] = orElse(some(default)).get
 
     /** If this option is Some then the value is returned otherwise raises an
       * error with the given message.
@@ -86,11 +83,11 @@ trait ExprApi[Expr[T]] {
     @targetName("optionMap")
     def map[U, I: AsExpr.Of[U]](f: Expr[T] => I): Expr[Option[U]] = when(!isEmpty, f(get))
 
-    /** Returns this Option if the predicate returns true or the option is
-      * empty, otherwise returns None.
+    /** Returns this Option if it is nonempty and applying the predicate `p` to
+      * this Option's value returns true. Otherwise, return None.
       */
     @targetName("optionFilter")
-    def filter(p: Expr[T] => Expr[Boolean]): Expr[Option[T]] = when(isEmpty || p(get), get)
+    def filter(p: Expr[T] => Expr[Boolean]): Expr[Option[T]] = when(!isEmpty && p(get), get)
 
     /** Apply the Expr function returning an Option to the contained value if
       * the option is Some otherwise returns None.
@@ -98,7 +95,7 @@ trait ExprApi[Expr[T]] {
     def flatMap[U, I: AsExpr.Of[Option[U]]](f: Expr[T] => I): Expr[Option[U]] = {
       val mapped = AsExpr(f(get))
       given Codec[U] = mapped.elementCodec
-      ternary(isEmpty, lit[Option[U]](None), mapped)
+      ternary(!isEmpty, mapped, none)
     }
 
     /** Combine two options into one option of a tuple. If either option is None

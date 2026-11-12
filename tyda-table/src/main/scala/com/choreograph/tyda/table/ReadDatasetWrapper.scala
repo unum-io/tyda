@@ -34,18 +34,19 @@ object ReadDatasetWrapper {
   ) extends ReadDatasetWrapper[P, T] {
     val filtered = ds.where { case Expr(p, _) => predicate(p) }
     def values: Dataset[T] = filtered.select(_._2)
-    def withFileMetadata: Dataset[(FileMetadata, T)] = withFileMetadataAndPartitionValues.select(_._1, _._3)
+    def withFileMetadata: Dataset[(FileMetadata, T)] =
+      withFileMetadataAndPartitionValues.select(x => (x._1, x._3))
     def withPartitionValues: Dataset[(P, T)] = filtered
     def withFileMetadataAndPartitionValues: Dataset[(FileMetadata, P, T)] =
-      ds.withMetadata.where { case Expr(_, Expr(p, _)) => predicate(p) }.select(_._1, _._2._1, _._2._2)
+      ds.withMetadata.where { case Expr(_, Expr(p, _)) => predicate(p) }.select(x => (x._1, x._2._1, x._2._2))
   }
 
   private[table] final case class FromFull[P, T](ds: Dataset[(FileMetadata, P, T)])
       extends ReadDatasetWrapper[P, T] {
     def values: Dataset[T] = ds.select(_._3)
 
-    def withFileMetadata: Dataset[(FileMetadata, T)] = ds.select(_._1, _._3)
-    def withPartitionValues: Dataset[(P, T)] = ds.select(_._2, _._3)
+    def withFileMetadata: Dataset[(FileMetadata, T)] = ds.select(x => (x._1, x._3))
+    def withPartitionValues: Dataset[(P, T)] = ds.select(x => (x._2, x._3))
     def withFileMetadataAndPartitionValues: Dataset[(FileMetadata, P, T)] = ds
   }
 
@@ -68,10 +69,10 @@ object ReadDatasetWrapper {
   ) extends ReadDatasetWrapper[P, T] {
     def values: Dataset[T] = justValues
 
-    def withFileMetadata: Dataset[(FileMetadata, T)] = partitioned.withMetadata.select(_._1, _._2._2)
+    def withFileMetadata: Dataset[(FileMetadata, T)] = partitioned.withMetadata.select(x => (x._1, x._2._2))
     def withPartitionValues: Dataset[(P, T)] = partitioned
     def withFileMetadataAndPartitionValues: Dataset[(FileMetadata, P, T)] =
-      partitioned.withMetadata.select(_._1, _._2._1, _._2._2)
+      partitioned.withMetadata.select(x => (x._1, x._2._1, x._2._2))
   }
 
   private[table] final case class UnableToParsePartitions[P, T](ds: Dataset[(FileMetadata, T)], e: Throwable)
@@ -90,9 +91,9 @@ object ReadDatasetWrapper {
   private final case class Select[P, T, U](from: ReadDatasetWrapper[P, T], f: Expr[T] => Expr[U])
       extends ReadDatasetWrapper[P, U] {
     def values: Dataset[U] = from.values.select(f)
-    def withFileMetadata: Dataset[(FileMetadata, U)] = from.withFileMetadata.select(_._1, f.compose(_._2))
-    def withPartitionValues: Dataset[(P, U)] = from.withPartitionValues.select(_._1, f.compose(_._2))
+    def withFileMetadata: Dataset[(FileMetadata, U)] = from.withFileMetadata.select(x => (x._1, f(x._2)))
+    def withPartitionValues: Dataset[(P, U)] = from.withPartitionValues.select(x => (x._1, f(x._2)))
     def withFileMetadataAndPartitionValues: Dataset[(FileMetadata, P, U)] =
-      from.withFileMetadataAndPartitionValues.select(_._1, _._2, f.compose(_._3))
+      from.withFileMetadataAndPartitionValues.select(x => (x._1, x._2, f(x._3)))
   }
 }

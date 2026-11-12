@@ -14,6 +14,10 @@ SELECT EXISTS (SELECT CAST(1 AS INT64) AS value FROM table1 WHERE (NOT (table1.v
 SELECT table1.value AS value FROM table1 WHERE EXISTS (SELECT CAST(1 AS INT64) AS value FROM table1 WHERE (NOT (table1.value <= CAST(0 AS INT64))))
 ------ end
 
+------ Test: explode option in subquery
+SELECT t0 AS _1, coalesce((SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT64)) END AS value FROM table2 WHERE (table2.value IS NOT NULL)), CAST(0 AS INT64)) AS _2 FROM table1, unnest(table1.value) AS t0
+------ end
+
 ------ Test: explode subquery
 SELECT t0 AS _1, coalesce((SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT64)) END AS value FROM table2, unnest(table2.value) AS t1), CAST(0 AS INT64)) AS _2 FROM table1, unnest(table1.value) AS t0
 ------ end

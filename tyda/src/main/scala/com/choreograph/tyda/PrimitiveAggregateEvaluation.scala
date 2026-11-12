@@ -1,5 +1,7 @@
 package com.choreograph.tyda
 
+import scala.reflect.ClassTag
+
 import com.choreograph.tyda.Aggregator.AndThen
 import com.choreograph.tyda.Aggregator.Compose
 import com.choreograph.tyda.Aggregator.Reduce
@@ -26,14 +28,24 @@ private[tyda] object PrimitiveAggregateEvaluation {
       case PrimitiveAggregate.Count() => make(Compose(_ => 1L, Reduce[Long](_ + _)))
       case PrimitiveAggregate.CountSome() =>
         make(Compose(t => if t.isDefined then 1L else 0L, Reduce[Long](_ + _)))
+      case countDistinct: PrimitiveAggregate.CountDistinct[?] =>
+        given Codec[From] = countDistinct.inputCodec
+        given Codec[Set[From]] = Codec.iterable[From, Set[From]]
+        make(AndThen(Compose(Set(_), Reduce[Set[From]](_ ++ _)), _.size.toLong))
       case PrimitiveAggregate.BoolAnd() => make(Reduce[Boolean](_ && _))
       case PrimitiveAggregate.BoolOr() => make(Reduce[Boolean](_ || _))
       case PrimitiveAggregate.Min(comparable) =>
         given Codec[To] = agg.codec
         make(Reduce(comparableToOrd(comparable).min))
+      case minOption: PrimitiveAggregate.MinOption[?] =>
+        given Codec[To] = agg.codec
+        make(Reduce(nullableCombine(comparableToOrd(minOption.comparable).min)))
       case PrimitiveAggregate.Max(comparable) =>
         given Codec[To] = agg.codec
         make(Reduce(comparableToOrd(comparable).max))
+      case maxOption: PrimitiveAggregate.MaxOption[?] =>
+        given Codec[To] = agg.codec
+        make(Reduce(nullableCombine(comparableToOrd(maxOption.comparable).max)))
       case minBy: PrimitiveAggregate.MinBy[?, ?] =>
         minByAggregator(comparableToOrd(minBy.comparable))(using minBy.inputCodec)
       case maxBy: PrimitiveAggregate.MaxBy[?, ?] =>
@@ -48,6 +60,13 @@ private[tyda] object PrimitiveAggregateEvaluation {
         given Codec[To] = agg.codec
         make(Reduce[From](_ ++ _))
     }
+
+  /** Combine two [[Option]] values by filtering out [[None]]s and combining any
+    * remaining values with `combine`. If both are [[None]], the result is
+    * [[None]].
+    */
+  def nullableCombine[T](combine: (T, T) => T): (Option[T], Option[T]) => Option[T] =
+    (x, y) => x.zip(y).map(combine.tupled).orElse(x).orElse(y)
 
   def minByAggregator[V, O](
       ord: Ord[O]

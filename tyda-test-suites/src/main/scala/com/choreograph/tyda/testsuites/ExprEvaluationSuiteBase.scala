@@ -47,6 +47,7 @@ import com.choreograph.tyda.functions.microsToTimestamp
 import com.choreograph.tyda.functions.namedTuple
 import com.choreograph.tyda.functions.none
 import com.choreograph.tyda.functions.raiseError
+import com.choreograph.tyda.functions.rand
 import com.choreograph.tyda.functions.range
 import com.choreograph.tyda.functions.seq
 import com.choreograph.tyda.functions.some
@@ -88,7 +89,7 @@ object ExprEvaluationSuiteBase {
     case _ => NestedOption[Levels - 1, Option[Value]]
   }
 
-  private final case class WithOptionField(a: Option[Int]) derives Arbitrary, Codec
+  private final case class WithOptionField(a: Option[Boolean]) derives Arbitrary, Codec
 
   private final case class WithEmptyTuple(empty: EmptyTuple) derives Arbitrary, Codec
   private final case class WithNamedTupleEmpty(empty: NamedTuple.Empty) derives Arbitrary, Codec
@@ -169,30 +170,35 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     t => !t._1 == !t._2
   )
 
-  testHasSameBehavior[(Int, Int), Boolean]("equals on primitive", t => t._1 == t._2, _ == _)
-  testHasSameBehavior[(Int, Int), Boolean]("not equals on primitive", t => t._1 != t._2, _ != _)
-  testHasSameBehavior[(Option[Int], Option[Int]), Boolean]("equals on Option", t => t._1 == t._2, _ == _)
-  testHasSameBehavior[(Option[Option[Boolean]], Option[Option[Boolean]]), Boolean](
-    "equals on nested Option",
-    t => t._1 == t._2,
-    _ == _
-  )
-  testHasSameBehavior[(Seq[Boolean], Seq[Boolean]), Boolean]("equals on Seq", t => t._1 == t._2, _ == _)
-  testHasSameBehavior[(WithOptionField, WithOptionField), Boolean](
-    "equals on struct with optional field",
-    t => t._1 == t._2,
-    _ == _
-  )
-  testHasSameBehavior[(Seq[(Int, Int)], Seq[(Int, Int)]), Boolean](
-    "equals on Seq with product",
-    t => t._1 == t._2,
-    _ == _
-  )
-  testHasSameBehavior[(Seq[WithOptionField], Seq[WithOptionField]), Boolean](
-    "equals on Seq with product optional field",
-    t => t._1 == t._2,
-    _ == _
-  )
+  def testEqualsAndContains[T: Codec: Arbitrary: TypeName] = {
+    testHasSameBehavior[(T, T), Boolean](s"equals on ${TypeName.name}", t => t._1 == t._2, _ == _)
+    testHasSameBehavior[(T, T), Boolean](s"not equals on ${TypeName.name}", t => t._1 != t._2, _ != _)
+    testHasSameBehavior[(Seq[T], T), Boolean](
+      s"seq contains ${TypeName.name}",
+      x => x._1.contains(x._2),
+      x => x._1.contains(x._2)
+    )
+  }
+
+  testEqualsAndContains[Boolean]
+  testEqualsAndContains[Option[Boolean]]
+  testEqualsAndContains[Option[Option[Boolean]]]
+  testEqualsAndContains[Seq[Boolean]]
+  testEqualsAndContains[Option[Seq[Boolean]]]
+  testEqualsAndContains[Seq[Option[Boolean]]]
+  testEqualsAndContains[Seq[Struct]]
+  testEqualsAndContains[Seq[WithOptionField]]
+  testEqualsAndContains[Seq[Seq[Boolean]]]
+  testEqualsAndContains[(bool: Boolean)]
+  testEqualsAndContains[WithOptionField]
+  testEqualsAndContains[(seq: Seq[Boolean])]
+  testEqualsAndContains[Seq[(Int, Int)]]
+  testEqualsAndContains[Struct]
+  testEqualsAndContains[Option[Struct]]
+  testEqualsAndContains[Option[Option[Struct]]]
+  testEqualsAndContains[TestEnum]
+  testEqualsAndContains[TestEnumString]
+
   testHasSameBehavior[Option[Int], Boolean]("equals to None", _ == None, _ == None)
 
   testHasSameBehavior[Option[Option[Int]], Option[Option[Int]]]("nested Option", identity, identity)
@@ -233,6 +239,17 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testHasSameBehavior[Option[Byte], Boolean]("Option.exists", _.exists(_ == byte0), _.exists(_ == byte0))
   testHasSameBehavior[Option[Byte], Boolean]("Option.forall", _.forall(_ == byte0), _.forall(_ == byte0))
   testHasSameBehavior[Option[Byte], Boolean]("Option.contains", _.contains(byte0), _.contains(byte0))
+  testHasSameBehavior[Option[Byte], Option[Byte]]("Option.filter", _.filter(_ > 0), _.filter(_ > 0))
+  testHasSameBehavior[Option[Option[Byte]], Option[Option[Byte]]](
+    "Nested Option.filter outside",
+    _.filter(_.exists(_ > 0)),
+    _.filter(_.exists(_ > 0))
+  )
+  testHasSameBehavior[Option[Option[Byte]], Option[Option[Byte]]](
+    "Nested Option.filter inside",
+    _.map(_.filter(_ > 0)),
+    _.map(_.filter(_ > 0))
+  )
 
   testHasSameBehavior[Option[Int], Option[Boolean]]("map Option", _.map(_ == 0), _.map(_ == 0))
   testHasSameBehavior[Option[Option[Int]], Option[Int]]("flatMap Option", _.flatMap(identity), _.flatten)
@@ -430,6 +447,16 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   )
   testHasSameBehavior[Seq[Int], Boolean]("seq exists", _.exists(_ < 0), _.exists(_ < 0))
   testHasSameBehavior[Seq[Boolean], Boolean]("seq contains", _.contains(true), _.contains(elem = true))
+  testHasSameBehavior[(Seq[Boolean], Boolean, Boolean), Boolean](
+    "boolean in expr of sequence",
+    { case Expr(a, b, c) => a.contains(b) == c },
+    _.contains(_) == _
+  )
+  testHasSameBehavior[Boolean, Boolean](
+    "empty sequence contains boolean",
+    seq[Boolean]().contains(_),
+    _ => false
+  )
   testHasSameBehavior[Seq[Int], Boolean]("seq forall", _.forall(_ < 0), _.forall(_ < 0))
   testHasSameBehavior[Seq[Seq[Int]], Seq[Boolean]](
     "seq forall nested",
@@ -724,6 +751,19 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     "(out of bounds)|(index)|(Invalid)|(100)".r
   )
 
+  testHasSameBehavior[String, Boolean](
+    "raiseError is lazy for empty sequence contains",
+    _ => seq[Int]().contains(raiseError[Int](errorMessage)),
+    _ => false
+  )
+  {
+    given Arbitrary[Seq[Int]] = Arbitrary.seqN(0)
+    testHasSameBehavior[Seq[Int], Boolean](
+      "raiseError is lazy for empty sequence expr contains",
+      _.contains(raiseError[Int](errorMessage)),
+      _ => false
+    )
+  }
   testHasSameBehavior[Int, Boolean](
     "raise error is lazy in &&",
     _ => lit(false) && raiseError[Boolean]("error"),
@@ -1054,6 +1094,18 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     _ == true
   )
 
+  testHasSameBehavior[TestEnum, Boolean](
+    "compare to literal enum variant",
+    _ == lit(TestEnum.B),
+    _ == TestEnum.B
+  )
+
+  testHasSameBehavior[TestEnum, Boolean](
+    "compare to literal non-singleton enum variant",
+    _ == lit(TestEnum.C(0)),
+    _ == TestEnum.C(0)
+  )
+
   val specialStrings = Seq("\b", "\f", "\n", "\r", "\t", "\u000B", "'", "\\", "\"", "`", "${var}")
   testHasSameBehavior[Int, Seq[String]](
     "handle special strings",
@@ -1186,6 +1238,36 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testTryCast[Decimal[19, 1], Decimal[19, 0]](v => Decimal[19, 0](v.toBigDecimal))
   testTryCast[Decimal[19, 3], Decimal[10, 3]](v => Decimal[10, 3](v.toBigDecimal))
 
+  testTryCast[Decimal[38, 9], Long](_.roundToLong)
+  testTryCast[Decimal[19, 1], Long](_.roundToLong)
+  testTryCast[Decimal[18, 1], Long](_.roundToLong)
+  testTryCast[Decimal[18, 0], Long](x => Some(x.toLong))
+
+  def testDecimalToLongRounding[P <: Int, S <: Int](using
+      Codec[Decimal[P, S]],
+      Arbitrary[Decimal[P, S]],
+      TypeName[Decimal[P, S]],
+      CanTryCast[Decimal[P, S], Decimal[P, 0]],
+      CanTryCast[Decimal[P, 0], Long]
+  ) =
+    testHasSameBehavior[Decimal[P, S], Option[Long]](
+      s"try cast ${TypeName.name[Decimal[P, S]]} to Long is consistent with Decimal rounding",
+      _.tryCast[Decimal[P, 0]].flatMap(_.tryCast[Long]),
+      _.roundToLong
+    )
+
+  testDecimalToLongRounding[38, 9]
+  testDecimalToLongRounding[19, 1]
+  testDecimalToLongRounding[19, 0]
+  testDecimalToLongRounding[18, 1]
+  testDecimalToLongRounding[18, 0]
+
+  testHasSameBehavior[Long, Option[Long]](
+    "cast Long to Decimal[38,9] then tryCast to Long roundtrip",
+    _.cast[Decimal[38, 9]].tryCast[Long],
+    Some(_)
+  )
+
   def testLiteralCreation[T: ClassTag: Arbitrary: Codec: TypeName](fixed: T) =
     testHasSameBehavior[T, T](
       s"create literal ${fixed.toString} ${TypeName.name[T]}",
@@ -1228,6 +1310,7 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
   testLiteralCreation[Option[Struct]](None)
   testLiteralCreation[Option[Struct]](Some(Struct(1, "a", false)))
   testLiteralCreation[TestEnum](TestEnum.A)
+  testLiteralCreation[TestEnum](TestEnum.C(1))
   testLiteralCreation[Option[TestEnum]](None)
   testLiteralCreation[Option[TestEnum.A.type]](None)
   testLiteralCreation[Option[TestEnum]](Some(TestEnum.C(1)))
@@ -1417,4 +1500,19 @@ trait ExprEvaluationSuiteBase extends AnyFunSuite {
     )
   }
   testHasSameBehavior[Seq[Int], String]("toJson Seq[Int]", toJson, _.mkString("[", ",", "]"))
+  testHasSameBehavior[EmptyTuple, Boolean](
+    "rand is rand",
+    _ => range(0, 100).map(_ => rand()).distinct.size > 1,
+    _ => true
+  )
+  testHasSameBehavior[EmptyTuple, Boolean](
+    "rand is also rand with exists",
+    _ => range(0, 100).exists(_ => rand() < 0.5),
+    _ => true
+  )
+  testHasSameBehavior[EmptyTuple, Boolean](
+    "rand is also rand with exists equals",
+    _ => range(0, 100).map(_ => true).exists(_ == rand() < 0.5),
+    _ => true
+  )
 }

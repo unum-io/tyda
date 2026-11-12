@@ -32,7 +32,8 @@ private[tyda] final case class SqlWriter(writer: Writer) {
       case SqlExpr.BinaryOp(op, lhs, rhs) => writeSql"($lhs $op $rhs)"
       case SqlExpr.Brackets(exprs) => writeSql1"[$exprs]"
       case SqlExpr.FieldAccess(struct, field) => writeSql"$struct.$field"
-      case SqlExpr.Function(name, args) => writeSql"$name($args)"
+      case SqlExpr.Function(name, args, distinct) =>
+        if distinct then writeSql"$name(DISTINCT $args)" else writeSql"$name($args)"
       case SqlExpr.OrderedAggregate(name, arg, orderBy, descending, limit) =>
         writeSql"$name($arg ORDER BY $orderBy"
         write(if descending then " DESC LIMIT " else " ASC LIMIT ")

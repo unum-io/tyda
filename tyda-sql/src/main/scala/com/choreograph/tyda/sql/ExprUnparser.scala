@@ -11,7 +11,6 @@ import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Decimal.MaxPrecision
 import com.choreograph.tyda.Duration
 import com.choreograph.tyda.Errors
-import com.choreograph.tyda.ExplodeExpr
 import com.choreograph.tyda.ExprNode
 import com.choreograph.tyda.ExprNode.KnownNotNull
 import com.choreograph.tyda.ExprNode.Or
@@ -23,7 +22,6 @@ import com.choreograph.tyda.TreeApi.Continue
 import com.choreograph.tyda.rewrite.ArrayCodec
 import com.choreograph.tyda.rewrite.CollectionOrNullableCollectionCodec
 import com.choreograph.tyda.rewrite.IsNone
-import com.choreograph.tyda.rewrite.MapOption
 import com.choreograph.tyda.rewrite.NotNullNonEmptyDummyLiteral
 import com.choreograph.tyda.rewrite.Nullable
 import com.choreograph.tyda.rewrite.PrimitiveAggregateAsFold
@@ -45,33 +43,13 @@ import com.choreograph.tyda.sql.ast.SqlExpr
 import com.choreograph.tyda.unreachable
 
 private def simplifyAndToSqlExpr(
-    expr: ExprNode[?] | ExplodeExpr[?],
+    expr: ExprNode[?],
     extraReferences: Map[ExprNode.Reference[?], IdentifierOrSqlExpr],
     args: UnparserArgs
 ): Result[SqlExpr] = simplifyAndToSqlExpr(expr, args.withReferences(extraReferences.toSeq*))
 
-private def simplifyAndToSqlExpr(expr: ExprNode[?] | ExplodeExpr[?], args: UnparserArgs): Result[SqlExpr] = {
-  val simplified = expr match {
-    case e: ExplodeExpr[?] => ExplodeExpr(simplifySelects(e.expr))
-    case e: ExprNode[?] => simplifySelects(e)
-  }
-  exprToSqlExpr(simplified, args)
-}
-
-/* These rules are to generate simpler SQL for outer joins where we do extra handling to make sure we get
- * correct nullability. Hopefully this should be replaced by some more general handling around MapOption and
- * null intolerant expressions. */
-private object OuterJoinRules {
-  def unapply[U](expr: ExprNode[U]): Option[ExprNode[U]] =
-    expr match {
-
-      // This is a _.map(identity), so we can just drop it entirely
-      // TYPE SAFETY: arg has the same type as body
-      case Nullable(MapOption(arg, bodyArg)) if bodyArg == arg => Some(arg.expr.asInstanceOf[ExprNode[U]])
-
-      case _ => None
-    }
-}
+private def simplifyAndToSqlExpr(expr: ExprNode[?], args: UnparserArgs): Result[SqlExpr] =
+  exprToSqlExpr(simplifySelects(expr), args)
 
 private def simplifySelects[From, To](
     compiled: CompiledAggregateExpr[From, To]
@@ -84,7 +62,6 @@ private def simplifySelects[T](expr: ExprNode[T]): ExprNode[T] =
   expr.transformUp([t] =>
     (n: ExprNode[t]) =>
       n match {
-        case OuterJoinRules(opt) => Continue(opt)
         case SimplifySelects(simplified) => Continue(simplified)
         case ToFromRepr(value) => Continue(value)
         case other => Continue(other)
@@ -109,17 +86,6 @@ private def lambda2[T1, T2, R](compiled: CompiledExpr2[T1, T2, R], args: Unparse
     )
   ).map(body => SqlExpr.LambdaFunction(Seq(SqlExpr.Ident(argName1), SqlExpr.Ident(argName2)), body))
 }
-
-private def exprToSqlExpr(expr: ExplodeExpr[?] | ExprNode[?], args: UnparserArgs): Result[SqlExpr] =
-  expr match {
-    case e: ExplodeExpr[?] => exprToSqlExpr(e.expr, args).map(arg =>
-        args.dialect.explode match {
-          case SqlDialect.ExplodeSupport.Function(name) => SqlExpr.Function(name, Seq(arg))
-          case SqlDialect.ExplodeSupport.InnerJoin(name) => SqlExpr.Function(name, Seq(arg))
-        }
-      )
-    case e: ExprNode[?] => exprToSqlExpr(e, args)
-  }
 
 private object TopLevelSelect {
   def unapply[T](expr: ExprNode.Select[?, T]): Option[(ExprNode.Reference[?], String)] =
@@ -158,6 +124,12 @@ private def exprToSqlExpr[T](fullExpr: ExprNode[T], args: UnparserArgs): Result[
       args.references.get(ref).getOrElse(Errors.failUnexpectedReference(ref, args.references.keys))
 
     expr match {
+      case ExprNode.Explode(expr) => dialect.explode match {
+          case SqlDialect.ExplodeSupport.Function(name) =>
+            inner(expr).map(arg => SqlExpr.Function(name, Seq(arg)))
+          case SqlDialect.ExplodeSupport.InnerJoin(name) =>
+            inner(expr).map(arg => SqlExpr.Function(name, Seq(arg)))
+        }
       case TopLevelSelect(ref, field) =>
         val parent = getTableExpr(ref) match {
           case IdentifierOrSqlExpr.Ident(id) => SqlExpr.Ident(id)
@@ -703,8 +675,13 @@ private def cast(expr: SqlExpr, to: Codec[?], dialect: SqlDialect): SqlExpr =
   SqlExpr.Cast(expr, ToDdl.toDdlType(to, dialect.ddl))
 
 private def tryCast(expr: SqlExpr, from: Codec[?], to: Codec[?], dialect: SqlDialect): SqlExpr =
+  val preRounded = (from, to) match {
+    case (Codec.Decimal(_, _), Codec.Long) =>
+      SqlExpr.Function("round", Seq(expr, literalToSqlExpr(0, Codec.Int, dialect)))
+    case _ => expr
+  }
   SqlExpr
-    .Cast(dialect.tryCast, expr, ToDdl.toDdlType(to, dialect.ddl))
+    .Cast(dialect.tryCast, preRounded, ToDdl.toDdlType(to, dialect.ddl))
     .pipe(addControlCharCheckIfNeeded(expr, _, from, dialect))
     .pipe(addIntRangeCheckIfNeeded(_, to, dialect))
     .pipe(addDecimalRangeAndRoundingIfNeeded(_, to, dialect))
@@ -868,6 +845,11 @@ private def addDecimalRangeAndRoundingIfNeeded(expr: SqlExpr, to: Codec[?], dial
 
 private def coalesce(exprs: SqlExpr*): SqlExpr = SqlExpr.Function("coalesce", exprs)
 
+private def minExcludingNaN(arg: SqlExpr, dialect: SqlDialect): SqlExpr = {
+  val isNan = SqlExpr.Function(dialect.isNanFunction, Seq(arg))
+  SqlExpr.Function("min", Seq(SqlExpr.Case(Seq((condition = SqlExpr.not(isNan), result = arg)))))
+}
+
 private def makeStruct(names: Seq[String], fields: Seq[SqlExpr], dialect: SqlDialect): SqlExpr =
   assert(names.length == fields.length)
   dialect.makeStruct match {
@@ -896,6 +878,12 @@ private def isFloatingPoint(codec: Codec[?]): Boolean =
   codec match {
     case Codec.Float | Codec.Double => true
     case _ => false
+  }
+
+private def isFloatingPointOrOptionFloatingPoint(codec: Codec[?]): Boolean =
+  codec match {
+    case Codec.Option(element) => isFloatingPoint(element)
+    case codec => isFloatingPoint(codec)
   }
 
 private def makeArray[T](values: Seq[SqlExpr], element: Codec[T], dialect: SqlDialect): SqlExpr = {
@@ -975,20 +963,30 @@ private def primitiveAggregate[T: Codec](
   }
   agg match {
     case PrimitiveAggregate.Count() => simple("count")
+    case PrimitiveAggregate.CountDistinct() => Right(SqlExpr.Function("count", Seq(arg), distinct = true))
     case PrimitiveAggregate.BoolAnd() => simple(dialect.boolAndFunction)
     case PrimitiveAggregate.BoolOr() => simple(dialect.boolOrFunction)
-    case agg @ (PrimitiveAggregate.Min(_)) if isFloatingPoint(Codec[T]) =>
-      val function = "min"
+    case PrimitiveAggregate.Min(_) if isFloatingPoint(Codec[T]) =>
       dialect.floatingAggregate match {
-        case SqlDialect.FloatingAggregate.NaNIsLargest => simple(function)
+        case SqlDialect.FloatingAggregate.NaNIsLargest => simple("min")
+        case SqlDialect.FloatingAggregate.NaNIsSmallestAndLargest =>
+          Right(coalesce(minExcludingNaN(arg, dialect), literalToSqlExpr(Float.NaN, Codec.Float, dialect)))
+      }
+    case PrimitiveAggregate.MinOption(_) if isFloatingPointOrOptionFloatingPoint(Codec[T]) =>
+      dialect.floatingAggregate match {
+        case SqlDialect.FloatingAggregate.NaNIsLargest => simple("min")
         case SqlDialect.FloatingAggregate.NaNIsSmallestAndLargest =>
           val isNan = SqlExpr.Function(dialect.isNanFunction, Seq(arg))
-          val minWithoutNan =
-            SqlExpr.Function(function, Seq(SqlExpr.Case(Seq((condition = SqlExpr.not(isNan), result = arg)))))
-          Right(coalesce(minWithoutNan, literalToSqlExpr(Float.NaN, Codec.Float, dialect)))
+          val allNonNullAreNaN = SqlExpr.Function(dialect.boolAndFunction, Seq(isNan))
+          Right(SqlExpr.Case(
+            Seq((condition = allNonNullAreNaN, result = literalToSqlExpr(Float.NaN, Codec.Float, dialect))),
+            elseExpr = Some(minExcludingNaN(arg, dialect))
+          ))
       }
     case PrimitiveAggregate.Max(_) => simple("max")
+    case PrimitiveAggregate.MaxOption(_) => simple("max")
     case PrimitiveAggregate.Min(_) => simple("min")
+    case PrimitiveAggregate.MinOption(_) => simple("min")
     case PrimitiveAggregate.MaxBy(_) => dialect.minMaxBy match {
         case SqlDialect.MinMaxBy.Function(_, max) => binaryAgg(max)
         case SqlDialect.MinMaxBy.OrderedArrayAgg(name) => orderedArrayAgg(descending = true, name)

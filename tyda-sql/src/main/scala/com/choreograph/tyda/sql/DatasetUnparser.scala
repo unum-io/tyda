@@ -83,6 +83,8 @@ def toSql(action: Dataset.Action, dialect: SqlDialect): Result[RenderedMultiStat
           }
         }
         .map(queryToString)
+    case Dataset.Action.WriteTable(_, _, _) =>
+      Left(DatasetToSqlError.NotImplemented("WriteTable is not supported by BigQueryRunner"))
   }
 }
 
@@ -150,8 +152,7 @@ private def unparseDs[T](ds: Dataset[T], args: UnparserArgs): Result[SelectBuild
       case Dataset.ReadTable(name, _, partitionCodec, modelCodec) =>
         Right(SelectBuilder.fromTable(name, partitionCodec, modelCodec, args))
       case ExplodeOptionToFilter(ds) => inner(ds)
-      case Dataset.Select1(input, expr) => inner(input).flatMap(_.select(expr))
-      case Dataset.SelectN(input, exprs) => inner(input).flatMap(_.selectN(exprs))
+      case Dataset.Select(input, expr) => inner(input).flatMap(_.select(expr))
       case Dataset.Cache(input) => inner(input)
       case Dataset.Limit(input, n) => inner(input).flatMap(_.limit(n))
       case Dataset.OrderBy(input, key) => inner(input).flatMap(_.orderBy(key))

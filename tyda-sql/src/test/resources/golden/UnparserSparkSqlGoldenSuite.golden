@@ -27,7 +27,7 @@ SELECT t0.`from` AS `from`, t0.`has space` AS `has space` FROM VALUES (CAST(1 AS
 ------ end
 
 ------ Test: explode multiple expression
-SELECT table1.a AS _1, explode(table1.d) AS _2 FROM table1
+SELECT t0._1.a AS _1, t0._2 AS _2 FROM (SELECT named_struct('a', table1.a, 'b', table1.b, 'c', table1.c, 'd', table1.d) AS _1, explode(table1.d) AS _2 FROM table1) AS t0
 ------ end
 
 ------ Test: fromSeq
@@ -68,10 +68,6 @@ SELECT table1.a AS _1, t0.value AS _2 FROM table1 LEFT JOIN (SELECT table2.a AS 
 
 ------ Test: left join product on rhs
 SELECT table1.a AS _1, t0.value AS _2 FROM table1 LEFT JOIN (SELECT named_struct('a', table2.a, 'b', table2.b, 'c', table2.c, 'd', table2.d) AS value FROM table2) AS t0 ON (table1.a = t0.value.a)
------- end
-
------- Test: literal enum
-SELECT (t0._1 = named_struct('discriminant', 'c', 'a', CAST(NULL AS STRUCT<a INT NOT NULL>))) AS value FROM VALUES (named_struct('discriminant', 'a', 'a', named_struct('a', CAST(1 AS INT)))) AS t0(_1)
 ------ end
 
 ------ Test: literal enum as string

@@ -41,7 +41,7 @@ abstract class UnparserSuite extends SqlGoldenTestSuite {
 
   testSql("group by all") { ds4.groupByKey(_ => lit(None)).aggregateValue(countIf(!_.a.isEmpty)).values }
 
-  testSql("explode multiple expression") { ds.select(_.a, explode(_.d)) }
+  testSql("explode multiple expression") { ds.select(x => (x.a, explode(x.d))) }
 
   testSql("aggregate after grouped aggregate") {
     ds.groupByKey(_.b).aggregateValue(min(_.a)).pairs.aggregate(min(_._2))
@@ -59,7 +59,7 @@ abstract class UnparserSuite extends SqlGoldenTestSuite {
 
   testSql("select distinct") { ds.select(_.a).distinct }
 
-  testSql("inner join select after") { ds.join(ds2, (l, r) => l.a == r.a).select(_._1.a, _._2.a) }
+  testSql("inner join select after") { ds.join(ds2, (l, r) => l.a == r.a).select(x => (x._1.a, x._2.a)) }
 
   testSql("inner join select before") { ds.select(_.a).join(ds2.select(_.a), (l, r) => l == r) }
 
@@ -67,13 +67,13 @@ abstract class UnparserSuite extends SqlGoldenTestSuite {
     ds.select(_.a)
       .join(ds2.select(_.a), (l, r) => l == r)
       .join(ds3.select(_.a), (l, r) => l._1 == r)
-      .select(_._1._1, _._1._2, _._2)
+      .select(x => (x._1._1, x._1._2, x._2))
   }
 
   testSql("left join product on rhs") { ds.select(_.a).leftOuterJoin(ds2, (l, r) => l == r.a) }
 
   testSql("left join product on lhs") {
-    ds.leftOuterJoin(ds2.select(_.a), (l, r) => l.a == r).select(_._1.a, _._2)
+    ds.leftOuterJoin(ds2.select(_.a), (l, r) => l.a == r).select(x => (x._1.a, x._2))
   }
 
   testSql("full outer join product on lhs") { ds.fullOuterJoin(ds2.select(_.a), (l, r) => l.a == r) }
@@ -84,23 +84,21 @@ abstract class UnparserSuite extends SqlGoldenTestSuite {
     ds.groupByKey(_.b).aggregateValue(min(_.a)).values.join(ds2.select(_.a), (l, r) => l == r)
   }
 
-  testSql("fromSeq") { Dataset.FromSeq(Seq(1, 2, 3)) }
+  testSql("fromSeq") { Dataset.from(Seq(1, 2, 3)) }
 
-  testSql("literal enum") { Dataset.FromSeq(Seq(E1.A(1)).map(Tuple1(_))).select(_._1 == E1.C) }
+  testSql("literal singleton") { Dataset.from[E1.C.type](Seq(E1.C)) }
 
-  testSql("literal singleton") { Dataset.FromSeq[E1.C.type](Seq(E1.C)) }
-
-  testSql("literal enum as string") { Dataset.FromSeq(Seq(E2.First)).select(_ == E2.Second) }
+  testSql("literal enum as string") { Dataset.from(Seq(E2.First)).select(_ == E2.Second) }
 
   testSql("bytes literal") {
-    Dataset.FromSeq(Seq(Binary.fromArray(Array(0x00, 0xca, 0xfe, 0xba, 0xbe).map(_.toByte))))
+    Dataset.from(Seq(Binary.fromArray(Array(0x00, 0xca, 0xfe, 0xba, 0xbe).map(_.toByte))))
   }
 
-  testSql("empty collection") { Dataset.FromSeq[M1](Seq()) }
+  testSql("empty collection") { Dataset.from[M1](Seq()) }
 
-  testSql("escape strings") { Dataset.FromSeq(Seq("O'R", "Line1\nLine2", "Tab\tCharacter")) }
+  testSql("escape strings") { Dataset.from(Seq("O'R", "Line1\nLine2", "Tab\tCharacter")) }
 
-  testSql("escape value columns") { Dataset.FromSeq[(from: Int, `has space`: Long)](Seq((1, 2L))) }
+  testSql("escape value columns") { Dataset.from[(from: Int, `has space`: Long)](Seq((1, 2L))) }
 
   testSql("escape identifiers") {
     Dataset.readTable[(`dashed-column`: Int), EmptyTuple]("table-name").select(_._1)

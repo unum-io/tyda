@@ -215,8 +215,10 @@ object ExprEvaluation {
           val arrayEval = impl(array)
           val indexEval = impl(index)
           from => arrayEval(from)(indexEval(from))
+        case ExprNode.Explode(_) =>
+          unreachable("ExprNode.Explode should not be constructible using public APIs on Expr")
         case ExprNode.Aggregate(_, _) =>
-          unreachable("ExprNode.Aggregate should not not be contructable using public APIs on Epxr")
+          unreachable("ExprNode.Aggregate should not be constructible using public APIs on Expr")
         case ExprNode.Cases(whenThenExpr, whenThenExprs, elseExpr) =>
           val branches = (whenThenExpr +: whenThenExprs).map(branch =>
             (impl(branch.whenExpr), impl(branch.thenExpr))
@@ -366,6 +368,7 @@ object ExprEvaluation {
       case cast @ CanTryCast.DecimalToDecimal() =>
         import cast.given
         v => Decimal(v.toBigDecimal)
+      case CanTryCast.DecimalToLong() => _.roundToLong
       case CanTryCast.StringToByte => checkedFromString[Byte]
       case CanTryCast.StringToShort => checkedFromString[Short]
       case CanTryCast.StringToInt => checkedFromString[Int]

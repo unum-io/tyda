@@ -45,7 +45,7 @@ class AggregatorSpec extends AnyFunSuite {
       )
     }
 
-  test("asstDoesNotCapture should throw on forbiddenidden class") {
+  test("assertDoesNotCapture should throw on forbidden class") {
     assertThrows[AssertionError] { assertDoesNotCapture(Tuple1(Codec[Long]), classOf[Codec[?]]) }
   }
 
@@ -57,9 +57,13 @@ class AggregatorSpec extends AnyFunSuite {
   testAggregatorDoesNotCaptureCodec(PrimitiveAggregate.BoolAnd())
   testAggregatorDoesNotCaptureCodec(PrimitiveAggregate.BoolOr())
   testAggregatorDoesNotCaptureCodec(PrimitiveAggregate.Min[Long](Comparable.long))
+  testAggregatorDoesNotCaptureCodec(PrimitiveAggregate.MinOption[Long](Comparable.long))
   testAggregatorDoesNotCaptureCodec(PrimitiveAggregate.Max[Long](Comparable.long))
+  testAggregatorDoesNotCaptureCodec(PrimitiveAggregate.MaxOption[Long](Comparable.long))
   testAggregatorDoesNotCaptureCodec(PrimitiveAggregate.MinBy[Long, Long](Comparable.long))
   testAggregatorDoesNotCaptureCodec(PrimitiveAggregate.MaxBy[Long, Long](Comparable.long))
   testAggregatorDoesNotCaptureCodec(PrimitiveAggregate.Reduce[Long](_ + _))
   testAggregatorDoesNotCaptureCodec(PrimitiveAggregate.Sum(SumMagnet[Long]))
+  testAggregatorDoesNotCaptureCodec(PrimitiveAggregate.CountDistinct[Long]())
+  testAggregatorDoesNotCaptureCodec(PrimitiveAggregate.SeqConcat[Long]())
 }

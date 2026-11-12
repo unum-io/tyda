@@ -53,6 +53,9 @@ class TydaJobContext(private val runner: Runner) {
         case Sink.Path(basePath, format) =>
           val write = dataset.writeToPath(partitioner.path(basePath), format)
           runner.execute(write)
+        case Sink.Table(identifier, location) =>
+          val write = dataset.writeToTable(identifier, location)
+          runner.execute(write)
         case Sink.Test(verifiers) =>
           val verify = verifiers.getVerifier(partitioner)
           val collected = privateCollect(dataset)

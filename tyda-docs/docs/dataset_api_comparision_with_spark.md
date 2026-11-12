@@ -43,13 +43,13 @@ val tydaUsers = Dataset.from(users)
 
 ## Selection
 
-Similar to Spark, Tyda supports selecting multiple columns at once.
+Similar to Spark, Tyda supports selecting multiple columns at once by returning a tuple.
 ```scala mdoc:silent
 val sparkSelected: SparkDataset[(Int, String)] =
     sparkUsers.select($"age".as[Int], $"name".as[String])
 
 val tydaSelected: Dataset[(Int, String)] =
-    tydaUsers.select(_.age, _.name)
+    tydaUsers.select(user => (user.age, user.name))
 ```
 
 To do named selection in Tyda one would use a select with returning a named tuple.
@@ -85,7 +85,7 @@ val sparkUsersWithLocation: DataFrame =
     sparkUsers.where($"location".isNotNull).select($"id", $"location")
 
 val tydaUsersWithLocation: Dataset[(UserId, String)] =
-    tydaUsers.select(_.id, explode(_.location))
+    tydaUsers.select(user => (user.id, explode(user.location)))
 ```
 
 ## Joins

@@ -129,7 +129,7 @@ object Source {
               ReadDatasetWrapper(partioned, justValues)
             case _ =>
               val ds = Dataset.read[M](p.path(basePath), format, unpivot, filenameGlobFilter).withMetadata
-              ReadDatasetWrapper(ds.select(_._1, _._1.file_path.udf(decoder.decode), _._2))
+              ReadDatasetWrapper(ds.select(x => (x._1, x._1.file_path.udf(decoder.decode), x._2)))
           }
         case Source.Table(identifier, location) =>
           ReadDatasetWrapper(Dataset.readTable[V, M](identifier, location), decoder.predicate(p))
@@ -138,9 +138,10 @@ object Source {
             // Special case for empty to not require a valid metadata for that case.
             case TestValues.Fixed(Seq()) => ReadDatasetWrapper(Dataset.empty[(FileMetadata, V, M)])
             case TestValues.Fixed(data) =>
-              val ds = Dataset.from(data).select(_ => metadata, identity)
+              val ds = Dataset.from(data).select(x => (metadata, x))
               Try(decoder.decode(metadata.file_path)) match {
-                case Success(partitionValue) => ReadDatasetWrapper(ds.select(_._1, _ => partitionValue, _._2))
+                case Success(partitionValue) =>
+                  ReadDatasetWrapper(ds.select(x => (x._1, partitionValue, x._2)))
                 /* We delay the exception here so that jobs that do not use the partition values do not need
                  * to provide valid metadata. */
                 case Failure(e) => ReadDatasetWrapper.UnableToParsePartitions(ds, e)
@@ -155,7 +156,7 @@ object Source {
                 )
               } else {
                 ReadDatasetWrapper(
-                  Dataset.from(data).select(_ => metadata, _._1.udf(decoder.decode(_)), explode(_._2))
+                  Dataset.from(data).select(x => (metadata, x._1.udf(decoder.decode(_)), explode(x._2)))
                 )
               }
           }

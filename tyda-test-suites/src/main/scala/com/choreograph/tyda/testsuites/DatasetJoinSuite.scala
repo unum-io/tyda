@@ -135,12 +135,12 @@ trait DatasetJoinSuite extends DatasetSuite {
   test[Pair, Pair, ((Pair, Pair), Pair)](
     "self join mutiple left with union",
     (ds1: Dataset[Pair], ds2: Dataset[Pair]) =>
-      ds1.join(ds2, _._1 == _._1).union(ds2.select(identity, identity)).join(ds1, _._1._2 == _._2)
+      ds1.join(ds2, _._1 == _._1).union(ds2.select(x => (x, x))).join(ds1, _._1._2 == _._2)
   )
   test[Pair, Pair, ((Pair, Pair), Pair)](
     "self join mutiple left with except",
     (ds1: Dataset[Pair], ds2: Dataset[Pair]) =>
-      ds1.join(ds2, _._1 == _._1).except(ds2.select(identity, identity)).join(ds1, _._1._2 == _._2)
+      ds1.join(ds2, _._1 == _._1).except(ds2.select(x => (x, x))).join(ds1, _._1._2 == _._2)
   )
 
   test[Pair, Pair, ((Pair, Pair), Pair)](
@@ -203,7 +203,7 @@ trait DatasetJoinSuite extends DatasetSuite {
 
   test[M3, M3, (Long, Long)](
     "join and then explode",
-    (ds1, ds2) => ds1.join(ds2, (l, r) => l.a == r.a).select(explode(_._1.d), explode(_._2.d))
+    (ds1, ds2) => ds1.join(ds2, (l, r) => l.a == r.a).select(x => (explode(x._1.d), explode(x._2.d)))
   )
 
 }

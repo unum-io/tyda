@@ -24,7 +24,7 @@ val joined: Dataset[(User, Event)] =
 
 // Option is used for nullable values, not null
 val withLocation: Dataset[(Long, String)] =
-  users.select(_.id, explode(_.location))
+  users.select(u => (u.id, explode(u.location)))
 ```
 
 ## Key features

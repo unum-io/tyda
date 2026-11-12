@@ -1,6 +1,7 @@
 package com.choreograph.tyda.table
 
 import com.choreograph.tyda.Format
+import com.choreograph.tyda.TableLocation
 
 enum Sink[M, P <: Partitioner] {
 
@@ -12,6 +13,8 @@ enum Sink[M, P <: Partitioner] {
     *   The data format to use when writing.
     */
   case Path(basePath: String, format: Format = Format.Parquet) extends Sink[M, P]
+
+  case Table(identifier: String, location: TableLocation = TableLocation.Native)
 
   /** Sink that is written to in a unit test.
     *

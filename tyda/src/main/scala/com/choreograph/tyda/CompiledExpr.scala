@@ -1,6 +1,9 @@
 package com.choreograph.tyda
 
 import com.choreograph.tyda.Expr.AsExpr
+import com.choreograph.tyda.TreeApi.Continue
+import com.choreograph.tyda.TreeApi.Skip
+import com.choreograph.tyda.TreeApi.Stop
 
 /** Represents a function Expr[T] => Expr[R] that been compiled with a specific
   * argument.
@@ -11,6 +14,17 @@ import com.choreograph.tyda.Expr.AsExpr
   * references.
   */
 private[tyda] final case class CompiledExpr[T, R](arg: ExprNode.Reference[T], expr: ExprNode[R]) {
+  assert(
+    expr.fold(true)((_, node) =>
+      node match {
+        case ExprNode.ScalarSubquery(_) | ExprNode.ExistsSubquery(_) => Skip(true)
+        case ExprNode.Explode(_) => Stop(false)
+        case _ => Continue(true)
+      }
+    ),
+    "CompiledExpr must not contain ExprNode.Explode outside subquery"
+  )
+
   def codec: Codec[R] = expr.codec
 
   /** Composes this compiled expression with another one, with this function

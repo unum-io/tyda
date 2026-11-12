@@ -2,6 +2,10 @@
 SELECT table1.a AS a, table1.b AS b FROM table1
 ------ end
 
+------ Test: creation of enums
+((SELECT 'a' AS discriminant, CAST(NULL AS STRUCT<i INT64>) AS c, CAST(NULL AS STRUCT<i INT64>) AS d) UNION ALL (SELECT 'b' AS discriminant, CAST(NULL AS STRUCT<i INT64>) AS c, CAST(NULL AS STRUCT<i INT64>) AS d)) UNION ALL ((SELECT 'c' AS discriminant, struct(CAST(1 AS INT64) AS i) AS c, CAST(NULL AS STRUCT<i INT64>) AS d) UNION ALL (SELECT 'd' AS discriminant, CAST(NULL AS STRUCT<i INT64>) AS c, struct(CAST(2 AS INT64) AS i) AS d))
+------ end
+
 ------ Test: distinct List
 SELECT DISTINCT table1.value AS value FROM table1
 ------ end
@@ -12,6 +16,10 @@ SELECT DISTINCT table1.value AS value FROM table1
 
 ------ Test: distinct before select
 SELECT t0.a AS value FROM (SELECT DISTINCT table1.a AS a, table1.b AS b FROM table1) AS t0
+------ end
+
+------ Test: distinct decimal
+SELECT DISTINCT table1.value AS value FROM table1
 ------ end
 
 ------ Test: distinct primitive
@@ -178,8 +186,36 @@ SELECT table1._1 AS _1, table1._2 AS _2 FROM table1 WHERE CASE WHEN (table1._1 I
 SELECT t0 AS _1, t1 AS _2 FROM table1, unnest(table1._1) AS t0, unnest(table1._2) AS t1
 ------ end
 
+------ Test: select multiple explode seq legacy syntax
+SELECT t0 AS _1, t1 AS _2 FROM table1, unnest(table1._1) AS t0, unnest(table1._2) AS t1
+------ end
+
+------ Test: select multiple explode seq namedtuple
+SELECT t0 AS first, t1 AS second FROM table1, unnest(table1._1) AS t0, unnest(table1._2) AS t1
+------ end
+
+------ Test: select multiple explode seq namedtuple nested
+SELECT t0 AS first, struct(t1 AS second) AS wrapper FROM table1, unnest(table1._1) AS t0, unnest(table1._2) AS t1
+------ end
+
+------ Test: select multiple explode seq namedtuple with reference to input
+SELECT t0 AS first, table1._3 AS string, t1 AS second FROM table1, unnest(table1._1) AS t0, unnest(table1._2) AS t1
+------ end
+
 ------ Test: select nested access
 SELECT table1._1._1 AS value FROM table1
+------ end
+
+------ Test: select one explode seq
+SELECT t0 AS int FROM table1, unnest(table1.seq) AS t0
+------ end
+
+------ Test: select one explode seq nested
+SELECT struct(t0 AS int) AS wrapper FROM table1, unnest(table1.seq) AS t0
+------ end
+
+------ Test: select one explode seq with reference to input
+SELECT t0 AS int, table1.seq AS seq FROM table1, unnest(table1.seq) AS t0
 ------ end
 
 ------ Test: select primitive

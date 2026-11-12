@@ -5,6 +5,7 @@ import shapeless3.deriving.Complete
 import com.choreograph.tyda.Codec
 import com.choreograph.tyda.Expr
 import com.choreograph.tyda.ExprNode
+import com.choreograph.tyda.functions.ternary
 import com.choreograph.tyda.unreachable
 
 /** This rewrites equals of products with nullable fields and arrays into equals
@@ -34,7 +35,7 @@ object DistributeProductAndSeqEquals extends ExprRule {
     Codec
       .iterate(codec)
       .exists {
-        case Codec.Seq(_) | Codec.Option(Codec.Option(_)) => true
+        case Codec.Seq(_) | Codec.Option(Codec.Option(_)) | Codec.Option(Codec.Product(_, _, _)) => true
         case Codec.Product(_, fields, _) => fields.foldLeft0(false)([t] =>
             (_, f) =>
               f.codec match {
@@ -52,7 +53,7 @@ object DistributeProductAndSeqEquals extends ExprRule {
       case _: Codec.Option[e] => transform[Option[e]](
           lhs,
           rhs,
-          (l, r) => l.isEmpty == r.isEmpty && l.zip(r).forall { case Expr(someL, someR) => someL == someR }
+          (l, r) => ternary(!l.isEmpty && !r.isEmpty, l.get == r.get, l.isEmpty == r.isEmpty)
         )
       case _: Codec.Seq[e] => transform[Seq[e]](
           lhs,

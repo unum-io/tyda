@@ -14,8 +14,12 @@ SELECT EXISTS (SELECT CAST(1 AS INT) AS value FROM table1 WHERE (NOT (table1.val
 SELECT table1.value AS value FROM table1 WHERE EXISTS (SELECT CAST(1 AS INT) AS value FROM table1 WHERE (NOT (table1.value <= CAST(0 AS BIGINT))))
 ------ end
 
+------ Test: explode option in subquery
+SELECT t0._1 AS _1, coalesce((SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM table2 WHERE (table2.value IS NOT NULL)), CAST(0 AS BIGINT)) AS _2 FROM (SELECT explode(table1.value) AS _1 FROM table1) AS t0
+------ end
+
 ------ Test: explode subquery
-SELECT explode(table1.value) AS _1, coalesce((SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM (SELECT explode(table2.value) AS value FROM table2) AS t0), CAST(0 AS BIGINT)) AS _2 FROM table1
+SELECT t0._1 AS _1, coalesce((SELECT CASE WHEN (count(1) <> 0) THEN count(CAST(1 AS INT)) END AS value FROM (SELECT explode(table2.value) AS _1 FROM table2) AS t1), CAST(0 AS BIGINT)) AS _2 FROM (SELECT explode(table1.value) AS _1 FROM table1) AS t0
 ------ end
 
 ------ Test: scalar subquery

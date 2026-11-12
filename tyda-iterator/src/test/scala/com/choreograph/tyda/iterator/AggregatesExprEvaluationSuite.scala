@@ -1,14 +1,18 @@
 package com.choreograph.tyda.iterator
 
+import org.scalactic.Equality
 import org.scalatest.funsuite.AnyFunSuite
 
 import com.choreograph.tyda.AggregateExpr
 import com.choreograph.tyda.AggregateExpr.tuple
+import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Codec
+import com.choreograph.tyda.Comparable
 import com.choreograph.tyda.CompiledAggregateExpr
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Decimal.MaxPrecision
 import com.choreograph.tyda.Expr
+import com.choreograph.tyda.SumMagnet
 import com.choreograph.tyda.aggregates.collect
 import com.choreograph.tyda.aggregates.count
 import com.choreograph.tyda.aggregates.countIf
@@ -21,14 +25,14 @@ import com.choreograph.tyda.aggregates.reduce
 import com.choreograph.tyda.aggregates.sum
 
 class AggregatesExprEvaluationSuite extends AnyFunSuite {
-  def test[T: Codec, R](data: Seq[T], expected: R)(agg: Expr[T] => AggregateExpr[R]): Unit = {
+  def test[T: Codec, R: Equality](data: Seq[T], expected: R)(agg: Expr[T] => AggregateExpr[R]): Unit = {
     val compiled = CompiledAggregateExpr(agg)
     test(s"test aggregate expr ${compiled.expr}") {
       val aggregator = AggregateExprEvaluation.aggregator[T, R](compiled)
       def reduce(data: Seq[T]) = data.foldLeft(aggregator.zero)(aggregator.reduce)
       val (data1, data2) = data.splitAt(data.length / 2)
       val result = aggregator.finish(aggregator.merge(reduce(data1), reduce(data2)))
-      assert(result == expected)
+      assert(result === expected)
     }
   }
 
@@ -73,4 +77,28 @@ class AggregatesExprEvaluationSuite extends AnyFunSuite {
   test((0 to 10).map(_.toDouble), Tuple1(0.0))(i => tuple(Tuple1(min(i))))
   test((0 to 10).map(_.toDouble), (0.0, 10.0))(i => tuple(min(i), max(i)))
   test((0 to 10).map(_.toDouble), (0.0, 10.0, 55.0))(i => tuple(min(i), max(i), sum(i)))
+
+  def testMinMax[T: Codec: Arbitrary: Ordering: Comparable: Equality]: Unit = {
+    val input = Arbitrary[Seq[T]].filter(_.nonEmpty)()
+    test[T, T](input, input.min)(min)
+    test[T, T](input, input.max)(max)
+    val nullableInput = Arbitrary[Seq[Option[T]]].filter(_.nonEmpty)()
+    val flattened = nullableInput.flatten
+    test[Option[T], Option[T]](nullableInput, Option.when(flattened.nonEmpty)(flattened.min))(min)
+    test[Option[T], Option[T]](nullableInput, Option.when(flattened.nonEmpty)(flattened.max))(max)
+  }
+
+  testMinMax[Boolean]
+  testMinMax[Byte]
+  testMinMax[Short]
+  testMinMax[Int]
+  testMinMax[Long]
+  {
+    import com.choreograph.tyda.testsuites.FloatingPointEquality.given
+    testMinMax[Double]
+    testMinMax[Float]
+  }
+  testMinMax[Decimal[37, 9]]
+  testMinMax[String]
+
 }

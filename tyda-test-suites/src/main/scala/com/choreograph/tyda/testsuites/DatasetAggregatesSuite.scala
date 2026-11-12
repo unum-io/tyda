@@ -9,17 +9,23 @@ import org.scalactic.TolerantNumerics
 import com.choreograph.tyda.AggregateExpr
 import com.choreograph.tyda.Arbitrary
 import com.choreograph.tyda.Codec
+import com.choreograph.tyda.Comparable
+import com.choreograph.tyda.Date
 import com.choreograph.tyda.Decimal
 import com.choreograph.tyda.Decimal.MaxPrecision
+import com.choreograph.tyda.Duration
 import com.choreograph.tyda.Expr
 import com.choreograph.tyda.Expr.explode
 import com.choreograph.tyda.NumericLimits
+import com.choreograph.tyda.SimpleTypeName
 import com.choreograph.tyda.SumMagnet
+import com.choreograph.tyda.Timestamp
 import com.choreograph.tyda.aggregates.boolAnd
 import com.choreograph.tyda.aggregates.boolOr
 import com.choreograph.tyda.aggregates.collect
 import com.choreograph.tyda.aggregates.concat
 import com.choreograph.tyda.aggregates.count
+import com.choreograph.tyda.aggregates.countDistinct
 import com.choreograph.tyda.aggregates.countIf
 import com.choreograph.tyda.aggregates.countSome
 import com.choreograph.tyda.aggregates.max
@@ -129,7 +135,8 @@ trait DatasetAggregatesSuite extends DatasetSuite {
   )
   test[Pair, (TinyByte, Seq[Int])](
     "collect and map pairs",
-    ds => ds.groupByKey(_._1).aggregateValue(collect(_._2)).pairs.select(_._1, _._2.map(_.cast[Int] + 1))
+    ds =>
+      ds.groupByKey(_._1).aggregateValue(collect(_._2)).pairs.select(x => (x._1, x._2.map(_.cast[Int] + 1)))
   )
   test[PairSeq, Seq[TinyByte]](
     "concat and filter",
@@ -164,6 +171,35 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     "countSome whole row",
     ds => ds.groupByKey(_ => lit(1)).aggregateValue(countSome).values
   )
+  test[Int, Long]("countDistinct whole row", ds => ds.groupByKey(_ => 1).aggregateValue(countDistinct).values)
+  test[(Int, Int), (Int, Long)](
+    "countDistinct group by",
+    ds => ds.groupByKey(_._1).aggregateValue(countDistinct(_._2)).pairs
+  )
+  test[Pair, Long]("countDistinct struct", ds => ds.groupByKey(_ => 1).aggregateValue(countDistinct).values)
+  test[(Pair, Pair), (key: TinyByte, d1: Long, d2: Long)](
+    "countDistinct struct multiple",
+    ds => ds.groupByKey(_._1._1).aggregate(r => (d1 = countDistinct(r._1), d2 = countDistinct(r._2)))
+  )
+  test[(Pair, Pair), (key: TinyByte, d1: Long, d2: Long, tot: Long)](
+    "countDistinct struct multiple and supported",
+    ds =>
+      ds.groupByKey(_._1._1)
+        .aggregate(r => (d1 = countDistinct(r._1), d2 = countDistinct(r._2), tot = count(r)))
+  )
+  test[(Pair, Pair), Option[(d1: Long, d2: Long, tot: Long)]](
+    "countDistinct struct multiple and supported ungrouped",
+    ds => ds.aggregate(r => (d1 = countDistinct(r._1), d2 = countDistinct(r._2), tot = count(r)))
+  )
+  test[Pair, Option[Long]]("countDistinct struct ungrouped", ds => ds.aggregate(countDistinct))
+  test[Seq[Int], Long](
+    "countDistinct array",
+    ds => ds.groupByKey(_ => 1).aggregateValue(countDistinct).values
+  )
+  test[Decimal[38, 9], Long](
+    "countDistinct decimal",
+    ds => ds.groupByKey(_ => 1).aggregateValue(countDistinct).values
+  )
   test[(TinyByte, Option[Int]), Long](
     "countSome expr",
     ds => ds.groupByKey(_._1).aggregateValue(countSome(_._2)).values
@@ -179,25 +215,14 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     ds => ds.groupByKey(_._1).aggregateValue(boolOr(_._2 > 0)).values
   )
   test[Pair, Pair]("min expr", ds => ds.groupByKey(_._1).aggregateValue(min(_._2)).pairs)
-  test[Boolean, Boolean]("min Boolean", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-  test[Byte, Byte]("min Byte", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-  test[Short, Short]("min Short", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-  test[Int, Int]("min Int", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-  test[String, String]("min String", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-  {
-    import FloatingPointEquality.given
-    test[Float, Float]("min Float", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-    test[Double, Double]("min Double", ds => ds.groupByKey(_ => lit(1)).aggregateValue(min).values)
-    test[Double, Double](
-      "max Double",
-      ds => ds.groupByKey(_ => lit(1)).aggregateValue(max).values,
-      Seq(1, Double.NaN)
-    )
-  }
   test[Pair, (TinyByte, Long)]("count group by", ds => ds.groupByKey(_._1).aggregateValue(count).pairs)
   test[(Int, Int), (Boolean, Int)](
     "groupBy transform",
     ds => ds.groupByKey(_._1 > 2).aggregateValue(min(_._2)).pairs
+  )
+  test[(Decimal[2, 1], Int), (key: Decimal[2, 1], value: Long)](
+    "groupBy decimal",
+    ds => ds.grouped.aggregateValue(count)
   )
 
   test[Pair, Pair]("maxBy", ds => ds.groupByKey(_._1).aggregateValue(maxBy(_._1, _._2)).pairs)
@@ -207,18 +232,6 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     ds => ds.groupByKey(_._1).aggregate(v => (min = minBy(v._1, v._2), max = maxBy(v._1, v._2)))
   )
 
-  test[Byte, Long]("sum Byte", ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values)
-  test[Short, Long]("sum Short", ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values)
-  test[Int, Long]("sum Int", ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values)
-  {
-
-    /** Generate Long values that are small enough to not cause overflow when
-      * summed a resonable number of them.
-      */
-    given Arbitrary[Long] = Arbitrary.between(Int.MinValue, Int.MaxValue)
-    test[Long, Long]("sum Long", ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values)
-  }
-
   testFailure[Long, Option[Long]](
     "sum Long overflow should error",
     Seq(Long.MaxValue, 1L),
@@ -226,21 +239,6 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     "overflow"
   )
 
-  {
-    /* Summing floating point is sensitive to the order of the elements, since the order in not promised we
-     * only check using small values and using some tolerance for equality. */
-    import DatasetAggregatesSuite.{smallFloat, smallDouble}
-    given Equality[Double] = TolerantNumerics.tolerantDoubleEquality(1e-12)
-    test[Float, Double]("sum Float", ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values)
-    test[Double, Double]("sum Double", ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values)
-  }
-  test[Option[Int], Option[Long]](
-    "sum Option[Int]",
-    ds => ds.groupByKey(_ => lit(1)).aggregateValue(sum).values,
-    Seq(None, None),
-    Seq(None, Some(1)),
-    Seq()
-  )
   {
     given [S <: Int](using
         Decimal.Valid[MaxPrecision, S],
@@ -348,17 +346,22 @@ trait DatasetAggregatesSuite extends DatasetSuite {
 
   test[M1, (Long, Int)](
     "explode after aggregate",
-    ds => ds.groupByKey(_.d).aggregateValue(min(_.a)).pairs.select(explode(_._1), _._2)
+    ds => ds.groupByKey(_.d).aggregateValue(min(_.a)).pairs.select(x => (explode(x._1), x._2))
+  )
+
+  test[M1, (Long, Int)](
+    "explode after filtered aggregate",
+    ds => ds.groupByKey(_.d).aggregateValue(min(_.a)).pairs.where(_._2 > 0).select(x => (explode(x._1), x._2))
   )
 
   test[M1, (Int, Long)](
     "aggregate after explode",
-    ds => ds.select(_.a, explode(_.d)).groupByKey(_._1).aggregateValue(min(_._2)).pairs
+    ds => ds.select(x => (x.a, explode(x.d))).groupByKey(_._1).aggregateValue(min(_._2)).pairs
   )
 
   test[M1, (Int, Seq[Long])](
     "aggregate after select",
-    ds => ds.select(_.a, _.d).groupByKey(_._1).aggregateValue(concat(_._2)).pairs
+    ds => ds.select(x => (x.a, x.d)).groupByKey(_._1).aggregateValue(concat(_._2)).pairs
   )
 
   test[M1, (String, Int)](
@@ -370,4 +373,77 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     "select after where after aggregate",
     ds => ds.groupByKey(_.d).aggregateValue(min(_.a)).values.where(_ > 0).select(x => x.cast[Long] + 1L)
   )
+
+  def testSum[T: SimpleTypeName: Arbitrary: Codec: SumMagnet as magnet](using
+      Equality[magnet.Result],
+      Equality[Option[magnet.Result]]
+  ): Unit =
+    test[T, magnet.Result](
+      s"sum ${SimpleTypeName.name}",
+      ds => ds.groupByKey(_ => 1).aggregateValue(sum).values
+    )
+    test[Option[T], Option[magnet.Result]](
+      s"sum Option[${SimpleTypeName.name}]",
+      ds => ds.groupByKey(_ => 1).aggregateValue(sum).values
+    )
+
+  testSum[Byte]
+  testSum[Short]
+  testSum[Int]
+  {
+    /* Summing floating point is sensitive to the order of the elements, since the order in not promised we
+     * only check using small values and using some tolerance for equality. */
+    import DatasetAggregatesSuite.{smallFloat, smallDouble}
+    given doubleEq: Equality[Double] = TolerantNumerics.tolerantDoubleEquality(1e-12)
+    given Equality[Option[Double]] =
+      new Equality[Option[Double]] {
+        override def areEqual(a: Option[Double], b: Any): Boolean =
+          b match {
+            case None => a.isEmpty
+            case Some(b: Double) => a.exists(doubleEq.areEqual(_, b))
+            case _ => false
+          }
+      }
+    testSum[Float]
+    testSum[Double]
+  }
+  {
+
+    /* Generate Long values that are small enough to not cause overflow when summed a resonable number of
+     * them. */
+    given Arbitrary[Long] = Arbitrary.between(Int.MinValue, Int.MaxValue)
+    testSum[Long]
+  }
+
+  def testMinMax[T: SimpleTypeName: Arbitrary: Codec: Comparable: Equality](using
+      Equality[Option[T]]
+  ): Unit = {
+    test[T, T](s"min ${SimpleTypeName.name}", ds => ds.groupByKey(_ => 1).aggregateValue(min).values)
+    test[T, T](s"max ${SimpleTypeName.name}", ds => ds.groupByKey(_ => 1).aggregateValue(max).values)
+    test[Option[T], Option[T]](
+      s"min Option[${SimpleTypeName.name}]",
+      ds => ds.groupByKey(_ => 1).aggregateValue(min).values
+    )
+    test[Option[T], Option[T]](
+      s"max Option[${SimpleTypeName.name}]",
+      ds => ds.groupByKey(_ => 1).aggregateValue(max).values
+    )
+  }
+
+  testMinMax[Boolean]
+  testMinMax[Byte]
+  testMinMax[Short]
+  testMinMax[Int]
+  testMinMax[Long]
+  {
+    import FloatingPointEquality.given
+    testMinMax[Float]
+    testMinMax[Double]
+  }
+  testMinMax[Decimal[37, 9]]
+  testMinMax[String]
+  testMinMax[Duration]
+  testMinMax[Date]
+  testMinMax[Timestamp]
+
 }

@@ -27,7 +27,7 @@ SELECT CASE WHEN (count(1) <> 0) THEN named_struct('_1', count(CAST(1 AS INT)), 
 ------ end
 
 ------ Test: aggregate after explode
-SELECT t0._1 AS _1, min(t0._2) AS _2 FROM (SELECT table1.a AS _1, explode(table1.d) AS _2 FROM table1) AS t0 GROUP BY t0._1
+SELECT t0._1.a AS _1, min(t0._2) AS _2 FROM (SELECT named_struct('a', table1.a, 'b', table1.b, 'c', table1.c, 'd', table1.d) AS _1, explode(table1.d) AS _2 FROM table1) AS t0 GROUP BY t0._1.a
 ------ end
 
 ------ Test: aggregate after select
@@ -142,6 +142,42 @@ SELECT table1._1 AS _1, count(CAST(1 AS INT)) AS _2 FROM table1 GROUP BY table1.
 SELECT count(CAST(1 AS INT)) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
+------ Test: countDistinct array
+SELECT count(DISTINCT table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: countDistinct decimal
+SELECT count(DISTINCT table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: countDistinct group by
+SELECT table1._1 AS _1, count(DISTINCT table1._2) AS _2 FROM table1 GROUP BY table1._1
+------ end
+
+------ Test: countDistinct struct
+SELECT count(DISTINCT named_struct('_1', table1._1, '_2', table1._2)) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: countDistinct struct multiple
+SELECT table1._1._1 AS key, count(DISTINCT table1._1) AS d1, count(DISTINCT table1._2) AS d2 FROM table1 GROUP BY table1._1._1
+------ end
+
+------ Test: countDistinct struct multiple and supported
+SELECT table1._1._1 AS key, count(DISTINCT table1._1) AS d1, count(DISTINCT table1._2) AS d2, count(CAST(1 AS INT)) AS tot FROM table1 GROUP BY table1._1._1
+------ end
+
+------ Test: countDistinct struct multiple and supported ungrouped
+SELECT CASE WHEN (count(1) <> 0) THEN named_struct('d1', count(DISTINCT table1._1), 'd2', count(DISTINCT table1._2), 'tot', count(CAST(1 AS INT))) END AS value FROM table1
+------ end
+
+------ Test: countDistinct struct ungrouped
+SELECT CASE WHEN (count(1) <> 0) THEN count(DISTINCT named_struct('_1', table1._1, '_2', table1._2)) END AS value FROM table1
+------ end
+
+------ Test: countDistinct whole row
+SELECT count(DISTINCT table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
 ------ Test: countIf expr
 SELECT count(CASE WHEN (NOT (table1.value <= CAST(0 AS INT))) THEN CAST(1 AS INT) END) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
@@ -163,7 +199,11 @@ SELECT count(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: explode after aggregate
-SELECT explode(table1.d) AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.d
+SELECT t0._2 AS _1, t0._1._2 AS _2 FROM (SELECT named_struct('_1', table1.d, '_2', min(table1.a)) AS _1, explode(table1.d) AS _2 FROM table1 GROUP BY table1.d) AS t0
+------ end
+
+------ Test: explode after filtered aggregate
+SELECT t1._2 AS _1, t1._1._2 AS _2 FROM (SELECT named_struct('_1', t0._1, '_2', t0._2) AS _1, explode(t0._1) AS _2 FROM (SELECT table1.d AS _1, min(table1.a) AS _2 FROM table1 GROUP BY table1.d HAVING (NOT (min(table1.a) <= CAST(0 AS INT)))) AS t0) AS t1
 ------ end
 
 ------ Test: group by whole enum row
@@ -178,11 +218,107 @@ SELECT table1.value AS value FROM table1 GROUP BY table1.value
 SELECT named_struct('_1', table1._1, '_2', table1._2) AS _1, min(table1._1) AS _2 FROM table1 GROUP BY table1._1, table1._2
 ------ end
 
+------ Test: groupBy decimal
+SELECT table1._1 AS key, count(CAST(1 AS INT)) AS value FROM table1 GROUP BY table1._1
+------ end
+
 ------ Test: groupBy transform
 SELECT (NOT (table1._1 <= CAST(2 AS INT))) AS _1, min(table1._2) AS _2 FROM table1 GROUP BY (NOT (table1._1 <= CAST(2 AS INT)))
 ------ end
 
+------ Test: max Boolean
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Byte
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Date
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Decimal[Int,Int]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
 ------ Test: max Double
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Duration
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Float
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Int
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Long
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Boolean]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Byte]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Date]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Decimal[Int,Int]]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Double]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Duration]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Float]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Int]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Long]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Short]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[String]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Option[Timestamp]
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Short
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max String
+SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: max Timestamp
 SELECT max(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
@@ -198,7 +334,19 @@ SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
+------ Test: min Date
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Decimal[Int,Int]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
 ------ Test: min Double
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Duration
 SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
@@ -210,11 +358,67 @@ SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
+------ Test: min Long
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Boolean]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Byte]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Date]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Decimal[Int,Int]]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Double]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Duration]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Float]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Int]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Long]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Short]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[String]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Option[Timestamp]
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
 ------ Test: min Short
 SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
 ------ Test: min String
+SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: min Timestamp
 SELECT min(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 
@@ -282,7 +486,27 @@ SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 SELECT CASE WHEN (count(1) <> 0) THEN sum(table1.value) END AS value FROM table1
 ------ end
 
+------ Test: sum Option[Byte]
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: sum Option[Double]
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: sum Option[Float]
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
 ------ Test: sum Option[Int]
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: sum Option[Long]
+SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
+------ end
+
+------ Test: sum Option[Short]
 SELECT sum(table1.value) AS value FROM table1 GROUP BY CAST(NULL AS INT)
 ------ end
 

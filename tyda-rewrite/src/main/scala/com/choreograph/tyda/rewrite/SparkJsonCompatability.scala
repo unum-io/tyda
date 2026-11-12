@@ -74,7 +74,7 @@ object SparkJsonCompatability {
             ) => readAdapter(mCodec).map { case ReadAdapter(readCodec, cast) =>
             val onlyHereToHelpWithTypeInference = Dataset
               .ReadPathWithHivePartitions(basePath, path, Format.Json, filenameGlobFilter, pCodec, readCodec)
-              .select(_._1, cast.compose(_._2))
+              .select(x => (x._1, cast(x._2)))
             onlyHereToHelpWithTypeInference
           }
         case _ => None

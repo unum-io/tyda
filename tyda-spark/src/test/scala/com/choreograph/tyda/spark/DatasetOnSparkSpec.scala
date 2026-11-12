@@ -51,9 +51,9 @@ class DatasetOnSparkSpec extends AnyFunSuite, SharedSparkSession, Eventually {
   // Disable broadcast hash join to simplify exchange count
   test("Reuse partitioning when doing multiple joins on the same key") {
     withConf(("spark.sql.autoBroadcastJoinThreshold", "-1")) {
-      val ds1 = Dataset.FromSeq(Seq((1, 2)))
-      val ds2 = Dataset.FromSeq(Seq((1, 3)))
-      val ds3 = Dataset.FromSeq(Seq((1, 4)))
+      val ds1 = Dataset.from(Seq((1, 2)))
+      val ds2 = Dataset.from(Seq((1, 3)))
+      val ds3 = Dataset.from(Seq((1, 4)))
 
       val joined = ds1.join(ds2, _._1 == _._1).join(ds3, _._1._1 == _._1)
       assert(countExchanges(joined) == 3, "Each dataset should only be shuffled once")
@@ -62,8 +62,8 @@ class DatasetOnSparkSpec extends AnyFunSuite, SharedSparkSession, Eventually {
 
   test("Reuse partitioning in aggregate after join") {
     withConf(("spark.sql.autoBroadcastJoinThreshold", "-1")) {
-      val ds1 = Dataset.FromSeq(Seq((1, 2)))
-      val ds2 = Dataset.FromSeq(Seq((1, 2)))
+      val ds1 = Dataset.from(Seq((1, 2)))
+      val ds2 = Dataset.from(Seq((1, 2)))
 
       val aggregated = ds1.join(ds2, _._1 == _._1).groupByKey(_._1._1).aggregateValue(count).values
       assert(countExchanges(aggregated) == 2, "Each dataset should only be shuffled once")
@@ -71,8 +71,8 @@ class DatasetOnSparkSpec extends AnyFunSuite, SharedSparkSession, Eventually {
   }
 
   test("cache should work for simple case") {
-    val ds1 = Dataset.FromSeq(Seq((1, 2)))
-    val ds2 = Dataset.FromSeq(Seq((1, 2)))
+    val ds1 = Dataset.from(Seq((1, 2)))
+    val ds2 = Dataset.from(Seq((1, 2)))
 
     val joined = ds1.join(ds2, _._1 == _._1)
     val cached = joined.cache()
@@ -82,8 +82,8 @@ class DatasetOnSparkSpec extends AnyFunSuite, SharedSparkSession, Eventually {
   }
 
   test("cache should work for udaf aggregate") {
-    val ds1 = Dataset.FromSeq(Seq((1, 2)))
-    val ds2 = Dataset.FromSeq(Seq((1, 2)))
+    val ds1 = Dataset.from(Seq((1, 2)))
+    val ds2 = Dataset.from(Seq((1, 2)))
 
     val aggregation = ds1.join(ds2, _._1 == _._1).groupByKey(_._1._1).aggregateValue(min(_._1._2)).values
     assert(countCached(aggregation) == 0, "The aggregation should not be cached yet")
@@ -96,8 +96,8 @@ class DatasetOnSparkSpec extends AnyFunSuite, SharedSparkSession, Eventually {
   }
 
   test("cache should sit in the right place for udaf aggregate") {
-    val ds1 = Dataset.FromSeq(Seq((1, 2, 10))).cache()
-    val ds2 = Dataset.FromSeq(Seq((1, 2, 11)))
+    val ds1 = Dataset.from(Seq((1, 2, 10))).cache()
+    val ds2 = Dataset.from(Seq((1, 2, 11)))
 
     val aggregation = ds1.join(ds2, _._1 == _._1).groupByKey(_._1._1).aggregateValue(min(_._1._2)).values
     val _ = DatasetOnSpark(aggregation)
@@ -107,8 +107,8 @@ class DatasetOnSparkSpec extends AnyFunSuite, SharedSparkSession, Eventually {
   }
 
   test("cache should work for udaf aggregate many times") {
-    val ds1 = Dataset.FromSeq(Seq((1, 2)))
-    val ds2 = Dataset.FromSeq(Seq((1, 3)))
+    val ds1 = Dataset.from(Seq((1, 2)))
+    val ds2 = Dataset.from(Seq((1, 3)))
 
     val cached = ds1.cache()
     val aggregate = cached
@@ -124,7 +124,7 @@ class DatasetOnSparkSpec extends AnyFunSuite, SharedSparkSession, Eventually {
   }
 
   test("cached dataset are automatically cleaned up") {
-    val ds1 = Dataset.FromSeq(Seq((1, 2, 3)))
+    val ds1 = Dataset.from(Seq((1, 2, 3)))
 
     /* Without the extra select we return the same SparkDataset instance and that contains a cached plan. But
      * we need Spark to recompute the plan to see if the cache is still there. */

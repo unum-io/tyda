@@ -101,6 +101,9 @@ private[tyda] sealed trait TreeApi[Node, Base[_]] {
       (acc, base) => f(base).map(b => Continue(acc :+ b)).getOrElse(Continue(acc))
     )
 
+  final def count(value: Node, f: [t] => Base[t] => Boolean): Long =
+    fold(value)(0L)([t] => (acc, base) => if f(base) then Continue(acc + 1) else Continue(acc))
+
   /** Fold over the entire tree pre-order traversal. */
   final def fold[Acc](value: Node)(acc: Acc)(f: [t] => (Acc, Base[t]) => Control[Acc]): Acc = {
     lazy val visitor: FoldVisitor[Acc] = [t] =>

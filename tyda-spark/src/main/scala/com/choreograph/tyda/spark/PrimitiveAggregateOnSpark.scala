@@ -7,6 +7,7 @@ import org.apache.spark.sql.functions.bool_and
 import org.apache.spark.sql.functions.bool_or
 import org.apache.spark.sql.functions.collect_list
 import org.apache.spark.sql.functions.count
+import org.apache.spark.sql.functions.countDistinct
 import org.apache.spark.sql.functions.flatten
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.functions.max
@@ -31,10 +32,13 @@ private[spark] object PrimitiveAggregateOnSpark {
       case PrimitiveAggregate.SeqConcat() => flatten(collect_list(cf.row))
       case PrimitiveAggregate.Count() => count(lit(1))
       case PrimitiveAggregate.CountSome() => count(cf.row)
+      case PrimitiveAggregate.CountDistinct() => countDistinct(cf.row)
       case PrimitiveAggregate.BoolAnd() => bool_and(cf.row)
       case PrimitiveAggregate.BoolOr() => bool_or(cf.row)
       case PrimitiveAggregate.Max(_) => max(cf.row)
+      case PrimitiveAggregate.MaxOption(_) => max(cf.row)
       case PrimitiveAggregate.Min(_) => min(cf.row)
+      case PrimitiveAggregate.MinOption(_) => min(cf.row)
       case PrimitiveAggregate.MaxBy(_) =>
         assert(cf.columns.size == 2, "MaxBy requires exactly two columns but found: " + cf.columns.size)
         max_by(cf.column("_1"), cf.column("_2"))

@@ -6,6 +6,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.execution.ExtendedMode
 
 import com.choreograph.tyda.Dataset
+import com.choreograph.tyda.Dataset.Action.WriteTable
 import com.choreograph.tyda.Runner
 import com.choreograph.tyda.RunnerArgs
 
@@ -17,6 +18,8 @@ class SparkRunner(using spark: SparkSession) extends Runner {
     action match {
       case Dataset.Action.Write(input, path, format) => "Write to {path} in format {format}:\n" +
           explain(input)
+      case Dataset.Action.WriteTable(_, _, _) =>
+        throw new UnsupportedOperationException("WriteTable is not supported by SparkRunner")
     }
 }
 

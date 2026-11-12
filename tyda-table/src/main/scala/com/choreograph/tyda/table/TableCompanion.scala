@@ -23,6 +23,12 @@ trait ReadableTable[M, P <: Partitioner.Hive[?] | Partitioner.None] extends Tabl
     Source.Table(identifier, location)
 }
 
+trait WriteableTable[M, P <: Partitioner.Hive[?] | Partitioner.None] extends TableBase {
+  type Sink = com.choreograph.tyda.table.Sink[M, P]
+
+  def sink(identifier: String, location: TableLocation): Sink.Table[M, P] = Sink.Table(identifier, location)
+}
+
 trait ReadablePathTableBase[M, P <: Partitioner] extends TableBase {
   type Source = com.choreograph.tyda.table.Source[M, P]
 

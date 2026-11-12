@@ -290,4 +290,5 @@ object Decimal {
   }
 
   given [P <: Int, S <: Int]: Ordering[Decimal[P, S]] = Ordering[BigDecimal]
+  given [P <: Int, S <: Int]: Groupable[Decimal[P, S]] with {}
 }
