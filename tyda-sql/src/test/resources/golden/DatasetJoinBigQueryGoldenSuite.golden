@@ -1,5 +1,5 @@
 ------ Test: fullJoinFlat
-SELECT CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END IS NULL) THEN struct(CAST(NULL AS TINYINT) AS key, CAST(NULL AS INT) AS b) ELSE struct(CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.key AS key, CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.b AS b) END.key AS key, CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END IS NULL) THEN struct(CAST(NULL AS TINYINT) AS key, CAST(NULL AS INT) AS b) ELSE struct(CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.key AS key, CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.b AS b) END.b AS b, CASE WHEN (CASE WHEN (t1.value IS NOT NULL) THEN struct(t1.value.m1Key AS m1Key, t1.value.c AS c) END IS NULL) THEN struct(CAST(NULL AS TINYINT) AS m1Key, CAST(NULL AS INT) AS c) ELSE struct(CASE WHEN (t1.value IS NOT NULL) THEN struct(t1.value.m1Key AS m1Key, t1.value.c AS c) END.m1Key AS m1Key, CASE WHEN (t1.value IS NOT NULL) THEN struct(t1.value.m1Key AS m1Key, t1.value.c AS c) END.c AS c) END.m1Key AS m1Key, CASE WHEN (CASE WHEN (t1.value IS NOT NULL) THEN struct(t1.value.m1Key AS m1Key, t1.value.c AS c) END IS NULL) THEN struct(CAST(NULL AS TINYINT) AS m1Key, CAST(NULL AS INT) AS c) ELSE struct(CASE WHEN (t1.value IS NOT NULL) THEN struct(t1.value.m1Key AS m1Key, t1.value.c AS c) END.m1Key AS m1Key, CASE WHEN (t1.value IS NOT NULL) THEN struct(t1.value.m1Key AS m1Key, t1.value.c AS c) END.c AS c) END.c AS c FROM (SELECT struct(table1.key AS key, table1.b AS b) AS value FROM table1) AS t0 FULL JOIN (SELECT struct(table2.m1Key AS m1Key, table2.c AS c) AS value FROM table2) AS t1 ON (t0.value.key = t1.value.m1Key)
+SELECT CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END IS NULL) THEN struct(CAST(NULL AS INT64) AS key, CAST(NULL AS INT64) AS b) ELSE struct(CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.key AS key, CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.b AS b) END.key AS key, CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END IS NULL) THEN struct(CAST(NULL AS INT64) AS key, CAST(NULL AS INT64) AS b) ELSE struct(CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.key AS key, CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.b AS b) END.b AS b, CASE WHEN (CASE WHEN (t1.value IS NOT NULL) THEN struct(t1.value.m1Key AS m1Key, t1.value.c AS c) END IS NULL) THEN struct(CAST(NULL AS INT64) AS m1Key, CAST(NULL AS INT64) AS c) ELSE struct(CASE WHEN (t1.value IS NOT NULL) THEN struct(t1.value.m1Key AS m1Key, t1.value.c AS c) END.m1Key AS m1Key, CASE WHEN (t1.value IS NOT NULL) THEN struct(t1.value.m1Key AS m1Key, t1.value.c AS c) END.c AS c) END.m1Key AS m1Key, CASE WHEN (CASE WHEN (t1.value IS NOT NULL) THEN struct(t1.value.m1Key AS m1Key, t1.value.c AS c) END IS NULL) THEN struct(CAST(NULL AS INT64) AS m1Key, CAST(NULL AS INT64) AS c) ELSE struct(CASE WHEN (t1.value IS NOT NULL) THEN struct(t1.value.m1Key AS m1Key, t1.value.c AS c) END.m1Key AS m1Key, CASE WHEN (t1.value IS NOT NULL) THEN struct(t1.value.m1Key AS m1Key, t1.value.c AS c) END.c AS c) END.c AS c FROM (SELECT struct(table1.key AS key, table1.b AS b) AS value FROM table1) AS t0 FULL JOIN (SELECT struct(table2.m1Key AS m1Key, table2.c AS c) AS value FROM table2) AS t1 ON (t0.value.key = t1.value.m1Key)
 ------ end
 
 ------ Test: fullOuterJoin
@@ -7,7 +7,7 @@ SELECT t0.value AS _1, t1.value AS _2 FROM (SELECT table1.value AS value FROM ta
 ------ end
 
 ------ Test: fullOuterJoin nested Option
-SELECT t0.value AS _1, t1.value AS _2 FROM (SELECT struct(table1.value AS value) AS value FROM table1) AS t0 FULL JOIN (SELECT struct(table2.value AS value) AS value FROM table2) AS t1 ON ((coalesce(t0.value.value, CAST(0 AS TINYINT)) = coalesce(t1.value.value, CAST(0 AS TINYINT))) AND ((t0.value.value IS NULL) = (t1.value.value IS NULL)))
+SELECT t0.value AS _1, t1.value AS _2 FROM (SELECT struct(table1.value AS value) AS value FROM table1) AS t0 FULL JOIN (SELECT struct(table2.value AS value) AS value FROM table2) AS t1 ON ((coalesce(t0.value.value, CAST(0 AS INT64)) = coalesce(t1.value.value, CAST(0 AS INT64))) AND ((t0.value.value IS NULL) = (t1.value.value IS NULL)))
 ------ end
 
 ------ Test: fullOuterJoin nested Option one side
@@ -31,11 +31,11 @@ SELECT t0 AS _1, t1 AS _2 FROM table1 JOIN table2 ON (table1.a = table2.a), unne
 ------ end
 
 ------ Test: join complex condition
-SELECT struct(table1._1 AS _1, table1._2 AS _2) AS _1, struct(table2._1 AS _1, table2._2 AS _2) AS _2 FROM table1 JOIN table2 ON ((table1._1 = table2._1) AND ((table2._2 = table1._2) OR (table1._2 = CAST(0 AS TINYINT))))
+SELECT struct(table1._1 AS _1, table1._2 AS _2) AS _1, struct(table2._1 AS _1, table2._2 AS _2) AS _2 FROM table1 JOIN table2 ON ((table1._1 = table2._1) AND ((table2._2 = table1._2) OR (table1._2 = CAST(0 AS INT64))))
 ------ end
 
 ------ Test: join complex not equi condition
-SELECT table1.value AS _1, table2.value AS _2 FROM table1 JOIN table2 ON ((table1.value = table2.value) OR (table1.value = CAST(0 AS TINYINT)))
+SELECT table1.value AS _1, table2.value AS _2 FROM table1 JOIN table2 ON ((table1.value = table2.value) OR (table1.value = CAST(0 AS INT64)))
 ------ end
 
 ------ Test: join condition reverse order of exprs
@@ -43,15 +43,15 @@ SELECT table1.value AS _1, table2.value AS _2 FROM table1 JOIN table2 ON (table2
 ------ end
 
 ------ Test: join filter on both sides
-SELECT table1.value AS _1, table2.value AS _2 FROM table1 JOIN table2 ON (table1.value = table2.value) WHERE ((table1.value < CAST(0 AS TINYINT)) AND (table2.value < CAST(5 AS TINYINT)))
+SELECT table1.value AS _1, table2.value AS _2 FROM table1 JOIN table2 ON (table1.value = table2.value) WHERE ((table1.value < CAST(0 AS INT64)) AND (table2.value < CAST(5 AS INT64)))
 ------ end
 
 ------ Test: join filter on lhs
-SELECT table1.value AS _1, table2.value AS _2 FROM table1 JOIN table2 ON (table1.value = table2.value) WHERE (table1.value < CAST(0 AS TINYINT))
+SELECT table1.value AS _1, table2.value AS _2 FROM table1 JOIN table2 ON (table1.value = table2.value) WHERE (table1.value < CAST(0 AS INT64))
 ------ end
 
 ------ Test: join filter on rhs
-SELECT table1.value AS _1, table2.value AS _2 FROM table1 JOIN table2 ON (table1.value = table2.value) WHERE (table2.value < CAST(0 AS TINYINT))
+SELECT table1.value AS _1, table2.value AS _2 FROM table1 JOIN table2 ON (table1.value = table2.value) WHERE (table2.value < CAST(0 AS INT64))
 ------ end
 
 ------ Test: join multiple keys
@@ -71,7 +71,7 @@ SELECT table1._1 AS _1, table1._2 AS _2 FROM table1 WHERE (NOT EXISTS (SELECT ta
 ------ end
 
 ------ Test: leftJoinFlat
-SELECT table1.key AS key, table1.b AS b, CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.m1Key AS m1Key, t0.value.c AS c) END IS NULL) THEN struct(CAST(NULL AS TINYINT) AS m1Key, CAST(NULL AS INT) AS c) ELSE struct(CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.m1Key AS m1Key, t0.value.c AS c) END.m1Key AS m1Key, CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.m1Key AS m1Key, t0.value.c AS c) END.c AS c) END.m1Key AS m1Key, CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.m1Key AS m1Key, t0.value.c AS c) END IS NULL) THEN struct(CAST(NULL AS TINYINT) AS m1Key, CAST(NULL AS INT) AS c) ELSE struct(CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.m1Key AS m1Key, t0.value.c AS c) END.m1Key AS m1Key, CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.m1Key AS m1Key, t0.value.c AS c) END.c AS c) END.c AS c FROM table1 LEFT JOIN (SELECT struct(table2.m1Key AS m1Key, table2.c AS c) AS value FROM table2) AS t0 ON (table1.key = t0.value.m1Key)
+SELECT table1.key AS key, table1.b AS b, CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.m1Key AS m1Key, t0.value.c AS c) END IS NULL) THEN struct(CAST(NULL AS INT64) AS m1Key, CAST(NULL AS INT64) AS c) ELSE struct(CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.m1Key AS m1Key, t0.value.c AS c) END.m1Key AS m1Key, CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.m1Key AS m1Key, t0.value.c AS c) END.c AS c) END.m1Key AS m1Key, CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.m1Key AS m1Key, t0.value.c AS c) END IS NULL) THEN struct(CAST(NULL AS INT64) AS m1Key, CAST(NULL AS INT64) AS c) ELSE struct(CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.m1Key AS m1Key, t0.value.c AS c) END.m1Key AS m1Key, CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.m1Key AS m1Key, t0.value.c AS c) END.c AS c) END.c AS c FROM table1 LEFT JOIN (SELECT struct(table2.m1Key AS m1Key, table2.c AS c) AS value FROM table2) AS t0 ON (table1.key = t0.value.m1Key)
 ------ end
 
 ------ Test: leftOuterJoin
@@ -107,7 +107,7 @@ SELECT CASE WHEN (t0.value IS NOT NULL) THEN t0.value._2 END AS _1, table2.value
 ------ end
 
 ------ Test: rightJoinFlat
-SELECT CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END IS NULL) THEN struct(CAST(NULL AS TINYINT) AS key, CAST(NULL AS INT) AS b) ELSE struct(CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.key AS key, CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.b AS b) END.key AS key, CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END IS NULL) THEN struct(CAST(NULL AS TINYINT) AS key, CAST(NULL AS INT) AS b) ELSE struct(CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.key AS key, CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.b AS b) END.b AS b, table2.m1Key AS m1Key, table2.c AS c FROM table2 LEFT JOIN (SELECT struct(table1.key AS key, table1.b AS b) AS value FROM table1) AS t0 ON (t0.value.key = table2.m1Key)
+SELECT CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END IS NULL) THEN struct(CAST(NULL AS INT64) AS key, CAST(NULL AS INT64) AS b) ELSE struct(CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.key AS key, CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.b AS b) END.key AS key, CASE WHEN (CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END IS NULL) THEN struct(CAST(NULL AS INT64) AS key, CAST(NULL AS INT64) AS b) ELSE struct(CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.key AS key, CASE WHEN (t0.value IS NOT NULL) THEN struct(t0.value.key AS key, t0.value.b AS b) END.b AS b) END.b AS b, table2.m1Key AS m1Key, table2.c AS c FROM table2 LEFT JOIN (SELECT struct(table1.key AS key, table1.b AS b) AS value FROM table1) AS t0 ON (t0.value.key = table2.m1Key)
 ------ end
 
 ------ Test: rightOuterJoin
