@@ -5,6 +5,7 @@ import com.choreograph.tyda.NonEmpty
 private[sql] enum From {
   case Table(name: Identifier)
   case Expr(name: SqlExpr, alias: Identifier)
+  case ExprWithOffset(name: SqlExpr, alias: Identifier, offset: Identifier)
   case Subquery(query: Query, alias: Identifier)
   case Join(left: From, right: From, joinType: JoinType, on: Option[SqlExpr])
   case Values(values: Seq[NonEmpty[Seq[SqlExpr]]], columns: NonEmpty[Seq[Identifier]], alias: Identifier)
@@ -13,6 +14,11 @@ private[sql] enum From {
 private[sql] object From {
   object Expr {
     def apply(expr: SqlExpr, alias: String): From = Expr(expr, Identifier(alias))
+  }
+
+  object ExprWithOffset {
+    def apply(expr: SqlExpr, alias: String, offset: String): From =
+      ExprWithOffset(expr, Identifier(alias), Identifier(offset))
   }
 
   object Table {

@@ -257,7 +257,7 @@ trait DatasetAggregatesSuite extends DatasetSuite {
     "sum Decimal overflow should error",
     Seq(NumericLimits[Decimal[MaxPrecision, 0]].max, Decimal[MaxPrecision, 0](1)),
     ds => ds.aggregate(sum),
-    "cannot be represented"
+    "(cannot be represented)|(exceeds limit for number of digits)".r
   )
 
   test[(Int, Int), (Int, Int)](
