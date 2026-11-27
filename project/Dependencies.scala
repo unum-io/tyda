@@ -7,7 +7,7 @@ object Dependencies {
   val scala3Version = "3.7.4" // scala-steward:off
   val spark3Version = "3.5.9" // scala-steward:off
   val spark4Version = "4.0.2" // scala-steward:off
-  val jsoniterVersion = "2.42.2"
+  val jsoniterVersion = "2.42.3"
   val bigQueryConnectorVersion = "0.46.0"
 
   object TestDeps {
@@ -16,7 +16,7 @@ object Dependencies {
     val spark3Sql = (CompileDeps.spark3Sql % Test).exclude("org.scala-lang.modules", "scala-xml_2.13")
     val spark4Sql = (CompileDeps.spark4Sql % Test).exclude("org.scala-lang.modules", "scala-xml_2.13")
     val gcsConnector = CompileDeps.gcsConnector % Test
-    val jsonSchemaValidator = "com.networknt" % "json-schema-validator" % "3.0.8" % Test
+    val jsonSchemaValidator = "com.networknt" % "json-schema-validator" % "3.0.9" % Test
     val bigQuerySpark3Connector = "com.google.cloud.spark" % "spark-3.5-bigquery" % bigQueryConnectorVersion %
       Test
     val bigQuerySpark4Connector = "com.google.cloud.spark" % "spark-4.0-bigquery" % bigQueryConnectorVersion %
